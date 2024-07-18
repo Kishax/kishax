@@ -11,14 +11,14 @@ Moving to hub server<br>
 Getting server status and checking whether you have FMC account from MySQL<br>
 In FMC Server, using python script for getting minecrafts' status<br>
 >Here is<br>
-[text](https://github.com/bella2391/Mine_Status)<br>
+[python scripts](https://github.com/bella2391/Mine_Status)<br>
 ### /fmcb stp \<server\>
 Moving to specific server as server command
 ### /fmcb req \<server\>
 Requesting to let server start-up to Admin through discord and python<br>
 In FMC Server, using python and php script for requesting to Discord<br>
 >Here is 
-[text](https://github.com/bella2391/Discord_Button)
+[python and php scripts](https://github.com/bella2391/Discord_Button)
 ### /fmcb start \<server\>
 Let server start by bat file of windows
 ### /fmcb cancel
