@@ -1,7 +1,7 @@
 # FMC Plugin
-This is able to use in both bungee and spigot.<br>
-But this is created for myself for my server.<br>
-So this plugin is good for developers<br>
+## This is able to use in both bungee and spigot.<br>
+## But this is created for myself for my server.<br>
+## So this plugin is good for developers<br>
 Freely to edit!<br>
 ## Bungee Command list
 ### /hub
@@ -10,15 +10,13 @@ Moving to hub server<br>
 ### /fmcb ss \<server\>
 Getting server status and checking whether you have FMC account from MySQL<br>
 In FMC Server, using python script for getting minecrafts' status<br>
->Here is<br>
-[python scripts](https://github.com/bella2391/Mine_Status)<br>
+>Here is [python scripts](https://github.com/bella2391/Mine_Status)<br>
 ### /fmcb stp \<server\>
 Moving to specific server as server command
 ### /fmcb req \<server\>
 Requesting to let server start-up to Admin through discord and python<br>
 In FMC Server, using python and php script for requesting to Discord<br>
->Here is 
-[python and php scripts](https://github.com/bella2391/Discord_Button)
+>Here is [python and php scripts](https://github.com/bella2391/Discord_Button)
 ### /fmcb start \<server\>
 Let server start by bat file of windows
 ### /fmcb cancel
