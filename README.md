@@ -1,6 +1,5 @@
 # FMC Plugin
->## This is able to use in both bungee and spigot.<br>But this is created for myself for my server.<br>So this plugin is good for developers.<br>
-Freely to edit!<br>
+>## This is able to use in both bungee and spigot.<br>But this is created for myself for my server.<br>So this plugin is good for developers.<br>Freely to edit!<br>
 ## Bungee Command list
 ### /hub
 ### /fmcb hub
