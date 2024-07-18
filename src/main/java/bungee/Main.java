@@ -122,11 +122,13 @@ public class Main extends Plugin
     		}
     		
         	broadcastMessage(res,null);
+        	getLogger().info(res);
     	}
     	else
     	{	
     		// Discordからのメッセージ処理
     		sendmixurl(res);
+    		getLogger().info(res);
     	}
     }
     
