@@ -23,7 +23,7 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 public class FMCCommand extends Command implements TabExecutor
 {
 	public Main plugin;
-	public List<String> subcommands = new ArrayList<>(Arrays.asList("debug","hub","reload","ss","req","start","stp","retry","debug"));
+	public List<String> subcommands = new ArrayList<>(Arrays.asList("debug","hub","reload","ss","req","start","stp","retry","debug","cancel"));
 	public List<String> anylists = new ArrayList<>(Arrays.asList("true","false"));
 	
     public FMCCommand(Main plugin) {
@@ -53,6 +53,9 @@ public class FMCCommand extends Command implements TabExecutor
         			        .append(ChatColor.AQUA+"\n\n/fmcb req <server>")
         			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb req"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("サーバー起動リクエスト")))
+        			        .append(ChatColor.AQUA+"\n\n/fmcb cancel")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb cancel"))
+        			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("「キャンセルしました」メッセージ")))
         			        .append(ChatColor.AQUA+"\n\n/fmcb debug")
         			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb debug"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("管理者専用デバッグモード")))
@@ -103,6 +106,10 @@ public class FMCCommand extends Command implements TabExecutor
             	
             case "req":
             	new Request(sender, args);
+            	break;
+            	
+            case "cancel":
+            	new Cancel(sender,args);
             	break;
             	
             default:
