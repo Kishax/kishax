@@ -1,4 +1,4 @@
-package bungee;
+package common;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.awt.Color;
