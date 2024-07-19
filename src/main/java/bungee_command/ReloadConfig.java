@@ -14,7 +14,7 @@ public class ReloadConfig
 	{
 		this.plugin = Main.getInstance();
 		
-		Main.motdConfig = new Config("config.yml",this.plugin);
+		new Config("config.yml",this.plugin);
 		sender.sendMessage(new ComponentBuilder("コンフィグをリロードしました。").color(ChatColor.GREEN).create());
 	}
 }

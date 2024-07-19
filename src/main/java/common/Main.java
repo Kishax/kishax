@@ -9,9 +9,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import spigot.Config;
 import spigot.Database;
 import spigot.EventListener;
-import spigot.SetConfig;
 import spigot.SocketSwitch;
 import spigot_command.FMCCommand;
 
@@ -44,7 +44,7 @@ public class Main extends JavaPlugin
         		saveDefaultConfig();
         		
             	FileConfiguration config = getConfig();
-            	new SetConfig(config);
+            	new Config(config);
             	
             	getServer().getPluginManager().registerEvents(new EventListener(this,ssw), this);
                 
@@ -57,7 +57,7 @@ public class Main extends JavaPlugin
         			if(Objects.nonNull(conn))
         			{
         				// サーバーをオンラインに
-        				String sql = "UPDATE mine_status SET "+SetConfig.config.getString("Server")+"=? WHERE id=1;";
+        				String sql = "UPDATE mine_status SET "+Config.config.getString("Server")+"=? WHERE id=1;";
         				ps = conn.prepareStatement(sql);
         				ps.setBoolean(1,true);
         				ps.executeUpdate();
@@ -79,7 +79,7 @@ public class Main extends JavaPlugin
                 
                 //startSocketServer();
                 
-        	    ssw.startSocketClient(ChatColor.GREEN+SetConfig.config.getString("Server")+"サーバーが起動しました。");
+        	    ssw.startSocketClient(ChatColor.GREEN+Config.config.getString("Server")+"サーバーが起動しました。");
             }
         }
         catch (Exception e)
@@ -106,7 +106,7 @@ public class Main extends JavaPlugin
         			// サーバーをオフラインに
         			if(Objects.nonNull(conn))
         			{
-        				String sql = "UPDATE mine_status SET "+SetConfig.config.getString("Server")+"=? WHERE id=1;";
+        				String sql = "UPDATE mine_status SET "+Config.config.getString("Server")+"=? WHERE id=1;";
         				ps = conn.prepareStatement(sql);
         				ps.setBoolean(1,false);
         				ps.executeUpdate();

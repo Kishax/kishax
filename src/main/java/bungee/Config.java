@@ -7,22 +7,22 @@ import java.io.*;
 
 public class Config
 {
-    private Configuration config;
-    private File file;
+    public static Configuration config;
+    private static File file;
     private Main plugin;
     public Config(String name, Main plugin)
     {
     	this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), name);
+        Config.file = new File(plugin.getDataFolder(), name);
         if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdir();
     
-        if (!this.file.exists())
+        if (!Config.file.exists())
         {
             try
             {
-                this.file.createNewFile();
+                Config.file.createNewFile();
                 try (final InputStream is = plugin.getResourceAsStream(name);
-                     final OutputStream os = new FileOutputStream(this.file))
+                     final OutputStream os = new FileOutputStream(Config.file))
                 {
                     // 既存のファイル内容を読み込む
                     String existingContent = new String(ByteStreams.toByteArray(is), "UTF-8");
@@ -55,7 +55,7 @@ public class Config
         
         try
         {
-            this.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(this.file);
+            Config.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(Config.file);
         }
         catch (Exception e)
         {
@@ -63,11 +63,11 @@ public class Config
         }
     }
     
-    public void save()
+    public static void save()
     {
         try
         {
-            ConfigurationProvider.getProvider(YamlConfiguration.class).save(this.config, this.file);
+            ConfigurationProvider.getProvider(YamlConfiguration.class).save(Config.config, Config.file);
         }
         catch (Exception e)
         {
@@ -75,8 +75,8 @@ public class Config
         }
     }
     
-    public Configuration getConfig()
+    public static Configuration getConfig()
     {
-        return this.config;
+        return Config.config;
     }
 }

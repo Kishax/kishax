@@ -17,32 +17,32 @@ public class Debug
 		
 		if
 		(
-			!(Main.motdConfig.getConfig().getString("Debug.Webhook_URL","").isEmpty()) && 
-			!(Main.motdConfig.getConfig().getString("Discord.Webhook_URL","").isEmpty())
+			!(Config.getConfig().getString("Debug.Webhook_URL","").isEmpty()) && 
+			!(Config.getConfig().getString("Discord.Webhook_URL","").isEmpty())
 		)
 		{
-			value1 = Main.motdConfig.getConfig().getString("Debug.Webhook_URL");
-			value2 = Main.motdConfig.getConfig().getString("Discord.Webhook_URL");
+			value1 = Config.getConfig().getString("Debug.Webhook_URL");
+			value2 = Config.getConfig().getString("Discord.Webhook_URL");
 			
-			Main.motdConfig.getConfig().set("Discord.Webhook_URL", value1);
-			Main.motdConfig.getConfig().set("Debug.Webhook_URL", value2);
+			Config.getConfig().set("Discord.Webhook_URL", value1);
+			Config.getConfig().set("Debug.Webhook_URL", value2);
 			
 			
 			
-			if(Main.motdConfig.getConfig().getBoolean("Debug.Mode"))
+			if(Config.getConfig().getBoolean("Debug.Mode"))
 			{
 				sender.sendMessage(new TextComponent(ChatColor.GREEN+"デバッグモードがOFFになりました。"));
-				Main.motdConfig.getConfig().set("Debug.Mode", false);
-				Main.motdConfig.save();
+				Config.getConfig().set("Debug.Mode", false);
+				Config.save();
 			}
 			else
 			{
 				sender.sendMessage(new TextComponent(ChatColor.GREEN+"デバッグモードがONになりました。"));
-				Main.motdConfig.getConfig().set("Debug.Mode", true);
-				Main.motdConfig.save();
+				Config.getConfig().set("Debug.Mode", true);
+				Config.save();
 			}
 			
-			Main.motdConfig = new Config("bungee-config.yml",this.plugin);
+			new Config("bungee-config.yml",this.plugin);
 		}
 		else
 		{

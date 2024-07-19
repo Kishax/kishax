@@ -25,7 +25,7 @@ public class SocketSwitch
 	//Client side
 	public void startSocketClient(String sendmsg)
 	{
-		if(SetConfig.config.getInt("Socket.Client_Port")==0)
+		if(Config.config.getInt("Socket.Client_Port")==0)
 		{
 			this.plugin.getLogger().info("Client Socket is canceled for config value not given");
 			return;
@@ -36,7 +36,7 @@ public class SocketSwitch
         	
             String hostname = "localhost";
             
-            try (Socket socket = new Socket(hostname, SetConfig.config.getInt("Socket.Client_Port"));
+            try (Socket socket = new Socket(hostname, Config.config.getInt("Socket.Client_Port"));
                  DataOutputStream out = new DataOutputStream(socket.getOutputStream());
                  DataInputStream in = new DataInputStream(socket.getInputStream()))
             {
@@ -87,7 +87,7 @@ public class SocketSwitch
     //Server side
     public void startSocketServer()
     {
-		if(Objects.isNull(SetConfig.config.getInt("Socket.Server_Port")) || SetConfig.config.getInt("Socket.Server_Port") ==0)
+		if(Objects.isNull(Config.config.getInt("Socket.Server_Port")) || Config.config.getInt("Socket.Server_Port") ==0)
 		{
 			this.plugin.getLogger().info("Socket Server is canceled for config value not given");
 			return;
@@ -97,8 +97,8 @@ public class SocketSwitch
         {
             try
             {
-                serverSocket = new ServerSocket(SetConfig.config.getInt("Socket.Server_Port"));
-                this.plugin.getLogger().info("Socket Server is listening on port " + SetConfig.config.getInt("Socket.Server_Port"));
+                serverSocket = new ServerSocket(Config.config.getInt("Socket.Server_Port"));
+                this.plugin.getLogger().info("Socket Server is listening on port " + Config.config.getInt("Socket.Server_Port"));
 
                 while (running)
                 {

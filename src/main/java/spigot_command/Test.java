@@ -2,13 +2,8 @@ package spigot_command;
 
 import java.util.Objects;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 
-import spigot.Main;
-import spigot.SetConfig;
 
 public class Test
 {

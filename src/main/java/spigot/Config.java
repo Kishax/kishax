@@ -2,12 +2,12 @@ package spigot;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
-public class SetConfig
+public class Config
 {
     public static FileConfiguration config;
     
-    public SetConfig(FileConfiguration config)
+    public Config(FileConfiguration config)
     {
-    	SetConfig.config = config;
+    	Config.config = config;
     }
 }

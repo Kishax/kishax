@@ -4,8 +4,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 
-import spigot.Main;
-import spigot.SetConfig;
+import spigot.Config;
 
 public class ReloadConfig
 {
@@ -17,7 +16,7 @@ public class ReloadConfig
 		
 		this.plugin.reloadConfig();
 		FileConfiguration config = this.plugin.getConfig();
-		new SetConfig(config);
+		new Config(config);
 		sender.sendMessage(ChatColor.GREEN+"コンフィグをリロードしました。");
 	}
 }

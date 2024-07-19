@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 
+import bungee.Config;
 import bungee.Database;
 import bungee.Main;
 import net.md_5.bungee.api.ChatColor;
@@ -83,7 +84,7 @@ public class StartServer
 							
 							long ss_sa = now_timestamp-sst_timestamp;
 							long ss_sa_minute = ss_sa/60;
-							if(ss_sa_minute>=Main.motdConfig.getConfig().getInt("Interval.Session",3))
+							if(ss_sa_minute>=Config.getConfig().getInt("Interval.Session",3))
 							{
 								player.sendMessage(new TextComponent(ChatColor.RED+"セッションが無効です。"));
 								return;
@@ -96,9 +97,9 @@ public class StartServer
 					        long sa = now_timestamp-st_timestamp;
 					        long sa_minute = sa/60;
 					        
-					        if(sa_minute<=Main.motdConfig.getConfig().getInt("Interval.Start_Server",0))
+					        if(sa_minute<=Config.getConfig().getInt("Interval.Start_Server",0))
 					        {
-					        	player.sendMessage(new TextComponent(ChatColor.RED+"サーバーの起動間隔は"+Main.motdConfig.getConfig().getInt("Interval.Start_Server",0)+"分以上は空けてください。"));
+					        	player.sendMessage(new TextComponent(ChatColor.RED+"サーバーの起動間隔は"+Config.getConfig().getInt("Interval.Start_Server",0)+"分以上は空けてください。"));
 					        	return;
 					        }
 						}
@@ -112,7 +113,7 @@ public class StartServer
 							}
 							else
 							{
-								if(Main.motdConfig.getConfig().getString("Servers."+args[1].toString()+".Bat_Path").isEmpty())
+								if(Config.getConfig().getString("Servers."+args[1].toString()+".Bat_Path").isEmpty())
 								{
 									player.sendMessage(new TextComponent(ChatColor.RED+"許可されていません。"));
 									return;
@@ -125,7 +126,7 @@ public class StartServer
 								ps.executeUpdate();
 								
 					            // バッチファイルのパスを指定
-					            String batchFilePath = Main.motdConfig.getConfig().getString("Servers."+args[1].toString()+".Bat_Path");
+					            String batchFilePath = Config.getConfig().getString("Servers."+args[1].toString()+".Bat_Path");
 
 					            // ProcessBuilderを作成
 					            ProcessBuilder processBuilder = new ProcessBuilder(batchFilePath);

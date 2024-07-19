@@ -1,5 +1,6 @@
 package bungee_command;
 
+import bungee.Config;
 import bungee.Main;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -23,12 +24,12 @@ public class Hub extends Command implements TabExecutor
         if (sender instanceof ProxiedPlayer)
         {
             ProxiedPlayer player = (ProxiedPlayer) sender;
-            if (!player.getServer().getInfo().getName().equalsIgnoreCase(Main.motdConfig.getConfig().getString("Servers.Hub")))
+            if (!player.getServer().getInfo().getName().equalsIgnoreCase(Config.getConfig().getString("Servers.Hub")))
             {
-            	ServerInfo target = ProxyServer.getInstance().getServerInfo(Main.motdConfig.getConfig().getString("Servers.Hub"));
+            	ServerInfo target = ProxyServer.getInstance().getServerInfo(Config.getConfig().getString("Servers.Hub"));
             	player.connect(target);
             }else{
-            	player.sendMessage(new ComponentBuilder("すでに"+Main.motdConfig.getConfig().getString("Servers.Hub")+"サーバーにいます！").color(ChatColor.RED).create());
+            	player.sendMessage(new ComponentBuilder("すでに"+Config.getConfig().getString("Servers.Hub")+"サーバーにいます！").color(ChatColor.RED).create());
             }
         }
         else

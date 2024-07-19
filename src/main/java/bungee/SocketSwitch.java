@@ -28,7 +28,7 @@ public class SocketSwitch
 	//Client side
 	public void startSocketClient(String sendmsg)
 	{
-		if(Main.motdConfig.getConfig().getInt("Socket.Client_Port")==0)
+		if(Config.getConfig().getInt("Socket.Client_Port")==0)
 		{
 			this.plugin.getLogger().info("Client Socket is canceled for config value not given");
 			return;
@@ -39,7 +39,7 @@ public class SocketSwitch
         	
             String hostname = "localhost";
             
-            try (Socket socket = new Socket(hostname, Main.motdConfig.getConfig().getInt("Socket.Client_Port"));
+            try (Socket socket = new Socket(hostname, Config.getConfig().getInt("Socket.Client_Port"));
                  DataOutputStream out = new DataOutputStream(socket.getOutputStream());
                  DataInputStream in = new DataInputStream(socket.getInputStream()))
             {
@@ -92,7 +92,7 @@ public class SocketSwitch
     //Server side
     public void startSocketServer()
     {
-		if(Main.motdConfig.getConfig().getInt("Socket.Server_Port")==0)
+		if(Config.getConfig().getInt("Socket.Server_Port")==0)
 		{
 			this.plugin.getLogger().info("Server Socket is canceled for config value not given");
 			return;
@@ -102,8 +102,8 @@ public class SocketSwitch
         {
             try
             {
-                serverSocket = new ServerSocket(Main.motdConfig.getConfig().getInt("Socket.Server_Port"));
-                this.plugin.getLogger().info("Socket Server is listening on port " + Main.motdConfig.getConfig().getInt("Socket.Server_Port"));
+                serverSocket = new ServerSocket(Config.getConfig().getInt("Socket.Server_Port"));
+                this.plugin.getLogger().info("Socket Server is listening on port " + Config.getConfig().getInt("Socket.Server_Port"));
 
                 while (running)
                 {
@@ -154,7 +154,7 @@ public class SocketSwitch
 
     public void startBufferedSocketServer()
     {
-		if(Main.motdConfig.getConfig().getInt("Socket.Buffered_Server_Port")==0)
+		if(Config.getConfig().getInt("Socket.Buffered_Server_Port")==0)
 		{
 			this.plugin.getLogger().info("Buffered Server Socket is canceled for config value not given");
 			return;
@@ -164,8 +164,8 @@ public class SocketSwitch
         {
             try
             {
-                bufferedserverSocket = new ServerSocket(Main.motdConfig.getConfig().getInt("Socket.Buffered_Server_Port"));
-                this.plugin.getLogger().info("Buffered Socket Server is listening on port " + Main.motdConfig.getConfig().getInt("Socket.Buffered_Server_Port"));
+                bufferedserverSocket = new ServerSocket(Config.getConfig().getInt("Socket.Buffered_Server_Port"));
+                this.plugin.getLogger().info("Buffered Socket Server is listening on port " + Config.getConfig().getInt("Socket.Buffered_Server_Port"));
 
                 while (bufferedrunning)
                 {

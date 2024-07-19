@@ -26,6 +26,7 @@ import com.github.ucchyocean.lc3.japanize.IMEConverter;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import common.DiscordWebhook;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -73,7 +74,7 @@ public class EventListener implements Listener
 		//my.shaded.ucchyocean.lc3.LunaChatAPI lunaChatAPI = lunaChatBungee.getLunaChatAPI();
 		
 		if (e.isCommand() || e.isCancelled()) return;
-	    if (Main.motdConfig.getConfig().getString("Discord.Webhook_URL", "").isEmpty()) return;
+	    if (Config.getConfig().getString("Discord.Webhook_URL", "").isEmpty()) return;
 
 	    ProxiedPlayer player = (ProxiedPlayer) e.getSender();
 	    String originalMessage = e.getMessage();
@@ -160,7 +161,7 @@ public class EventListener implements Listener
 	
 	public void sendChatToDiscord(ProxiedPlayer player,String message)
 	{
-		DiscordWebhook webhook = new DiscordWebhook(Main.motdConfig.getConfig().getString("Discord.Webhook_URL"));
+		DiscordWebhook webhook = new DiscordWebhook(Config.getConfig().getString("Discord.Webhook_URL"));
         webhook.setUsername(player.getName().toString());
         webhook.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
 	    webhook.setContent(message);
@@ -203,7 +204,7 @@ public class EventListener implements Listener
 	            {
 	            	sql = "UPDATE minecraft SET server=? WHERE uuid=?;";
 	            	ps = conn.prepareStatement(sql);
-	            	ps.setString(1, Main.motdConfig.getConfig().getString("Servers.Hub"));
+	            	ps.setString(1, Config.getConfig().getString("Servers.Hub"));
 	            	ps.setString(2, player.getUniqueId().toString());
 	            	ps.executeUpdate();
 	            	
@@ -216,7 +217,7 @@ public class EventListener implements Listener
 	            	{
 	            		if(player.getName().equals(yuyu.getString("name")))
 	            		{
-	            			if(!Main.motdConfig.getConfig().getString("Discord.Webhook_URL","").isEmpty())
+	            			if(!Config.getConfig().getString("Discord.Webhook_URL","").isEmpty())
 	            			{
 	            				// 2時間経ってたら
 	            				sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
@@ -238,7 +239,7 @@ public class EventListener implements Listener
 	        	    				long beforejoin_sa = now_timestamp-beforejoin_timestamp;
 	        	    				long beforejoin_sa_minute = beforejoin_sa/60;
 	        	    				
-	        	    				if(beforejoin_sa_minute>=Main.motdConfig.getConfig().getInt("Interval.Login",0)) discord_join_notify(player,Color.GREEN,player.getName()+"が"+Main.motdConfig.getConfig().getString("Servers.Hub","")+"サーバーに参加したぜよ！");
+	        	    				if(beforejoin_sa_minute>=Config.getConfig().getInt("Interval.Login",0)) discord_join_notify(player,Color.GREEN,player.getName()+"が"+Config.getConfig().getString("Servers.Hub","")+"サーバーに参加したぜよ！");
 	            				}
 	            			}
 	            			
@@ -292,7 +293,7 @@ public class EventListener implements Listener
 	            					ps.executeUpdate();
 	            				}
 	            			}
-	            			discord_join_notify(player,Color.GREEN,player.getName()+"が"+Main.motdConfig.getConfig().getString("Servers.Hub","")+"サーバーに参加したぜよ！");
+	            			discord_join_notify(player,Color.GREEN,player.getName()+"が"+Config.getConfig().getString("Servers.Hub","")+"サーバーに参加したぜよ！");
 	            		}
 	            	}
 	            }
@@ -327,7 +328,7 @@ public class EventListener implements Listener
 	    			discord_join_notify(player,Color.orange,player.getName()+"が"+player.getServer().getInfo().getName()+"サーバーに初参加です！");
 	    			
 	    			// Discord絵文字を追加する
-	    			String pythonScriptPath = Main.motdConfig.getConfig().getString("Discord.Emoji_Add_Path");
+	    			String pythonScriptPath = Config.getConfig().getString("Discord.Emoji_Add_Path");
 	            	// ProcessBuilderを作成
 	            	ProcessBuilder pb = new ProcessBuilder
 	            			(
@@ -342,9 +343,9 @@ public class EventListener implements Listener
 				if (serverInfo != null)
 				{
 					this.plugin.getLogger().info("Player connected to server: " + serverInfo.getName());
-					if(serverInfo.getName().equalsIgnoreCase(Main.motdConfig.getConfig().getString("hub")))
+					if(serverInfo.getName().equalsIgnoreCase(Config.getConfig().getString("hub")))
 					{
-						this.plugin.broadcastMessage(ChatColor.AQUA+player.getName()+"が"+Main.motdConfig.getConfig().getString("Servers.Hub")+"サーバーにやってきました！",serverInfo.getName());
+						this.plugin.broadcastMessage(ChatColor.AQUA+player.getName()+"が"+Config.getConfig().getString("Servers.Hub")+"サーバーにやってきました！",serverInfo.getName());
 					}
 					else
 					{
@@ -382,7 +383,7 @@ public class EventListener implements Listener
 
 	public void discord_join_notify(ProxiedPlayer player,Color color,String msg)
 	{
-		DiscordWebhook webhook = new DiscordWebhook(Main.motdConfig.getConfig().getString("Discord.Webhook_URL"));
+		DiscordWebhook webhook = new DiscordWebhook(Config.getConfig().getString("Discord.Webhook_URL"));
 		webhook.setUsername(player.getName().toString());
         webhook.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
 	    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(color).setDescription(msg));
@@ -415,7 +416,7 @@ public class EventListener implements Listener
 			ps.setString(2, player.getUniqueId().toString());
 			ps.executeUpdate();
 			
-			DiscordWebhook webhook = new DiscordWebhook(Main.motdConfig.getConfig().getString("Discord.Webhook_URL"));
+			DiscordWebhook webhook = new DiscordWebhook(Config.getConfig().getString("Discord.Webhook_URL"));
 	        webhook.setUsername("サーバー");
 	        webhook.setAvatarUrl("https://www.illust-box.jp/db_img/sozai/00021/213610/watermark.jpg");
 		    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("侵入者が現れました。"));

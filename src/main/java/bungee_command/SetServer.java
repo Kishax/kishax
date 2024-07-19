@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Random;
 
+import bungee.Config;
 import bungee.Database;
 import bungee.Main;
 import net.md_5.bungee.api.ChatColor;
@@ -160,22 +161,22 @@ public class SetServer
         						{
         							if(mine_status.getBoolean(serverInfo.getName().toString()))
         							{
-        								sum_memory = sum_memory + Main.motdConfig.getConfig().getInt("Servers."+serverInfo.getName().toString()+".Memory",0);
+        								sum_memory = sum_memory + Config.getConfig().getInt("Servers."+serverInfo.getName().toString()+".Memory",0);
         							}
         						}
         						// 起動・起動リクエストしたいサーバーのメモリも足す
-        						sum_memory = sum_memory + Main.motdConfig.getConfig().getInt("Servers."+args[1].toString()+".Memory",0);
+        						sum_memory = sum_memory + Config.getConfig().getInt("Servers."+args[1].toString()+".Memory",0);
         						
         						// BungeeCordのメモリも足す
-        						sum_memory = sum_memory + Main.motdConfig.getConfig().getInt("Servers.BungeeCord.Memory",0);
+        						sum_memory = sum_memory + Config.getConfig().getInt("Servers.BungeeCord.Memory",0);
         								
-    							if(!(sum_memory<=Main.motdConfig.getConfig().getInt("Servers.Memory_Limit",0)))
+    							if(!(sum_memory<=Config.getConfig().getInt("Servers.Memory_Limit",0)))
     							{
     								ComponentBuilder component =
             			    			    new ComponentBuilder(ChatColor.WHITE+args[1].toString()+"サーバーは現在")
             			    			    	.append(ChatColor.BLUE+"オフライン")
             			    			    	.append(ChatColor.WHITE+"です。")
-            			    			    	.append(ChatColor.RED+"\nメモリ超過のため、サーバーを起動できません。("+sum_memory+"GB/"+Main.motdConfig.getConfig().getInt("Servers.Memory_Limit",0)+"GB)");
+            			    			    	.append(ChatColor.RED+"\nメモリ超過のため、サーバーを起動できません。("+sum_memory+"GB/"+Config.getConfig().getInt("Servers.Memory_Limit",0)+"GB)");
     								
             						// BaseComponent[]に変換
             						BaseComponent[] messageComponents = component.create();

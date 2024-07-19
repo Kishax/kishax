@@ -29,7 +29,6 @@ import net.md_5.bungee.api.plugin.Plugin;
 
 public class Main extends Plugin
 {
-	public static Config motdConfig;	
 	public SocketSwitch ssw = new SocketSwitch(this);
 	public LuckPerms luckperms;
 	public Luckperms lp;
@@ -45,7 +44,7 @@ public class Main extends Plugin
 		
 		instance = this;
 		
-		motdConfig = new Config("bungee-config.yml", this);
+		new Config("bungee-config.yml", this);
 		
 		getProxy().getPluginManager().registerListener(this, new EventListener(this, ssw));
 		

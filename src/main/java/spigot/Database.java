@@ -20,11 +20,11 @@ public class Database
 	{
 		if
 		(
-			SetConfig.config.getString("MySQL.Host").isEmpty() || 
-			SetConfig.config.getInt("MySQL.Port") == 0 || 
-			SetConfig.config.getString("MySQL.Database").isEmpty() || 
-			SetConfig.config.getString("MySQL.User").isEmpty() || 
-			SetConfig.config.getString("MySQL.Password").isEmpty()
+			Config.config.getString("MySQL.Host").isEmpty() || 
+			Config.config.getInt("MySQL.Port") == 0 || 
+			Config.config.getString("MySQL.Database").isEmpty() || 
+			Config.config.getString("MySQL.User").isEmpty() || 
+			Config.config.getString("MySQL.Password").isEmpty()
 		)
 		{
 			return null;
@@ -38,11 +38,11 @@ public class Database
             Class.forName("com.mysql.cj.jdbc.Driver");
             conn = DriverManager.getConnection
             		(
-            			"jdbc:mysql://" + SetConfig.config.getString("MySQL.Host") + ":" + 
-            			SetConfig.config.getInt("MySQL.Port") + "/" + 
-            			SetConfig.config.getString("MySQL.Database"),
-            			SetConfig.config.getString("MySQL.User"),
-            			SetConfig.config.getString("MySQL.Password")
+            			"jdbc:mysql://" + Config.config.getString("MySQL.Host") + ":" + 
+            			Config.config.getInt("MySQL.Port") + "/" + 
+            			Config.config.getString("MySQL.Database"),
+            			Config.config.getString("MySQL.User"),
+            			Config.config.getString("MySQL.Password")
             		);
             return conn;
         }

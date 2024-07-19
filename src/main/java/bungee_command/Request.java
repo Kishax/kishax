@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 
+import bungee.Config;
 import bungee.Database;
 import bungee.Main;
 import net.md_5.bungee.api.ChatColor;
@@ -53,7 +54,7 @@ public class Request
             	return;
             }
             
-            if(Main.motdConfig.getConfig().getString("Servers."+args[1]+".Bat_Path").isEmpty())
+            if(Config.getConfig().getString("Servers."+args[1]+".Bat_Path").isEmpty())
             {
             	player.sendMessage(new TextComponent(ChatColor.RED+"許可されていません。"));
             	return;
@@ -78,7 +79,7 @@ public class Request
     					
     					long ss_sa = now_timestamp-sst_timestamp;
     					long ss_sa_minute = ss_sa/60;
-    					if(ss_sa_minute>Main.motdConfig.getConfig().getInt("Interval.Session",3))
+    					if(ss_sa_minute>Config.getConfig().getInt("Interval.Session",3))
     					{
     						player.sendMessage(new TextComponent(ChatColor.RED+"セッションが無効です。"));
     						return;
@@ -91,9 +92,9 @@ public class Request
     					long req_sa = now_timestamp-req_timestamp;
     					long req_sa_minute = req_sa/60;
         				
-        		        if(req_sa_minute<=Main.motdConfig.getConfig().getInt("Interval.Request",0))
+        		        if(req_sa_minute<=Config.getConfig().getInt("Interval.Request",0))
         		        {
-        		        	player.sendMessage(new TextComponent(ChatColor.RED+"リクエストは"+Main.motdConfig.getConfig().getInt("Interval.Request",0)+"分に1回までです。"));
+        		        	player.sendMessage(new TextComponent(ChatColor.RED+"リクエストは"+Config.getConfig().getInt("Interval.Request",0)+"分に1回までです。"));
         		        	return;
         		        }
     				}
@@ -135,7 +136,7 @@ public class Request
 				ps.setString(1,player.getUniqueId().toString());
 				ps.executeUpdate();
 		        
-		        String pythonScriptPath = Main.motdConfig.getConfig().getString("Servers.Request_Path");
+		        String pythonScriptPath = Config.getConfig().getString("Servers.Request_Path");
             	// ProcessBuilderを作成
             	ProcessBuilder pb = new ProcessBuilder
             			(
@@ -143,10 +144,10 @@ public class Request
             					pythonScriptPath, 
             					player.getName().toString(),
             					player.getUniqueId().toString(),
-            					Main.motdConfig.getConfig().getString("Servers.Hub"),
+            					Config.getConfig().getString("Servers.Hub"),
             					args[1].toString(),
             					req_type,
-            					Main.motdConfig.getConfig().getString("Servers."+args[1]+".Bat_Path")
+            					Config.getConfig().getString("Servers."+args[1]+".Bat_Path")
             			);
             	pb.start();
             	player.sendMessage(new TextComponent(ChatColor.GREEN+"送信されました。"));

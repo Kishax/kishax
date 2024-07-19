@@ -20,11 +20,11 @@ public class Database
 	{
 		if
 		(
-			Main.motdConfig.getConfig().getString("MySQL.Host").isEmpty() || 
-			Main.motdConfig.getConfig().getInt("MySQL.Port")==0 || 
-			Main.motdConfig.getConfig().getString("MySQL.Database").isEmpty() || 
-			Main.motdConfig.getConfig().getString("MySQL.User").isEmpty() || 
-			Main.motdConfig.getConfig().getString("MySQL.Password").isEmpty()
+			Config.getConfig().getString("MySQL.Host").isEmpty() || 
+			Config.getConfig().getInt("MySQL.Port")==0 || 
+			Config.getConfig().getString("MySQL.Database").isEmpty() || 
+			Config.getConfig().getString("MySQL.User").isEmpty() || 
+			Config.getConfig().getString("MySQL.Password").isEmpty()
 		)
 		{
 			return null;
@@ -38,11 +38,11 @@ public class Database
             Class.forName("com.mysql.cj.jdbc.Driver");
             conn = DriverManager.getConnection
             		(
-            			"jdbc:mysql://" + Main.motdConfig.getConfig().getString("MySQL.Host") + ":" + 
-            			Main.motdConfig.getConfig().getInt("MySQL.Port") + "/" + 
-            			Main.motdConfig.getConfig().getString("MySQL.Database"), 
-            			Main.motdConfig.getConfig().getString("MySQL.User"), 
-            			Main.motdConfig.getConfig().getString("MySQL.Password")
+            			"jdbc:mysql://" + Config.getConfig().getString("MySQL.Host") + ":" + 
+            			Config.getConfig().getInt("MySQL.Port") + "/" + 
+            			Config.getConfig().getString("MySQL.Database"), 
+            			Config.getConfig().getString("MySQL.User"), 
+            			Config.getConfig().getString("MySQL.Password")
             		);
             return conn;
         }
