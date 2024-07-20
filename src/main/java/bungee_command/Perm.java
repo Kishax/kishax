@@ -10,6 +10,7 @@ import java.util.List;
 
 import bungee.Config;
 import bungee.Database;
+import bungee.Luckperms;
 import bungee.Main;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -27,10 +28,12 @@ public class Perm
 	public static List<String> args1 = new ArrayList<>(Arrays.asList("add","remove"));
 	public static List<String> permS = Config.getConfig().getStringList("Permission.Short_Name");
 	public static List<String> permD = Config.getConfig().getStringList("Permission.Detail_Name");
-	// Short_NameとDetail_Nameの1:1対応が必要
 	
 	public Perm(CommandSender sender, String[] args)
 	{
+		List<String> permS = Config.getConfig().getStringList("Permission.Short_Name");
+		List<String> permD = Config.getConfig().getStringList("Permission.Detail_Name");
+		
 		if(!(permS.size() == permD.size()))
 		{
 			sender.sendMessage(new TextComponent(ChatColor.RED+"コンフィグのDetail_NameとShort_Nameの要素の数を同じにしてください。"));
@@ -52,7 +55,7 @@ public class Perm
 	        switch(args.length)
 	        {
 	        	case 1:
-	        		sender.sendMessage(new TextComponent(ChatColor.GREEN+"/fmcb　admin <add|remove|list> [group:<super-admin|sub-admin>] <player>"));
+	        		sender.sendMessage(new TextComponent(ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
 	            	break;
 	            	
 	        	case 2:
@@ -60,11 +63,11 @@ public class Perm
 	        		{
 	        			case "list":
 	        				ComponentBuilder component =
-		    			    new ComponentBuilder("アドミンリスト")
+		    			    new ComponentBuilder("Permission List")
 		    			    	.color(ChatColor.GOLD)
 		    			    	.underlined(true)
 		    			    	.bold(true);
-					
+	        				
 	        				// アドミンリスト表示処理
 	        				while (minecrafts.next())
 	        	            {
@@ -79,31 +82,49 @@ public class Perm
 	        		        		if(isperm.next())
 	        		        		{
 	        		        			component = component
-	        		        						.append(minecrafts.getString("name"))
+	        		        						.append("\n"+minecrafts.getString("name"))
 	        		        						.color(ChatColor.WHITE)
+	        		        						.underlined(false)
+	        				    			    	.bold(false)
 	        		        						.append("  -"+permS.get(i))
-	        		        						.color(ChatColor.GOLD);
+	        		        						.color(ChatColor.GOLD)
+				        		        			.underlined(false)
+				    		    			    	.bold(false);
+	        		        			ispermindb = true;
 	        		        		}
 	        					}
 	        	            }
+	        				
+	        				if(!(ispermindb))
+	        				{
+	        					component = component
+	        								.append("\nコンフィグで設定されているすべての権限が見つかりませんでした。")
+	        								.color(ChatColor.GREEN)
+	        								.underlined(false)
+		    		    			    	.bold(false);
+	        				}
 	        				
 	        				// BaseComponent[]に変換
         					BaseComponent[] messageComponents = component.create();
 	        				sender.sendMessage(messageComponents);
 	        				break;
+	        				
+	        			default:
+	        				sender.sendMessage(new TextComponent(ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+	        				break;
 	        		}
-        			// フォロースルー
+        			break;
         			
 	        	case 4:
-        			if(args1.contains(args[1].toLowerCase()))
+        			if(!(args1.contains(args[1].toLowerCase())))
         			{
-        				sender.sendMessage(new TextComponent(ChatColor.RED+"第2引数が不正です。"+ChatColor.WHITE+"usage: /fmcb　admin <add|remove|list> [group:<super-admin|sub-admin>] <player>"));
+        				sender.sendMessage(new TextComponent(ChatColor.RED+"第2引数が不正です。\n"+ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
         				break;
         			}
         			
         			if(!(permS.contains(args[2].toLowerCase())))
         			{
-        				sender.sendMessage(new TextComponent(ChatColor.RED+"第3引数が不正です。"+ChatColor.WHITE+"usage: /fmcb　admin <add|remove|list> [group:<super-admin|sub-admin>] <player>"));
+        				sender.sendMessage(new TextComponent(ChatColor.RED+"第3引数が不正です。"+ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
         				break;
         			}
         			
@@ -163,7 +184,7 @@ public class Perm
 	        		break;
 	        		
 	        	default:
-	        		sender.sendMessage(new TextComponent(ChatColor.WHITE+"usage: /fmcb　admin <add|remove|list> [group:<super-admin|sub-admin>] <player>"));
+	        		sender.sendMessage(new TextComponent(ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
 	        		break;
 	        }
 	        return;
@@ -202,13 +223,12 @@ public class Perm
 					ps.setString(1,database_uuid.getString("uuid"));
 					ps.setString(2,permission);
 					ps.setBoolean(3,true);
-					//ps.setBoolean(4,false);
 					ps.setString(4,"global");
 					ps.setString(5,"global");
 					ps.setInt(6,0);
 					ps.setString(7,"{}");
 					ps.executeUpdate();
-					sender.sendMessage(new TextComponent(ChatColor.GREEN+name+"に権限: "+permission+"に追加しました。"));
+					sender.sendMessage(new TextComponent(ChatColor.GREEN+name+"に権限: "+permission+"を追加しました。"));
 				}
 				else
 				{
@@ -218,6 +238,9 @@ public class Perm
 					ps.executeUpdate();
 					sender.sendMessage(new TextComponent(ChatColor.GREEN+name+"から権限: "+permission+"を除去しました。"));
 				}
+				
+				Luckperms.triggerNetworkSync();
+				sender.sendMessage(new TextComponent(ChatColor.GREEN+"権限を更新しました。"));
 			}
 		}
 		catch (SQLException | ClassNotFoundException e)

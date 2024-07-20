@@ -18,9 +18,12 @@ public class SocketServerThread extends Thread {
     }
 
     public void run() {
-        try (DataInputStream in = new DataInputStream(socket.getInputStream());
-             DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
-
+        try
+        (	
+        	 DataInputStream in = new DataInputStream(socket.getInputStream());
+             DataOutputStream out = new DataOutputStream(socket.getOutputStream())
+        )
+        {
             // クライアントからのデータを受信
             int length = in.readInt(); // データの長さを最初に受信
             byte[] data = new byte[length];

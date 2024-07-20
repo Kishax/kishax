@@ -370,7 +370,7 @@ public class EventListener implements Listener
 					}
 				}
 				
-				new PlayerList();
+				PlayerList.updatePlayers(); // プレイヤーリストをアップデート
 			}
 			catch (SQLException | IOException | ClassNotFoundException e1)
 			{

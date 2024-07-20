@@ -30,7 +30,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 public class Main extends Plugin
 {
 	public SocketSwitch ssw = new SocketSwitch(this);
-	public LuckPerms luckperms;
+	public static LuckPerms luckperms;
 	public Luckperms lp;
 	public Connection conn = null;
 	public PreparedStatement ps = null;
@@ -45,8 +45,6 @@ public class Main extends Plugin
 		instance = this;
 		
 		new Config("bungee-config.yml", this);
-		
-		new PlayerList();
 		
 		getProxy().getPluginManager().registerListener(this, new EventListener(this, ssw));
 		
@@ -73,10 +71,9 @@ public class Main extends Plugin
 			Database.close_resorce(null,conn,ps);
 		}
 		
-		this.luckperms = LuckPermsProvider.get();
-		lp = new Luckperms(this,this.luckperms);
+		luckperms = LuckPermsProvider.get();
+		Luckperms.triggerNetworkSync();
 		getLogger().info("luckpermsと連携しました。");
-		lp.triggerNetworkSync();
 		
 		ProxyServer.getInstance().getPluginManager().registerCommand(this, new FMCCommand(this));
 		ProxyServer.getInstance().getPluginManager().registerCommand(this, new Hub());
@@ -102,6 +99,11 @@ public class Main extends Plugin
 		getLogger().info( "プラグインが無効になりました。" );
 	}
     
+	public static LuckPerms getlpInstance()
+	{
+		return luckperms;
+	}
+	
     public void resaction(String res)
     {
     		
@@ -118,7 +120,7 @@ public class Main extends Plugin
     		}
     		if (res.contains("uuid"))
     		{
-    			lp.triggerNetworkSync();
+    			Luckperms.triggerNetworkSync();
     			if(res.contains("new")) res = ChatColor.LIGHT_PURPLE+res.replace("PHP->uuid->new->", "");
     		}
     		

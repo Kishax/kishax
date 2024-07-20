@@ -5,27 +5,27 @@ import net.luckperms.api.messaging.MessagingService;
 
 public class Luckperms
 {
-	public LuckPerms luckperms;
-	public Main plugin;
+	public static LuckPerms lp;
+	public static Main plugin;
 	
-	public Luckperms(Main plugin,LuckPerms luckperms)
+	public Luckperms()
 	{
-		this.plugin = plugin;
-		this.luckperms = luckperms;
+		plugin = Main.getInstance();
+		lp = Main.getlpInstance();
 	}
 	
-	public void triggerNetworkSync()
+	public static void triggerNetworkSync()
 	{
-        MessagingService messagingService = this.luckperms.getMessagingService().orElse(null);
+        MessagingService messagingService = Main.getlpInstance().getMessagingService().orElse(null);
 
         if (messagingService != null)
         {
             messagingService.pushUpdate();
-            this.plugin.getLogger().info("LuckPerms network sync triggered.");
+            Main.getInstance().getLogger().info("LuckPerms network sync triggered.");
         }
         else
         {
-        	this.plugin.getLogger().severe("Failed to get LuckPerms MessagingService.");
+        	Main.getInstance().getLogger().severe("Failed to get LuckPerms MessagingService.");
         }
     }
 }

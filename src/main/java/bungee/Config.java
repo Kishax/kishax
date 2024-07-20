@@ -7,22 +7,23 @@ import java.io.*;
 
 public class Config
 {
-    public static Configuration config;
-    private static File file;
+    public static Configuration config = null;
+    private static File file = null;
     private Main plugin;
+    
     public Config(String name, Main plugin)
     {
     	this.plugin = plugin;
-        Config.file = new File(plugin.getDataFolder(), name);
-        if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdir();
+        file = new File(this.plugin.getDataFolder(), name);
+        if (!this.plugin.getDataFolder().exists()) this.plugin.getDataFolder().mkdir();
     
-        if (!Config.file.exists())
+        if (!file.exists())
         {
             try
             {
-                Config.file.createNewFile();
-                try (final InputStream is = plugin.getResourceAsStream(name);
-                     final OutputStream os = new FileOutputStream(Config.file))
+                file.createNewFile();
+                try (final InputStream is = this.plugin.getResourceAsStream(name);
+                     final OutputStream os = new FileOutputStream(file))
                 {
                     // 既存のファイル内容を読み込む
                     String existingContent = new String(ByteStreams.toByteArray(is), "UTF-8");
@@ -55,7 +56,7 @@ public class Config
         
         try
         {
-            Config.config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(Config.file);
+            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
         }
         catch (Exception e)
         {
@@ -67,7 +68,7 @@ public class Config
     {
         try
         {
-            ConfigurationProvider.getProvider(YamlConfiguration.class).save(Config.config, Config.file);
+            ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, file);
         }
         catch (Exception e)
         {

@@ -6,7 +6,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import bungee.Config;
 import bungee.Main;
+import bungee.PlayerList;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
@@ -63,7 +65,7 @@ public class FMCCommand extends Command implements TabExecutor
         			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb reload"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロード")))
         			        .append(ChatColor.AQUA+"\n\n/fmcb　perm <add|remove|list> [Short:permission] <player>")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb add "))
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb perm "))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ユーザーに対して権限の追加と除去")))
         			        .create();
         		sender.sendMessage(component);
@@ -117,6 +119,7 @@ public class FMCCommand extends Command implements TabExecutor
             	
             case "perm":
             	new Perm(sender,args);
+            	break;
             	
             default:
                 sender.sendMessage(new TextComponent("Unknown subcommand: " + subCommand));
@@ -177,20 +180,25 @@ public class FMCCommand extends Command implements TabExecutor
 	    		{
 	    			case "add":
 	    			case "remove":
-	    				for (String permS : Perm.permS)
+	    				List<String> permS = Config.getConfig().getStringList("Permission.Short_Name");
+	    				for (String permS1 : permS)
 	    				{
-	    					ret.add(permS);
+	    					ret.add(permS1);
 	    				}
 	    				return ret;
 	    		}
 	    	case 4:
 	    		if (!sender.hasPermission("fmc.bungee." + args[0].toLowerCase())) return Collections.emptyList();
-	    		//switch(args[2].toLowerCase())
+	    		
+	    		PlayerList.loadPlayers(); // プレイヤーリストをロード
 	    		if(Perm.permS.contains(args[2].toLowerCase()))
 	    		{
-	    			
-	    			ret.add("");
+	    			for (String player : PlayerList.getPlayerList())
+	    			{
+	    				ret.add(player);
+	    			}
 	    		}
+    			return ret;
     	}
         return Collections.emptyList();
     }
