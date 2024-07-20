@@ -28,8 +28,8 @@ public class SetServer
 {
 	public Main plugin;
 	public Connection conn = null;
-	public ResultSet minecrafts = null, mine_status = null;
-	public ResultSet[] resultsets = {minecrafts,mine_status};
+	public ResultSet minecrafts = null, mine_status = null, issuperadmin = null, issubadmin = null;
+	public ResultSet[] resultsets = {minecrafts,mine_status,issuperadmin,issubadmin};
 	public PreparedStatement ps = null;
 	
 	public SetServer(CommandSender sender, String[] args)
@@ -68,11 +68,11 @@ public class SetServer
     			String sql = "SELECT * FROM minecraft WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
-    			ResultSet minecrafts = ps.executeQuery();
+    			minecrafts = ps.executeQuery();
     			
     			sql = "SELECT * FROM mine_status WHERE id=1;";
     			ps = conn.prepareStatement(sql);
-    			ResultSet mine_status = ps.executeQuery();
+    			mine_status = ps.executeQuery();
     			
     			if(minecrafts.next())
     			{
@@ -185,8 +185,20 @@ public class SetServer
     								return;
     							}
     							
+    							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
+    							ps = conn.prepareStatement(sql);
+    							ps.setString(1, player.getUniqueId().toString());
+    							ps.setString(2, "group.super-admin");
+    							issuperadmin = ps.executeQuery();
+    							
+    							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
+    							ps = conn.prepareStatement(sql);
+    							ps.setString(1, player.getUniqueId().toString());
+    							ps.setString(2, "group.sub-admin");
+    							issubadmin = ps.executeQuery();
+    							
         						// fmcアカウントを持っている
-        						if(minecrafts.getBoolean("admin"))
+        						if(issuperadmin.next() || issubadmin.next())
         						{
         							// adminである /startが使用可能
         							// /startで用いるセッションタイム(現在時刻)(sst)をデータベースに

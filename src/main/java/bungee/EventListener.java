@@ -369,6 +369,8 @@ public class EventListener implements Listener
 						player.sendMessage(messageComponents);
 					}
 				}
+				
+				new PlayerList();
 			}
 			catch (SQLException | IOException | ClassNotFoundException e1)
 			{

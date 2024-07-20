@@ -23,7 +23,7 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 public class FMCCommand extends Command implements TabExecutor
 {
 	public Main plugin;
-	public List<String> subcommands = new ArrayList<>(Arrays.asList("debug","hub","reload","ss","req","start","stp","retry","debug","cancel"));
+	public List<String> subcommands = new ArrayList<>(Arrays.asList("debug","hub","reload","ss","req","start","stp","retry","debug","cancel","perm"));
 	public List<String> anylists = new ArrayList<>(Arrays.asList("true","false"));
 	
     public FMCCommand(Main plugin) {
@@ -62,6 +62,9 @@ public class FMCCommand extends Command implements TabExecutor
         			        .append(ChatColor.AQUA+"\n\n/fmcb reload")
         			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb reload"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロード")))
+        			        .append(ChatColor.AQUA+"\n\n/fmcb　perm <add|remove|list> [Short:permission] <player>")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb add "))
+        			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ユーザーに対して権限の追加と除去")))
         			        .create();
         		sender.sendMessage(component);
         	}
@@ -112,6 +115,9 @@ public class FMCCommand extends Command implements TabExecutor
             	new Cancel(sender,args);
             	break;
             	
+            case "perm":
+            	new Perm(sender,args);
+            	
             default:
                 sender.sendMessage(new TextComponent("Unknown subcommand: " + subCommand));
         }
@@ -156,6 +162,34 @@ public class FMCCommand extends Command implements TabExecutor
 	    		            ret.add(serverInfo.getName());
 	    		        }
 	    				return ret;
+	    			case "perm":
+	    				for (String args1 : Perm.args1)
+	    				{
+	    					ret.add(args1);
+	    				}
+	    				return ret;
+	    		}
+	    	case 3:
+	    		if (!sender.hasPermission("fmc.bungee." + args[0].toLowerCase())) return Collections.emptyList();
+	    		
+	    		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
+    			switch(args[1].toLowerCase())
+	    		{
+	    			case "add":
+	    			case "remove":
+	    				for (String permS : Perm.permS)
+	    				{
+	    					ret.add(permS);
+	    				}
+	    				return ret;
+	    		}
+	    	case 4:
+	    		if (!sender.hasPermission("fmc.bungee." + args[0].toLowerCase())) return Collections.emptyList();
+	    		//switch(args[2].toLowerCase())
+	    		if(Perm.permS.contains(args[2].toLowerCase()))
+	    		{
+	    			
+	    			ret.add("");
 	    		}
     	}
         return Collections.emptyList();

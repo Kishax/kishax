@@ -25,3 +25,9 @@ Debug:
     Mode: false
     ChannelId: ""
     Webhook_URL: ""
+
+Permission:
+    Detail_Name:
+        - something.permission
+    Short_Name:
+        - someperm

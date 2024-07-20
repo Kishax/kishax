@@ -46,6 +46,8 @@ public class Main extends Plugin
 		
 		new Config("bungee-config.yml", this);
 		
+		new PlayerList();
+		
 		getProxy().getPluginManager().registerListener(this, new EventListener(this, ssw));
 		
 		try
