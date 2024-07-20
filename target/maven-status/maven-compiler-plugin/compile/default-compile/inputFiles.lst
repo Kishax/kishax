@@ -4,12 +4,14 @@ C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee\Database.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee\EventListener.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee\Luckperms.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee\Main.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee\PlayerList.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee\SocketServerThread.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee\SocketSwitch.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee_command\Cancel.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee_command\Debug.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee_command\FMCCommand.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee_command\Hub.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee_command\Perm.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee_command\ReloadConfig.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee_command\Request.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\bungee_command\Retry.java

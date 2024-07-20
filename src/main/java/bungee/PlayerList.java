@@ -10,7 +10,7 @@ import java.util.List;
 public class PlayerList
 {
 	public Connection conn = null;
-	public PreparedStatement ps;
+	public PreparedStatement ps = null;
 	public ResultSet playerlist = null;
 	public ResultSet[] resultsets = {playerlist};
 	public static List<String> Players = new ArrayList<>();
@@ -35,7 +35,7 @@ public class PlayerList
 		}
 		finally
 		{
-			Database.close_resorce(resultsets, conn, null);
+			Database.close_resorce(resultsets, conn, ps);
 		}
 	}
 	
