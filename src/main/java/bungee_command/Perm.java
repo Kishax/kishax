@@ -25,9 +25,9 @@ public class Perm
 	public ResultSet minecrafts = null, database_uuid = null, isperm = null;
 	public ResultSet[] resultsets = {minecrafts,database_uuid,isperm};
 	public PreparedStatement ps = null;
-	public static List<String> args1 = new ArrayList<>(Arrays.asList("add","remove"));
-	public static List<String> permS = Config.getConfig().getStringList("Permission.Short_Name");
-	public static List<String> permD = Config.getConfig().getStringList("Permission.Detail_Name");
+	public static List<String> args1 = new ArrayList<>(Arrays.asList("add","remove","list"));
+	public static List<String> permS = null;
+	public static List<String> permD = null;
 	
 	public Perm(CommandSender sender, String[] args)
 	{
@@ -63,7 +63,7 @@ public class Perm
 	        		{
 	        			case "list":
 	        				ComponentBuilder component =
-		    			    new ComponentBuilder("Permission List")
+		    			    new ComponentBuilder("FMC Specific Permission List")
 		    			    	.color(ChatColor.GOLD)
 		    			    	.underlined(true)
 		    			    	.bold(true);
@@ -73,6 +73,9 @@ public class Perm
 	        	            {
 	        					for (int i = 0; i < permD.size(); i++)
 	        					{
+	        						// permSのindex値をもって、permDからDetail_Nameを取得(1:1対応)
+		                			//permD1 = permD.get(permS.indexOf(args[2]));
+		                			
 	        						sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
 		        					ps = conn.prepareStatement(sql);
 		        					ps.setString(1, minecrafts.getString("uuid"));
@@ -115,6 +118,24 @@ public class Perm
 	        		}
         			break;
         			
+	        	case 3:
+	        		// 以下はパーミッションが所持していることが確認されている上で、permというコマンドを使っているので、確認の必要なし
+	        		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
+	        		if(!(args1.contains(args[1].toLowerCase())))
+        			{
+        				sender.sendMessage(new TextComponent(ChatColor.RED+"第2引数が不正です。\n"+ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+        				break;
+        			}
+	        		
+	        		if(!(permS.contains(args[2].toLowerCase())))
+        			{
+        				sender.sendMessage(new TextComponent(ChatColor.RED+"第3引数が不正です。\n"+ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+        				break;
+        			}
+	        		
+        			sender.sendMessage(new TextComponent(ChatColor.RED+"対象のプレイヤー名を入力してください。\n"+ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+        			break;
+        			
 	        	case 4:
         			if(!(args1.contains(args[1].toLowerCase())))
         			{
@@ -124,20 +145,22 @@ public class Perm
         			
         			if(!(permS.contains(args[2].toLowerCase())))
         			{
-        				sender.sendMessage(new TextComponent(ChatColor.RED+"第3引数が不正です。"+ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+        				sender.sendMessage(new TextComponent(ChatColor.RED+"第3引数が不正です。\n"+ChatColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
         				break;
         			}
         			
+        			// permSのindex値をもって、permDからDetail_Nameを取得(1:1対応)
+        			permD1 = permD.get(permS.indexOf(args[2]));
         			while (minecrafts.next())
     	            {
-        				for (int i = 0; i < permD.size(); i++)
+        				/*for (int i = 0; i < permD.size(); i++)
     					{
         					if(permS.contains(args[2]))
         					{
         						// permSからpermDへの1:1対応
         						permD1 = permD.get(i);
         					}
-    					}
+    					}*/
         				sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
     					ps = conn.prepareStatement(sql);
     					ps.setString(1, minecrafts.getString("uuid"));
@@ -166,7 +189,7 @@ public class Perm
         				case "add":
         					if(ispermindb)
         					{
-        						sender.sendMessage(new TextComponent(ChatColor.RED+args[3]+"はすでに権限: "+permD+"を持っているため、追加できません。"));
+        						sender.sendMessage(new TextComponent(ChatColor.RED+args[3]+"はすでにpermission: "+permD1+"を持っているため、追加できません。"));
 		    		        	break;
         					}
         					SetAdmin(permD1,args[3],true,sender);
@@ -175,7 +198,7 @@ public class Perm
         				case "remove":
         					if(!(ispermindb))
         					{
-        						sender.sendMessage(new TextComponent(ChatColor.RED+args[3]+"は権限: "+permD+"を持っていないため、除去できません。"));
+        						sender.sendMessage(new TextComponent(ChatColor.RED+args[3]+"はpermission: "+permD1+"を持っていないため、除去できません。"));
 		    		        	break;
         					}
         					SetAdmin(permD1,args[3],false,sender);
@@ -228,7 +251,7 @@ public class Perm
 					ps.setInt(6,0);
 					ps.setString(7,"{}");
 					ps.executeUpdate();
-					sender.sendMessage(new TextComponent(ChatColor.GREEN+name+"に権限: "+permission+"を追加しました。"));
+					sender.sendMessage(new TextComponent(ChatColor.GREEN+name+"にpermission: "+permission+"を追加しました。"));
 				}
 				else
 				{
@@ -236,7 +259,7 @@ public class Perm
 					ps = conn.prepareStatement(sql);
 					ps.setString(1,database_uuid.getString("uuid"));
 					ps.executeUpdate();
-					sender.sendMessage(new TextComponent(ChatColor.GREEN+name+"から権限: "+permission+"を除去しました。"));
+					sender.sendMessage(new TextComponent(ChatColor.GREEN+name+"からpermission: "+permission+"を除去しました。"));
 				}
 				
 				Luckperms.triggerNetworkSync();

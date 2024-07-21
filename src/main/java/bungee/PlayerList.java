@@ -13,7 +13,7 @@ public class PlayerList
 	public static PreparedStatement ps = null;
 	public static ResultSet playerlist = null;
 	public static ResultSet[] resultsets = {playerlist};
-	public static List<String> Players = new CopyOnWriteArrayList<>();;
+	public static List<String> Players = new CopyOnWriteArrayList<>();
 	public static boolean isLoaded = false;
 	
 	public PlayerList()
@@ -57,6 +57,9 @@ public class PlayerList
 			ps = conn.prepareStatement(sql);
 			playerlist = ps.executeQuery();
 			
+			// Playersリストを初期化
+			Players.clear();
+					
 			while(playerlist.next())
 			{
 				Players.add(playerlist.getString("name"));

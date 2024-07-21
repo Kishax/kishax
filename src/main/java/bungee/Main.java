@@ -75,6 +75,8 @@ public class Main extends Plugin
 		Luckperms.triggerNetworkSync();
 		getLogger().info("luckpermsと連携しました。");
 		
+		PlayerList.loadPlayers(); // プレイヤーリストをアップデート
+		
 		ProxyServer.getInstance().getPluginManager().registerCommand(this, new FMCCommand(this));
 		ProxyServer.getInstance().getPluginManager().registerCommand(this, new Hub());
 		

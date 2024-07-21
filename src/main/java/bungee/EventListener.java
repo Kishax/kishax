@@ -369,8 +369,7 @@ public class EventListener implements Listener
 						player.sendMessage(messageComponents);
 					}
 				}
-				
-				PlayerList.updatePlayers(); // プレイヤーリストをアップデート
+				PlayerList.updatePlayers();
 			}
 			catch (SQLException | IOException | ClassNotFoundException e1)
 			{

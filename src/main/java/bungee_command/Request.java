@@ -138,17 +138,36 @@ public class Request
 		        
 		        String pythonScriptPath = Config.getConfig().getString("Servers.Request_Path");
             	// ProcessBuilderを作成
-            	ProcessBuilder pb = new ProcessBuilder
-            			(
-            					"python",
-            					pythonScriptPath, 
-            					player.getName().toString(),
-            					player.getUniqueId().toString(),
-            					Config.getConfig().getString("Servers.Hub"),
-            					args[1].toString(),
-            					req_type,
-            					Config.getConfig().getString("Servers."+args[1]+".Bat_Path")
-            			);
+		        ProcessBuilder pb = null;
+		        if(Config.getConfig().getBoolean("Debug.Mode"))
+		        {
+		        	pb = new ProcessBuilder
+	            			(
+	            					"python",
+	            					pythonScriptPath, 
+	            					player.getName().toString(),
+	            					player.getUniqueId().toString(),
+	            					Config.getConfig().getString("Servers.Hub"),
+	            					args[1].toString(),
+	            					req_type,
+	            					Config.getConfig().getString("Servers."+args[1]+".Bat_Path"),
+	            					"test"
+	            			);
+		        }
+		        else
+		        {
+		        	pb = new ProcessBuilder
+	            			(
+	            					"python",
+	            					pythonScriptPath, 
+	            					player.getName().toString(),
+	            					player.getUniqueId().toString(),
+	            					Config.getConfig().getString("Servers.Hub"),
+	            					args[1].toString(),
+	            					req_type,
+	            					Config.getConfig().getString("Servers."+args[1]+".Bat_Path")
+	            			);
+		        }
             	pb.start();
             	player.sendMessage(new TextComponent(ChatColor.GREEN+"送信されました。"));
             	

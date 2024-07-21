@@ -64,7 +64,7 @@ public class FMCCommand extends Command implements TabExecutor
         			        .append(ChatColor.AQUA+"\n\n/fmcb reload")
         			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb reload"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロード")))
-        			        .append(ChatColor.AQUA+"\n\n/fmcb　perm <add|remove|list> [Short:permission] <player>")
+        			        .append(ChatColor.AQUA+"\n\n/fmcb perm <add|remove|list> [Short:permission] <player>")
         			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb perm "))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ユーザーに対して権限の追加と除去")))
         			        .create();
@@ -171,6 +171,8 @@ public class FMCCommand extends Command implements TabExecutor
 	    					ret.add(args1);
 	    				}
 	    				return ret;
+	    			default:
+	    				return Collections.emptyList();
 	    		}
 	    	case 3:
 	    		if (!sender.hasPermission("fmc.bungee." + args[0].toLowerCase())) return Collections.emptyList();
@@ -191,7 +193,8 @@ public class FMCCommand extends Command implements TabExecutor
 	    		if (!sender.hasPermission("fmc.bungee." + args[0].toLowerCase())) return Collections.emptyList();
 	    		
 	    		PlayerList.loadPlayers(); // プレイヤーリストをロード
-	    		if(Perm.permS.contains(args[2].toLowerCase()))
+	    		List<String> permS = Config.getConfig().getStringList("Permission.Short_Name");
+	    		if(permS.contains(args[2].toLowerCase()))
 	    		{
 	    			for (String player : PlayerList.getPlayerList())
 	    			{
