@@ -4,7 +4,7 @@
 ### /hub
 ### /fmcb hub
 Moving to hub server<br>
-### /fmcb perm <add | remove | list> [Short:permission] <target:player>
+### /fmcb perm <add | remove | list> [Short:permission] [target:player]
 Adding or removing permission written in config.yml by adding or removing permission in mysql database for luckperm MySQL mode.
 ### /fmcb ss \<server\>
 Getting server status and checking whether you have FMC account from MySQL<br>
