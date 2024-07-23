@@ -5,5 +5,12 @@
   "description": "This plugin is provided by FMC Server!!",
   "authors": [
     "Bella"
-  ]
+  ],
+  "dependencies": [
+      {
+        "id": "luckperms",
+        "version": "5.4",
+        "scope": "provided"
+      }
+    ]
 }
