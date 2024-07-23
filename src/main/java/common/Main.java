@@ -15,8 +15,6 @@ import spigot.EventListener;
 import spigot.SocketSwitch;
 import spigot_command.FMCCommand;
 
-import com.velocitypowered.api.proxy.ProxyServer;
-
 public class Main extends JavaPlugin
 {
 
@@ -38,7 +36,7 @@ public class Main extends JavaPlugin
             }
             else if(isVelocity())
             {
-            	new velocity.Main((ProxyServer) this).onProxyInitialization(null);
+            	// Velocityプラグインは自動的にインスタンス化されるので、ここでは何もしない
             }
             else
             {

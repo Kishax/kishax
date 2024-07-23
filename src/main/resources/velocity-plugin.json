@@ -1,13 +1,9 @@
 {
   "id": "fmc-plugin",
-  "name": "FMC Plugin",
+  "name": "FMC-Plugin",
   "version": "0.0.1",
   "description": "This plugin is provided by FMC Server!!",
-  "authors": ["Bella"],
-  "dependencies": [
-    {
-      "id": "luna-chat",
-      "optional": false
-    }
+  "authors": [
+    "Bella"
   ]
 }
