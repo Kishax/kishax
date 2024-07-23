@@ -15,6 +15,8 @@ import spigot.EventListener;
 import spigot.SocketSwitch;
 import spigot_command.FMCCommand;
 
+import com.velocitypowered.api.proxy.ProxyServer;
+
 public class Main extends JavaPlugin
 {
 
@@ -33,6 +35,10 @@ public class Main extends JavaPlugin
             if (isBungeeCord())
             {
                 new bungee.Main().onEnable();
+            }
+            else if(isVelocity())
+            {
+            	new velocity.Main((ProxyServer) this).onProxyInitialization(null);
             }
             else
             {
@@ -98,6 +104,10 @@ public class Main extends JavaPlugin
                 // Call BungeeCord-specific initialization
                 new bungee.Main().onDisable();
             }
+            else if(isVelocity())
+            {
+            	System.out.println("Velocity plugin has been disabled.");
+            }
             else
             {
             	try
@@ -138,6 +148,15 @@ public class Main extends JavaPlugin
         }
         catch (ClassNotFoundException e)
         {
+            return false;
+        }
+    }
+    
+    private boolean isVelocity() {
+        try {
+            Class.forName("com.velocitypowered.api.plugin.Plugin");
+            return true;
+        } catch (ClassNotFoundException e) {
             return false;
         }
     }
