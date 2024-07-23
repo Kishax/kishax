@@ -2,6 +2,7 @@ package velocity;
 
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -19,6 +20,8 @@ import java.util.Map;
 
 public class Config
 {
+	private Main plugin;
+	private ProxyServer server;
     private static Config instance;
     private static Map<String, Object> config;
     private final Logger logger;
@@ -27,6 +30,8 @@ public class Config
     @Inject
     public Config(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory)
     {
+    	this.plugin = Main.getInstance();
+    	this.server = this.plugin.getServer();
         this.logger = logger;
         this.dataDirectory = dataDirectory;
         instance = this;
@@ -60,6 +65,23 @@ public class Config
             }
         }
 
+        // 読み込みと新規内容の追加
+        String existingContent = Files.readString(configPath);
+        String addContents = "\n\nServers:\n    Hub: \"\"\n    Request_Path: \"\"\n    Memory_Limit: ";
+        addContents += "\n\n    Velocity:\n        Memory: ";
+        
+        // 例: サーバー名を追加する部分
+        for (RegisteredServer server : this.server.getAllServers())
+        {
+        	addContents += "\n    "+server.getServerInfo().getName()+":";
+        	addContents += "\n        Memory: ";
+        	addContents += "\n        Bat_Path: \"\"";
+        }
+        
+        // 新しい内容を追加してファイルに書き込み
+        Files.writeString(configPath, existingContent + addContents);
+        
+        // Yamlでの読み込み
         Yaml yaml = new Yaml(new Constructor(Map.class, null));
         try 
         (

@@ -1,7 +1,33 @@
-# Example configuration
-database:
-  host: localhost
-  port: 3306
-  username: 
-  password: 
-  database: 
+# FMC Configuration File
+MySQL:
+    Host: ""
+    Database: ""
+    Port: 
+    User: ""
+    Password: ""
+  
+Socket:
+    Client_Port: 
+    Server_Port: 
+    Buffered_Server_Port: 
+
+Discord:
+    Webhook_URL: ""
+    Emoji_Add_Path: ""
+
+Interval:
+    Login: 
+    Session: 3
+    Request: 
+    Start_Server: 
+
+Debug:
+    Mode: false
+    ChannelId: ""
+    Webhook_URL: ""
+
+Permission:
+    Detail_Name:
+        - something.permission
+    Short_Name:
+        - someperm
