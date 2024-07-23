@@ -38,7 +38,7 @@ public class Main extends JavaPlugin
             }
             else if(isVelocity())
             {
-            	new velocity.Main((ProxyServer) this).onProxyInitialization(null);//
+            	new velocity.Main((ProxyServer) this).onProxyInitialization(null);
             }
             else
             {
