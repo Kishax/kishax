@@ -40,13 +40,13 @@ public class Main extends Plugin
 	@Override
 	public void onEnable()
 	{
-		getLogger().info( "Detected BungeeCord platform." );
+		getLogger().info("Detected BungeeCord platform.");
 		
 		instance = this;
 		
 		new Config("bungee-config.yml", this);
 		
-		getProxy().getPluginManager().registerListener(this, new EventListener(this, ssw));
+		getProxy().getPluginManager().registerListener(this, new EventListener(this));
 		
 		try
 		{
@@ -286,7 +286,6 @@ public class Main extends Plugin
     
 	public void sendresponse(String res,ByteArrayDataOutput dataOut) {
 		return;
-		/*if(res=="onEnable"){dataOut.writeUTF("");}*/
 	}
 	
 	public static Main getInstance()

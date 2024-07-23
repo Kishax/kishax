@@ -249,7 +249,7 @@ public class SetServer
             			    			    	.append(ChatColor.WHITE+"です。\n管理者に、サーバー起動のリクエストを送信できます。\n結果は3分以内に返ってきます。\n送信しますか？")
             			    			    	.append(ChatColor.GOLD+"\nYES")
             			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb req "+args[1].toString()))
-            			    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)"+args[1].toString()+"リクエストを送信する。")))
+            			    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)"+args[1].toString()+"サーバー起動リクエストを送信する。")))
             			    			    	.append(ChatColor.GOLD+" or ")
             			    			    	.append(ChatColor.GOLD+"NO")
             			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb cancel"))

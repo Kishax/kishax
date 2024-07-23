@@ -21,6 +21,12 @@ public class Hub extends Command implements TabExecutor
 	@Override
 	public void execute(CommandSender sender, String[] args)
 	{
+		if (Config.getConfig().getString("Servers.Hub","").isEmpty())
+		{
+			sender.sendMessage(new ComponentBuilder("すでに"+Config.getConfig().getString("Servers.Hub")+"サーバーにいます！").color(ChatColor.RED).create());
+			return;
+		}
+		
         if (sender instanceof ProxiedPlayer)
         {
             ProxiedPlayer player = (ProxiedPlayer) sender;
@@ -28,7 +34,9 @@ public class Hub extends Command implements TabExecutor
             {
             	ServerInfo target = ProxyServer.getInstance().getServerInfo(Config.getConfig().getString("Servers.Hub"));
             	player.connect(target);
-            }else{
+            }
+            else
+            {
             	player.sendMessage(new ComponentBuilder("すでに"+Config.getConfig().getString("Servers.Hub")+"サーバーにいます！").color(ChatColor.RED).create());
             }
         }

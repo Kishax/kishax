@@ -1,4 +1,4 @@
-package bungee_command;
+package velocity_command;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -9,43 +9,47 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 
-import bungee.Config;
-import bungee.Database;
-import bungee.Main;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.config.ServerInfo;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.TextComponent;
+import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import velocity.Config;
+import velocity.Database;
+import velocity.Main;
 
 public class StartServer
 {
-	public Main plugin;
+	private final Main plugin;
+	private final ProxyServer server;
 	public Connection conn = null;
 	public ResultSet minecrafts = null, status = null;
 	public ResultSet[] resultsets = {minecrafts,status};
 	public PreparedStatement ps = null;
 	
-	public StartServer(CommandSender sender, String[] args)
+	public StartServer(CommandSource source,String[] args)
 	{
 		this.plugin = Main.getInstance();
+		this.server = this.plugin.getServer();
 		
-		if (sender instanceof ProxiedPlayer)
+		if (source instanceof Player)
 		{
             // プレイヤーがコマンドを実行した場合の処理
-			ProxiedPlayer player = (ProxiedPlayer) sender;
+			Player player = (Player) source;
 			if(args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty())
 			{
-				player.sendMessage(new TextComponent(ChatColor.RED+"サーバー名を入力してください。"));
+				player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
 				return;
 			}
+			
+			String targetServerName = args[0];
 			boolean containsServer = false;
-			for (ServerInfo serverInfo : ProxyServer.getInstance().getServers().values())
+			for (RegisteredServer server : this.server.getAllServers())
 			{
-				if(serverInfo.getName().equalsIgnoreCase(args[1]))
+				if(server.getServerInfo().getName().equalsIgnoreCase(targetServerName))
 				{
 					containsServer = true;
 					break;
@@ -53,7 +57,7 @@ public class StartServer
 			}
 			if(!containsServer)
 			{
-		        player.sendMessage(new TextComponent(ChatColor.RED+"サーバー名が違います。"));
+		        player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
 		        return;
 			}
 			else
@@ -66,7 +70,7 @@ public class StartServer
 	    			ps.setString(1,player.getUniqueId().toString());
 	    			ResultSet minecrafts = ps.executeQuery();
 	    			
-					sql = "SELECT "+args[1].toString()+" FROM mine_status WHERE id=1;";
+					sql = "SELECT "+args[1]+" FROM mine_status WHERE id=1;";
 					ps = conn.prepareStatement(sql);
 					ResultSet status = ps.executeQuery();
 					if(minecrafts.next())
@@ -84,9 +88,9 @@ public class StartServer
 							
 							long ss_sa = now_timestamp-sst_timestamp;
 							long ss_sa_minute = ss_sa/60;
-							if(ss_sa_minute>=Config.getConfig().getInt("Interval.Session",3))
+							if(ss_sa_minute>=(int) Config.getConfig().getOrDefault("Interval.Session",3))
 							{
-								player.sendMessage(new TextComponent(ChatColor.RED+"セッションが無効です。"));
+								player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
 								return;
 							}
 							
@@ -97,25 +101,25 @@ public class StartServer
 					        long sa = now_timestamp-st_timestamp;
 					        long sa_minute = sa/60;
 					        
-					        if(sa_minute<=Config.getConfig().getInt("Interval.Start_Server",0))
+					        if(sa_minute<=(int) Config.getConfig().getOrDefault("Interval.Start_Server",0))
 					        {
-					        	player.sendMessage(new TextComponent(ChatColor.RED+"サーバーの起動間隔は"+Config.getConfig().getInt("Interval.Start_Server",0)+"分以上は空けてください。"));
+					        	player.sendMessage(Component.text("サーバーの起動間隔は"+(int) Config.getConfig().getOrDefault("Interval.Start_Server",0)+"分以上は空けてください。").color(NamedTextColor.RED));
 					        	return;
 					        }
 						}
 	    		        
 						if(status.next())
 						{
-							if(status.getBoolean(args[1].toString()))
+							if(status.getBoolean(args[1]))
 							{
-								player.sendMessage(new TextComponent(ChatColor.RED+args[1].toString()+"サーバーは起動中です。"));
-								this.plugin.getLogger().info(ChatColor.RED+args[1].toString()+"サーバーは起動中です。");
+								player.sendMessage(Component.text(args[1]+"サーバーは起動中です。").color(NamedTextColor.RED));
+								this.plugin.getLogger().info(NamedTextColor.RED+args[1]+"サーバーは起動中です。");
 							}
 							else
 							{
-								if(Config.getConfig().getString("Servers."+args[1].toString()+".Bat_Path","").isEmpty())
+								if(((String) Config.getConfig().getOrDefault("Servers."+args[1]+".Bat_Path","")).isEmpty())
 								{
-									player.sendMessage(new TextComponent(ChatColor.RED+"許可されていません。"));
+									player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
 									return;
 								}
 								// /startでサーバー起動
@@ -126,7 +130,7 @@ public class StartServer
 								ps.executeUpdate();
 								
 					            // バッチファイルのパスを指定
-					            String batchFilePath = Config.getConfig().getString("Servers."+args[1].toString()+".Bat_Path");
+					            String batchFilePath = (String) Config.getConfig().get("Servers."+args[1]+".Bat_Path");
 
 					            // ProcessBuilderを作成
 					            ProcessBuilder processBuilder = new ProcessBuilder(batchFilePath);
@@ -134,17 +138,15 @@ public class StartServer
 					            // プロセスを開始
 					            processBuilder.start();
 					            
-        						ComponentBuilder component =
-        			    			    new ComponentBuilder(ChatColor.GREEN+"UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n")
-        			    			    	.append(ChatColor.GREEN+args[1].toString()+"サーバーがまもなく起動します。");
+					            TextComponent component = Component.text()
+        			    			    	.append(Component.text("UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
+        			    			    	.append(Component.text(args[1]+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
+        									.build();
         						
-        						// BaseComponent[]に変換
-        						BaseComponent[] messageComponents = component.create();
-        						
-        						player.sendMessage(messageComponents);
-					            this.plugin.getLogger().info(ChatColor.GREEN+args[1].toString()+"サーバーがまもなく起動します。");
+        						player.sendMessage(component);
+					            this.plugin.getLogger().info(NamedTextColor.GREEN+args[1]+"サーバーがまもなく起動します。");
 					            
-					            sql = "UPDATE mine_status SET "+args[1].toString()+"=? WHERE id=1;";
+					            sql = "UPDATE mine_status SET "+args[1]+"=? WHERE id=1;";
 					            ps = conn.prepareStatement(sql);
 				            	ps.setBoolean(1, true);
 				            	ps.executeUpdate();
@@ -152,9 +154,9 @@ public class StartServer
 				            	// add log
 				            	sql = "INSERT INTO mine_log (name,uuid,server,sss,status) VALUES (?,?,?,?,?);";
 		            			ps = conn.prepareStatement(sql);
-		            			ps.setString(1, player.getName().toString());
+		            			ps.setString(1, player.getUsername());
 		            			ps.setString(2, player.getUniqueId().toString());
-		            			ps.setString(3, player.getServer().getInfo().getName());
+		            			ps.setString(3, player.getCurrentServer().toString());
 		            			ps.setBoolean(4, true);
 		            			ps.setString(5, "start");
 		            			ps.executeUpdate();
@@ -164,8 +166,8 @@ public class StartServer
 					else
 					{
 						// MySQLサーバーにプレイヤー情報が登録されてなかった場合
-	    				this.plugin.getLogger().info(ChatColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
-	    				player.sendMessage(new TextComponent(ChatColor.RED+player.getName().toString()+"のプレイヤー情報がデータベースに登録されていません。"));
+	    				this.plugin.getLogger().info(NamedTextColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
+	    				player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
 					}
 					
 		        }
@@ -181,7 +183,7 @@ public class StartServer
 		}
 		else
 		{
-			sender.sendMessage(new TextComponent(ChatColor.RED+"このコマンドはプレイヤーのみが実行できます。"));
+			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
 			return;
 		}
 		return;
