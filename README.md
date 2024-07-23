@@ -1,9 +1,11 @@
 # FMC Plugin
->## This is able to use in both bungee and spigot.<br>But this is created for myself for my server.<br>So this plugin is good for developers.<br>Freely to edit!<br>
+>## This is able to use in both bungee and spigot.<br>But this is created for myself for my server.<br>So this plugin is maybe good for plugin developers.<br>Freely to edit!<br>
 ## Bungee Command list
 ### /hub
 ### /fmcb hub
 Moving to hub server<br>
+### /fmcb perm <add | remove | list> [Short:permission] [target:player]
+Adding or removing permission written in config.yml by adding or removing permission in mysql database for luckperm MySQL mode.
 ### /fmcb ss \<server\>
 Getting server status and checking whether you have FMC account from MySQL<br>
 In FMC Server, using python script for getting minecrafts' status<br>
@@ -50,3 +52,7 @@ Reloading config
 Adding potion effect within a radius of 5 squares
 ### /fmc test \<arg-1\>
 Only returning arg-1 player writes
+
+## Dependancy
+>- Luckperm (for managing permission)
+>- LunaChat (for sending translated chat contents to Discord)
