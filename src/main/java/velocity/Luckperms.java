@@ -1,31 +1,37 @@
 package velocity;
 
+import org.slf4j.Logger;
+
+import com.google.inject.Inject;
+
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.messaging.MessagingService;
 
 public class Luckperms
 {
-	public static LuckPerms lp;
-	public static Main plugin;
+	// なお、LuckPerms = net.luckperms.api.LuckPerms, Luckperms = velocity.Luckperm
+	private final LuckPerms lp;
+	private final Logger logger;
 	
-	public Luckperms()
+	@Inject
+	public Luckperms(LuckPerms lp, Logger logger)
 	{
-		plugin = Main.getInstance();
-		lp = Main.getlpInstance();
+		this.lp = lp;
+		this.logger = logger;
 	}
 	
-	public static void triggerNetworkSync()
+	public void triggerNetworkSync()
 	{
-        MessagingService messagingService = Main.getlpInstance().getMessagingService().orElse(null);
+        MessagingService messagingService = lp.getMessagingService().orElse(null);
 
         if (messagingService != null)
         {
             messagingService.pushUpdate();
-            Main.getInstance().getLogger().info("LuckPerms network sync triggered.");
+            logger.info("LuckPerms network sync triggered.");
         }
         else
         {
-        	Main.getInstance().getLogger().error("Failed to get LuckPerms MessagingService.");
+        	logger.error("Failed to get LuckPerms MessagingService.");
         }
     }
 }

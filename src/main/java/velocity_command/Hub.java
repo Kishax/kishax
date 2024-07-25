@@ -1,5 +1,6 @@
 package velocity_command;
 
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -16,19 +17,22 @@ public class Hub implements SimpleCommand
 {
 	private final Main plugin;
 	private final ProxyServer server;
+	private final Config config;
 	
-    public Hub()
-    {
-    	this.plugin = Main.getInstance();
-    	this.server = this.plugin.getServer();
-    }
+	@Inject
+    public Hub(Main plugin,ProxyServer server, Config config)
+	{
+		this.plugin = plugin;
+		this.server = server;
+		this.config = config;
+	}
 
 	@Override
 	public void execute(Invocation invocation)
 	{
 		CommandSource source = invocation.source();
         
-        if(((String) Config.getConfig().getOrDefault("Servers.Hub","")).isEmpty())
+        if(config.getString("Servers.Hub","").isEmpty())
         {
         	source.sendMessage(Component.text("コンフィグで設定されていません。").color(NamedTextColor.RED));
         	return;
@@ -43,6 +47,6 @@ public class Hub implements SimpleCommand
         Player player = (Player) source;
         // Implement the logic to send the player to the hub server
         player.sendMessage(Component.text("Sending you to the hub..."));
-        this.server.getServer(((String) Config.getConfig().get("Servers.Hub"))).ifPresent(server -> player.createConnectionRequest(server).fireAndForget());
+        this.server.getServer(config.getString("Servers.Hub")).ifPresent(server -> player.createConnectionRequest(server).fireAndForget());
 	}
 }

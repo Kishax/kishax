@@ -16,8 +16,11 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
@@ -41,23 +44,30 @@ public class EventListener
 {
 	public final Main plugin;
 	private final ProxyServer server;
+	private final Config config;
+	private final Logger logger;
+	private final DatabaseInterface db;
 	
 	public Connection conn = null;
 	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null;
 	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs};
 	public PreparedStatement ps = null;
 	
-	public EventListener()
+	@Inject
+	public EventListener(Main plugin, Logger logger, ProxyServer server,Config config, DatabaseInterface db)
 	{
-		this.plugin = Main.getInstance();
-		this.server = this.plugin.getServer();
+		this.plugin = plugin;
+		this.logger = logger;
+		this.server = server;
+		this.config = config;
+		this.db = db;
 	}
 	
 	@Subscribe
 	public void onChat(PlayerChatEvent e)
 	{
 		if (e.getMessage().startsWith("/")) return;
-	    if (((String) Config.getConfig().getOrDefault("Discord.Webhook_URL", "")).isEmpty()) return;
+	    if (config.getString("Discord.Webhook_URL", "").isEmpty()) return;
 
 	    Player player = e.getPlayer();
 	    String originalMessage = e.getMessage();
@@ -82,7 +92,7 @@ public class EventListener
         		player,
         		Component.text(ChatColor.RED+"コネクションエラー: 接続サーバー名が不明です。")
         	);
-        	this.plugin.getLogger().error("コネクションエラー: 接続サーバー名が不明です。");
+        	logger.error("コネクションエラー: 接続サーバー名が不明です。");
         	return;
         }
         
@@ -90,7 +100,7 @@ public class EventListener
 		{
 			try
 			{
-				conn = Database.getConnection();
+				conn = db.getConnection();
 				if(Objects.isNull(conn))
 				{
 					player_disconnect
@@ -116,7 +126,7 @@ public class EventListener
 	            {
 	            	sql = "UPDATE minecraft SET server=? WHERE uuid=?;";
 	            	ps = conn.prepareStatement(sql);
-	            	ps.setString(1, (String) Config.getConfig().get("Servers.Hub"));
+	            	ps.setString(1, config.getString("Servers.Hub"));
 	            	ps.setString(2, player.getUniqueId().toString());
 	            	ps.executeUpdate();
 	            	
@@ -134,7 +144,7 @@ public class EventListener
 	            	{
 	            		if(player.getUsername().equals(yuyu.getString("name")))
 	            		{
-	            			if(!((String) Config.getConfig().getOrDefault("Discord.Webhook_URL","")).isEmpty())
+	            			if(!config.getString("Discord.Webhook_URL","").isEmpty())
 	            			{
 	            				// 2時間経ってたら
 	            				sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
@@ -156,7 +166,7 @@ public class EventListener
 	        	    				long beforejoin_sa = now_timestamp-beforejoin_timestamp;
 	        	    				long beforejoin_sa_minute = beforejoin_sa/60;
 	        	    				
-	        	    				if(beforejoin_sa_minute>=(int) Config.getConfig().getOrDefault("Interval.Login",0)) discord_join_notify(player,Color.GREEN,player.getUsername()+"が"+(String) Config.getConfig().getOrDefault("Servers.Hub","")+"サーバーに参加したぜよ！");
+	        	    				if(beforejoin_sa_minute>=config.getInt("Interval.Login",0)) discord_join_notify(player,Color.GREEN,player.getUsername()+"が"+config.getString("Servers.Hub","")+"サーバーに参加したぜよ！");
 	            				}
 	            			}
 	            			
@@ -215,7 +225,7 @@ public class EventListener
 	            					ps.executeUpdate();
 	            				}
 	            			}
-	            			discord_join_notify(player,Color.GREEN,player.getUsername()+"が"+(String) Config.getConfig().getOrDefault("Servers.Hub","")+"サーバーに参加したぜよ！");
+	            			discord_join_notify(player,Color.GREEN,player.getUsername()+"が"+config.getString("Servers.Hub","")+"サーバーに参加したぜよ！");
 	            		}
 	            	}
 	            }
@@ -260,7 +270,7 @@ public class EventListener
 	    			);
 	    			
 	    			// Discord絵文字を追加する
-	    			String pythonScriptPath = (String) Config.getConfig().get("Discord.Emoji_Add_Path");
+	    			String pythonScriptPath = config.getString("Discord.Emoji_Add_Path");
 	            	// ProcessBuilderを作成
 	            	ProcessBuilder pb = new ProcessBuilder
 	            			(
@@ -272,10 +282,10 @@ public class EventListener
 	            
 	            
 				// サーバー移動通知
-				this.plugin.getLogger().info("Player connected to server: " + serverInfo.getName());
-				if(serverInfo.getName().equalsIgnoreCase((String) Config.getConfig().get("hub")))
+				logger.info("Player connected to server: " + serverInfo.getName());
+				if(serverInfo.getName().equalsIgnoreCase(config.getString("hub")))
 				{
-					this.plugin.broadcastMessage(NamedTextColor.AQUA+player.getUsername()+"が"+(String) Config.getConfig().get("Servers.Hub")+"サーバーにやってきました！",serverInfo.getName());
+					this.plugin.broadcastMessage(NamedTextColor.AQUA+player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーにやってきました！",serverInfo.getName());
 				}
 				else
 				{
@@ -295,7 +305,8 @@ public class EventListener
 		    			    	.build();
 					player.sendMessage(component);
 				}
-				PlayerList.updatePlayers();
+				
+				Main.getInjector().getInstance(PlayerList.class).updatePlayers(); // プレイヤーリストをアップデート
 			}
 			catch (SQLException | IOException | ClassNotFoundException e1)
 			{
@@ -303,14 +314,14 @@ public class EventListener
 	        }
 			finally
 			{
-				Database.close_resorce(resultsets,conn,ps);
+				db.close_resorce(resultsets,conn,ps);
 			}
 		});
 	}
 	
 	public void sendChatToDiscord(Player player,String message)
 	{
-		DiscordWebhook webhook = new DiscordWebhook((String) Config.getConfig().get("Discord.Webhook_URL"));
+		DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
         webhook.setUsername(player.getUsername());
         webhook.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
 	    webhook.setContent(message);
@@ -320,13 +331,13 @@ public class EventListener
 	    }
 	    catch (java.io.IOException e1)
 	    {
-	    	this.plugin.getLogger().error(e1.getStackTrace().toString());
+	    	logger.error(e1.getStackTrace().toString());
 	    }
 	}
 	
 	public void discord_join_notify(Player player,Color color,String msg)
 	{
-		DiscordWebhook webhook = new DiscordWebhook((String) Config.getConfig().get("Discord.Webhook_URL"));
+		DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
 		webhook.setUsername(player.getUsername());
         webhook.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
 	    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(color).setDescription(msg));
@@ -336,7 +347,7 @@ public class EventListener
 		}    		    
 		catch (java.io.IOException e1)
 		{
-			this.plugin.getLogger().error(e1.getStackTrace().toString());
+			logger.error(e1.getStackTrace().toString());
 		}
 	}
 	
@@ -348,14 +359,14 @@ public class EventListener
 		
 		try
 		{
-			conn = Database.getConnection();
+			conn = db.getConnection();
 			String sql="UPDATE minecraft SET ban=? WHERE uuid=?;";
 			ps = conn.prepareStatement(sql);
 			ps.setBoolean(1, true);
 			ps.setString(2, player.getUniqueId().toString());
 			ps.executeUpdate();
 			
-			DiscordWebhook webhook = new DiscordWebhook((String) Config.getConfig().get("Discord.Webhook_URL"));
+			DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
 	        webhook.setUsername("サーバー");
 	        webhook.setAvatarUrl("https://www.illust-box.jp/db_img/sozai/00021/213610/watermark.jpg");
 		    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("侵入者が現れました。"));
@@ -363,11 +374,11 @@ public class EventListener
 		}
 		catch (SQLException | IOException | ClassNotFoundException e)
 		{
-			this.plugin.getLogger().error(e.getStackTrace().toString());
+			logger.error(e.getStackTrace().toString());
 		}
 		finally
 		{
-			Database.close_resorce(null, conn, ps);
+			db.close_resorce(null, conn, ps);
 		}
 	}
 	
@@ -377,7 +388,7 @@ public class EventListener
     	Player player = e.getPlayer();
     	try
     	{
-    		conn = Database.getConnection();
+    		conn = db.getConnection();
     		
     		// calc playtime
     		String sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
@@ -413,7 +424,7 @@ public class EventListener
         }
     	finally
     	{
-    		Database.close_resorce(resultsets, conn, ps);
+    		db.close_resorce(resultsets, conn, ps);
     	}
     }
     
@@ -441,7 +452,7 @@ public class EventListener
             }
             else
             {
-            	this.plugin.getLogger().error("GETリクエストに失敗しました。HTTPエラーコード: " + response.statusCode());
+            	logger.error("GETリクエストに失敗しました。HTTPエラーコード: " + response.statusCode());
                 return null;
             }
         }

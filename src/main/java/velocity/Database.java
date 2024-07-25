@@ -7,49 +7,94 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
-public class Database
+import org.slf4j.Logger;
+
+import com.google.inject.Inject;
+
+public class Database implements DatabaseInterface
 {
-    public static Connection conn;
+	private final Config config;
+    private Connection conn = null;
+    private PreparedStatement ps = null;
+    private boolean firstonline = false;
+    private final Logger logger;
     
-    public Database()
+    @Inject
+    public Database(Logger logger, Config config)
     {
-    	//
+    	this.logger = logger;
+    	this.config = config;
     }
 
-	public static Connection getConnection() throws SQLException, ClassNotFoundException
+    @Inject
+    @Override
+	public void DoServerOnline()
 	{
+    	if(!(firstonline))
+    	{
+    		firstonline = true;
+    		return;
+    	}
+    		
+		try
+		{
+			conn = getConnection();
+			if(Objects.nonNull(conn))
+			{
+				String sql = "UPDATE mine_status SET Proxi=? WHERE id=1;";
+				ps = conn.prepareStatement(sql);
+				ps.setBoolean(1,true);
+				ps.executeUpdate();
+				logger.info("MySQL Server is connected!");
+			}
+			else logger.info("MySQL Server is canceled for config value not given");
+		}
+		catch (ClassNotFoundException | SQLException e1)
+		{
+			e1.printStackTrace();
+		}
+		finally
+		{
+			close_resorce(null,conn,ps);
+		}
+	}
+    
+    @Override
+	public Connection getConnection() throws SQLException, ClassNotFoundException
+	{
+		// Map<String, Object> mysqlConfig = (Map<String, Object>) config.getConfig().get("MySQL");
 		if
 		(
-				
-			((String) Config.getConfig().get("MySQL.Host")).isEmpty() || 
-			((int) Config.getConfig().get("MySQL.Port"))==0 || 
-			((String) Config.getConfig().get("MySQL.Database")).isEmpty() || 
-			((String) Config.getConfig().get("MySQL.User")).isEmpty() || 
-			((String) Config.getConfig().get("MySQL.Password")).isEmpty()
+			config.getString("MySQL.Host","").isEmpty() || 
+			config.getInt("MySQL.Port",0)==0 || 
+			config.getString("MySQL.Database","").isEmpty() || 
+			config.getString("MySQL.User","").isEmpty() || 
+			config.getString("MySQL.Password","").isEmpty()
 		)
 		{
 			return null;
 		}
 		
-        if (conn != null && !conn.isClosed()) return conn;
+        if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
         
         synchronized (Database.class) {
-            if (conn != null && !conn.isClosed()) return conn;
+            if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
             
             Class.forName("com.mysql.cj.jdbc.Driver");
             conn = DriverManager.getConnection
             		(
-            			"jdbc:mysql://" + ((String) Config.getConfig().get("MySQL.Host") + ":" + 
-            			(int) Config.getConfig().get("MySQL.Port") + "/" + 
-            			(String) Config.getConfig().get("MySQL.Database")), 
-            			((String) Config.getConfig().get("MySQL.User")), 
-            			((String) Config.getConfig().get("MySQL.Password"))
+            			"jdbc:mysql://" + config.getString("MySQL.Host") + ":" + 
+            			config.getInt("MySQL.Port") + "/" + 
+            			config.getString("MySQL.Database"), 
+            			config.getString("MySQL.User"), 
+            			config.getString("MySQL.Password")
             		);
             return conn;
         }
     }
 	
-	public static void close_resorce(ResultSet[] resultsets,Connection conn, PreparedStatement ps)
+    @Override
+	public void close_resorce(ResultSet[] resultsets,Connection conn, PreparedStatement ps)
 	{
 		if(Objects.nonNull(resultsets))
 		{

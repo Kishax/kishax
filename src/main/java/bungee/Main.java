@@ -54,7 +54,7 @@ public class Main extends Plugin
 			// サーバーをオンラインに
 			if(Objects.nonNull(conn))
 			{
-				String sql = "UPDATE mine_status SET Bungeecord=? WHERE id=1;";
+				String sql = "UPDATE mine_status SET Proxi=? WHERE id=1;";
 				ps = conn.prepareStatement(sql);
 				ps.setBoolean(1,true);
 				ps.executeUpdate();
@@ -80,13 +80,13 @@ public class Main extends Plugin
 		ProxyServer.getInstance().getPluginManager().registerCommand(this, new FMCCommand(this));
 		ProxyServer.getInstance().getPluginManager().registerCommand(this, new Hub());
 		
-	    getLogger().info( "プラグインが有効になりました。" );
-	    
         // Client side
 	    ssw.startSocketClient("Hello!\nStart Server!!");
 	    // Server side
 	    ssw.startSocketServer();
 	    ssw.startBufferedSocketServer();
+	    
+	    getLogger().info( "プラグインが有効になりました。" );
 	}
 
 	@Override

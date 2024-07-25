@@ -1,0 +1,16 @@
+# FMC Configuration File
+Server: ""
+
+MySQL:
+    Host: ""
+    Database: ""
+    Port: 
+    User: ""
+    Password: ""
+
+Socket:
+    Client_Port: 
+    Server_Port: 
+
+Discord:
+    Webhook_URL: ""

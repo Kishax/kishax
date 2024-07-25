@@ -9,7 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.ProxyServer;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -17,13 +19,17 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.Database;
+import velocity.DatabaseInterface;
 import velocity.Luckperms;
 import velocity.Main;
 
 
 public class Perm
 {
-	public Main plugin;
+	private final Config config;
+	private final Luckperms lp;
+	private final DatabaseInterface db;
+	
 	public Connection conn = null;
 	public ResultSet minecrafts = null, database_uuid = null, isperm = null;
 	public ResultSet[] resultsets = {minecrafts,database_uuid,isperm};
@@ -32,10 +38,18 @@ public class Perm
 	public static List<String> permS = null;
 	public static List<String> permD = null;
 	
-	public Perm(CommandSource source,String[] args)
+	@Inject
+	public Perm(Main plugin,ProxyServer server, Config config, Luckperms lp, DatabaseInterface db)
 	{
-		List<String> permS = Config.getInstance().getStringList("Permission.Short_Name");
-		List<String> permD = Config.getInstance().getStringList("Permission.Detail_Name");
+		this.config = config;
+		this.lp = lp;
+		this.db = db;
+	}
+	
+	public void execute(CommandSource source,String[] args)
+	{
+		List<String> permS = config.getList("Permission.Short_Name");
+		List<String> permD = config.getList("Permission.Detail_Name");
 		
 		if(!(permS.size() == permD.size()))
 		{
@@ -44,7 +58,7 @@ public class Perm
 		}
         try
         {
-        	conn = Database.getConnection();
+        	conn = db.getConnection();
         	
         	String sql = "SELECT * FROM minecraft ORDER BY id DESC;";
 			ps = conn.prepareStatement(sql);
@@ -57,6 +71,7 @@ public class Perm
 			
 	        switch(args.length)
 	        {
+	        	case 0:
 	        	case 1:
 	        		source.sendMessage(Component.text("usage: /fmcb　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 	            	break;
@@ -211,7 +226,7 @@ public class Perm
         }
         finally
         {
-        	Database.close_resorce(resultsets, conn, ps);
+        	db.close_resorce(resultsets, conn, ps);
         }
 		return;
 	}
@@ -221,7 +236,7 @@ public class Perm
 		// 上のAdminメソッドの途中なので、connは閉じない。(finallyを省く)
 		try
 		{
-			conn = Database.getConnection();
+			conn = db.getConnection();
 			
 			String sql = "SELECT * FROM minecraft WHERE name=? ORDER BY id DESC LIMIT 1;";
 			ps = conn.prepareStatement(sql);
@@ -255,7 +270,7 @@ public class Perm
 					source.sendMessage(Component.text(name+"からpermission: "+permission+"を除去しました。").color(NamedTextColor.GREEN));
 				}
 				
-				Luckperms.triggerNetworkSync();
+				lp.triggerNetworkSync();
 				source.sendMessage(Component.text("権限を更新しました。").color(NamedTextColor.GREEN));
 			}
 		}

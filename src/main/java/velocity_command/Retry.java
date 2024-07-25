@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Random;
 
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -14,28 +15,33 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import velocity.Config;
 import velocity.Database;
+import velocity.DatabaseInterface;
 import velocity.Main;
 
 public class Retry
 {
-	private final Main plugin;
-	private final ProxyServer server;
+	private final DatabaseInterface db;
+	
 	public Connection conn = null;
 	public PreparedStatement ps = null;
 
-	public Retry(CommandSource source,String[] args)
+	@Inject
+	public Retry(Main plugin,ProxyServer server, Config config, DatabaseInterface db)
 	{
-		this.plugin = Main.getInstance();
-		this.server = this.plugin.getServer();
-		
+		this.db = db;
+	}
+	
+	public void execute(CommandSource source,String[] args)
+	{
 		if (source instanceof Player)
 		{
 			// プレイヤーがコマンドを実行した場合の処理
 			Player player = (Player) source;
 			try
 			{
-				conn = Database.getConnection();
+				conn = db.getConnection();
 				
 				// 6桁の乱数を生成
 		        Random rnd = new Random();
@@ -66,7 +72,7 @@ public class Retry
 	        }
 			finally
 			{
-				Database.close_resorce(null, conn, ps);
+				db.close_resorce(null, conn, ps);
 			}
 		}
 		else

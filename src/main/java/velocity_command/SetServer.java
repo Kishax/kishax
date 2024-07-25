@@ -9,6 +9,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Random;
 
+import org.slf4j.Logger;
+
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -22,22 +25,34 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.Database;
+import velocity.DatabaseInterface;
 import velocity.Main;
 
 public class SetServer
 {
-	public Main plugin;
+	private final Main plugin;
 	private final ProxyServer server;
+	private final Config config;
+	private final Logger logger;
+	private final DatabaseInterface db;
+	
 	public Connection conn = null;
 	public ResultSet minecrafts = null, mine_status = null, issuperadmin = null, issubadmin = null;
 	public ResultSet[] resultsets = {minecrafts,mine_status,issuperadmin,issubadmin};
 	public PreparedStatement ps = null;
 	
-	public SetServer(CommandSource source,String[] args)
+	@Inject
+	public SetServer(Main plugin,ProxyServer server, Logger logger, Config config, DatabaseInterface db)
 	{
-		this.plugin = Main.getInstance();
-		this.server = this.plugin.getServer();
-		
+		this.plugin = plugin;
+		this.server = server;
+		this.logger = logger;
+		this.config = config;
+		this.db = db;
+	}
+	
+	public void execute(CommandSource source,String[] args)
+	{
 		if (source instanceof Player)
 		{
             // プレイヤーがコマンドを実行した場合の処理
@@ -62,13 +77,13 @@ public class SetServer
             if(!containsServer)
             {
             	player.sendMessage(Component.text(NamedTextColor.RED+"サーバー名が違います。"));
-            	this.plugin.getLogger().info(NamedTextColor.RED+"サーバー名が違います。");
+            	logger.info(NamedTextColor.RED+"サーバー名が違います。");
             	return;
             }
 
             try
             {
-            	conn = Database.getConnection();
+            	conn = db.getConnection();
     			String sql = "SELECT * FROM minecraft WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
@@ -105,11 +120,11 @@ public class SetServer
         			    			    	.append(Component.text("です。\nサーバーに入りますか？\n").color(NamedTextColor.WHITE))
         			    			    	.append(Component.text("YES")
         			    			    			.color(NamedTextColor.GOLD)
-        			    			    			.clickEvent(ClickEvent.runCommand("/fmcb stp "+args[1]))
+        			    			    			.clickEvent(ClickEvent.runCommand("/fmcp stp "+args[1]))
         			                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+args[1]+"サーバーに入ります。"))))
         			    			    	.append(Component.text(" or ").color(NamedTextColor.GOLD))
         			    			    	.append(Component.text("NO").color(NamedTextColor.GOLD)
-        			    			    			.clickEvent(ClickEvent.runCommand("/fmcb cancel"))
+        			    			    			.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
         			                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
         			    			    	.build();
         						
@@ -144,7 +159,7 @@ public class SetServer
         			    			    		.hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
         			    			    	.append(Component.text(" です。").color(NamedTextColor.WHITE)
         			    			    	.append(Component.text("\n\n認証コードの再生成").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-	        			    			    	.clickEvent(ClickEvent.runCommand("/fmcb retry"))
+	        			    			    	.clickEvent(ClickEvent.runCommand("/fmcp retry"))
 	        	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)認証コードを再生成します。"))))
         			    			    	.build();
         						player.sendMessage(component);
@@ -162,22 +177,22 @@ public class SetServer
         						{
         							if(mine_status.getBoolean(server.getServerInfo().getName()))
         							{
-        								sum_memory = sum_memory + (int) Config.getConfig().getOrDefault("Servers."+server.getServerInfo().getName()+".Memory",0);
+        								sum_memory = sum_memory + config.getInt("Servers."+server.getServerInfo().getName()+".Memory",0);
         							}
         						}
         						// 起動・起動リクエストしたいサーバーのメモリも足す
-        						sum_memory = sum_memory + (int) Config.getConfig().getOrDefault("Servers."+args[1]+".Memory",0);
+        						sum_memory = sum_memory + config.getInt("Servers."+args[1]+".Memory",0);
         						
         						// BungeeCordのメモリも足す
-        						sum_memory = sum_memory + (int) Config.getConfig().getOrDefault("Servers.BungeeCord.Memory",0);
+        						sum_memory = sum_memory + config.getInt("Servers.BungeeCord.Memory",0);
         								
-    							if(!(sum_memory<=(int) Config.getConfig().getOrDefault("Servers.Memory_Limit",0)))
+    							if(!(sum_memory<=config.getInt("Servers.Memory_Limit",0)))
     							{
     								TextComponent component = Component.text()
             			    			    	.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
             			    			    	.append(Component.text("オフライン").color(NamedTextColor.BLUE))
             			    			    	.append(Component.text("です。").color(NamedTextColor.WHITE))
-            			    			    	.append(Component.text("\nメモリ超過のため、サーバーを起動できません。("+sum_memory+"GB/"+(int) Config.getConfig().getOrDefault("Servers.Memory_Limit",0)+"GB)").color(NamedTextColor.RED))
+            			    			    	.append(Component.text("\nメモリ超過のため、サーバーを起動できません。("+sum_memory+"GB/"+config.getInt("Servers.Memory_Limit",0)+"GB)").color(NamedTextColor.RED))
             			    			    	.build();
             						
             						player.sendMessage(component);
@@ -216,11 +231,11 @@ public class SetServer
             			    			    	.append(Component.text("オフライン").color(NamedTextColor.BLUE))
             			    			    	.append(Component.text("です。\nサーバーを起動しますか？").color(NamedTextColor.WHITE))
             			    			    	.append(Component.text("\nYES").color(NamedTextColor.GOLD))
-	            			    			    	.clickEvent(ClickEvent.runCommand("/fmcb start "+args[1]))
+	            			    			    	.clickEvent(ClickEvent.runCommand("/fmcp start "+args[1]))
 		        	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+args[1]+"サーバーを起動します。")))
             			    			    	.append(Component.text(" or ").color(NamedTextColor.GOLD))
             			    			    	.append(Component.text("NO").color(NamedTextColor.GOLD)
-	            			    			    	.clickEvent(ClickEvent.runCommand("/fmcb cancel"))
+	            			    			    	.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
 		        	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
 		        	                            .build();
             						
@@ -245,11 +260,11 @@ public class SetServer
             			    			    	.append(Component.text("オフライン").color(NamedTextColor.BLUE))
             			    			    	.append(Component.text("です。\n管理者に、サーバー起動のリクエストを送信できます。\n結果は3分以内に返ってきます。\n送信しますか？").color(NamedTextColor.WHITE))
             			    			    	.append(Component.text("\nYES").color(NamedTextColor.GOLD))
-            			    			    		.clickEvent(ClickEvent.runCommand("/fmcb req "+args[1]))
+            			    			    		.clickEvent(ClickEvent.runCommand("/fmcp req "+args[1]))
             			    			    		.hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+args[1]+"サーバー起動リクエストを送信する。")))
             			    			    	.append(Component.text(" or ").color(NamedTextColor.GOLD))
             			    			    	.append(Component.text("NO").color(NamedTextColor.GOLD))
-            			    			    		.clickEvent(ClickEvent.runCommand("/fmcb cancel"))
+            			    			    		.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
             			    			    		.hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。")))
             			    			    	.build();
             						player.sendMessage(component);
@@ -284,7 +299,7 @@ public class SetServer
     			    			    		.hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
     			    			    	.append(Component.text(" です。").color(NamedTextColor.WHITE)
     			    			    	.append(Component.text("\n\n認証コードの再生成").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-        			    			    	.clickEvent(ClickEvent.runCommand("/fmcb retry"))
+        			    			    	.clickEvent(ClickEvent.runCommand("/fmcp retry"))
         	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)認証コードを再生成します。"))))
     			    			    	.build();
         						
@@ -295,7 +310,7 @@ public class SetServer
         			else
         			{
         				// MySQLサーバーにサーバーが登録されてなかった場合
-        				this.plugin.getLogger().info(NamedTextColor.RED+"このサーバーは、データベースに登録されていません。");
+        				logger.info(NamedTextColor.RED+"このサーバーは、データベースに登録されていません。");
         				player.sendMessage(Component.text(NamedTextColor.RED+"このサーバーは、データベースに登録されていません。"));
         				return;
         			}
@@ -303,7 +318,7 @@ public class SetServer
     			else
     			{
     				// MySQLサーバーにプレイヤー情報が登録されてなかった場合
-    				this.plugin.getLogger().info(NamedTextColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
+    				logger.info(NamedTextColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
     				player.sendMessage(Component.text(NamedTextColor.RED+player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。"));
     			}
             }
@@ -313,7 +328,7 @@ public class SetServer
             }
             finally
             {
-            	Database.close_resorce(resultsets, conn, ps);
+            	db.close_resorce(resultsets, conn, ps);
             }
         }
 		else

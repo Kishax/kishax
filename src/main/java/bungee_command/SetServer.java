@@ -100,11 +100,11 @@ public class SetServer
         			    			    	.append(ChatColor.AQUA+"オンライン")
         			    			    	.append(ChatColor.WHITE+"です。\nサーバーに入りますか？\n")
         			    			    	.append(ChatColor.GOLD+"YES")
-        			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb stp "+args[1].toString()))
+        			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcp stp "+args[1].toString()))
         			    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)"+args[1].toString()+"サーバーに入ります。")))
         			    			    	.append(ChatColor.GOLD+" or ")
         			    			    	.append(ChatColor.GOLD+"NO")
-        			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb cancel"))
+        			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcp cancel"))
         			    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)キャンセルします。")));
         						
         						// BaseComponent[]に変換
@@ -142,7 +142,7 @@ public class SetServer
         			    			    	.append(ChatColor.WHITE+" です。")
         			    			    	.append(ChatColor.LIGHT_PURPLE+"\n\n認証コードの再生成").bold(true).underlined(true)
         			    			    	.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)認証コードを再生成します。")))
-        			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb retry"));
+        			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcp retry"));
         						// BaseComponent[]に変換
         						BaseComponent[] messageComponents = component.create();
         						
@@ -217,11 +217,11 @@ public class SetServer
             			    			    	.append(ChatColor.BLUE+"オフライン")
             			    			    	.append(ChatColor.WHITE+"です。\nサーバーを起動しますか？")
             			    			    	.append(ChatColor.GOLD+"\nYES")
-            			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb start "+args[1].toString()))
+            			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcp start "+args[1].toString()))
             			    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)"+args[1].toString()+"サーバーを起動します。")))
             			    			    	.append(ChatColor.GOLD+" or ")
             			    			    	.append(ChatColor.GOLD+"NO")
-            			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb cancel"))
+            			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcp cancel"))
             			    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)キャンセルします。")));
             						
             						// BaseComponent[]に変換
@@ -248,11 +248,11 @@ public class SetServer
             			    			    	.append(ChatColor.BLUE+"オフライン")
             			    			    	.append(ChatColor.WHITE+"です。\n管理者に、サーバー起動のリクエストを送信できます。\n結果は3分以内に返ってきます。\n送信しますか？")
             			    			    	.append(ChatColor.GOLD+"\nYES")
-            			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb req "+args[1].toString()))
+            			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcp req "+args[1].toString()))
             			    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)"+args[1].toString()+"サーバー起動リクエストを送信する。")))
             			    			    	.append(ChatColor.GOLD+" or ")
             			    			    	.append(ChatColor.GOLD+"NO")
-            			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb cancel"))
+            			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcp cancel"))
             			    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)キャンセルします。")));
             						
             						// BaseComponent[]に変換
@@ -291,7 +291,7 @@ public class SetServer
         			    			    	.append(ChatColor.WHITE+" です。")
         			    			    	.append(ChatColor.LIGHT_PURPLE+"\n\n認証コードの再生成").bold(true).underlined(true)
         			    			    	.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("(クリックして)認証コードを再生成します。")))
-        			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcb retry"));
+        			    			    	.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmcp retry"));
         						// BaseComponent[]に変換
         						BaseComponent[] messageComponents = component.create();
         						

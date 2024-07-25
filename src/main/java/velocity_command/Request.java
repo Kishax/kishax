@@ -9,6 +9,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 
+import org.slf4j.Logger;
+
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -16,6 +19,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import velocity.Config;
 import velocity.Database;
+import velocity.DatabaseInterface;
 import velocity.Main;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -24,16 +28,27 @@ public class Request
 {
 	private final Main plugin;
 	private final ProxyServer server;
+	private final Config config;
+	private final Logger logger;
+	private final DatabaseInterface db;
+	
 	public Connection conn = null;
 	public ResultSet minecrafts = null, reqstatus = null;
 	public ResultSet[] resultsets = {minecrafts,reqstatus};
 	public PreparedStatement ps = null;
 	
-	public Request(CommandSource source,String[] args)
+	@Inject
+	public Request(Main plugin, ProxyServer server, Logger logger, Config config, DatabaseInterface db)
 	{
-		this.plugin = Main.getInstance();
-		this.server = this.plugin.getServer();
-		
+		this.plugin = plugin;
+		this.server = server;
+		this.logger = logger;
+		this.config = config;
+		this.db = db;
+	}
+
+	public void execute(CommandSource source,String[] args)
+	{
 		if (source instanceof Player)
 		{
             // プレイヤーがコマンドを実行した場合の処理
@@ -62,7 +77,7 @@ public class Request
                 return;
             }
             
-            if(((String) Config.getConfig().get("Servers."+args[1]+".Bat_Path")).isEmpty())
+            if(config.getString("Servers."+args[1]+".Bat_Path").isEmpty())
             {
             	player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
             	return;
@@ -70,7 +85,7 @@ public class Request
             
             try
             {
-            	conn = Database.getConnection();
+            	conn = db.getConnection();
             	String sql = "SELECT * FROM minecraft WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
@@ -87,7 +102,7 @@ public class Request
     					
     					long ss_sa = now_timestamp-sst_timestamp;
     					long ss_sa_minute = ss_sa/60;
-    					if(ss_sa_minute>((int) Config.getConfig().getOrDefault("Interval.Session",3)))
+    					if(ss_sa_minute>config.getInt("Interval.Session",3))
     					{
     						player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
     						return;
@@ -100,9 +115,9 @@ public class Request
     					long req_sa = now_timestamp-req_timestamp;
     					long req_sa_minute = req_sa/60;
         				
-        		        if(req_sa_minute<=((int) Config.getConfig().getOrDefault("Interval.Request",0)))
+        		        if(req_sa_minute<=config.getInt("Interval.Request",0))
         		        {
-        		        	player.sendMessage(Component.text("リクエストは"+((int) Config.getConfig().getOrDefault("Interval.Request",0))+"分に1回までです。").color(NamedTextColor.RED));
+        		        	player.sendMessage(Component.text("リクエストは"+config.getInt("Interval.Request",0)+"分に1回までです。").color(NamedTextColor.RED));
         		        	return;
         		        }
     				}
@@ -110,7 +125,7 @@ public class Request
     			else
     			{
     				// MySQLサーバーにサーバーが登録されてなかった場合
-    				this.plugin.getLogger().info(NamedTextColor.RED+"このサーバーは、データベースに登録されていません。");
+    				logger.info(NamedTextColor.RED+"このサーバーは、データベースに登録されていません。");
     				player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
     				return;
     			}
@@ -144,10 +159,10 @@ public class Request
 				ps.setString(1,player.getUniqueId().toString());
 				ps.executeUpdate();
 		        
-		        String pythonScriptPath = ((String) Config.getConfig().get("Servers.Request_Path"));
+		        String pythonScriptPath = config.getString("Servers.Request_Path");
             	// ProcessBuilderを作成
 		        ProcessBuilder pb = null;
-		        if(((boolean) Config.getConfig().get("Debug.Mode")))
+		        if(config.getBoolean("Debug.Mode"))
 		        {
 		        	pb = new ProcessBuilder
 	            			(
@@ -155,10 +170,10 @@ public class Request
 	            					pythonScriptPath, 
 	            					player.getUsername(),
 	            					player.getUniqueId().toString(),
-	            					((String) Config.getConfig().get("Servers.Hub")),
+	            					config.getString("Servers.Hub"),
 	            					args[1].toString(),
 	            					req_type,
-	            					((String) Config.getConfig().get("Servers."+args[1]+".Bat_Path")),
+	            					config.getString("Servers."+args[1]+".Bat_Path"),
 	            					"test"
 	            			);
 		        }
@@ -170,10 +185,10 @@ public class Request
 	            					pythonScriptPath, 
 	            					player.getUsername(),
 	            					player.getUniqueId().toString(),
-	            					((String) Config.getConfig().get("Servers.Hub")),
+	            					config.getString("Servers.Hub"),
 	            					args[1].toString(),
 	            					req_type,
-	            					((String) Config.getConfig().get("Servers."+args[1]+".Bat_Path"))
+	            					config.getString("Servers."+args[1]+".Bat_Path")
 	            			);
 		        }
             	pb.start();
@@ -195,7 +210,7 @@ public class Request
             }
             finally
             {
-            	Database.close_resorce(resultsets, conn, ps);
+            	db.close_resorce(resultsets, conn, ps);
             }
         }
 		else

@@ -1,11 +1,14 @@
 package velocity;
 
-import com.velocitypowered.api.plugin.Plugin;
 import com.google.common.io.ByteArrayDataOutput;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
@@ -21,6 +24,7 @@ import velocity_command.FMCCommand;
 import velocity_command.Hub;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -30,28 +34,31 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.inject.Inject;
-
 import org.slf4j.Logger;
 
-@Plugin(id = "fmc-plugin", name = "FMC-Plugin", version = "0.0.1", description = "This plugin is provided by FMC Server!!")
 public class Main
 {
-	public SocketSwitch ssw = new SocketSwitch(this);
+	public SocketSwitch ssw = null;
 	
-	private static Main instance;
-    private static ProxyServer server;
-    private Logger logger;
-    private static LuckPerms luckperms;
-	private Connection conn = null;
-	private PreparedStatement ps = null;
+	private static Injector injector = null;
+	
+	private final ProxyServer server;
+	private final Logger logger;
+	//private Config config = null;
+	private LuckPerms lpinstance = null;
+	private Luckperms lp = null;
+	private final Path dataDirectory;
 	
     @Inject
-    public Main(ProxyServer server, Logger logger)
+    // VelocityAPIにあるInject群 = {ProxyServer, Logger, Path}を呼び出すための@Inject
+    public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory)
     {
+        this.server = serverinstance;
         this.logger = logger;
-        instance = this;
-        Main.server = server;
+        this.dataDirectory = dataDirectory;
+        
+        // Guiceに依存性を自動で解決させ、インスタンスを生成してもらう。
+        // Guice インジェクターの作成は onProxyInitialization メソッドで行う
     }
 
     @Subscribe
@@ -59,57 +66,38 @@ public class Main
     {
     	logger.info("Detected Velocity platform.");
     	
-    	try
-    	{
-			Config.getInstance().loadConfig();
-		}
-    	catch (IOException e1)
-    	{
-			e1.printStackTrace();
-		}
+    	// LuckpermAPIに依存した自作のLuckpermクラスインスタンスを取得
+        this.lpinstance = LuckPermsProvider.get();
+        this.lp = new Luckperms(lpinstance, logger);
+        
+        // Guice インジェクターを作成
+        injector = Guice.createInjector(new MainModule(this, server, logger, dataDirectory/*, config*/, lp));
+        
+    	ssw = getInjector().getInstance(SocketSwitch.class);
     	
-    	server.getEventManager().register(this, new EventListener());
+    	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
     	
-    	try
-		{
-			conn = Database.getConnection();
-			// サーバーをオンラインに
-			if(Objects.nonNull(conn))
-			{
-				String sql = "UPDATE mine_status SET Bungeecord=? WHERE id=1;";
-				ps = conn.prepareStatement(sql);
-				ps.setBoolean(1,true);
-				ps.executeUpdate();
-				getLogger().info("MySQL Server is connected!");
-			}
-			else getLogger().info("MySQL Server is canceled for config value not given");
-		}
-		catch (ClassNotFoundException | SQLException e1)
-		{
-			e1.printStackTrace();
-		}
-		finally
-		{
-			Database.close_resorce(null,conn,ps);
-		}
-    	
-    	luckperms = LuckPermsProvider.get();
- 		Luckperms.triggerNetworkSync();
+ 		lp.triggerNetworkSync();
  		logger.info("luckpermsと連携しました。");
  		
-    	PlayerList.loadPlayers(); // プレイヤーリストをアップデート
+ 		getInjector().getInstance(PlayerList.class).loadPlayers(); // プレイヤーリストをアップデート
     	
     	CommandManager commandManager = server.getCommandManager();
-        commandManager.register("fmcb", new FMCCommand(server,this.logger));
-        commandManager.register("hub", new Hub());
-        
-        logger.info("プラグインが有効になりました。");
+        commandManager.register("fmcp", getInjector().getInstance(FMCCommand.class));
+        commandManager.register("hub", getInjector().getInstance(Hub.class));
 		
 		// Client side
 	    ssw.startSocketClient("Hello!\nStart Server!!");
 	    // Server side
 	    ssw.startSocketServer();
 	    ssw.startBufferedSocketServer();
+	    
+	    logger.info("プラグインが有効になりました。");
+    }
+    
+    public static Injector getInjector()
+    {
+        return injector;
     }
     
     @Subscribe
@@ -140,18 +128,18 @@ public class Main
     		}
     		if (res.contains("uuid"))
     		{
-    			Luckperms.triggerNetworkSync();
+    			lp.triggerNetworkSync();
     			if(res.contains("new")) res = NamedTextColor.LIGHT_PURPLE+res.replace("PHP->uuid->new->", "");
     		}
     		
         	broadcastMessage(res,null);
-        	getLogger().info(res);
+        	logger.info(res);
     	}
     	else
     	{	
     		// Discordからのメッセージ処理
     		sendmixurl(res);
-    		getLogger().info(res);
+    		logger.info(res);
     	}
     }
     
@@ -306,25 +294,5 @@ public class Main
     public void sendresponse(String res,ByteArrayDataOutput dataOut)
     {
 		return;
-	}
-    
-    public static Main getInstance()
-    {
-    	return instance;
-    }
-    
-    public ProxyServer getServer()
-    {
-    	return server;
-    }
-    
-    public Logger getLogger()
-    {
-		return this.logger;
-    }
-    
-    public static LuckPerms getlpInstance()
-	{
-		return luckperms;
 	}
 }

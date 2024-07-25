@@ -2,6 +2,7 @@ package velocity_command;
 
 import java.io.IOException;
 
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
 import net.kyori.adventure.text.Component;
@@ -9,11 +10,20 @@ import velocity.Config;
 
 public class ReloadConfig
 {
-    public ReloadConfig(CommandSource source,String[] args)
+	private final Config config;
+	
+	@Inject
+	public ReloadConfig(Config config)
+	{
+		this.config = config;
+	}
+	
+    public void execute(CommandSource source, String[] args)
     {
     	try
     	{
-			Config.getInstance().loadConfig();
+    		config.loadConfig();
+			//Config.getInstance().loadConfig();
 		}
     	catch (IOException e1)
     	{

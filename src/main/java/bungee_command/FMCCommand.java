@@ -29,7 +29,7 @@ public class FMCCommand extends Command implements TabExecutor
 	public List<String> anylists = new ArrayList<>(Arrays.asList("true","false"));
 	
     public FMCCommand(Main plugin) {
-        super("fmcb");
+        super("fmcp");
         this.plugin = plugin;
     }
 
@@ -38,34 +38,34 @@ public class FMCCommand extends Command implements TabExecutor
     {
         if (args.length == 0 || !subcommands.contains(args[0].toLowerCase()))
         {
-        	if(sender.hasPermission("fmc.bungee.commandslist"))
+        	if(sender.hasPermission("fmc.proxi.commandslist"))
         	{
         		BaseComponent[] component =
         			    new ComponentBuilder(ChatColor.YELLOW+"FMC COMMANDS LIST").bold(true).underlined(true)
         			    	.append(ChatColor.AQUA+"\n/hub")
-        			    	.append(ChatColor.AQUA+"\n/fmcb hub")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb hub" ))
+        			    	.append(ChatColor.AQUA+"\n/fmcp hub")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcp hub" ))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ホームサーバーに帰還")))
-        			        .append(ChatColor.AQUA+"\n\n/fmcb ss <server>")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb ss "))
+        			        .append(ChatColor.AQUA+"\n\n/fmcp ss <server>")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcp ss "))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("サーバーステータス取得")))
-        			        .append(ChatColor.AQUA+"\n\n/fmcb start <server>")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb start "))
+        			        .append(ChatColor.AQUA+"\n\n/fmcp start <server>")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcp start "))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("サーバーを起動")))
-        			        .append(ChatColor.AQUA+"\n\n/fmcb req <server>")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb req"))
+        			        .append(ChatColor.AQUA+"\n\n/fmcp req <server>")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcp req"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("サーバー起動リクエスト")))
-        			        .append(ChatColor.AQUA+"\n\n/fmcb cancel")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb cancel"))
+        			        .append(ChatColor.AQUA+"\n\n/fmcp cancel")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcp cancel"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("「キャンセルしました」メッセージ")))
-        			        .append(ChatColor.AQUA+"\n\n/fmcb debug")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb debug"))
+        			        .append(ChatColor.AQUA+"\n\n/fmcp debug")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcp debug"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("管理者専用デバッグモード")))
-        			        .append(ChatColor.AQUA+"\n\n/fmcb reload")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb reload"))
+        			        .append(ChatColor.AQUA+"\n\n/fmcp reload")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcp reload"))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロード")))
-        			        .append(ChatColor.AQUA+"\n\n/fmcb perm <add|remove|list> [Short:permission] <player>")
-        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcb perm "))
+        			        .append(ChatColor.AQUA+"\n\n/fmcp perm <add|remove|list> [Short:permission] <player>")
+        			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmcp perm "))
         			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ユーザーに対して権限の追加と除去")))
         			        .create();
         		sender.sendMessage(component);
@@ -136,7 +136,7 @@ public class FMCCommand extends Command implements TabExecutor
 	    	case 1:
 	    		for (String subcmd : subcommands)
 	    		{
-	    			if (!sender.hasPermission("fmc.bungee." + subcmd)) continue;
+	    			if (!sender.hasPermission("fmc.proxi." + subcmd)) continue;
 	      
 	    			ret.add(subcmd);
 	    		}
@@ -144,14 +144,14 @@ public class FMCCommand extends Command implements TabExecutor
 	    	
 	    	case 2:
 	    		
-	    		if (!sender.hasPermission("fmc.bungee." + args[0].toLowerCase())) return Collections.emptyList();
+	    		if (!sender.hasPermission("fmc.proxi." + args[0].toLowerCase())) return Collections.emptyList();
 	    		
 	    		switch (args[0].toLowerCase())
 	    		{
 	    			case "something":
 	    				for (String any : anylists)
 	    				{
-	    					//if (!sender.hasPermission("fmc.bungee.debug." + any)) continue;    		   
+	    					//if (!sender.hasPermission("fmc.proxi.debug." + any)) continue;    		   
 	    					ret.add(any);
 	    				}
 	    				return ret;
@@ -175,7 +175,7 @@ public class FMCCommand extends Command implements TabExecutor
 	    				return Collections.emptyList();
 	    		}
 	    	case 3:
-	    		if (!sender.hasPermission("fmc.bungee." + args[0].toLowerCase())) return Collections.emptyList();
+	    		if (!sender.hasPermission("fmc.proxi." + args[0].toLowerCase())) return Collections.emptyList();
 	    		
 	    		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
     			switch(args[1].toLowerCase())
@@ -190,7 +190,7 @@ public class FMCCommand extends Command implements TabExecutor
 	    				return ret;
 	    		}
 	    	case 4:
-	    		if (!sender.hasPermission("fmc.bungee." + args[0].toLowerCase())) return Collections.emptyList();
+	    		if (!sender.hasPermission("fmc.proxi." + args[0].toLowerCase())) return Collections.emptyList();
 	    		
 	    		PlayerList.loadPlayers(); // プレイヤーリストをロード
 	    		List<String> permS = Config.getConfig().getStringList("Permission.Short_Name");

@@ -8,12 +8,15 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import velocity.Config;
 import velocity.Database;
+import velocity.DatabaseInterface;
 import velocity.Main;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -21,14 +24,22 @@ import net.kyori.adventure.text.format.NamedTextColor;
 public class ServerTeleport
 {
     private final ProxyServer server;
+    private final DatabaseInterface db;
+    
     public Connection conn = null;
     public ResultSet minecrafts = null;
     public ResultSet[] resultsets = {minecrafts};
     public PreparedStatement ps = null;
-
-    public ServerTeleport(CommandSource source,String[] args)
+    
+    @Inject
+    public ServerTeleport(Main plugin,ProxyServer server, Config config, DatabaseInterface db)
+	{
+		this.server = server;
+		this.db = db;
+	}
+    
+    public void execute(CommandSource source,String[] args)
     {
-        this.server = Main.getInstance().getServer();
         if (!(source instanceof Player))
         {
             source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
@@ -62,7 +73,7 @@ public class ServerTeleport
 
         try
         {
-            conn = Database.getConnection();
+            conn = db.getConnection();
             String sql = "SELECT * FROM minecraft WHERE uuid=?;";
             ps = conn.prepareStatement(sql);
             ps.setString(1, player.getUniqueId().toString());
@@ -92,7 +103,7 @@ public class ServerTeleport
         }
         finally
         {
-            Database.close_resorce(resultsets, conn, ps);
+            db.close_resorce(resultsets, conn, ps);
         }
 
         server.getServer(targetServerName).ifPresent(server -> player.createConnectionRequest(server).fireAndForget());

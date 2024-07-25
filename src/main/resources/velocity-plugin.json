@@ -1,5 +1,5 @@
 {
-  "id": "fmc-plugin",
+  "id": "fmc",
   "name": "FMC-Plugin",
   "version": "0.0.1",
   "description": "This plugin is provided by FMC Server!!",
@@ -9,8 +9,9 @@
   "dependencies": [
       {
         "id": "luckperms",
-        "version": "5.4",
+        "version": "5.4.137",
         "scope": "provided"
       }
-    ]
+   ],
+   "main": "velocity.Main"
 }

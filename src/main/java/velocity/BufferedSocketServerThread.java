@@ -4,10 +4,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+import com.google.inject.Inject;
+
 public class BufferedSocketServerThread extends Thread
 {
     private Socket socket;
     public Main plugin;
+    
+    @Inject
     public BufferedSocketServerThread(Socket socket, Main plugin)
     {
         this.socket = socket;

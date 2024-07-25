@@ -1,8 +1,11 @@
 package velocity_command;
 
 import java.io.IOException;
+import java.util.Map;
 
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.ProxyServer;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -11,34 +14,43 @@ import velocity.Main;
 
 public class Debug
 {
-	public Main plugin;
+	private final Main plugin;
+	private final ProxyServer server;
+	private final Config config;
+	
 	public String value1 = null, value2 = null;
 	
-	public Debug(CommandSource source,String[] args)
+	@Inject
+	public Debug(Main plugin,ProxyServer server, Config config)
 	{
-		this.plugin = Main.getInstance();
-		
+		this.plugin = plugin;
+		this.server = server;
+		this.config = config;
+	}
+	
+	public void execute(CommandSource source,String[] args)
+	{
+		Map<String, Object> DebugConfig = (Map<String, Object>) config.getConfig().get("Debug");
+		Map<String, Object> DiscordConfig = (Map<String, Object>) config.getConfig().get("Discord");
 		if
 		(
-			!(((String) Config.getConfig().getOrDefault("Debug.Webhook_URL","")).isEmpty()) && 
-			!(((String) Config.getConfig().getOrDefault("Discord.Webhook_URL","")).isEmpty())
+			!(config.getString("Debug.Webhook_URL","").isEmpty()) && 
+			!(config.getString("Discord.Webhook_URL","").isEmpty())
 		)
 		{
-			value1 = (String) Config.getConfig().get("Debug.Webhook_URL");
-			value2 = (String) Config.getConfig().get("Discord.Webhook_URL");
+			value1 = config.getString("Debug.Webhook_URL");
+			value2 = config.getString("Discord.Webhook_URL");
 			
-			Config.getConfig().put("Discord.Webhook_URL", value1);
-			Config.getConfig().put("Debug.Webhook_URL", value2);
+			DiscordConfig.put("Webhook_URL", value1);
+			DebugConfig.put("Webhook_URL", value2);
 			
-			
-			
-			if(((boolean) Config.getConfig().get("Debug.Mode")))
+			if(config.getBoolean("Debug.Mode"))
 			{
 				source.sendMessage(Component.text("デバッグモードがOFFになりました。").color(NamedTextColor.GREEN));
-				Config.getConfig().put("Debug.Mode", false);
+				DebugConfig.put("Mode", false);
 				try
 				{
-					Config.getInstance().saveConfig();
+					config.saveConfig();
 				}
 				catch (IOException e)
 				{
@@ -48,10 +60,10 @@ public class Debug
 			else
 			{
 				source.sendMessage(Component.text("デバッグモードがONになりました。").color(NamedTextColor.GREEN));
-				Config.getConfig().put("Debug.Mode", true);
+				DebugConfig.put("Mode", true);
 				try
 				{
-					Config.getInstance().saveConfig();
+					config.saveConfig();
 				}
 				catch (IOException e)
 				{

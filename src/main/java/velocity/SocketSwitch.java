@@ -5,8 +5,11 @@ import java.io.DataOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import org.slf4j.Logger;
+
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.google.inject.Inject;
 
 public class SocketSwitch
 {
@@ -18,30 +21,38 @@ public class SocketSwitch
 	public String sendmsg;
 	private volatile boolean running = true;
 	private volatile boolean bufferedrunning = true;
-	public Main plugin;
+	private final Main plugin;
+	private final Config config;
+	private final Logger logger;
 	
-	public SocketSwitch(Main plugin)
+	@Inject
+	public SocketSwitch(Main plugin,Logger logger,Config config)
 	{
 		this.plugin = plugin;
+		this.logger = logger;
+		this.config = config;
 	}
 	
 	//Client side
 	public void startSocketClient(String sendmsg)
 	{
-		if((int) Config.getConfig().get("Socket.Client_Port")==0)
+		if(config.getInt("Socket.Client_Port",0)==0)
 		{
-			this.plugin.getLogger().info("Client Socket is canceled for config value not given");
+			logger.info("Client Socket is canceled for config value not given");
 			return;
 		}
-		this.plugin.getLogger().info("Client Socket is Available");
+		logger.info("Client Socket is Available");
         clientThread = new Thread(() ->
         {
         	
             String hostname = "localhost";
             
-            try (Socket socket = new Socket(hostname, (int) Config.getConfig().get("Socket.Client_Port"));
-                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                 DataInputStream in = new DataInputStream(socket.getInputStream()))
+            try
+            (
+            	Socket socket = new Socket(hostname, config.getInt("Socket.Client_Port"));
+            	DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            	DataInputStream in = new DataInputStream(socket.getInputStream())
+            )
             {
 
                 // 送信するデータの準備
@@ -60,7 +71,7 @@ public class SocketSwitch
 
                 // 受信したデータの処理
                 String response = new String(responseData, "UTF-8");
-                this.plugin.getLogger().info("Server response: " + response);
+                logger.info("Server response: " + response);
                 
             }
             catch (Exception e)
@@ -92,18 +103,18 @@ public class SocketSwitch
     //Server side
     public void startSocketServer()
     {
-		if((int) Config.getConfig().get("Socket.Server_Port")==0)
+		if(config.getInt("Socket.Server_Port",0)==0)
 		{
-			this.plugin.getLogger().info("Server Socket is canceled for config value not given");
+			logger.info("Server Socket is canceled for config value not given");
 			return;
 		}
-		this.plugin.getLogger().info("Server Socket is Available");
+		logger.info("Server Socket is Available");
         socketThread = new Thread(() ->
         {
             try
             {
-                serverSocket = new ServerSocket((int) Config.getConfig().get("Socket.Server_Port"));
-                this.plugin.getLogger().info("Socket Server is listening on port " + (int) Config.getConfig().get("Socket.Server_Port"));
+                serverSocket = new ServerSocket(config.getInt("Socket.Server_Port"));
+                logger.info("Socket Server is listening on port " + config.getInt("Socket.Server_Port"));
 
                 while (running)
                 {
@@ -115,14 +126,14 @@ public class SocketSwitch
                             socket.close();
                             break;
                         }
-                        this.plugin.getLogger().info("New client connected");
-                        new SocketServerThread(socket,this.plugin).start();
+                        logger.info("New client connected");
+                        new SocketServerThread(socket,plugin).start();
                     }
                     catch (Exception e)
                     {
                         if (running)
                         {
-                            this.plugin.getLogger().error("Error accepting client connection");
+                            logger.error("Error accepting client connection");
                             e.printStackTrace();
                         }
                     }
@@ -130,7 +141,7 @@ public class SocketSwitch
             }
             catch (Exception e)
             {
-                this.plugin.getLogger().error("Socket Server socket error");
+                logger.error("Socket Server socket error");
                 e.printStackTrace();
             }
             finally
@@ -154,18 +165,18 @@ public class SocketSwitch
 
     public void startBufferedSocketServer()
     {
-		if((int) Config.getConfig().get("Socket.Buffered_Server_Port")==0)
+		if(config.getInt("Socket.Buffered_Server_Port",0)==0)
 		{
-			this.plugin.getLogger().info("Buffered Server Socket is canceled for config value not given");
+			logger.info("Buffered Server Socket is canceled for config value not given");
 			return;
 		}
-		this.plugin.getLogger().info("Buffered Server Socket is Available");
+		logger.info("Buffered Server Socket is Available");
         bufferedsocketThread = new Thread(() ->
         {
             try
             {
-                bufferedserverSocket = new ServerSocket((int) Config.getConfig().get("Socket.Buffered_Server_Port"));
-                this.plugin.getLogger().info("Buffered Socket Server is listening on port " + (int) Config.getConfig().get("Socket.Buffered_Server_Port"));
+                bufferedserverSocket = new ServerSocket(config.getInt("Socket.Buffered_Server_Port"));
+                logger.info("Buffered Socket Server is listening on port " + config.getInt("Socket.Buffered_Server_Port"));
 
                 while (bufferedrunning)
                 {
@@ -177,14 +188,14 @@ public class SocketSwitch
                             socket2.close();
                             break;
                         }
-                        this.plugin.getLogger().info("New client connected");
-                        new BufferedSocketServerThread(socket2,this.plugin).start();
+                        logger.info("New client connected");
+                        new BufferedSocketServerThread(socket2,plugin).start();
                     }
                     catch (Exception e)
                     {
                         if (bufferedrunning)
                         {
-                            this.plugin.getLogger().error("Error accepting client connection");
+                            logger.error("Error accepting client connection");
                             e.printStackTrace();
                         }
                     }
@@ -192,7 +203,7 @@ public class SocketSwitch
             }
             catch (Exception e)
             {
-                this.plugin.getLogger().error("Socket Server socket error");
+                logger.error("Socket Server socket error");
                 e.printStackTrace();
             }
             finally

@@ -9,6 +9,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 
+import org.slf4j.Logger;
+
+import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -19,22 +22,34 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
 import velocity.Database;
+import velocity.DatabaseInterface;
 import velocity.Main;
 
 public class StartServer
 {
 	private final Main plugin;
 	private final ProxyServer server;
+	private final Config config;
+	private final Logger logger;
+	private final DatabaseInterface db;
+	
 	public Connection conn = null;
 	public ResultSet minecrafts = null, status = null;
 	public ResultSet[] resultsets = {minecrafts,status};
 	public PreparedStatement ps = null;
 	
-	public StartServer(CommandSource source,String[] args)
+	@Inject
+	public StartServer(Main plugin,ProxyServer server, Logger logger, Config config, DatabaseInterface db)
 	{
-		this.plugin = Main.getInstance();
-		this.server = this.plugin.getServer();
-		
+		this.plugin = plugin;
+		this.server = server;
+		this.logger = logger;
+		this.config = config;
+		this.db = db;
+	}
+	
+	public void execute(CommandSource source,String[] args)
+	{
 		if (source instanceof Player)
 		{
             // プレイヤーがコマンドを実行した場合の処理
@@ -47,7 +62,7 @@ public class StartServer
 			
 			String targetServerName = args[0];
 			boolean containsServer = false;
-			for (RegisteredServer server : this.server.getAllServers())
+			for (RegisteredServer server : server.getAllServers())
 			{
 				if(server.getServerInfo().getName().equalsIgnoreCase(targetServerName))
 				{
@@ -64,7 +79,7 @@ public class StartServer
 			{
 				try
 				{
-					conn = Database.getConnection();
+					conn = db.getConnection();
 					String sql = "SELECT * FROM minecraft WHERE uuid=?;";
 	    			ps = conn.prepareStatement(sql);
 	    			ps.setString(1,player.getUniqueId().toString());
@@ -88,7 +103,7 @@ public class StartServer
 							
 							long ss_sa = now_timestamp-sst_timestamp;
 							long ss_sa_minute = ss_sa/60;
-							if(ss_sa_minute>=(int) Config.getConfig().getOrDefault("Interval.Session",3))
+							if(ss_sa_minute>=config.getInt("Interval.Session",3))
 							{
 								player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
 								return;
@@ -101,9 +116,9 @@ public class StartServer
 					        long sa = now_timestamp-st_timestamp;
 					        long sa_minute = sa/60;
 					        
-					        if(sa_minute<=(int) Config.getConfig().getOrDefault("Interval.Start_Server",0))
+					        if(sa_minute<=config.getInt("Interval.Start_Server",0))
 					        {
-					        	player.sendMessage(Component.text("サーバーの起動間隔は"+(int) Config.getConfig().getOrDefault("Interval.Start_Server",0)+"分以上は空けてください。").color(NamedTextColor.RED));
+					        	player.sendMessage(Component.text("サーバーの起動間隔は"+config.getInt("Interval.Start_Server",0)+"分以上は空けてください。").color(NamedTextColor.RED));
 					        	return;
 					        }
 						}
@@ -113,11 +128,11 @@ public class StartServer
 							if(status.getBoolean(args[1]))
 							{
 								player.sendMessage(Component.text(args[1]+"サーバーは起動中です。").color(NamedTextColor.RED));
-								this.plugin.getLogger().info(NamedTextColor.RED+args[1]+"サーバーは起動中です。");
+								logger.info(NamedTextColor.RED+args[1]+"サーバーは起動中です。");
 							}
 							else
 							{
-								if(((String) Config.getConfig().getOrDefault("Servers."+args[1]+".Bat_Path","")).isEmpty())
+								if(config.getString("Servers."+args[1]+".Bat_Path","").isEmpty())
 								{
 									player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
 									return;
@@ -130,7 +145,7 @@ public class StartServer
 								ps.executeUpdate();
 								
 					            // バッチファイルのパスを指定
-					            String batchFilePath = (String) Config.getConfig().get("Servers."+args[1]+".Bat_Path");
+					            String batchFilePath = config.getString("Servers."+args[1]+".Bat_Path");
 
 					            // ProcessBuilderを作成
 					            ProcessBuilder processBuilder = new ProcessBuilder(batchFilePath);
@@ -144,7 +159,7 @@ public class StartServer
         									.build();
         						
         						player.sendMessage(component);
-					            this.plugin.getLogger().info(NamedTextColor.GREEN+args[1]+"サーバーがまもなく起動します。");
+					            logger.info(NamedTextColor.GREEN+args[1]+"サーバーがまもなく起動します。");
 					            
 					            sql = "UPDATE mine_status SET "+args[1]+"=? WHERE id=1;";
 					            ps = conn.prepareStatement(sql);
@@ -166,7 +181,7 @@ public class StartServer
 					else
 					{
 						// MySQLサーバーにプレイヤー情報が登録されてなかった場合
-	    				this.plugin.getLogger().info(NamedTextColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
+	    				logger.info(NamedTextColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
 	    				player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
 					}
 					
@@ -177,7 +192,7 @@ public class StartServer
 		        }
 				finally
 				{
-					Database.close_resorce(resultsets, conn, ps);
+					db.close_resorce(resultsets, conn, ps);
 				}
 			}
 		}

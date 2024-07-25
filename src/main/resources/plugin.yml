@@ -7,7 +7,7 @@ api-version: 1.16
 description: "§6§lThis plugin is provided by FMC Server!!"
 depends: [LunaChat]
 commands:
-  fmcb:
+  fmcp:
     usage: /<command>
     description: You can use FMC Bungeecord server command!
     executor: bungee_command.FMCCommand
