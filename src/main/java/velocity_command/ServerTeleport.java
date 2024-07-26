@@ -48,13 +48,13 @@ public class ServerTeleport
 
         Player player = (Player) source;
 
-        if (args.length == 0 || Objects.isNull(args[0]) || args[0].isEmpty())
+        if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty())
         {
             player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
             return;
         }
 
-        String targetServerName = args[0];
+        String targetServerName = args[1];
         boolean containsServer = false;
         for (RegisteredServer server : server.getAllServers())
         {

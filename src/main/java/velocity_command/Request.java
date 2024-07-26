@@ -60,7 +60,7 @@ public class Request
             	return;
             }
             
-            String targetServerName = args[0];
+            String targetServerName = args[1];
             boolean containsServer = false;
             for (RegisteredServer server : this.server.getAllServers())
             {

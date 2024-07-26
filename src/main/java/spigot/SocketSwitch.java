@@ -1,7 +1,9 @@
 package spigot;
 
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Objects;
@@ -22,51 +24,38 @@ public class SocketSwitch
 	{
 		this.plugin = plugin;
 	}
+	
 	//Client side
-	public void startSocketClient(String sendmsg)
+	public void startSocketClient(String sendmsg) {
+	    if (Config.config.getInt("Socket.Client_Port") == 0) {
+	        plugin.getLogger().info("Client Socket is canceled for config value not given");
+	        return;
+	    }
+	    plugin.getLogger().info("Client Socket is Available");
+
+	    clientThread = new Thread(() -> {
+	        sendMessage(sendmsg);
+	    });
+
+	    clientThread.start();
+	}
+
+	private void sendMessage(String sendmsg)
 	{
-		if(Config.config.getInt("Socket.Client_Port")==0)
-		{
-			this.plugin.getLogger().info("Client Socket is canceled for config value not given");
-			return;
-		}
-		this.plugin.getLogger().info("Client Socket is Available");
-        clientThread = new Thread(() ->
-        {
-        	
-            String hostname = "localhost";
-            
-            try (Socket socket = new Socket(hostname, Config.config.getInt("Socket.Client_Port"));
-                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                 DataInputStream in = new DataInputStream(socket.getInputStream()))
-            {
-                // 送信するデータの準備
-                ByteArrayDataOutput dataOut = ByteStreams.newDataOutput();
-                dataOut.writeUTF(sendmsg); // 例として文字列を送信
+	    String hostname = "localhost";
 
-                // データの送信
-                byte[] dataToSend = dataOut.toByteArray();
-                out.writeInt(dataToSend.length); // データの長さを最初に送信
-                out.write(dataToSend); // 実際のデータを送信
-
-                // レスポンスの受信
-                int length = in.readInt(); // レスポンスの長さを最初に受信
-                byte[] responseData = new byte[length];
-                in.readFully(responseData); // レスポンスデータを受信
-
-                // 受信したデータの処理
-                String response = new String(responseData, "UTF-8");
-                this.plugin.getLogger().info("Server response: " + response);
-
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        });
-
-        clientThread.start();
-    }
+	    try
+	    (
+	    	Socket socket = new Socket(hostname, Config.config.getInt("Socket.Client_Port"));
+	    	BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+	    )
+	    {
+	    	writer.write(sendmsg + "\n");
+	    	writer.flush();
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
 
     public void stopSocketClient()
     {
@@ -89,16 +78,16 @@ public class SocketSwitch
     {
 		if(Objects.isNull(Config.config.getInt("Socket.Server_Port")) || Config.config.getInt("Socket.Server_Port") ==0)
 		{
-			this.plugin.getLogger().info("Socket Server is canceled for config value not given");
+			plugin.getLogger().info("Socket Server is canceled for config value not given");
 			return;
 		}
-		this.plugin.getLogger().info("Server Socket is Available");
+		plugin.getLogger().info("Server Socket is Available");
         socketThread = new Thread(() ->
         {
             try
             {
                 serverSocket = new ServerSocket(Config.config.getInt("Socket.Server_Port"));
-                this.plugin.getLogger().info("Socket Server is listening on port " + Config.config.getInt("Socket.Server_Port"));
+                plugin.getLogger().info("Socket Server is listening on port " + Config.config.getInt("Socket.Server_Port"));
 
                 while (running)
                 {
@@ -110,14 +99,14 @@ public class SocketSwitch
                             socket.close();
                             break;
                         }
-                        this.plugin.getLogger().info("New client connected");
+                        plugin.getLogger().info("New client connected");
                         new SocketServerThread(socket, plugin).start();
                     }
                     catch (Exception e)
                     {
                         if (running) 
                         {
-                            this.plugin.getLogger().severe("Error accepting client connection");
+                            plugin.getLogger().severe("Error accepting client connection");
                             e.printStackTrace();
                         }
                     }
@@ -125,7 +114,7 @@ public class SocketSwitch
             }
             catch (Exception e)
             {
-                this.plugin.getLogger().severe("Socket Server socket error");
+                plugin.getLogger().severe("Socket Server socket error");
                 e.printStackTrace();
             } 
            finally

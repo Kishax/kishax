@@ -131,9 +131,11 @@ public class FMCCommand implements SimpleCommand
             case "perm":
             	Main.getInjector().getInstance(Perm.class).execute(source, args);
                 break;
+                
             case "test":
             	Main.getInjector().getInstance(Test.class).execute(source, args);
             	break;
+            	
             default:
                 source.sendMessage(Component.text("Unknown subcommand: " + subCommand));
         }
@@ -178,12 +180,14 @@ public class FMCCommand implements SimpleCommand
                             ret.add(server.getServerInfo().getName());
                         }
                         return ret;
+                        
                     case "perm":
                         for (String args1 : Perm.args1)
                         {
                             ret.add(args1);
                         }
                         return ret;
+                        
                     default:
                         return Collections.emptyList();
                 }

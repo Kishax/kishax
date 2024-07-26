@@ -10,19 +10,19 @@ import net.luckperms.api.messaging.MessagingService;
 public class Luckperms
 {
 	// なお、LuckPerms = net.luckperms.api.LuckPerms, Luckperms = velocity.Luckperm
-	private final LuckPerms lp;
+	private final LuckPerms lpapi;
 	private final Logger logger;
 	
 	@Inject
-	public Luckperms(LuckPerms lp, Logger logger)
+	public Luckperms(LuckPerms lpapi, Logger logger)
 	{
-		this.lp = lp;
+		this.lpapi = lpapi;
 		this.logger = logger;
 	}
 	
 	public void triggerNetworkSync()
 	{
-        MessagingService messagingService = lp.getMessagingService().orElse(null);
+        MessagingService messagingService = lpapi.getMessagingService().orElse(null);
 
         if (messagingService != null)
         {

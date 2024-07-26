@@ -21,7 +21,7 @@ import net.md_5.bungee.api.chat.hover.content.Text;
 
 public class FMCCommand implements CommandExecutor,TabExecutor{
 	
-	private List<String> subcommands = new ArrayList<>(Arrays.asList("reload","potion","medic","fly","test"));
+	private List<String> subcommands = new ArrayList<>(Arrays.asList("reload","potion","medic","fly","test","fv"));
 	public common.Main plugin;
 	
 	public FMCCommand(common.Main plugin2)
@@ -48,6 +48,8 @@ public class FMCCommand implements CommandExecutor,TabExecutor{
     			        .append(ChatColor.AQUA+"\n\n/fmc test <arg-1>")
     			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc test "))
     			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("第一引数を返します！(クリックしてコピー)")))
+    			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc fv "))
+    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("プロキシコマンドをフォワードします！(クリックしてコピー)")))
     			        .append(ChatColor.AQUA+"\n\n/fmc medic")
     			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc medic"))
     			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ライフが回復します！(クリックしてコピー)")))
@@ -65,6 +67,10 @@ public class FMCCommand implements CommandExecutor,TabExecutor{
 
       switch (args[0].toLowerCase())
       {
+      	  case "fv":
+      		  new CommandForward(sender, cmd, label, args);
+      		  return true;
+      		  
 	      case "reload":
 	    	  new ReloadConfig(sender, cmd, label, args);
 	    	  return true;

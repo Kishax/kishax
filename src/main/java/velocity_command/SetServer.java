@@ -97,7 +97,7 @@ public class SetServer
     			{
     				if(mine_status.next())
         			{
-        				if(mine_status.getBoolean(args[1].toString()))
+        				if(mine_status.getBoolean(args[1]))
         				{
         					// オンライン
         					if(minecrafts.getBoolean("confirm"))
@@ -115,7 +115,7 @@ public class SetServer
         		    			ps.executeUpdate();
         		    			
         		    			TextComponent component = Component.text()
-        		    						.append(Component.text(args[1].toString()+"サーバーは現在").color(NamedTextColor.WHITE))
+        		    						.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
         			    			    	.append(Component.text("オンライン").color(NamedTextColor.AQUA))
         			    			    	.append(Component.text("です。\nサーバーに入りますか？\n").color(NamedTextColor.WHITE))
         			    			    	.append(Component.text("YES")
@@ -173,7 +173,7 @@ public class SetServer
         						//メモリの確認
         						int sum_memory = 0;
         						//現在オンラインのサーバーのメモリ合計を取得
-        						for (RegisteredServer server : this.server.getAllServers())
+        						for (RegisteredServer server : server.getAllServers())
         						{
         							if(mine_status.getBoolean(server.getServerInfo().getName()))
         							{

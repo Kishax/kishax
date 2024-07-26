@@ -24,13 +24,15 @@ public class SocketSwitch
 	private final Main plugin;
 	private final Config config;
 	private final Logger logger;
+	private final SocketResponse sr;
 	
 	@Inject
-	public SocketSwitch(Main plugin,Logger logger,Config config)
+	public SocketSwitch(Main plugin,Logger logger,Config config, SocketResponse sr)
 	{
 		this.plugin = plugin;
 		this.logger = logger;
 		this.config = config;
+		this.sr = sr;
 	}
 	
 	//Client side
@@ -44,9 +46,7 @@ public class SocketSwitch
 		logger.info("Client Socket is Available");
         clientThread = new Thread(() ->
         {
-        	
             String hostname = "localhost";
-            
             try
             (
             	Socket socket = new Socket(hostname, config.getInt("Socket.Client_Port"));
@@ -54,7 +54,6 @@ public class SocketSwitch
             	DataInputStream in = new DataInputStream(socket.getInputStream())
             )
             {
-
                 // 送信するデータの準備
                 ByteArrayDataOutput dataOut = ByteStreams.newDataOutput();
                 dataOut.writeUTF(sendmsg); // 例として文字列を送信
@@ -82,7 +81,6 @@ public class SocketSwitch
 
         clientThread.start();
     }
-
 	
     public void stopSocketClient()
     {
@@ -126,8 +124,8 @@ public class SocketSwitch
                             socket.close();
                             break;
                         }
-                        logger.info("New client connected");
-                        new SocketServerThread(socket,plugin).start();
+                        logger.info("New client connected(Non Buffered)");
+                        new SocketServerThread(socket, plugin, sr).start();
                     }
                     catch (Exception e)
                     {
@@ -188,8 +186,8 @@ public class SocketSwitch
                             socket2.close();
                             break;
                         }
-                        logger.info("New client connected");
-                        new BufferedSocketServerThread(socket2,plugin).start();
+                        logger.info("New client connected(Buffered)");
+                        new BufferedSocketServerThread(socket2, plugin, logger, sr).start();
                     }
                     catch (Exception e)
                     {

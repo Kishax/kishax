@@ -129,6 +129,10 @@ public class Main extends Plugin
         	broadcastMessage(res,null);
         	getLogger().info(res);
     	}
+    	else if (res.contains("起動"))
+    	{
+    		broadcastMessage(ChatColor.AQUA+res,null);
+    	}
     	else
     	{	
     		// Discordからのメッセージ処理

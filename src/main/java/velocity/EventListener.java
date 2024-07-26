@@ -27,7 +27,7 @@ import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import common.DiscordWebhook;
@@ -47,6 +47,7 @@ public class EventListener
 	private final Config config;
 	private final Logger logger;
 	private final DatabaseInterface db;
+	private final BroadCast bc;
 	
 	public Connection conn = null;
 	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null;
@@ -54,13 +55,14 @@ public class EventListener
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public EventListener(Main plugin, Logger logger, ProxyServer server,Config config, DatabaseInterface db)
+	public EventListener(Main plugin, Logger logger, ProxyServer server,Config config, DatabaseInterface db, BroadCast bc)
 	{
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
 		this.config = config;
 		this.db = db;
+		this.bc = bc;
 	}
 	
 	@Subscribe
@@ -82,7 +84,7 @@ public class EventListener
 	public void onServerSwitch(ServerConnectedEvent e)
 	{
 		Player player = e.getPlayer();
-		ServerConnection serverConnection = (ServerConnection) e.getServer();
+		RegisteredServer serverConnection = e.getServer();
         ServerInfo serverInfo = serverConnection.getServerInfo();
         if(Objects.isNull(serverInfo))
         {
@@ -285,11 +287,11 @@ public class EventListener
 				logger.info("Player connected to server: " + serverInfo.getName());
 				if(serverInfo.getName().equalsIgnoreCase(config.getString("hub")))
 				{
-					this.plugin.broadcastMessage(NamedTextColor.AQUA+player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーにやってきました！",serverInfo.getName());
+					bc.broadcastMessage(player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーにやってきました！", NamedTextColor.AQUA, serverInfo.getName());
 				}
 				else
 				{
-					this.plugin.broadcastMessage(NamedTextColor.AQUA+"サーバー移動通知: "+player.getUsername()+" -> "+serverInfo.getName(), serverInfo.getName());
+					bc.broadcastMessage("サーバー移動通知: "+player.getUsername()+" -> "+serverInfo.getName(), NamedTextColor.AQUA, serverInfo.getName());
 				}
 				
 				

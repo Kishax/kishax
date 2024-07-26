@@ -17,6 +17,7 @@ public class Main
 	public PreparedStatement ps = null;
 	public common.Main plugin;
 	public SocketSwitch ssw;
+	public static Main instance;
 	
 	public Main(common.Main plugin)
 	{
@@ -25,18 +26,20 @@ public class Main
 	
 	public void onEnable()
     {
-		this.plugin.getLogger().info("Detected Spigot platform.");
+		instance = this;
 		
-	    ssw = new SocketSwitch(this.plugin);
+		plugin.getLogger().info("Detected Spigot platform.");
 		
-	    this.plugin.saveDefaultConfig();
+	    ssw = new SocketSwitch(plugin);
 		
-    	FileConfiguration config = this.plugin.getConfig();
+	    plugin.saveDefaultConfig();
+		
+    	FileConfiguration config = plugin.getConfig();
     	new Config(config);
     	
-    	this.plugin.getServer().getPluginManager().registerEvents(new EventListener(this.plugin,ssw), this.plugin);
+    	plugin.getServer().getPluginManager().registerEvents(new EventListener(plugin,ssw), plugin);
         
-    	this.plugin.getCommand("fmc").setExecutor(new FMCCommand(this.plugin));
+    	plugin.getCommand("fmc").setExecutor(new FMCCommand(plugin));
         
         try
 		{
@@ -50,9 +53,9 @@ public class Main
 				ps.setBoolean(1,true);
 				ps.executeUpdate();
 				
-				this.plugin.getLogger().info("MySQL Server is connected!");
+				plugin.getLogger().info("MySQL Server is connected!");
 			}
-			else this.plugin.getLogger().info("MySQL Server is canceled for config value not given");
+			else plugin.getLogger().info("MySQL Server is canceled for config value not given");
 		}
 		catch (SQLException | ClassNotFoundException e)
 		{
@@ -63,13 +66,21 @@ public class Main
         	Database.close_resorce(null, conn, ps);
         }
         
-        //startSocketServer();
-        
-	    ssw.startSocketClient(ChatColor.GREEN+Config.config.getString("Server")+"サーバーが起動しました。");
+	    ssw.startSocketClient(Config.config.getString("Server")+"サーバーが起動しました。\n");
 	    
-	    this.plugin.getLogger().info("プラグインが有効になりました。");
+	    plugin.getLogger().info("プラグインが有効になりました。");
     }
     
+	public static Main getMaininstance()
+	{
+		return instance;
+	}
+	
+	public SocketSwitch getSocket()
+	{
+		return ssw;
+	}
+	
     public void onDisable()
     {
     	try
@@ -91,7 +102,7 @@ public class Main
     	
     	ssw.stopSocketServer();
     	
-    	this.plugin.getLogger().info("Socket Server stopping...");
-    	this.plugin.getLogger().info("プラグインが無効になりました。");
+    	plugin.getLogger().info("Socket Server stopping...");
+    	plugin.getLogger().info("プラグインが無効になりました。");
     }
 }

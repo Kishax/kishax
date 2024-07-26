@@ -11,10 +11,13 @@ public class SocketServerThread extends Thread
 {
     private Socket socket;
     public Main plugin;
-    public SocketServerThread(Socket socket, Main plugin)
+    public SocketResponse sr;
+    
+    public SocketServerThread(Socket socket, Main plugin, SocketResponse sr)
     {
         this.socket = socket;
         this.plugin = plugin;
+        this.sr = sr;
     }
 
     public void run()
@@ -33,11 +36,11 @@ public class SocketServerThread extends Thread
             // 受信したデータの処理
             ByteArrayDataInput dataIn = ByteStreams.newDataInput(data);
             String receivedMessage = dataIn.readUTF();
-            this.plugin.resaction(receivedMessage);
+            sr.resaction(receivedMessage);
             
             // レスポンスの準備
             ByteArrayDataOutput dataOut = ByteStreams.newDataOutput();
-            this.plugin.sendresponse(receivedMessage,dataOut);
+            sr.sendresponse(receivedMessage,dataOut);
             dataOut.writeUTF("Hello, Client!"); // 例として文字列を返す
 
             // レスポンスの送信
