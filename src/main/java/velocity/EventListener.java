@@ -25,6 +25,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -48,14 +49,19 @@ public class EventListener
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final BroadCast bc;
-	
+	private final ConsoleCommandSource console;
 	public Connection conn = null;
 	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null;
 	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs};
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public EventListener(Main plugin, Logger logger, ProxyServer server,Config config, DatabaseInterface db, BroadCast bc)
+	public EventListener
+	(
+		Main plugin, Logger logger, ProxyServer server,
+		Config config, DatabaseInterface db, BroadCast bc,
+		ConsoleCommandSource console
+	)
 	{
 		this.plugin = plugin;
 		this.logger = logger;
@@ -63,6 +69,7 @@ public class EventListener
 		this.config = config;
 		this.db = db;
 		this.bc = bc;
+		this.console = console;
 	}
 	
 	@Subscribe
@@ -74,10 +81,10 @@ public class EventListener
 	    Player player = e.getPlayer();
 	    String originalMessage = e.getMessage();
 	    
-	    this.server.getScheduler().buildTask(plugin, () ->
+	    server.getScheduler().buildTask(plugin, () ->
 	    {
 	    	// Chatをローマ字→かな→漢字にできる"何か"を探すまで待機
-	    });
+	    }).schedule();
 	}
 	
 	@Subscribe
@@ -98,7 +105,7 @@ public class EventListener
         	return;
         }
         
-		this.server.getScheduler().buildTask(plugin, () ->
+		server.getScheduler().buildTask(plugin, () ->
 		{
 			try
 			{
@@ -318,7 +325,7 @@ public class EventListener
 			{
 				db.close_resorce(resultsets,conn,ps);
 			}
-		});
+		}).schedule();
 	}
 	
 	public void sendChatToDiscord(Player player,String message)
@@ -388,46 +395,57 @@ public class EventListener
     public void onPlayerDisconnect(DisconnectEvent e)
     {
     	Player player = e.getPlayer();
-    	try
+    	
+        server.getScheduler().buildTask(plugin, () ->
     	{
-    		conn = db.getConnection();
-    		
-    		// calc playtime
-    		String sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
-    		ps = conn.prepareStatement(sql);
-    		ps.setString(1, player.getUniqueId().toString());
-    		ps.setBoolean(2, true);
-    		bj_logs = ps.executeQuery();
-    		
-    		if(bj_logs.next())
-    		{
-    			long now_timestamp = Instant.now().getEpochSecond();
-                Timestamp bj_time = bj_logs.getTimestamp("time");
-                long bj_timestamp = bj_time.getTime() / 1000L;
-    			
-    			long bj_sa = now_timestamp-bj_timestamp;
-        		
-    			int int_bj_sa = (int) bj_sa;
-    					
-        		// add log
-        		sql = "INSERT INTO mine_log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
-        		ps = conn.prepareStatement(sql);
-        		ps.setString(1, player.getUsername());
-        		ps.setString(2, player.getUniqueId().toString());
-        		ps.setString(3, player.getCurrentServer().toString());
-        		ps.setBoolean(4, true);
-        		ps.setInt(5, int_bj_sa);
-        		ps.executeUpdate();
-    		}
-    	}
-    	catch (SQLException | ClassNotFoundException e1)
-		{
-            e1.printStackTrace();
-        }
-    	finally
-    	{
-    		db.close_resorce(resultsets, conn, ps);
-    	}
+			// プレイヤーが最後にいたサーバーを取得
+	        player.getCurrentServer().ifPresent(currentServer ->
+	        {
+	            RegisteredServer server = currentServer.getServer();
+	            String serverName = server.getServerInfo().getName();
+	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverName).color(NamedTextColor.GREEN));
+	            try
+	        	{
+	            	conn = db.getConnection();
+	        		
+	        		// calc playtime
+	        		String sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
+	        		ps = conn.prepareStatement(sql);
+	        		ps.setString(1, player.getUniqueId().toString());
+	        		ps.setBoolean(2, true);
+	        		bj_logs = ps.executeQuery();
+	        		
+	        		if(bj_logs.next())
+	        		{
+	        			long now_timestamp = Instant.now().getEpochSecond();
+	                    Timestamp bj_time = bj_logs.getTimestamp("time");
+	                    long bj_timestamp = bj_time.getTime() / 1000L;
+	        			
+	        			long bj_sa = now_timestamp-bj_timestamp;
+	            		
+	        			int int_bj_sa = (int) bj_sa;
+	        					
+	            		// add log
+	            		sql = "INSERT INTO mine_log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
+	            		ps = conn.prepareStatement(sql);
+	            		ps.setString(1, player.getUsername());
+	            		ps.setString(2, player.getUniqueId().toString());
+	            		ps.setString(3, serverName);
+	            		ps.setBoolean(4, true);
+	            		ps.setInt(5, int_bj_sa);
+	            		ps.executeUpdate();
+	        		}
+	        	}
+	        	catch (SQLException | ClassNotFoundException e1)
+	    		{
+	                e1.printStackTrace();
+	            }
+	        	finally
+	        	{
+	        		db.close_resorce(resultsets, conn, ps);
+	        	}
+	        });
+    	}).schedule();
     }
     
     public String getPlayerNameFromUUID(UUID uuid)
