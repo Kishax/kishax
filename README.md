@@ -4,22 +4,22 @@
 ### `/hub`
 ### `/fmcp hub`
 Moving to hub server<br>
-### `/fmcp maintenance <status | switch\> discord <true | false\>`
+### `/fmcp maintenance <status | switch> discord <true | false>`
 This enable server to be maintenance mode, which is that for example, it is openable for only Admin who has permission:group.super-admin, others disconnecting.<br>
 If arg5 sets "true", server can notify to Discord whether maintenance mode is true or not.<br>
 ### `/fmcp perm <add | remove | list> [Short:permission] [target:player]`
 Adding or removing permission written in config.yml by adding or removing permission in mysql database for luckperm MySQL mode.
-### `/fmcp ss <server\>`
+### `/fmcp ss <server>`
 Getting server status and checking whether you have FMC account from MySQL<br>
 In FMC Server, using python script for getting minecrafts' status<br>
 >Here is [python scripts](https://github.com/bella2391/Mine_Status)<br>
-### `/fmcp stp <server\>`
+### `/fmcp stp <server>`
 Moving to specific server as server command
-### `/fmcp req <server\>`
+### `/fmcp req <server>`
 Requesting to let server start-up to Admin through discord and python<br>
 In FMC Server, using python and php script for requesting to Discord<br>
 >Here is [python and php scripts](https://github.com/bella2391/Discord_Button)
-### `/fmcp start <server\>`
+### `/fmcp start <server>`
 Let server start by bat file of windows
 ### `/fmcp cancel`
 Only sending "canceled event"
@@ -46,15 +46,15 @@ Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
   socket_close($socket);
 ```
 ## Spigot Command list
-### `/fmc fv <cmd\>`
+### `/fmc fv <cmd>`
 Forwarding Velocity's command in Spigot
 ### `/fmc fly`
 Flying in survival mode
 ### `/fmc reload`
 Reloading config
-### `/fmc potion <potion-effect-type\>`
+### `/fmc potion <potion-effect-type>`
 Adding potion effect within a radius of 5 squares
-### `/fmc test <arg-1\>`
+### `/fmc test <arg-1>`
 Only returning arg-1 player writes
 
 ## Dependancy
