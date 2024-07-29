@@ -26,8 +26,8 @@ Only sending "canceled event"
 ## Socket Server
 Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
 ### Reason
-・Communication Available even when players are offline<br>
-・Not Java, for example, PHP can be access to it.<br>
+*Communication Available even when players are offline<br>
+*Not Java, for example, PHP can be access to it.<br>
 #### Here is PHP example code
 ```
 <?php
@@ -59,4 +59,7 @@ Only returning arg-1 player writes
 
 ## Dependancy
 >- Luckperm (for managing permission)
->- LunaChat (for sending translated chat contents to Discord)
+
+## Lisence
+This project is licensed under the MIT License, see the LICENSE.txt file for details
+
