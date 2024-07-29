@@ -58,7 +58,7 @@ Adding potion effect within a radius of 5 squares
 Only returning arg-1 player writes
 
 ## Dependancy
->- [Luckperms](https://github.com/LuckPerms/LuckPerms)
+* [Luckperms](https://github.com/LuckPerms/LuckPerms)
 
 ## Lisence
 This project is licensed under the MIT License, see the LICENSE.txt file for details
