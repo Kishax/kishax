@@ -2,23 +2,26 @@
 >## This is able to use in both Velocity and spigot.<br>But this is created for myself for my server.<br>So this plugin is maybe good for plugin developers.<br>Freely to edit!<br>
 ## Velocity Command list
 ### /hub
-### /fmcb hub
+### /fmcp hub
 Moving to hub server<br>
-### /fmcb perm <add | remove | list> [Short:permission] [target:player]
+### /fmcp maintenance \<status | switch\> discord \<true | false\>
+This enable server to be maintenance mode, which is that for example, it is openable for only Admin who has permission:group.super-admin, others disconnecting.<br>
+If arg5 sets "true", server can notify to Discord whether maintenance mode is true or not.<br>
+### /fmcp perm <add | remove | list> [Short:permission] [target:player]
 Adding or removing permission written in config.yml by adding or removing permission in mysql database for luckperm MySQL mode.
-### /fmcb ss \<server\>
+### /fmcp ss \<server\>
 Getting server status and checking whether you have FMC account from MySQL<br>
 In FMC Server, using python script for getting minecrafts' status<br>
 >Here is [python scripts](https://github.com/bella2391/Mine_Status)<br>
-### /fmcb stp \<server\>
+### /fmcp stp \<server\>
 Moving to specific server as server command
-### /fmcb req \<server\>
+### /fmcp req \<server\>
 Requesting to let server start-up to Admin through discord and python<br>
 In FMC Server, using python and php script for requesting to Discord<br>
 >Here is [python and php scripts](https://github.com/bella2391/Discord_Button)
-### /fmcb start \<server\>
+### /fmcp start \<server\>
 Let server start by bat file of windows
-### /fmcb cancel
+### /fmcp cancel
 Only sending "canceled event"
 ## Socket Server
 Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
@@ -43,6 +46,8 @@ Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
   socket_close($socket);
 ```
 ## Spigot Command list
+### /fmc fv \<cmd\>
+Forwarding Velocity's command in Spigot
 ### /fmc fly
 Flying in survival mode
 ### /fmc reload
