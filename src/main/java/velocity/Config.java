@@ -84,10 +84,10 @@ public class Config
                 // 読み込みと新規内容の追加
                 String existingContent = Files.readString(configPath);
                 String addContents = "\n\nServers:\n    Hub: \"\"\n    Request_Path: \"\"\n    Memory_Limit: ";
-                addContents += "\n\n    Velocity:\n        Memory: ";
+                addContents += "\n\n    Proxy:\n        Memory: ";
                 
                 // 例: サーバー名を追加する部分
-                for (RegisteredServer server : this.server.getAllServers())
+                for (RegisteredServer server : server.getAllServers())
                 {
                 	addContents += "\n    "+server.getServerInfo().getName()+":";
                 	addContents += "\n        Memory: ";

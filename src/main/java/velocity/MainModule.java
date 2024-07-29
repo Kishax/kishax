@@ -1,7 +1,6 @@
 package velocity;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 
@@ -59,6 +58,8 @@ public class MainModule extends AbstractModule
         bind(DatabaseInterface.class).to(Database.class);
         bind(BroadCast.class);
         bind(SocketResponse.class);
-        bind(PlayerList.class);
+        bind(velocity.PlayerList.class);
+        bind(RomaToKanji.class);
+        bind(PlayerDisconnect.class);
     }
 }

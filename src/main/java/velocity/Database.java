@@ -5,60 +5,33 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 public class Database implements DatabaseInterface
 {
 	private final Config config;
     private Connection conn = null;
-    private PreparedStatement ps = null;
-    private boolean firstonline = false;
-    private final Logger logger;
+    public ResultSet mine_status = null;
+	public ResultSet[] resultsets = {mine_status};
     
     @Inject
-    public Database(Logger logger, Config config)
+    public Database(Main plugin, ProxyServer server, Logger logger, Config config, ConsoleCommandSource console)
     {
-    	this.logger = logger;
     	this.config = config;
     }
 
-    @Inject
-    @Override
-	public void DoServerOnline()
-	{
-    	if(!(firstonline))
-    	{
-    		firstonline = true;
-    		return;
-    	}
-    		
-		try
-		{
-			conn = getConnection();
-			if(Objects.nonNull(conn))
-			{
-				String sql = "UPDATE mine_status SET Proxi=? WHERE id=1;";
-				ps = conn.prepareStatement(sql);
-				ps.setBoolean(1,true);
-				ps.executeUpdate();
-				logger.info("MySQL Server is connected!");
-			}
-			else logger.info("MySQL Server is canceled for config value not given");
-		}
-		catch (ClassNotFoundException | SQLException e1)
-		{
-			e1.printStackTrace();
-		}
-		finally
-		{
-			close_resorce(null,conn,ps);
-		}
-	}
-    
     @Override
 	public Connection getConnection() throws SQLException, ClassNotFoundException
 	{

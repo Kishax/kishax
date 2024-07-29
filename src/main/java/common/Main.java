@@ -19,10 +19,10 @@ public class Main extends JavaPlugin
             {
             	// Velocityプラグインは自動的にインスタンス化されるので、ここでは何もしない
             }
-            else if(isBungeeCord())
+            /*else if(isBungeeCord())
             {
             	new bungee.Main().onEnable();
-            }
+            }*/
             else
             {
                 new spigot.Main(this).onEnable();
@@ -43,11 +43,10 @@ public class Main extends JavaPlugin
             {
                 //
             }
-            else if(isBungeeCord())
+            /*else if(isBungeeCord())
             {
-            	// Call BungeeCord-specific initialization
                 new bungee.Main().onDisable();
-            }
+            }*/
             else
             {
             	new spigot.Main(this).onDisable();
@@ -59,10 +58,10 @@ public class Main extends JavaPlugin
         }
     }
     
-    private boolean isBungeeCord()
+    /*private boolean isBungeeCord()
     {
         return Objects.nonNull(getClass().getClassLoader().getResource("net/md_5/bungee/api/plugin/Plugin.class"));
-    }
+    }*/
 
     private boolean isVelocity()
     {

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -32,20 +33,22 @@ public class StartServer
 	private final Config config;
 	private final Logger logger;
 	private final DatabaseInterface db;
+	private final ConsoleCommandSource console;
 	
 	public Connection conn = null;
-	public ResultSet minecrafts = null, status = null;
-	public ResultSet[] resultsets = {minecrafts,status};
+	public ResultSet minecrafts = null, mine_status = null;
+	public ResultSet[] resultsets = {minecrafts,mine_status};
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public StartServer(Main plugin,ProxyServer server, Logger logger, Config config, DatabaseInterface db)
+	public StartServer(Main plugin,ProxyServer server, Logger logger, Config config, DatabaseInterface db, ConsoleCommandSource console)
 	{
 		this.plugin = plugin;
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
+		this.console = console;
 	}
 	
 	public void execute(CommandSource source,String[] args)
@@ -85,13 +88,12 @@ public class StartServer
 	    			ps.setString(1,player.getUniqueId().toString());
 	    			ResultSet minecrafts = ps.executeQuery();
 	    			
-					sql = "SELECT "+args[1]+" FROM mine_status WHERE id=1;";
+					sql = "SELECT * FROM mine_status WHERE name=?;";
 					ps = conn.prepareStatement(sql);
-					ResultSet status = ps.executeQuery();
+					ps.setString(1,args[1]);
+					ResultSet mine_status = ps.executeQuery();
 					if(minecrafts.next())
 					{
-						
-						
 						//初参加のプレイヤーのsst,req,stカラムはnull値を返すので
 						if(Objects.nonNull(minecrafts.getTimestamp("sst")) && Objects.nonNull(minecrafts.getTimestamp("st")))
 						{
@@ -123,9 +125,9 @@ public class StartServer
 					        }
 						}
 	    		        
-						if(status.next())
+						if(mine_status.next())
 						{
-							if(status.getBoolean(args[1]))
+							if(mine_status.getBoolean("online"))
 							{
 								player.sendMessage(Component.text(args[1]+"サーバーは起動中です。").color(NamedTextColor.RED));
 								logger.info(NamedTextColor.RED+args[1]+"サーバーは起動中です。");
@@ -159,11 +161,12 @@ public class StartServer
         									.build();
         						
         						player.sendMessage(component);
-					            logger.info(NamedTextColor.GREEN+args[1]+"サーバーがまもなく起動します。");
+					            console.sendMessage(Component.text(args[1]+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
 					            
-					            sql = "UPDATE mine_status SET "+args[1]+"=? WHERE id=1;";
+					            sql = "UPDATE mine_status SET online=? WHERE name=?;";
 					            ps = conn.prepareStatement(sql);
 				            	ps.setBoolean(1, true);
+				            	ps.setString(2, args[1]);
 				            	ps.executeUpdate();
 				            	
 				            	// add log

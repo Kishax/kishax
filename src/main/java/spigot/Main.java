@@ -2,9 +2,9 @@ package spigot;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
-import net.md_5.bungee.api.ChatColor;
 import spigot_command.FMCCommand;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -43,14 +43,21 @@ public class Main
         
         try
 		{
+        	// "plugins"ディレクトリの親ディレクトリを取得
+            File dataFolder = plugin.getDataFolder();
+            String grandDir = getParentDir(dataFolder);
+            
 			conn = Database.getConnection();
-			// サーバーをオンラインに
-			if(Objects.nonNull(conn))
+			
+			if(Objects.nonNull(conn) && Objects.nonNull(grandDir))
 			{
 				// サーバーをオンラインに
-				String sql = "UPDATE mine_status SET "+Config.config.getString("Server")+"=? WHERE id=1;";
+				ssw.startSocketClient(grandDir+"サーバーが起動しました。");
+				plugin.getLogger().info(grandDir+"サーバーが起動しました。");
+				String sql = "UPDATE mine_status SET online=? WHERE name=?;";
 				ps = conn.prepareStatement(sql);
 				ps.setBoolean(1,true);
+				ps.setString(2, grandDir);
 				ps.executeUpdate();
 				
 				plugin.getLogger().info("MySQL Server is connected!");
@@ -66,11 +73,32 @@ public class Main
         	Database.close_resorce(null, conn, ps);
         }
         
-	    ssw.startSocketClient(Config.config.getString("Server")+"サーバーが起動しました。\n");
-	    
 	    plugin.getLogger().info("プラグインが有効になりました。");
     }
     
+	private String getParentDir(File dataFolder)
+	{
+		// サーバーのホームディレクトリを取得
+        File serverHomeDirectory = dataFolder.getParentFile();
+        
+        // ホームディレクトリ名を取得
+        String homeDirectoryPath = serverHomeDirectory.getAbsolutePath();
+        
+        // Fileオブジェクトを作成
+        File file = new File(homeDirectoryPath);
+        
+        // "plugins"ディレクトリの親ディレクトリを取得
+        File parentDir = file.getParentFile();
+        
+        // 親ディレクトリが存在するか確認
+        if (Objects.nonNull(parentDir))
+        {
+            // 親ディレクトリの名前を取得
+        	return parentDir.getName();
+        }
+        return null;
+	}
+	
 	public static Main getMaininstance()
 	{
 		return instance;

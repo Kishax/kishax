@@ -46,7 +46,7 @@ public class PlayerList
 			}
 			isLoaded = true;
 		}
-		catch(SQLException | ClassNotFoundException e)
+		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
@@ -73,7 +73,7 @@ public class PlayerList
 				Players.add(playerlist.getString("name"));
 			}
 		}
-		catch(SQLException | ClassNotFoundException e)
+		catch(Exception e)
 		{
 			e.printStackTrace();
 		}

@@ -25,18 +25,16 @@ import java.util.List;
 public class FMCCommand implements SimpleCommand
 {
     private final ProxyServer server;
-    private final Logger logger;
     private final Config config;
     private final PlayerList pl;
     
-    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","test"));
+    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","test","maintenance"));
     public List<String> anylists = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
     public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerList pl)
     {
         this.server = server;
-        this.logger = logger;
         this.config = config;
         this.pl = pl;
     }
@@ -49,7 +47,7 @@ public class FMCCommand implements SimpleCommand
 
         if (args.length == 0 || !subcommands.contains(args[0].toLowerCase()))
         {
-            if (source.hasPermission("fmc.proxi.commandslist"))
+            if (source.hasPermission("fmc.proxy.commandslist"))
             {
                 TextComponent component = Component.text()
                         .append(Component.text("FMC COMMANDS LIST").color(NamedTextColor.YELLOW).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
@@ -78,6 +76,12 @@ public class FMCCommand implements SimpleCommand
                         .append(Component.text("\n\n/fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp perm "))
                                 .hoverEvent(HoverEvent.showText(Component.text("ユーザーに対して権限の追加と除去"))))
+                        .append(Component.text("\n\n/fmcp test").color(NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.suggestCommand("/fmcp test"))
+                                .hoverEvent(HoverEvent.showText(Component.text("ConfigのDebug.Testの値を参照"))))
+                        .append(Component.text("\n\n/fmcb　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.suggestCommand("/fmcp maintenance "))
+                                .hoverEvent(HoverEvent.showText(Component.text("メンテナンスモードの切り替え"))))
                         .build();
                 source.sendMessage(component);
             }
@@ -136,6 +140,10 @@ public class FMCCommand implements SimpleCommand
             	Main.getInjector().getInstance(Test.class).execute(source, args);
             	break;
             	
+            case "maintenance":
+            	Main.getInjector().getInstance(Maintenance.class).execute(source, args);
+            	break;
+            	
             default:
                 source.sendMessage(Component.text("Unknown subcommand: " + subCommand));
         }
@@ -154,13 +162,13 @@ public class FMCCommand implements SimpleCommand
             case 1:
                 for (String subcmd : subcommands)
                 {
-                    if (!source.hasPermission("fmc.proxi." + subcmd)) continue;
+                    if (!source.hasPermission("fmc.proxy." + subcmd)) continue;
                     ret.add(subcmd);
                 }
                 return ret;
 
             case 2:
-                if (!source.hasPermission("fmc.proxi." + args[0].toLowerCase())) return Collections.emptyList();
+                if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
 
                 switch (args[0].toLowerCase())
                 {
@@ -188,37 +196,81 @@ public class FMCCommand implements SimpleCommand
                         }
                         return ret;
                         
+                    case "maintenance":
+                    	for (String args1 : Maintenance.args1)
+                    	{
+                    		ret.add(args1);
+                    	}
+                    	return ret;
+                    	
                     default:
                         return Collections.emptyList();
                 }
             case 3:
-                if (!source.hasPermission("fmc.proxi." + args[0].toLowerCase())) return Collections.emptyList();
-
-                switch (args[1].toLowerCase())
+                if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
+                
+                switch (args[0].toLowerCase())
                 {
-                    case "add":
-                    case "remove":
-                        List<String> permS = config.getList("Permission.Short_Name");
-                        for (String permS1 : permS)
+                	case "perm":
+                		switch (args[1].toLowerCase())
                         {
-                            ret.add(permS1);
+                            case "add":
+                            case "remove":
+                                List<String> permS = config.getList("Permission.Short_Name");
+                                for (String permS1 : permS)
+                                {
+                                    ret.add(permS1);
+                                }
+                                return ret;
                         }
-                        return ret;
+                	case "maintenance":
+                		switch (args[1].toLowerCase())
+                        {
+                            case "switch":
+                            	for(String args2 : Maintenance.args2)
+                            	{
+                            		ret.add(args2);
+                            	}
+                            	return ret;
+                        }
                 }
             case 4:
-                if (!source.hasPermission("fmc.proxi." + args[0].toLowerCase())) return Collections.emptyList();
+                if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
 
-                pl.loadPlayers(); // プレイヤーリストをロード
-                List<String> permS = config.getList("Permission.Short_Name");
-                
-                if (permS.contains(args[2].toLowerCase()))
+                switch (args[0].toLowerCase())
                 {
-                    for (String player : pl.getPlayerList())
-                    {
-                        ret.add(player);
-                    }
+                	case "perm":
+                		switch (args[1].toLowerCase())
+                        {
+                            case "add":
+                            case "remove":
+                            	pl.loadPlayers(); // プレイヤーリストをロード
+                                List<String> permS = config.getList("Permission.Short_Name");
+                                
+                                if (permS.contains(args[2].toLowerCase()))
+                                {
+                                    for (String player : pl.getPlayerList())
+                                    {
+                                        ret.add(player);
+                                    }
+                                }
+                                return ret;
+                        }
+                	case "maintenance":
+                		switch (args[1].toLowerCase())
+                        {
+                            case "switch":
+                            	switch (args[2].toLowerCase())
+                            	{
+                            		case "discord":
+                            			for(String args3 : Maintenance.args3)
+                                    	{
+                                    		ret.add(args3);
+                                    	}
+                                    	return ret;
+                            	}
+                        }
                 }
-                return ret;
         }
         return Collections.emptyList();
     }

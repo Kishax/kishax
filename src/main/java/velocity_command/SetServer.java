@@ -89,15 +89,16 @@ public class SetServer
     			ps.setString(1,player.getUniqueId().toString());
     			minecrafts = ps.executeQuery();
     			
-    			sql = "SELECT * FROM mine_status WHERE id=1;";
+    			sql = "SELECT * FROM mine_status WHERE name=?;";
     			ps = conn.prepareStatement(sql);
+    			ps.setString(1,args[1]);
     			mine_status = ps.executeQuery();
     			
     			if(minecrafts.next())
     			{
     				if(mine_status.next())
         			{
-        				if(mine_status.getBoolean(args[1]))
+        				if(mine_status.getBoolean("online"))
         				{
         					// オンライン
         					if(minecrafts.getBoolean("confirm"))
@@ -175,7 +176,7 @@ public class SetServer
         						//現在オンラインのサーバーのメモリ合計を取得
         						for (RegisteredServer server : server.getAllServers())
         						{
-        							if(mine_status.getBoolean(server.getServerInfo().getName()))
+        							if(mine_status.getBoolean("online"))
         							{
         								sum_memory = sum_memory + config.getInt("Servers."+server.getServerInfo().getName()+".Memory",0);
         							}
@@ -183,8 +184,8 @@ public class SetServer
         						// 起動・起動リクエストしたいサーバーのメモリも足す
         						sum_memory = sum_memory + config.getInt("Servers."+args[1]+".Memory",0);
         						
-        						// BungeeCordのメモリも足す
-        						sum_memory = sum_memory + config.getInt("Servers.BungeeCord.Memory",0);
+        						// Proxyのメモリも足す
+        						sum_memory = sum_memory + config.getInt("Servers.Proxy.Memory",0);
         								
     							if(!(sum_memory<=config.getInt("Servers.Memory_Limit",0)))
     							{

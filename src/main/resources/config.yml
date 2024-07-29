@@ -1,6 +1,4 @@
 # FMC Configuration File
-Server: ""
-
 MySQL:
     Host: ""
     Database: ""

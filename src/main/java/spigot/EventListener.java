@@ -21,7 +21,5 @@ public final class EventListener implements Listener
 	{
     	Player player = e.getPlayer();
     	e.setJoinMessage(null);
-    	//e.setJoinMessage(ChatColor.YELLOW+player.getName()+"がサーバーに参加しました。");
-    	//this.socket.startSocketClient("サーバー移動通知: "+name+" -> "+SetConfig.server);
     }
 }

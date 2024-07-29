@@ -2,7 +2,6 @@ package velocity;
 
 import java.awt.Color;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -13,8 +12,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 
@@ -40,7 +43,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
 
-
 public class EventListener
 {
 	public final Main plugin;
@@ -50,9 +52,14 @@ public class EventListener
 	private final DatabaseInterface db;
 	private final BroadCast bc;
 	private final ConsoleCommandSource console;
+	private final RomaToKanji conv;
+	private String chatserverName = "";
+	private final PlayerList pl;
+	private final PlayerDisconnect pd;
+	
 	public Connection conn = null;
-	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null;
-	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs};
+	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
+	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs, ismente};
 	public PreparedStatement ps = null;
 	
 	@Inject
@@ -60,7 +67,8 @@ public class EventListener
 	(
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console
+		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
+		PlayerDisconnect pd
 	)
 	{
 		this.plugin = plugin;
@@ -70,6 +78,9 @@ public class EventListener
 		this.db = db;
 		this.bc = bc;
 		this.console = console;
+		this.conv = conv;
+		this.pl = pl;
+		this.pd = pd;
 	}
 	
 	@Subscribe
@@ -81,25 +92,178 @@ public class EventListener
 	    Player player = e.getPlayer();
 	    String originalMessage = e.getMessage();
 	    
-	    server.getScheduler().buildTask(plugin, () ->
-	    {
-	    	// Chatをローマ字→かな→漢字にできる"何か"を探すまで待機
-	    }).schedule();
+	    // プレイヤーの現在のサーバーを取得
+        player.getCurrentServer().ifPresent(serverConnection ->
+        {
+            RegisteredServer server = serverConnection.getServer();
+            chatserverName = server.getServerInfo().getName();
+        });
+        
+        // マルチバイト文字の長さを取得
+        int NameCount = player.getUsername().length();
+        
+        // スペースを生成
+        StringBuilder space = new StringBuilder();
+        for (int i = 0; i <= NameCount; i++)
+        {
+            space.append('\u0020');  // Unicodeのスペースを追加
+        }
+        
+        server.getScheduler().buildTask(plugin, () ->
+        {
+        	try
+    		{
+        		// 正規表現パターンを定義（URLを見つけるための正規表現）
+    		    String urlRegex = "https?://\\S+";
+    		    Pattern pattern = Pattern.compile(urlRegex);
+    		    Matcher matcher = pattern.matcher(originalMessage);
+
+    		    // URLリストを作成
+    		    List<String> urls = new ArrayList<>();
+    		    List<String> textParts = new ArrayList<>();
+
+    		    int lastMatchEnd = 0;
+    		    boolean isUrl = false;
+    		    String mixtext = "";
+
+    		    // マッチするものをリストに追加
+    		    while (matcher.find())
+    		    {
+    		        // URLが含まれていたら
+    		        isUrl = true;
+
+    		        // マッチしたURLをリストに追加
+    		        urls.add(matcher.group());
+
+    		        // URLの前のテキスト部分をリストに追加
+    		        textParts.add(originalMessage.substring(lastMatchEnd, matcher.start()));
+    		        lastMatchEnd = matcher.end();
+    		    }
+
+    		    Component component = Component.text(space+"(").color(NamedTextColor.GOLD);
+    		    // URLが含まれてなかったら
+    		    if (!isUrl)
+    		    {
+    		    	// 漢字の検出
+    		        String kanjiPattern = "[\\u4E00-\\u9FFF]+";
+    		        
+    		        // ひらがなの検出
+    		        String hiraganaPattern = "[\\u3040-\\u309F]+";
+    		        
+    		        // カタカナの検出
+    		        String katakanaPattern = "[\\u30A0-\\u30FF]+";
+    		        
+    		        if
+    		        (
+    		        	!detectMatches(originalMessage, kanjiPattern) &&
+    		        	!detectMatches(originalMessage, hiraganaPattern) &&
+    		        	!detectMatches(originalMessage, katakanaPattern)
+    		        )
+    		        {
+    		        	// 日本語でなかったら
+    		        	String kanaMessage = conv.ConvRomaToKana(originalMessage);
+        		        String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+        		        sendChatToDiscord(player, kanjiMessage);
+        		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
+        		        bc.broadcastComponent(component, chatserverName, true);
+        		        return;
+    		        }
+    		        else
+    		        {
+    		        	sendChatToDiscord(player, originalMessage);
+    		        	return;
+    		        }
+    		    }
+
+    		    // 最後のURLの後のテキスト部分を追加
+    		    if (lastMatchEnd < originalMessage.length())
+    		    {
+    		        textParts.add(originalMessage.substring(lastMatchEnd));
+    		    }
+
+    		    // テキスト部分を結合
+    		    int textPartsSize = textParts.size();
+    		    int urlsSize = urls.size();
+    		    //boolean isUrlLineBreak = false;
+    		    
+    		    for (int i = 0; i < textPartsSize; i++)
+    		    {
+    		        if (Objects.nonNull(textParts) && textPartsSize != 0)
+    		        {
+    		            String text = textParts.get(i);
+    		            String kanaMessage = conv.ConvRomaToKana(text);
+    		            String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+    		            mixtext += kanjiMessage;
+    		            component = component.append(Component.text(kanjiMessage).color(NamedTextColor.GOLD));
+    		        }
+
+    		        if (i < urlsSize)
+    		        {
+    		            String getUrl;
+    		            String getUrl2;
+    		            if (textParts.get(i).isEmpty())
+    		            {
+    		                // textがなかったら、先頭の改行は無くす(=URLのみ)
+    		                getUrl = urls.get(i);
+    		                getUrl2 = urls.get(i);
+    		            }
+    		            else if (i != textPartsSize - 1)
+    		            {
+    		                getUrl = "\\n" + urls.get(i) + "\\n";
+    		                getUrl2 = "\n" + space + urls.get(i);
+    		                
+    		                //if(i = urlsSize)
+    		                //isUrlLineBreak = true;
+    		            }
+    		            else
+    		            {
+    		                getUrl = "\\n" + urls.get(i);
+    		                getUrl2 = "\n" + space + urls.get(i);
+    		            }
+    		            mixtext += getUrl;
+    		            component = component.append(Component.text(getUrl2).color(NamedTextColor.GRAY).clickEvent(ClickEvent.openUrl(urls.get(i))).hoverEvent(HoverEvent.showText(Component.text("リンク"+(i+1)))));
+    		        }
+    		    }
+    		    
+    		    component = component.append(Component.text(")").color(NamedTextColor.GOLD));
+    		    bc.broadcastComponent(component, chatserverName, true);
+    		    sendChatToDiscord(player, mixtext);
+    		    return;
+    		}
+    		catch (Exception ex) {
+                ex.printStackTrace();
+    		}
+        }).schedule();
 	}
+	
+	public boolean detectMatches(String input, String pattern)
+	{
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(input);
+
+        while (matcher.find())
+        {
+            //String found = matcher.group();
+            //System.out.println(message + ": " + found);
+        	return true;
+        }
+        return false;
+    }
 	
 	@Subscribe
 	public void onServerSwitch(ServerConnectedEvent e)
 	{
+		
 		Player player = e.getPlayer();
 		RegisteredServer serverConnection = e.getServer();
         ServerInfo serverInfo = serverConnection.getServerInfo();
         if(Objects.isNull(serverInfo))
         {
-        	player_disconnect
+        	pd.playerDisconnect
         	(
         		false,
         		player,
-        		Component.text(ChatColor.RED+"コネクションエラー: 接続サーバー名が不明です。")
+        		Component.text("コネクションエラー: 接続サーバー名が不明です。").color(NamedTextColor.RED)
         	);
         	logger.error("コネクションエラー: 接続サーバー名が不明です。");
         	return;
@@ -112,15 +276,38 @@ public class EventListener
 				conn = db.getConnection();
 				if(Objects.isNull(conn))
 				{
-					player_disconnect
+					pd.playerDisconnect
 					(
 						false,
 						player,
-						Component.text(NamedTextColor.BLUE+"Database Server is closed now!!")
+						Component.text("Database Server is closed now!!").color(NamedTextColor.BLUE)
 					);
 				}
 				
-				String sql = "SELECT * FROM minecraft WHERE uuid=? ORDER BY id DESC LIMIT 1;";
+				String sql = "SELECT online FROM mine_status WHERE name=?;";
+				ps = conn.prepareStatement(sql);
+				ps.setString(1, "Maintenance");
+				ismente = ps.executeQuery();
+				
+				if(ismente.next())
+				{
+					if(ismente.getBoolean("online"))
+					{
+						if(!player.hasPermission("group.super-admin"))
+						{
+							pd.playerDisconnect
+							(
+								false,
+								player,
+								Component.text("現在メンテナンス中です。").color(NamedTextColor.BLUE)
+							);
+							return;
+						}
+						player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
+					}
+				}
+				
+				sql = "SELECT * FROM minecraft WHERE uuid=? ORDER BY id DESC LIMIT 1;";
 	            ps = conn.prepareStatement(sql);
 	            ps.setString(1, player.getUniqueId().toString());
 	            yuyu = ps.executeQuery();
@@ -141,11 +328,11 @@ public class EventListener
 	            	
 	            	if(yuyu.getBoolean("ban"))
 	            	{
-	            		player_disconnect
+	            		pd.playerDisconnect
 	            		(
 	            			true,
 	            			player,
-	            			Component.text(NamedTextColor.RED+"You are banned from this server.")
+	            			Component.text("You are banned from this server.").color(NamedTextColor.RED)
 	            		);
 	    				return;
 	            	}
@@ -195,11 +382,11 @@ public class EventListener
 	            			String current_name = getPlayerNameFromUUID(player.getUniqueId());
 	            			if(Objects.isNull(current_name) || !(current_name.equals(player.getUsername())))
 	            			{
-	            				player_disconnect
+	            				pd.playerDisconnect
 	            				(
 	            					true,
 	            					player,
-	            					Component.text(NamedTextColor.RED+"You are banned from this server.")
+	            					Component.text("You are banned from this server.").color(NamedTextColor.RED)
 	            				);
 	            				return;
 	            			}
@@ -243,7 +430,6 @@ public class EventListener
 	            	// DBにデータがなかったら (初参加)
 	            	// MojangAPIによるUUID-MCIDチェックも行う
 	            	// データベースに同一の名前がないか確認
-	            	
 	            	String current_name = getPlayerNameFromUUID(player.getUniqueId());
 	    			if(Objects.isNull(current_name) || !(current_name.equals(player.getUsername())) || yu.next())
 	    			{
@@ -255,11 +441,11 @@ public class EventListener
 	        			ps.setBoolean(4, true);
 	        			ps.executeUpdate();
 	        			
-	    				player_disconnect
+	        			pd.playerDisconnect
 	    				(
 	    					true,
 	    					player,
-	    					Component.text(NamedTextColor.RED+"You are banned from this server.")
+	    					Component.text("You are banned from this server.").color(NamedTextColor.RED)
 	    				);
 	    				return;
 	    			}
@@ -315,9 +501,11 @@ public class EventListener
 					player.sendMessage(component);
 				}
 				
-				Main.getInjector().getInstance(PlayerList.class).updatePlayers(); // プレイヤーリストをアップデート
+				// Amabassadorプラグインと競合している可能性あり
+				// Main.getInjector().getInstance(velocity.PlayerList.class).updatePlayers();
+				pl.updatePlayers();
 			}
-			catch (SQLException | IOException | ClassNotFoundException e1)
+			catch (Exception e1)// SQLException | IOException | ClassNotFoundException
 			{
 	            e1.printStackTrace();
 	        }
@@ -357,37 +545,6 @@ public class EventListener
 		catch (java.io.IOException e1)
 		{
 			logger.error(e1.getStackTrace().toString());
-		}
-	}
-	
-	public void player_disconnect(Boolean bool,Player player,TextComponent component)
-	{
-		player.disconnect(component);
-		
-		if(!(bool))	return;
-		
-		try
-		{
-			conn = db.getConnection();
-			String sql="UPDATE minecraft SET ban=? WHERE uuid=?;";
-			ps = conn.prepareStatement(sql);
-			ps.setBoolean(1, true);
-			ps.setString(2, player.getUniqueId().toString());
-			ps.executeUpdate();
-			
-			DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-	        webhook.setUsername("サーバー");
-	        webhook.setAvatarUrl("https://www.illust-box.jp/db_img/sozai/00021/213610/watermark.jpg");
-		    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("侵入者が現れました。"));
-		    webhook.execute();
-		}
-		catch (SQLException | IOException | ClassNotFoundException e)
-		{
-			logger.error(e.getStackTrace().toString());
-		}
-		finally
-		{
-			db.close_resorce(null, conn, ps);
 		}
 	}
 	

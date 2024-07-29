@@ -14,6 +14,9 @@ Socket:
 Discord:
     Webhook_URL: ""
     Emoji_Add_Path: ""
+    InvaderComingImageUrl: ""
+    MaintenanceOnImageUrl: ""
+    MaintenanceOffImageUrl: ""
 
 Interval:
     Login: 

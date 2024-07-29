@@ -1,6 +1,6 @@
 # FMC Plugin
->## This is able to use in both bungee and spigot.<br>But this is created for myself for my server.<br>So this plugin is maybe good for plugin developers.<br>Freely to edit!<br>
-## Bungee Command list
+>## This is able to use in both Velocity and spigot.<br>But this is created for myself for my server.<br>So this plugin is maybe good for plugin developers.<br>Freely to edit!<br>
+## Velocity Command list
 ### /hub
 ### /fmcb hub
 Moving to hub server<br>
@@ -21,8 +21,7 @@ Let server start by bat file of windows
 ### /fmcb cancel
 Only sending "canceled event"
 ## Socket Server
-Sockets are enable us to communicate between BungeeCord and Spigot Servers.<br>
-There are more extendance than BungeeCord Message Channel.
+Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
 ### Reason
 ・Communication Available even when players are offline<br>
 ・Not Java, for example, PHP can be access to it.<br>

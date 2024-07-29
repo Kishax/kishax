@@ -14,22 +14,21 @@ import net.luckperms.api.LuckPermsProvider;
 import velocity_command.FMCCommand;
 import velocity_command.Hub;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
 
 public class Main
 {
-	public SocketSwitch ssw = null;
-	
 	private static Injector injector = null;
 	
 	private final ProxyServer server;
 	private final Logger logger;
 	private final Path dataDirectory;
 	// Guice注入後、取得するインスタンス(フィールド)郡
+	public SocketSwitch ssw = null;
 	private Luckperms lp = null;
+	private DoServerOnline doOnline = null;
 	
     @Inject
     public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory)
@@ -53,6 +52,9 @@ public class Main
         // 依存性が解決された@Injectを使用するクラスのインスタンスを取得
         lp = getInjector().getInstance(Luckperms.class);
     	ssw = getInjector().getInstance(SocketSwitch.class);
+    	doOnline = getInjector().getInstance(DoServerOnline.class);
+    			
+    	doOnline.UpdateDatabase();
     	
     	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
     	
@@ -64,7 +66,7 @@ public class Main
     	CommandManager commandManager = server.getCommandManager();
         commandManager.register("fmcp", getInjector().getInstance(FMCCommand.class));
         commandManager.register("hub", getInjector().getInstance(Hub.class));
-		
+        
 		// Client side
 	    ssw.startSocketClient("Hello!\nStart Server!!");
 	    // Server side

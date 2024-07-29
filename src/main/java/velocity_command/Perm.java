@@ -73,7 +73,7 @@ public class Perm
 	        {
 	        	case 0:
 	        	case 1:
-	        		source.sendMessage(Component.text("usage: /fmcb　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
+	        		source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 	            	break;
 	            	
 	        	case 2:
@@ -129,7 +129,7 @@ public class Perm
 	        				break;
 	        				
 	        			default:
-	        				source.sendMessage(Component.text("usage: /fmcb　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
+	        				source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 	        				break;
 	        		}
         			break;
@@ -139,29 +139,29 @@ public class Perm
 	        		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
 	        		if(!(args1.contains(args[1].toLowerCase())))
         			{
-        				source.sendMessage(Component.text(NamedTextColor.RED+"第2引数が不正です。\n"+NamedTextColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+        				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
 	        		
 	        		if(!(permS.contains(args[2].toLowerCase())))
         			{
-        				source.sendMessage(Component.text(NamedTextColor.RED+"第3引数が不正です。\n"+NamedTextColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+	        			source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
 	        		
-        			source.sendMessage(Component.text(NamedTextColor.RED+"対象のプレイヤー名を入力してください。\n"+NamedTextColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+	        		source.sendMessage(Component.text("対象のプレイヤー名を入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         			break;
         			
 	        	case 4:
         			if(!(args1.contains(args[1].toLowerCase())))
         			{
-        				source.sendMessage(Component.text(NamedTextColor.RED+"第2引数が不正です。\n"+NamedTextColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+        				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
         			if(!(permS.contains(args[2].toLowerCase())))
         			{
-        				source.sendMessage(Component.text(NamedTextColor.RED+"第3引数が不正です。\n"+NamedTextColor.GREEN+"usage: /fmcb　perm <add|remove|list> [Short:permission] <player>"));
+        				source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
@@ -215,7 +215,7 @@ public class Perm
 	        		break;
 	        		
 	        	default:
-	        		source.sendMessage(Component.text("usage: /fmcb　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
+	        		source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 	        		break;
 	        }
 	        return;
