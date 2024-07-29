@@ -1,7 +1,7 @@
 # FMC Plugin
 >## This is able to use in both Velocity and spigot.<br>But this is created for myself for my server.<br>So this plugin is maybe good for plugin developers.<br>Freely to edit!<br>
 ## Velocity Command list
-### /hub
+### `/hub`
 ### /fmcp hub
 Moving to hub server<br>
 ### /fmcp maintenance \<status | switch\> discord \<true | false\>
