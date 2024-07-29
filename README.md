@@ -1,5 +1,5 @@
 # FMC Plugin
->## This is able to use in both Velocity and spigot.<br>But this is created for myself for my server.<br>So this plugin is maybe good for plugin developers.<br>Freely to edit!<br>
+>## This is able to use in both Velocity and Spigot.<br>But this is created for myself for my server.<br>So this plugin is maybe good for plugin developers.<br>Freely to edit!<br>
 ## Velocity Command list
 ### `/hub`
 ### `/fmcp hub`
@@ -26,8 +26,8 @@ Only sending "canceled event"
 ## Socket Server
 Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
 ### Reason
-・Communication Available even when players are offline<br>
-・Not Java, for example, PHP can be access to it.<br>
+* Communication Available even when players are offline<br>
+* Not Java, for example, PHP can be access to it.<br>
 #### Here is PHP example code
 ```
 <?php
@@ -58,7 +58,7 @@ Adding potion effect within a radius of 5 squares
 Only returning arg-1 player writes
 
 ## Dependancy
->- Luckperm (for managing permission)
+>- [Luckperms](https://github.com/LuckPerms/LuckPerms)
 
 ## Lisence
 This project is licensed under the MIT License, see the LICENSE.txt file for details
