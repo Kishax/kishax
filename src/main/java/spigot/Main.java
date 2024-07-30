@@ -177,17 +177,21 @@ public class Main
   {
         try
         {
-            while (!isRconActive && !Thread.currentThread().isInterrupted())
+            while (!Thread.currentThread().isInterrupted())
             {
-                if (checkRconRunning(RCON_HOST, RCON_PORT))
+                if (!isRconActive && checkRconRunning(RCON_HOST, RCON_PORT))
                 {
                     isRconActive = true;
                     
-                    onRconActivated(RCON_HOST, RCON_PORT, RCON_PASS);
                     plugin.getServer().getScheduler().runTask(plugin, () ->
                     {
-                        // RCONが有効になった後の処理をメインスレッドで実行
-                    	onRconActivated(RCON_HOST, RCON_PORT, RCON_PASS);
+                    	// RCONが有効になった後の処理をメインスレッドで実行
+                    	if (isRconActive)
+                    	{ // メインスレッドでチェック
+                    		plugin.getLogger().info("Running onRconActivated method.");
+                    		onRconActivated(RCON_HOST, RCON_PORT, RCON_PASS);
+                            isRconActive = false; // フラグをリセット
+                        }
                     });
                     break;
                 }
