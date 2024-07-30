@@ -46,21 +46,6 @@ public class RomajiConversion
 		{
             e.printStackTrace();
         }
-		
-		// データの読み込みを行う
-		/*try
-		{
-            List<String> lines = Files.readAllLines(Paths.get(File));
-            for (String s : lines)
-            {
-                String[] t = s.split(",");
-                if (t.length == 2) RomajiDefinitionData.add(new RomajiDefinition(t[0], t[1]));
-            }
-        }
-		catch (IOException e)
-		{
-            e.printStackTrace();
-        }*/
 	}
 	
 	// 変換データを保存するクラス
