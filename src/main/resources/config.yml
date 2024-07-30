@@ -12,3 +12,8 @@ Socket:
 
 Discord:
     Webhook_URL: ""
+
+MCVC:
+    Mode: false
+    Host: "localhost"
+    EXE_Path: ""
