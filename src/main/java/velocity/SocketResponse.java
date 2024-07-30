@@ -57,7 +57,7 @@ public class SocketResponse
 	public void resaction(String res)
     {
     	if (Objects.isNull(res)) return;
-    	if (res.contains("サーバー"))	return;
+    	if (res.contains("サーバー->"))	return;
     	
     	if(res.contains("PHP"))
     	{

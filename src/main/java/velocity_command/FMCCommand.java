@@ -28,7 +28,7 @@ public class FMCCommand implements SimpleCommand
     private final Config config;
     private final PlayerList pl;
     
-    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","test","maintenance"));
+    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","test","maintenance","conv"));
     public List<String> anylists = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
@@ -82,6 +82,9 @@ public class FMCCommand implements SimpleCommand
                         .append(Component.text("\n\n/fmcb　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp maintenance "))
                                 .hoverEvent(HoverEvent.showText(Component.text("メンテナンスモードの切り替え"))))
+                        .append(Component.text("\n\n/fmcb　conv").color(NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.suggestCommand("/fmcp conv"))
+                                .hoverEvent(HoverEvent.showText(Component.text("ローマ字変換方式の切り替え"))))
                         .build();
                 source.sendMessage(component);
             }
@@ -142,6 +145,10 @@ public class FMCCommand implements SimpleCommand
             	
             case "maintenance":
             	Main.getInjector().getInstance(Maintenance.class).execute(source, args);
+            	break;
+            
+            case "conv":
+            	Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
             	break;
             	
             default:

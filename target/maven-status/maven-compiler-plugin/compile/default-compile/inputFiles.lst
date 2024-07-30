@@ -24,6 +24,7 @@ C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\Main.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\MainModule.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\PlayerDisconnect.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\PlayerList.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\RomajiConversion.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\RomaToKanji.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\SocketResponse.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\SocketServerThread.java
@@ -41,4 +42,5 @@ C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\Retry
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\ServerTeleport.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\SetServer.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\StartServer.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\SwitchRomajiConvType.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\Test.java

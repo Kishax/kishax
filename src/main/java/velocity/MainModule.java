@@ -61,5 +61,6 @@ public class MainModule extends AbstractModule
         bind(velocity.PlayerList.class);
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
+        bind(RomajiConversion.class);
     }
 }

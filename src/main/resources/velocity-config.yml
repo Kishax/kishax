@@ -35,3 +35,6 @@ Permission:
         - something.permission
     Short_Name:
         - someperm
+
+Conv:
+    Mode: false

@@ -41,7 +41,6 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.md_5.bungee.api.ChatColor;
 
 public class EventListener
 {
@@ -56,6 +55,7 @@ public class EventListener
 	private String chatserverName = "";
 	private final PlayerList pl;
 	private final PlayerDisconnect pd;
+	private final RomajiConversion rc;
 	
 	public Connection conn = null;
 	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
@@ -68,7 +68,7 @@ public class EventListener
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
 		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
-		PlayerDisconnect pd
+		PlayerDisconnect pd, RomajiConversion rc
 	)
 	{
 		this.plugin = plugin;
@@ -81,6 +81,7 @@ public class EventListener
 		this.conv = conv;
 		this.pl = pl;
 		this.pd = pd;
+		this.rc = rc;
 	}
 	
 	@Subscribe
@@ -91,6 +92,7 @@ public class EventListener
 
 	    Player player = e.getPlayer();
 	    String originalMessage = e.getMessage();
+	    
 	    
 	    // プレイヤーの現在のサーバーを取得
         player.getCurrentServer().ifPresent(serverConnection ->
@@ -161,11 +163,24 @@ public class EventListener
     		        )
     		        {
     		        	// 日本語でなかったら
-    		        	String kanaMessage = conv.ConvRomaToKana(originalMessage);
-        		        String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-        		        sendChatToDiscord(player, kanjiMessage);
-        		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
-        		        bc.broadcastComponent(component, chatserverName, true);
+    		        	if(config.getBoolean("Conv.Mode"))
+    		        	{
+    		        		// Map方式
+    		        		String kanaMessage = conv.ConvRomaToKana(originalMessage);
+            		        String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+            		        sendChatToDiscord(player, kanjiMessage);
+            		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
+            		        bc.broadcastComponent(component, chatserverName, true);
+    		        	}
+    		        	else
+    		        	{
+    		        		// pde方式
+    		        		String kanaMessage = rc.Romaji(originalMessage);
+    		        		String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+            		        sendChatToDiscord(player, kanjiMessage);
+            		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
+            		        bc.broadcastComponent(component, chatserverName, true);
+    		        	}
         		        return;
     		        }
     		        else
@@ -191,8 +206,20 @@ public class EventListener
     		        if (Objects.nonNull(textParts) && textPartsSize != 0)
     		        {
     		            String text = textParts.get(i);
-    		            String kanaMessage = conv.ConvRomaToKana(text);
-    		            String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+    		            String kanaMessage = null;
+    		            String kanjiMessage = null;
+    		            if(config.getBoolean("Conv.Mode"))
+    		        	{
+    		        		// Map方式
+    		            	kanaMessage = conv.ConvRomaToKana(text);
+        		            kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+    		        	}
+    		            else
+    		            {
+    		            	// pde方式
+    		            	kanaMessage = rc.Romaji(text);
+        		            kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+    		            }
     		            mixtext += kanjiMessage;
     		            component = component.append(Component.text(kanjiMessage).color(NamedTextColor.GOLD));
     		        }
@@ -253,7 +280,6 @@ public class EventListener
 	@Subscribe
 	public void onServerSwitch(ServerConnectedEvent e)
 	{
-		
 		Player player = e.getPlayer();
 		RegisteredServer serverConnection = e.getServer();
         ServerInfo serverInfo = serverConnection.getServerInfo();

@@ -247,6 +247,7 @@ public class RomaToKanji
     	ROMA_TO_KANA_MAP.put("e","え");
     	ROMA_TO_KANA_MAP.put("o","お");
     	ROMA_TO_KANA_MAP.put("nn","ん");
+    	ROMA_TO_KANA_MAP.put("n","ん");
     	ROMA_TO_KANA_MAP.put("m","ん");
     }
 
