@@ -1,6 +1,7 @@
 package spigot;
 
 import java.io.DataInputStream;
+
 import java.io.DataOutputStream;
 import java.net.Socket;
 
@@ -8,16 +9,19 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
-public class SocketServerThread extends Thread {
+public class SocketServerThread extends Thread 
+{
     private Socket socket;
     public common.Main plugin;
     
-    public SocketServerThread(Socket socket, common.Main plugin) {
+    public SocketServerThread(Socket socket, common.Main plugin) 
+    {
         this.socket = socket;
         this.plugin = plugin;
     }
 
-    public void run() {
+    public void run() 
+    {
         try
         (	
         	 DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -44,14 +48,22 @@ public class SocketServerThread extends Thread {
             out.writeInt(responseData.length); // レスポンスの長さを最初に送信
             out.write(responseData); // 実際のレスポンスデータを送信
 
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             e.printStackTrace();
-        } finally {
-            try {
-                if (socket != null && !socket.isClosed()) {
+        } 
+        finally 
+        {
+            try 
+            {
+                if (socket != null && !socket.isClosed()) 
+                {
                     socket.close();
                 }
-            } catch (Exception e) {
+            } 
+            catch (Exception e) 
+            {
                 e.printStackTrace();
             }
         }

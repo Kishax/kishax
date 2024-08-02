@@ -7,48 +7,52 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
+import com.google.inject.Inject;
+
 public class Database
 {
     public static Connection conn;
+    private final common.Main plugin;
     
-    public Database()
+    @Inject
+    public Database(common.Main plugin)
     {
-    	//
+    	this.plugin = plugin;
     }
     
-	public static Connection getConnection() throws SQLException, ClassNotFoundException
+	public Connection getConnection() throws SQLException, ClassNotFoundException
 	{
 		if
 		(
-			Config.config.getString("MySQL.Host").isEmpty() || 
-			Config.config.getInt("MySQL.Port") == 0 || 
-			Config.config.getString("MySQL.Database").isEmpty() || 
-			Config.config.getString("MySQL.User").isEmpty() || 
-			Config.config.getString("MySQL.Password").isEmpty()
+			plugin.getConfig().getString("MySQL.Host").isEmpty() || 
+			plugin.getConfig().getInt("MySQL.Port") == 0 || 
+			plugin.getConfig().getString("MySQL.Database").isEmpty() || 
+			plugin.getConfig().getString("MySQL.User").isEmpty() || 
+			plugin.getConfig().getString("MySQL.Password").isEmpty()
 		)
 		{
 			return null;
 		}
 		
-        if (conn != null && !conn.isClosed()) return conn;
+        if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
         
         synchronized (Database.class) {
-            if (conn != null && !conn.isClosed()) return conn;
+            if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
             
             Class.forName("com.mysql.cj.jdbc.Driver");
             conn = DriverManager.getConnection
             		(
-            			"jdbc:mysql://" + Config.config.getString("MySQL.Host") + ":" + 
-            			Config.config.getInt("MySQL.Port") + "/" + 
-            			Config.config.getString("MySQL.Database"),
-            			Config.config.getString("MySQL.User"),
-            			Config.config.getString("MySQL.Password")
+            			"jdbc:mysql://" + plugin.getConfig().getString("MySQL.Host") + ":" + 
+            			plugin.getConfig().getInt("MySQL.Port") + "/" + 
+            			plugin.getConfig().getString("MySQL.Database"),
+            			plugin.getConfig().getString("MySQL.User"),
+            			plugin.getConfig().getString("MySQL.Password")
             		);
             return conn;
         }
     }
 	
-	public static void close_resorce(ResultSet[] resultsets,Connection conn, PreparedStatement ps)
+	public void close_resorce(ResultSet[] resultsets,Connection conn, PreparedStatement ps)
 	{
 		if(Objects.nonNull(resultsets))
 		{

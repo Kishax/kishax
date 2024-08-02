@@ -6,15 +6,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Objects;
 
+import com.google.inject.Inject;
+
 public class SocketSwitch
 {
+    public String sendmsg;
+    
     private Thread clientThread;
     private Thread socketThread;
     private volatile boolean running = true;
     private ServerSocket serverSocket;
-    public String sendmsg;
-    public common.Main plugin;
+    public final common.Main plugin;
     
+    @Inject
 	public SocketSwitch(common.Main plugin)
 	{
 		this.plugin = plugin;
@@ -22,7 +26,7 @@ public class SocketSwitch
 	
 	//Client side
 	public void startSocketClient(String sendmsg) {
-	    if (Config.config.getInt("Socket.Client_Port") == 0) {
+	    if (plugin.getConfig().getInt("Socket.Client_Port") == 0) {
 	        plugin.getLogger().info("Client Socket is canceled for config value not given");
 	        return;
 	    }
@@ -41,7 +45,7 @@ public class SocketSwitch
 
 	    try
 	    (
-	    	Socket socket = new Socket(hostname, Config.config.getInt("Socket.Client_Port"));
+	    	Socket socket = new Socket(hostname, plugin.getConfig().getInt("Socket.Client_Port"));
 	    	BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
 	    )
 	    {
@@ -71,7 +75,7 @@ public class SocketSwitch
     //Server side
     public void startSocketServer()
     {
-		if(Objects.isNull(Config.config.getInt("Socket.Server_Port")) || Config.config.getInt("Socket.Server_Port") ==0)
+		if(Objects.isNull(plugin.getConfig().getInt("Socket.Server_Port")) || plugin.getConfig().getInt("Socket.Server_Port") ==0)
 		{
 			plugin.getLogger().info("Socket Server is canceled for config value not given");
 			return;
@@ -81,8 +85,8 @@ public class SocketSwitch
         {
             try
             {
-                serverSocket = new ServerSocket(Config.config.getInt("Socket.Server_Port"));
-                plugin.getLogger().info("Socket Server is listening on port " + Config.config.getInt("Socket.Server_Port"));
+                serverSocket = new ServerSocket(plugin.getConfig().getInt("Socket.Server_Port"));
+                plugin.getLogger().info("Socket Server is listening on port " + plugin.getConfig().getInt("Socket.Server_Port"));
 
                 while (running)
                 {

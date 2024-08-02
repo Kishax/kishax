@@ -17,3 +17,7 @@ MCVC:
     Mode: false
     Host: "localhost"
     EXE_Path: ""
+
+AutoStop:
+    Mode: false
+    Interval: 3

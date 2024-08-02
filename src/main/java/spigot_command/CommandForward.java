@@ -3,18 +3,22 @@ package spigot_command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import spigot.Main;
+import com.google.inject.Inject;
+
 import spigot.SocketSwitch;
 
 public class CommandForward
 {
-	public common.Main plugin;
-	public SocketSwitch ssw;
+	private final SocketSwitch ssw;
 	
-	public CommandForward(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
+	@Inject
+	public CommandForward(SocketSwitch ssw)
 	{
-		this.plugin = common.Main.getInstance();
-		this.ssw = Main.getMaininstance().getSocket();
+		this.ssw = ssw;
+	}
+	
+	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
+	{
 		String allcmd = "";
 		for (String arg : args)
 		{

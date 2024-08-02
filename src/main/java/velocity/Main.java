@@ -47,7 +47,7 @@ public class Main
     	logger.info("Detected Velocity platform.");
     	
         // Guice インジェクターを作成
-        injector = Guice.createInjector(new MainModule(this, server, logger, dataDirectory, LuckPermsProvider.get()));
+        injector = Guice.createInjector(new VelocityModule(this, server, logger, dataDirectory, LuckPermsProvider.get()));
         
         // 依存性が解決された@Injectを使用するクラスのインスタンスを取得
         lp = getInjector().getInstance(Luckperms.class);

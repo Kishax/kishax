@@ -152,7 +152,7 @@ public class DoServerOnline
 								serverDBInfo.put(serverDBName,serverDBPort);
 							}
 			        	}
-			        	secondCheck =true;
+			        	secondCheck = true;
 			            // ポートの重複をチェック
 			            if (serverDBInfo.containsValue(serverConfigPort))
 			            {

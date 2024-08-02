@@ -1,6 +1,9 @@
 package common;
 
 import javax.net.ssl.HttpsURLConnection;
+
+import com.google.inject.Inject;
+
 import java.awt.Color;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,6 +34,7 @@ public class DiscordWebhook {
      *
      * @param url The webhook URL obtained in Discord
      */
+    @Inject
     public DiscordWebhook(String url) {
         this.url = url;
     }

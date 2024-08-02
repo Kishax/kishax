@@ -56,6 +56,7 @@ public class EventListener
 	private final PlayerList pl;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
+	private final DiscordWebhook dw;
 	
 	public Connection conn = null;
 	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
@@ -68,7 +69,7 @@ public class EventListener
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
 		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
-		PlayerDisconnect pd, RomajiConversion rc
+		PlayerDisconnect pd, RomajiConversion rc, DiscordWebhook dw
 	)
 	{
 		this.plugin = plugin;
@@ -82,6 +83,7 @@ public class EventListener
 		this.pl = pl;
 		this.pd = pd;
 		this.rc = rc;
+		this.dw = dw;
 	}
 	
 	@Subscribe
@@ -258,7 +260,12 @@ public class EventListener
     		    return;
     		}
     		catch (Exception ex) {
-                ex.printStackTrace();
+    			// スタックトレースをログに出力
+	            logger.error("An onChat error occurred: " + ex.getMessage());
+	            for (StackTraceElement element : ex.getStackTrace()) 
+	            {
+	                logger.error(element.toString());
+	            }
     		}
         }).schedule();
 	}
@@ -533,7 +540,12 @@ public class EventListener
 			}
 			catch (Exception e1)// SQLException | IOException | ClassNotFoundException
 			{
-	            e1.printStackTrace();
+				// スタックトレースをログに出力
+	            logger.error("An onConnection error occurred: " + e1.getMessage());
+	            for (StackTraceElement element : e1.getStackTrace()) 
+	            {
+	                logger.error(element.toString());
+	            }
 	        }
 			finally
 			{
@@ -544,33 +556,41 @@ public class EventListener
 	
 	public void sendChatToDiscord(Player player,String message)
 	{
-		DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-        webhook.setUsername(player.getUsername());
-        webhook.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
-	    webhook.setContent(message);
+        dw.setUsername(player.getUsername());
+        dw.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+	    dw.setContent(message);
 	    try
 	    {
-	    	webhook.execute();
+	    	dw.execute();
 	    }
 	    catch (java.io.IOException e1)
 	    {
-	    	logger.error(e1.getStackTrace().toString());
+	    	// スタックトレースをログに出力
+            logger.error("An onChat error occurred: " + e1.getMessage());
+            for (StackTraceElement element : e1.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
 	    }
 	}
 	
 	public void discord_join_notify(Player player,Color color,String msg)
 	{
-		DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-		webhook.setUsername(player.getUsername());
-        webhook.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
-	    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(color).setDescription(msg));
+		dw.setUsername(player.getUsername());
+        dw.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+	    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(color).setDescription(msg));
 	    try
 		{
-		    webhook.execute();
+		    dw.execute();
 		}    		    
 		catch (java.io.IOException e1)
 		{
-			logger.error(e1.getStackTrace().toString());
+			// スタックトレースをログに出力
+            logger.error("An onChat error occurred: " + e1.getMessage());
+            for (StackTraceElement element : e1.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
 		}
 	}
 	

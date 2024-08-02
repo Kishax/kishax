@@ -10,16 +10,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import spigot.Main;
+import com.google.inject.Inject;
 
 public class Potion
 {
-	public common.Main plugin;
-	
-	public Potion(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
+	@Inject
+	public Potion(common.Main plugin)
 	{
-		this.plugin = common.Main.getInstance();
-		
+		//
+	}
+	
+	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
+	{
 		if(!(sender instanceof Player))
   	  	{
   		  	sender.sendMessage(ChatColor.RED+"このコマンドはプレイヤーにしか実行できません！");

@@ -9,24 +9,26 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.StringUtil;
+
+import com.google.inject.Inject;
 
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
+import spigot.Main;
 
-public class FMCCommand implements CommandExecutor,TabExecutor{
+public class FMCCommand implements CommandExecutor,TabExecutor
+{
+	private List<String> subcommands = new ArrayList<>(Arrays.asList("reload","potion","medic","fly","test","fv","mcvc"));
 	
-	private List<String> subcommands = new ArrayList<>(Arrays.asList("reload","potion","medic","fly","test","fv"));
-	public common.Main plugin;
-	
-	public FMCCommand(common.Main plugin2)
+	@Inject
+	public FMCCommand()
 	{
-		this.plugin = plugin2;
+		//
 	}
 	
 	@Override
@@ -53,6 +55,9 @@ public class FMCCommand implements CommandExecutor,TabExecutor{
     			        .append(ChatColor.AQUA+"\n\n/fmc medic")
     			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc medic"))
     			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ライフが回復します！(クリックしてコピー)")))
+    			        .append(ChatColor.AQUA+"\n\n/fmcb　mcvc")
+                        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmcp mcvc"))
+                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("MCVCモードの切り替えを行います！(クリックしてコピー)")))
     			        .create();
     		sender.spigot().sendMessage(component);
     		return true;
@@ -68,35 +73,31 @@ public class FMCCommand implements CommandExecutor,TabExecutor{
       switch (args[0].toLowerCase())
       {
       	  case "fv":
-      		  new CommandForward(sender, cmd, label, args);
+      		  Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
       		  return true;
       		  
 	      case "reload":
-	    	  new ReloadConfig(sender, cmd, label, args);
+	    	  Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);
 	    	  return true;
 	    	  
 	      case "potion":
-	    	  new Potion(sender, cmd, label, args);
+	    	  Main.getInjector().getInstance(Potion.class).execute(sender, cmd, label, args);
 	    	  return true;
 	    	  
 	      case "medic":
-	    	  if(!(sender instanceof Player))
-	    	  {
-	    		  sender.sendMessage(ChatColor.GREEN + "このプラグインはプレイヤーでなければ実行できません。");
-	    		  return true;
-	    	  }
-	    	  Player player = (Player) sender;
-	    	  //we see sender is player, by doing so, it can substitute player variable for sender
-	    	  player.setHealth(20.0);
-	    	  player.sendMessage(ChatColor.GREEN+"傷の手当てが完了しました。");
+	    	  Main.getInjector().getInstance(Medic.class).execute(sender, cmd, label, args);
 	    	  return true;
 	    	  
 	      case "fly":
-	    	  new Fly(sender, cmd, label, args);
+	    	  Main.getInjector().getInstance(Fly.class).execute(sender, cmd, label, args);
 	    	  return true;
 	    	  
 	      case "test":
-	    	  new Test(sender, cmd, label, args);
+	    	  Main.getInjector().getInstance(Test.class).execute(sender, cmd, label, args);
+	    	  return true;
+	    	  
+	      case "mcvc":
+	    	  Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
 	    	  return true; 
 	      }
 	      return true;

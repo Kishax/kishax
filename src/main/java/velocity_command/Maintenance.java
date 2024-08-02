@@ -30,6 +30,7 @@ public class Maintenance
 	private final DatabaseInterface db;
 	private final PlayerDisconnect pd;
 	private final Config config;
+	private final DiscordWebhook dw;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null, issuperadmin = null;
@@ -43,12 +44,14 @@ public class Maintenance
 	public Maintenance
 	(
 		Main plugin, ProxyServer server, Logger logger,
-		Config config, DatabaseInterface db, PlayerDisconnect pd
+		Config config, DatabaseInterface db, PlayerDisconnect pd,
+		DiscordWebhook dw
 	)
 	{
 		this.config = config;
 		this.db = db;
 		this.pd = pd;
+		this.dw = dw;
 	}
 
 	public void execute(CommandSource source,String[] args)
@@ -159,14 +162,13 @@ public class Maintenance
         							
         							if(config.getString("Discord.Webhook_URL","").isEmpty())  return;
                 					
-                					DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-                			        webhook.setUsername("サーバー");
+                			        dw.setUsername("サーバー");
                 			        if(!config.getString("Discord.MaintenanceOffImageUrl","").isEmpty())
                 			        {
-                			        	webhook.setAvatarUrl(config.getString("Discord.MaintenanceOffImageUrl"));
+                			        	dw.setAvatarUrl(config.getString("Discord.MaintenanceOffImageUrl"));
                 			        }
-                				    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("メンテナンスモードが無効になりました。\\nまだまだ遊べるドン！"));
-                				    webhook.execute();
+                				    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("メンテナンスモードが無効になりました。\\nまだまだ遊べるドン！"));
+                				    dw.execute();
         						}
         						else
         						{
@@ -180,14 +182,13 @@ public class Maintenance
         							
         							if(config.getString("Discord.Webhook_URL","").isEmpty())  return;
                 					
-                					DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-                			        webhook.setUsername("サーバー");
+                			        dw.setUsername("サーバー");
                 			        if(!config.getString("Discord.MaintenanceOnImageUrl","").isEmpty())
                 			        {
-                			        	webhook.setAvatarUrl(config.getString("Discord.MaintenanceOnImageUrl"));
+                			        	dw.setAvatarUrl(config.getString("Discord.MaintenanceOnImageUrl"));
                 			        }
-                				    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.BLUE).setDescription("メンテナンスモードが有効になりました。\\nいまは遊べないカッ..."));
-                				    webhook.execute();
+                				    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.BLUE).setDescription("メンテナンスモードが有効になりました。\\nいまは遊べないカッ..."));
+                				    dw.execute();
         						}
         					}
         					break;

@@ -28,6 +28,7 @@ public class PlayerDisconnect
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
+	private final DiscordWebhook dw;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null;
@@ -39,7 +40,8 @@ public class PlayerDisconnect
 	(
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl
+		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
+		DiscordWebhook dw
 	)
 	{
 		this.plugin = plugin;
@@ -48,6 +50,7 @@ public class PlayerDisconnect
 		this.config = config;
 		this.db = db;
 		this.console = console;
+		this.dw = dw;
 	}
 	
 	public void menteDisconnect(List<String> UUIDs)
@@ -90,14 +93,13 @@ public class PlayerDisconnect
 			
 			if(config.getString("Discord.Webhook_URL","").isEmpty())  return;
 				
-			DiscordWebhook webhook = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-	        webhook.setUsername("サーバー");
+	        dw.setUsername("サーバー");
 	        if(!config.getString("Discord.InvaderComingImageUrl","").isEmpty())
 	        {
-	        	webhook.setAvatarUrl(config.getString("Discord.InvaderComingImageUrl"));
+	        	dw.setAvatarUrl(config.getString("Discord.InvaderComingImageUrl"));
 	        }
-		    webhook.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("侵入者が現れました。"));
-		    webhook.execute();
+		    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("侵入者が現れました。"));
+		    dw.execute();
 		}
 		catch (SQLException | IOException | ClassNotFoundException e)
 		{

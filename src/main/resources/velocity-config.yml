@@ -38,3 +38,5 @@ Permission:
 
 Conv:
     Mode: false
+    Host: "localhost"
+    EXE_Path: ""

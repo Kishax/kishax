@@ -2,21 +2,22 @@ package spigot_command;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 
-import spigot.Config;
+import com.google.inject.Inject;
 
 public class ReloadConfig
 {
-	public common.Main plugin;
+	private final common.Main plugin;
 	
-	public ReloadConfig(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
+	@Inject
+	public ReloadConfig(common.Main plugin)
 	{
-		this.plugin = common.Main.getInstance();
-		
-		this.plugin.reloadConfig();
-		FileConfiguration config = this.plugin.getConfig();
-		new Config(config);
+		this.plugin = plugin;
+	}
+	
+	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
+	{
+		plugin.reloadConfig();
 		sender.sendMessage(ChatColor.GREEN+"コンフィグをリロードしました。");
 	}
 }
