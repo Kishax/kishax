@@ -34,7 +34,6 @@ public class DiscordWebhook {
      *
      * @param url The webhook URL obtained in Discord
      */
-    @Inject
     public DiscordWebhook(String url) {
         this.url = url;
     }

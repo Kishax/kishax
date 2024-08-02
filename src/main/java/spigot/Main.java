@@ -1,7 +1,6 @@
 package spigot;
 
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 
 import spigot_command.FMCCommand;
@@ -15,12 +14,7 @@ public class Main
 	
 	public Connection conn = null;
 	public PreparedStatement ps = null;
-	public static Main instance;
 	public final common.Main plugin;
-	private Database db = null;
-	private SocketSwitch ssw = null; 
-	private AutoShutdown as = null;
-	private Rcon rcon = null;
 	
 	public Main(common.Main plugin)
 	{
@@ -29,19 +23,12 @@ public class Main
 	
 	public void onEnable()
     {
-		instance = this;
-		
 		// Guice インジェクターを作成
         injector = Guice.createInjector(new SpigotModule(plugin, this));
         
 		plugin.getLogger().info("Detected Spigot platform.");
 		
-		this.ssw = getInjector().getInstance(SocketSwitch.class);
-		this.db = getInjector().getInstance(Database.class);
-		this.as = getInjector().getInstance(AutoShutdown.class);
-		this.rcon = getInjector().getInstance(Rcon.class);
-		
-		as.startCheckForPlayers();
+		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
 		
 	    plugin.saveDefaultConfig();
 		
@@ -51,7 +38,7 @@ public class Main
         
     	if(plugin.getConfig().getBoolean("MCVC.Mode",false))
 		{
-			rcon.startMCVC();
+    		getInjector().getInstance(Rcon.class).startMCVC();
 		}
     	
     	getInjector().getInstance(DoServerOnline.class).UpdateDatabase();
@@ -68,13 +55,11 @@ public class Main
     {
     	if(plugin.getConfig().getBoolean("MCVC.Mode",false))
 		{
-    		rcon.stopMCVC();
+    		getInjector().getInstance(Rcon.class).stopMCVC();
 		}
         
-        as.stopCheckForPlayers();
+    	getInjector().getInstance(AutoShutdown.class).stopCheckForPlayers();
         
-    	ssw.stopSocketServer();
-    	
     	plugin.getLogger().info("Socket Server stopping...");
     	
     	getInjector().getInstance(DoServerOffline.class).UpdateDatabase();

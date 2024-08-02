@@ -47,6 +47,8 @@ public class DoServerOffline
 				ps.setString(2, serverName);
 				ps.executeUpdate();
 			}
+			
+			ssw.stopSocketServer();
 		}
 		catch (SQLException | ClassNotFoundException e2)
 		{

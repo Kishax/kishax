@@ -9,13 +9,17 @@ import com.google.inject.Inject;
 
 public class AutoShutdown
 {
-	private common.Main plugin;
+	private final common.Main plugin;
+	private final SocketSwitch ssw;
+	private final ServerHomeDir shd;
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown(common.Main plugin)
+	public AutoShutdown(common.Main plugin, SocketSwitch ssw, ServerHomeDir shd)
 	{
 		this.plugin = plugin;
+		this.ssw = ssw;
+		this.shd = shd;
 	}
 	
 	public void startCheckForPlayers() 
@@ -37,7 +41,10 @@ public class AutoShutdown
 	        {
 	            if (plugin.getServer().getOnlinePlayers().isEmpty()) 
 	            {
-	                plugin.getServer().broadcastMessage("プレイヤー不在のため、サーバーを5秒後に停止します。");
+	            	String serverName = shd.getServerName();
+	            	ssw.startSocketClient("プレイヤー不在のため、"+serverName+"サーバーを停止させます。");
+	            	
+	                plugin.getServer().broadcastMessage(ChatColor.RED+"プレイヤー不在のため、サーバーを5秒後に停止します。");
 	                countdownAndShutdown(5);
 	            }
 	        }

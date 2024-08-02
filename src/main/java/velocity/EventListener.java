@@ -56,7 +56,6 @@ public class EventListener
 	private final PlayerList pl;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
-	private final DiscordWebhook dw;
 	
 	public Connection conn = null;
 	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
@@ -69,7 +68,7 @@ public class EventListener
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
 		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
-		PlayerDisconnect pd, RomajiConversion rc, DiscordWebhook dw
+		PlayerDisconnect pd, RomajiConversion rc
 	)
 	{
 		this.plugin = plugin;
@@ -83,7 +82,6 @@ public class EventListener
 		this.pl = pl;
 		this.pd = pd;
 		this.rc = rc;
-		this.dw = dw;
 	}
 	
 	@Subscribe
@@ -556,6 +554,9 @@ public class EventListener
 	
 	public void sendChatToDiscord(Player player,String message)
 	{
+		if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
+		
+		DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
         dw.setUsername(player.getUsername());
         dw.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
 	    dw.setContent(message);
@@ -576,6 +577,9 @@ public class EventListener
 	
 	public void discord_join_notify(Player player,Color color,String msg)
 	{
+		if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
+		
+		DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
 		dw.setUsername(player.getUsername());
         dw.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
 	    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(color).setDescription(msg));

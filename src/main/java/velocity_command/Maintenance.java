@@ -30,7 +30,6 @@ public class Maintenance
 	private final DatabaseInterface db;
 	private final PlayerDisconnect pd;
 	private final Config config;
-	private final DiscordWebhook dw;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null, issuperadmin = null;
@@ -44,14 +43,12 @@ public class Maintenance
 	public Maintenance
 	(
 		Main plugin, ProxyServer server, Logger logger,
-		Config config, DatabaseInterface db, PlayerDisconnect pd,
-		DiscordWebhook dw
+		Config config, DatabaseInterface db, PlayerDisconnect pd
 	)
 	{
 		this.config = config;
 		this.db = db;
 		this.pd = pd;
-		this.dw = dw;
 	}
 
 	public void execute(CommandSource source,String[] args)
@@ -160,8 +157,9 @@ public class Maintenance
         							ps.executeUpdate();
         							source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
         							
-        							if(config.getString("Discord.Webhook_URL","").isEmpty())  return;
-                					
+        							if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
+        							
+        							DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
                 			        dw.setUsername("サーバー");
                 			        if(!config.getString("Discord.MaintenanceOffImageUrl","").isEmpty())
                 			        {
@@ -180,8 +178,9 @@ public class Maintenance
         							ps.executeUpdate();
         							pd.menteDisconnect(superadminUUIDs);
         							
-        							if(config.getString("Discord.Webhook_URL","").isEmpty())  return;
-                					
+        							if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
+        							
+        							DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
                 			        dw.setUsername("サーバー");
                 			        if(!config.getString("Discord.MaintenanceOnImageUrl","").isEmpty())
                 			        {

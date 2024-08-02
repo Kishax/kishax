@@ -159,6 +159,10 @@ public class SocketResponse
                 Main.getInjector().getInstance(CommandForwarder.class).forwardCommand(execplayerName, command, playerName);
             }
     	}
+    	else if(res.contains("プレイヤー不在"))
+    	{
+    		bc.broadcastMessage(res, NamedTextColor.RED, null);
+    	}
     	else
     	{	
     		// Discordからのメッセージ処理

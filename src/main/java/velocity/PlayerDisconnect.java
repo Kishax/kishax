@@ -28,7 +28,6 @@ public class PlayerDisconnect
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
-	private final DiscordWebhook dw;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null;
@@ -40,8 +39,7 @@ public class PlayerDisconnect
 	(
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
-		DiscordWebhook dw
+		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl
 	)
 	{
 		this.plugin = plugin;
@@ -50,7 +48,6 @@ public class PlayerDisconnect
 		this.config = config;
 		this.db = db;
 		this.console = console;
-		this.dw = dw;
 	}
 	
 	public void menteDisconnect(List<String> UUIDs)
@@ -93,6 +90,7 @@ public class PlayerDisconnect
 			
 			if(config.getString("Discord.Webhook_URL","").isEmpty())  return;
 				
+			DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
 	        dw.setUsername("サーバー");
 	        if(!config.getString("Discord.InvaderComingImageUrl","").isEmpty())
 	        {
@@ -103,7 +101,12 @@ public class PlayerDisconnect
 		}
 		catch (SQLException | IOException | ClassNotFoundException e)
 		{
-			logger.error(e.getStackTrace().toString());
+			// スタックトレースをログに出力
+            logger.error("An onChat error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
 		}
 		finally
 		{
