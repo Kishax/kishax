@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+
 import com.google.inject.Inject;
 
 import net.dv8tion.jda.api.entities.ChannelType;
@@ -21,25 +23,50 @@ import net.kyori.adventure.text.format.TextDecoration;
 
 public class DiscordEventListener extends ListenerAdapter
 {
+	private final Logger logger;
+	private final Config config;
 	private final BroadCast bc;
 	
 	@Inject
-	public DiscordEventListener(BroadCast bc)
+	public DiscordEventListener(Logger logger, Config config, BroadCast bc)
 	{
+		this.logger = logger;
+		this.config = config;
 		this.bc = bc;
 	}
 	
 	@Override
     public void onMessageReceived(MessageReceivedEvent e) 
     {
-        // BotのメッセージやDMには反応しないようにする
-        if (e.getAuthor().isBot() || e.isFromType(ChannelType.PRIVATE)) return;
-
+		// メッセージがフィルタリングされていないか確認
+	    logger.info("Received a message event");
+	    
+        // DMやBot、Webhookのメッセージには反応しないようにする// e.isFromType(ChannelType.PRIVATE)
+        if
+        (
+        	e.getAuthor().isBot() || 
+        	e.getMessage().isWebhookMessage() || 
+        	!e.getChannel().getId().equals(Long.valueOf(config.getLong("Discord.ChannelId")).toString())
+        )
+		{
+			return;
+		}
+        
         // メッセージ内容を取得
         String message = e.getMessage().getContentRaw();
+        logger.info("Message content: " + message);
+        
+        // メッセージが空でないことを確認
+        if (message.isEmpty())
+        {
+            logger.info("Message content is empty");
+            return;
+        }
+        
         sendMixUrl(message);
+        
         // チャンネルIDやユーザーIDも取得可能
-        String channelId = e.getChannel().getId();
+        //String channelId = e.getChannel().getId();
         String userId = e.getAuthor().getId();
         
         List <Attachment> attachments = e.getMessage().getAttachments();
@@ -50,12 +77,27 @@ public class DiscordEventListener extends ListenerAdapter
         			.append(Component.text(userId+" -> Discordで画像か動画を上げています！"))
         			.build();
         			
-        	// for(Attachment a : attachments)
+        	TextComponent additionalComponent = null;
+        	int i=0;
+        	// 添付ファイルを処理したい場合は、以下のようにできます
+            for (Attachment attachment : attachments)
+            {
+            	additionalComponent = Component.text()
+            			.append(Component.text(attachment.getUrl())
+        						.color(NamedTextColor.GRAY)
+        						.decorate(TextDecoration.UNDERLINED))
+        						.clickEvent(ClickEvent.openUrl(attachment.getUrl()))
+        						.hoverEvent(HoverEvent.showText(Component.text("添付ファイル"+(i+1))))
+                                .build();
+            	
+                // ここで各添付ファイルに対する処理を実装できます
+            	component = component.append(additionalComponent);
+                i++;
+            }
         	bc.broadcastComponent(component, null, false);
         }
-        
-        
     }
+	
 	public void sendMixUrl(String string)
     {
     	// 正規表現パターンを定義（URLを見つけるための正規表現）

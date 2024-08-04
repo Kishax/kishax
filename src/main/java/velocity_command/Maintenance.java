@@ -194,7 +194,7 @@ public class Maintenance
         					        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOnImageUrl"));
         					        }
         					        embed = new WebhookEmbedBuilder()
-        					            .setColor(ColorUtil.RED.getRGB())  // Embedの色
+        					            .setColor(ColorUtil.BLUE.getRGB())  // Embedの色
         					            .setDescription("メンテナンスモードが有効になりました。\nいまは遊べないカッ...")
         					            .build();
         					        builder.addEmbeds(embed);

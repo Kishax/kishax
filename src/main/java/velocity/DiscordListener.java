@@ -79,27 +79,6 @@ public class DiscordListener
         }
     }
     
-    /*public void sendWebhookMessage(String content, String username, String avatarUrl)
-    {
-    	if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
-    		
-        WebhookClient client = WebhookClient.withUrl(config.getString("Discord.Webhook_URL"));
-        WebhookMessageBuilder builder = new WebhookMessageBuilder();
-        builder.setContent(content);
-        builder.setUsername(username);
-        builder.setAvatarUrl(avatarUrl);
-        
-        WebhookMessage message = builder.build();
-        client.send(message).thenAccept(response ->
-        {
-        	console.sendMessage(Component.text("Message sent with ID: " + response.getId()));
-        }).exceptionally(throwable ->
-        {
-            throwable.printStackTrace();
-            return null;
-        });
-    }*/
-    
     public void sendWebhookMessage(WebhookMessageBuilder builder)
     {
     	if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
