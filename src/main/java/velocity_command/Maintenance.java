@@ -1,7 +1,5 @@
 package velocity_command;
 
-import java.awt.Color;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,12 +14,16 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import common.DiscordWebhook;
+import club.minnced.discord.webhook.send.WebhookEmbed;
+import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
+import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import common.ColorUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
 import velocity.DatabaseInterface;
+import velocity.DiscordListener;
 import velocity.Main;
 import velocity.PlayerDisconnect;
 
@@ -30,6 +32,9 @@ public class Maintenance
 	private final DatabaseInterface db;
 	private final PlayerDisconnect pd;
 	private final Config config;
+	private final DiscordListener discord;
+	private WebhookMessageBuilder builder = null;
+	private WebhookEmbed embed = null;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null, issuperadmin = null;
@@ -43,12 +48,14 @@ public class Maintenance
 	public Maintenance
 	(
 		Main plugin, ProxyServer server, Logger logger,
-		Config config, DatabaseInterface db, PlayerDisconnect pd
+		Config config, DatabaseInterface db, PlayerDisconnect pd,
+		DiscordListener discord
 	)
 	{
 		this.config = config;
 		this.db = db;
 		this.pd = pd;
+		this.discord = discord;
 	}
 
 	public void execute(CommandSource source,String[] args)
@@ -157,16 +164,18 @@ public class Maintenance
         							ps.executeUpdate();
         							source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
         							
-        							if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
-        							
-        							DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-                			        dw.setUsername("サーバー");
-                			        if(!config.getString("Discord.MaintenanceOffImageUrl","").isEmpty())
-                			        {
-                			        	dw.setAvatarUrl(config.getString("Discord.MaintenanceOffImageUrl"));
-                			        }
-                				    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("メンテナンスモードが無効になりました。\\nまだまだ遊べるドン！"));
-                				    dw.execute();
+        							builder = new WebhookMessageBuilder();
+        					        builder.setUsername("サーバー");
+        					        if(!config.getString("Discord.MaintenanceOffImageUrl","").isEmpty())
+        					        {
+        					        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOffImageUrl"));
+        					        }
+        					        embed = new WebhookEmbedBuilder()
+        					            .setColor(ColorUtil.RED.getRGB())  // Embedの色
+        					            .setDescription("メンテナンスモードが無効になりました。\nまだまだ遊べるドン！")
+        					            .build();
+        					        builder.addEmbeds(embed);
+        					        discord.sendWebhookMessage(builder);
         						}
         						else
         						{
@@ -178,16 +187,18 @@ public class Maintenance
         							ps.executeUpdate();
         							pd.menteDisconnect(superadminUUIDs);
         							
-        							if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
-        							
-        							DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-                			        dw.setUsername("サーバー");
-                			        if(!config.getString("Discord.MaintenanceOnImageUrl","").isEmpty())
-                			        {
-                			        	dw.setAvatarUrl(config.getString("Discord.MaintenanceOnImageUrl"));
-                			        }
-                				    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.BLUE).setDescription("メンテナンスモードが有効になりました。\\nいまは遊べないカッ..."));
-                				    dw.execute();
+        							builder = new WebhookMessageBuilder();
+        					        builder.setUsername("サーバー");
+        					        if(!config.getString("Discord.MaintenanceOnImageUrl","").isEmpty())
+        					        {
+        					        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOnImageUrl"));
+        					        }
+        					        embed = new WebhookEmbedBuilder()
+        					            .setColor(ColorUtil.RED.getRGB())  // Embedの色
+        					            .setDescription("メンテナンスモードが有効になりました。\nいまは遊べないカッ...")
+        					            .build();
+        					        builder.addEmbeds(embed);
+        					        discord.sendWebhookMessage(builder);
         						}
         					}
         					break;
@@ -228,7 +239,7 @@ public class Maintenance
 	        }
 			return;
 		}
-		catch (ClassNotFoundException | SQLException | IOException e)
+		catch (ClassNotFoundException | SQLException e)
 		{
             e.printStackTrace();
         }

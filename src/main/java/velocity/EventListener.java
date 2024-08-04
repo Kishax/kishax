@@ -1,7 +1,5 @@
 package velocity;
 
-import java.awt.Color;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -34,7 +32,10 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
-import common.DiscordWebhook;
+import club.minnced.discord.webhook.send.WebhookEmbed;
+import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
+import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import common.ColorUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -56,7 +57,9 @@ public class EventListener
 	private final PlayerList pl;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
-	
+	private final DiscordListener discord;
+	private WebhookMessageBuilder builder = null;
+	private WebhookEmbed embed = null;
 	public Connection conn = null;
 	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
 	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs, ismente};
@@ -68,7 +71,7 @@ public class EventListener
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
 		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
-		PlayerDisconnect pd, RomajiConversion rc
+		PlayerDisconnect pd, RomajiConversion rc, DiscordListener discord
 	)
 	{
 		this.plugin = plugin;
@@ -82,6 +85,7 @@ public class EventListener
 		this.pl = pl;
 		this.pd = pd;
 		this.rc = rc;
+		this.discord = discord;
 	}
 	
 	@Subscribe
@@ -168,7 +172,13 @@ public class EventListener
     		        		// Map方式
     		        		String kanaMessage = conv.ConvRomaToKana(originalMessage);
             		        String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-            		        sendChatToDiscord(player, kanjiMessage);
+            		        
+            		        builder = new WebhookMessageBuilder();
+        			        builder.setUsername(player.getUsername());
+        			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+        			        builder.setContent(kanjiMessage);
+        			        discord.sendWebhookMessage(builder);
+        			        
             		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
             		        bc.broadcastComponent(component, chatserverName, true);
     		        	}
@@ -177,7 +187,13 @@ public class EventListener
     		        		// pde方式
     		        		String kanaMessage = rc.Romaji(originalMessage);
     		        		String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-            		        sendChatToDiscord(player, kanjiMessage);
+    		        		
+    		        		builder = new WebhookMessageBuilder();
+        			        builder.setUsername(player.getUsername());
+        			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+        			        builder.setContent(kanjiMessage);
+        			        discord.sendWebhookMessage(builder);
+        			        
             		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
             		        bc.broadcastComponent(component, chatserverName, true);
     		        	}
@@ -185,7 +201,11 @@ public class EventListener
     		        }
     		        else
     		        {
-    		        	sendChatToDiscord(player, originalMessage);
+    		        	builder = new WebhookMessageBuilder();
+    			        builder.setUsername(player.getUsername());
+    			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+    			        builder.setContent(originalMessage);
+    			        discord.sendWebhookMessage(builder);
     		        	return;
     		        }
     		    }
@@ -236,7 +256,7 @@ public class EventListener
     		            }
     		            else if (i != textPartsSize - 1)
     		            {
-    		                getUrl = "\\n" + urls.get(i) + "\\n";
+    		                getUrl = "\n" + urls.get(i) + "\n";
     		                getUrl2 = "\n" + space + urls.get(i);
     		                
     		                //if(i = urlsSize)
@@ -244,7 +264,7 @@ public class EventListener
     		            }
     		            else
     		            {
-    		                getUrl = "\\n" + urls.get(i);
+    		                getUrl = "\n" + urls.get(i);
     		                getUrl2 = "\n" + space + urls.get(i);
     		            }
     		            mixtext += getUrl;
@@ -254,7 +274,12 @@ public class EventListener
     		    
     		    component = component.append(Component.text(")").color(NamedTextColor.GOLD));
     		    bc.broadcastComponent(component, chatserverName, true);
-    		    sendChatToDiscord(player, mixtext);
+    		    
+    		    builder = new WebhookMessageBuilder();
+		        builder.setUsername(player.getUsername());
+		        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+		        builder.setContent(mixtext);
+		        discord.sendWebhookMessage(builder);
     		    return;
     		}
     		catch (Exception ex) {
@@ -393,7 +418,18 @@ public class EventListener
 	        	    				long beforejoin_sa = now_timestamp-beforejoin_timestamp;
 	        	    				long beforejoin_sa_minute = beforejoin_sa/60;
 	        	    				
-	        	    				if(beforejoin_sa_minute>=config.getInt("Interval.Login",0)) discord_join_notify(player,Color.GREEN,player.getUsername()+"が"+config.getString("Servers.Hub","")+"サーバーに参加したぜよ！");
+	        	    				if(beforejoin_sa_minute>=config.getInt("Interval.Login",0))
+	        	    				{
+	        	    					builder = new WebhookMessageBuilder();
+	        	    			        builder.setUsername(player.getUsername());
+	        	    			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+	        	    			        embed = new WebhookEmbedBuilder()
+	        	    			            .setColor(ColorUtil.GREEN.getRGB())  // Embedの色
+	        	    			            .setDescription(player.getUsername()+"が"+config.getString("Servers.Hub","")+"サーバーに参加したぜよ！")
+	        	    			            .build();
+	        	    			        builder.addEmbeds(embed);
+	        	    			        discord.sendWebhookMessage(builder);
+	        	    				}
 	            				}
 	            			}
 	            			
@@ -452,7 +488,16 @@ public class EventListener
 	            					ps.executeUpdate();
 	            				}
 	            			}
-	            			discord_join_notify(player,Color.GREEN,player.getUsername()+"が"+config.getString("Servers.Hub","")+"サーバーに参加したぜよ！");
+	            			
+	            			builder = new WebhookMessageBuilder();
+	    			        builder.setUsername(player.getUsername());
+	    			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+	    			        embed = new WebhookEmbedBuilder()
+	    			            .setColor(ColorUtil.GREEN.getRGB())  // Embedの色
+	    			            .setDescription(player.getUsername()+"が"+config.getString("Servers.Hub","")+"サーバーに参加したぜよ！")
+	    			            .build();
+	    			        builder.addEmbeds(embed);
+	    			        discord.sendWebhookMessage(builder);
 	            		}
 	            	}
 	            }
@@ -488,13 +533,16 @@ public class EventListener
 	    			ps.setString(3, serverInfo.getName());
 	    			ps.executeUpdate();
 	    			
-	    			discord_join_notify
-	    			(
-	    				player,
-	    				Color.orange,
-	    				player.getUsername()+"が"+serverInfo.getName()+"サーバーに初参加です！"
-	    			);
-	    			
+	    			builder = new WebhookMessageBuilder();
+			        builder.setUsername(player.getUsername());
+			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
+			        embed = new WebhookEmbedBuilder()
+			            .setColor(ColorUtil.ORANGE.getRGB())  // Embedの色
+			            .setDescription(player.getUsername()+"が"+serverInfo.getName()+"サーバーに初参加です！")
+			            .build();
+			        builder.addEmbeds(embed);
+			        discord.sendWebhookMessage(builder);
+			        
 	    			// Discord絵文字を追加する
 	    			String pythonScriptPath = config.getString("Discord.Emoji_Add_Path");
 	            	// ProcessBuilderを作成
@@ -550,52 +598,6 @@ public class EventListener
 				db.close_resorce(resultsets,conn,ps);
 			}
 		}).schedule();
-	}
-	
-	public void sendChatToDiscord(Player player,String message)
-	{
-		if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
-		
-		DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-        dw.setUsername(player.getUsername());
-        dw.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
-	    dw.setContent(message);
-	    try
-	    {
-	    	dw.execute();
-	    }
-	    catch (java.io.IOException e1)
-	    {
-	    	// スタックトレースをログに出力
-            logger.error("An onChat error occurred: " + e1.getMessage());
-            for (StackTraceElement element : e1.getStackTrace()) 
-            {
-                logger.error(element.toString());
-            }
-	    }
-	}
-	
-	public void discord_join_notify(Player player,Color color,String msg)
-	{
-		if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
-		
-		DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-		dw.setUsername(player.getUsername());
-        dw.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
-	    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(color).setDescription(msg));
-	    try
-		{
-		    dw.execute();
-		}    		    
-		catch (java.io.IOException e1)
-		{
-			// スタックトレースをログに出力
-            logger.error("An onChat error occurred: " + e1.getMessage());
-            for (StackTraceElement element : e1.getStackTrace()) 
-            {
-                logger.error(element.toString());
-            }
-		}
 	}
 	
 	@Subscribe

@@ -1,7 +1,5 @@
 package velocity;
 
-import java.awt.Color;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,7 +13,10 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import common.DiscordWebhook;
+import club.minnced.discord.webhook.send.WebhookEmbed;
+import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
+import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import common.ColorUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -28,6 +29,9 @@ public class PlayerDisconnect
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
+	private final DiscordListener discord;
+	private WebhookMessageBuilder builder = null;
+	private WebhookEmbed embed = null;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null;
@@ -39,7 +43,8 @@ public class PlayerDisconnect
 	(
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl
+		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
+		DiscordListener discord
 	)
 	{
 		this.plugin = plugin;
@@ -48,6 +53,7 @@ public class PlayerDisconnect
 		this.config = config;
 		this.db = db;
 		this.console = console;
+		this.discord = discord;
 	}
 	
 	public void menteDisconnect(List<String> UUIDs)
@@ -88,18 +94,20 @@ public class PlayerDisconnect
 			ps.setString(2, player.getUniqueId().toString());
 			ps.executeUpdate();
 			
-			if(config.getString("Discord.Webhook_URL","").isEmpty())  return;
-				
-			DiscordWebhook dw = new DiscordWebhook(config.getString("Discord.Webhook_URL"));
-	        dw.setUsername("サーバー");
+			builder = new WebhookMessageBuilder();
+	        builder.setUsername("サーバー");
 	        if(!config.getString("Discord.InvaderComingImageUrl","").isEmpty())
 	        {
-	        	dw.setAvatarUrl(config.getString("Discord.InvaderComingImageUrl"));
+	        	builder.setAvatarUrl(config.getString("Discord.InvaderComingImageUrl"));
 	        }
-		    dw.addEmbed(new DiscordWebhook.EmbedObject().setColor(Color.RED).setDescription("侵入者が現れました。"));
-		    dw.execute();
+	        embed = new WebhookEmbedBuilder()
+	            .setColor(ColorUtil.RED.getRGB())  // Embedの色
+	            .setDescription("侵入者が現れました。")
+	            .build();
+	        builder.addEmbeds(embed);
+	        discord.sendWebhookMessage(builder);
 		}
-		catch (SQLException | IOException | ClassNotFoundException e)
+		catch (SQLException | ClassNotFoundException e)
 		{
 			// スタックトレースをログに出力
             logger.error("An onChat error occurred: " + e.getMessage());

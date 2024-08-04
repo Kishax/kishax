@@ -49,7 +49,9 @@ public class DiscordListener
     	{
 			try
 			{
-				jda = JDABuilder.createDefault(config.getString("Discord.Token")).build();
+				jda = JDABuilder.createDefault(config.getString("Discord.Token"))
+						.addEventListeners(Main.getInjector().getInstance(DiscordEventListener.class))
+						.build();
 				jda.awaitReady();
 				isDiscord = true;
 				logger.info("Discord-Botがログインしました。");
@@ -77,7 +79,7 @@ public class DiscordListener
         }
     }
     
-    public void sendWebhookMessage(String content, String username, String avatarUrl)
+    /*public void sendWebhookMessage(String content, String username, String avatarUrl)
     {
     	if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
     		
@@ -87,15 +89,26 @@ public class DiscordListener
         builder.setUsername(username);
         builder.setAvatarUrl(avatarUrl);
         
-        WebhookEmbed embed = new WebhookEmbedBuilder()
-            .setColor(0xFF0000)  // Embedの色
-            .setDescription("このメッセージは埋め込みです。")
-            //.addField(new EmbedField(true, "フィールド1", "値1"))
-            .build();
-
-        builder.addEmbeds(embed);
-        
         WebhookMessage message = builder.build();
+        client.send(message).thenAccept(response ->
+        {
+        	console.sendMessage(Component.text("Message sent with ID: " + response.getId()));
+        }).exceptionally(throwable ->
+        {
+            throwable.printStackTrace();
+            return null;
+        });
+    }*/
+    
+    public void sendWebhookMessage(WebhookMessageBuilder builder)
+    {
+    	if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
+    		
+        WebhookClient client = WebhookClient.withUrl(config.getString("Discord.Webhook_URL"));
+        
+        //.addField(new EmbedField(true, "フィールド1", "値1"))
+        WebhookMessage message = builder.build();
+        
         client.send(message).thenAccept(response ->
         {
         	console.sendMessage(Component.text("Message sent with ID: " + response.getId()));
@@ -119,7 +132,6 @@ public class DiscordListener
                 MessageAction messageAction = channel.sendMessage(content);
                 messageAction.queue(response ->
                 {
-                    logger.info("Message sent: " + response.getId());
                     // メッセージIDとチャンネルIDを取得
                     String messageId = response.getId();
                     logger.info("Message ID: " + messageId);
