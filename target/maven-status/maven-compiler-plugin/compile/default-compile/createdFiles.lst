@@ -44,7 +44,6 @@ spigot_command\Potion.class
 velocity_command\FMCCommand.class
 velocity_command\Maintenance.class
 common\DiscordWebhook$EmbedObject$Footer.class
-common\DiscordWebhook$JSONObject.class
 spigot_command\FMCCommand.class
 velocity\VelocityModule.class
 spigot\AutoShutdown.class

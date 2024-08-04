@@ -233,6 +233,22 @@ public class Config
         return getInt(path, 0);
     }
     
+    // 階層的なキーを指定してlong型の整数を取得する
+    public long getLong(String path, long defaultValue)
+    {
+        Object value = getNestedValue(path);
+        if (value instanceof Number)
+        {
+            return ((Number) value).longValue();
+        }
+        return defaultValue;
+    }
+
+    public long getLong(String path)
+    {
+        return getLong(path, 0L);
+    }
+    
     // 階層的なキーを指定してリストを取得する
     @SuppressWarnings("unchecked")
     public List<String> getList(String path, List<String> defaultValue)

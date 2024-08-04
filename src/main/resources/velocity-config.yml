@@ -12,6 +12,8 @@ Socket:
     Buffered_Server_Port: 
 
 Discord:
+    Token: ""
+	ChannelId: ""
     Webhook_URL: ""
     Emoji_Add_Path: ""
     InvaderComingImageUrl: ""

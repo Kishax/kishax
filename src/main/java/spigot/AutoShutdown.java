@@ -44,7 +44,7 @@ public class AutoShutdown
 	            	String serverName = shd.getServerName();
 	            	ssw.startSocketClient("プレイヤー不在のため、"+serverName+"サーバーを停止させます。");
 	            	
-	                plugin.getServer().broadcastMessage(ChatColor.RED+"プレイヤー不在のため、サーバーを5秒後に停止します。");
+	                plugin.getServer().broadcastMessage(ChatColor.RED+"プレイヤー不在のため、"+serverName+"サーバーを5秒後に停止します。");
 	                countdownAndShutdown(5);
 	            }
 	        }

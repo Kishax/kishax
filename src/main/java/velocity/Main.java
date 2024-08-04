@@ -27,8 +27,6 @@ public class Main
 	private final Path dataDirectory;
 	// Guice注入後、取得するインスタンス(フィールド)郡
 	public SocketSwitch ssw = null;
-	private Luckperms lp = null;
-	private DoServerOnline doOnline = null;
 	
     @Inject
     public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory)
@@ -50,15 +48,15 @@ public class Main
         injector = Guice.createInjector(new VelocityModule(this, server, logger, dataDirectory, LuckPermsProvider.get()));
         
         // 依存性が解決された@Injectを使用するクラスのインスタンスを取得
-        lp = getInjector().getInstance(Luckperms.class);
     	ssw = getInjector().getInstance(SocketSwitch.class);
-    	doOnline = getInjector().getInstance(DoServerOnline.class);
-    			
-    	doOnline.UpdateDatabase();
+    	
+    	getInjector().getInstance(DiscordListener.class).loginDiscordBotAsync(); // Discordボットのログインを非同期で実行		
+    	
+    	getInjector().getInstance(DoServerOnline.class).UpdateDatabase();
     	
     	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
     	
- 		lp.triggerNetworkSync();
+    	getInjector().getInstance(Luckperms.class).triggerNetworkSync();
  		logger.info("luckpermsと連携しました。");
  		
  		getInjector().getInstance(PlayerList.class).loadPlayers(); // プレイヤーリストをアップデート
@@ -88,6 +86,7 @@ public class Main
 		logger.info( "Client Socket Stopping..." );
 		ssw.stopSocketServer();
 		ssw.stopBufferedSocketServer();
+		getInjector().getInstance(DiscordListener.class).logoutDiscordBot(); // Discordボットのログアウトを非同期で実行
     	logger.info("Socket Server stopping...");
     	logger.info("Buffered Socket Server stopping...");
 		logger.info( "プラグインが無効になりました。" );

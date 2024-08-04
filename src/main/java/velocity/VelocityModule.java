@@ -63,5 +63,6 @@ public class VelocityModule extends AbstractModule
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
         bind(RomajiConversion.class);
+        bind(DiscordListener.class);
     }
 }
