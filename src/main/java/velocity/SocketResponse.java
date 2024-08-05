@@ -132,23 +132,22 @@ public class SocketResponse
                 	if(!DiscordInviteUrl.isEmpty())
                 	{
                 		component = Component.text()
-                				.append(Component.text("あなたのFMCアカウントとマイクラUUIDとの紐づけが完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！")
-                					.color(NamedTextColor.LIGHT_PURPLE))
-        	        			.append(Component.text("\nFMCサーバーの").color(NamedTextColor.LIGHT_PURPLE))
-        	        			.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-        	        			.append(Component.text("には参加しましたか？").color(NamedTextColor.LIGHT_PURPLE))
-        	        			.append(Component.text("\n"+DiscordInviteUrl).color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
-        			    			.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
-        			    			.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscord")))
-        			    		.append(Component.text("ここでは、個性豊かな色々なメンバーと交流ができます！\nなお、MinecraftとDiscord間のチャットが同期しているので、誰かが反応してくれるはずです...！").color(NamedTextColor.LIGHT_PURPLE))
+                				.append(Component.text("\nUUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+        	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
+        	        			.append(Component.text("\n\nFMCサーバーの").color(NamedTextColor.AQUA))
+        	        			.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
+        	        					.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
+            			    			.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscordへいこう！"))))
+        	        			.append(Component.text("には参加しましたか？").color(NamedTextColor.AQUA))
+        			    		.append(Component.text("\nここでは、個性豊かな色々なメンバーと交流ができます！\nなお、マイクラとDiscord間のチャットは同期しているので、誰かが反応してくれるはずです...！").color(NamedTextColor.AQUA))
         			    		.build();
                 		bc.sendSpecificPlayerMessage(component, mineName);
                 	}
                 	else
                 	{
                 		component = Component.text()
-                				.append(Component.text("あなたのFMCアカウントとマイクラUUIDとの紐づけが完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！")
-                					.color(NamedTextColor.LIGHT_PURPLE))
+                				.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+        	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
         			    		.build();
                 			bc.sendSpecificPlayerMessage(component, mineName);
                 	}
