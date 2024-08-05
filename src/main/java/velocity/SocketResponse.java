@@ -15,10 +15,11 @@ import org.slf4j.Logger;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.inject.Inject;
-import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.ColorUtil;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -33,25 +34,30 @@ public class SocketResponse
 	private PreparedStatement ps = null;
 	private final ProxyServer server;
 	private final Logger logger;
+	private final Config config;
 	private final Luckperms lp;
 	private final BroadCast bc;
-	private final ConsoleCommandSource console;
 	private final Database db;
+	private final EmojiManager emoji;
+	private final DiscordListener discord;
+	private String mineName = null;
 	
 	@Inject
 	public SocketResponse
 	(
-		Main plugin, ProxyServer server, Logger logger, 
-		Luckperms lp, BroadCast bc, ConsoleCommandSource console,
-		Database db
+		Main plugin, ProxyServer server, Logger logger,
+		Config config, Luckperms lp, BroadCast bc, 
+		Database db, EmojiManager emoji, DiscordListener discord
 	)
 	{
 		this.server = server;
         this.logger = logger;
+        this.config = config;
         this.lp = lp;
         this.bc = bc;
-        this.console = console;
         this.db = db;
+        this.emoji = emoji;
+        this.discord = discord;
 	}
 	
 	public void resaction(String res)
@@ -82,9 +88,72 @@ public class SocketResponse
     		}
     		if (res.contains("uuid"))
     		{
+    			// PHPの方でlpテーブルへの追加は完了済み
     			lp.triggerNetworkSync();
-    			if(res.contains("new")) res = res.replace("PHP->uuid->new->", "");
-    			bc.broadcastMessage(res, NamedTextColor.LIGHT_PURPLE, null);
+    			String pattern = "PHP->uuid->new->(.*?)->";
+
+                // パターンをコンパイル
+                Pattern compiledPattern = Pattern.compile(pattern);
+                Matcher matcher = compiledPattern.matcher(res);
+
+                mineName = null;
+                // パターンにマッチする部分を抽出
+                if (matcher.find())
+                {
+                	mineName = matcher.group(1);
+                	emoji.createOrgetEmojiId(mineName).thenAccept(emojiId ->
+	    			{
+	    				MessageEmbed newUserEmbed = null;
+    					if(Objects.nonNull(emojiId))
+		    			{
+    						newUserEmbed = discord.createEmbed
+	    							(
+	    								emoji.getEmojiString(mineName, emojiId)+
+	    								mineName+"が新規FMCメンバーになりました！",
+	    								ColorUtil.PINK.getRGB()
+	    							);
+	    					discord.sendBotMessageAsync(newUserEmbed);
+		    			}
+    					else
+    					{
+    						newUserEmbed = discord.createEmbed
+	    							(
+	    								mineName+"が新規FMCメンバーになりました！",
+	    								ColorUtil.PINK.getRGB()
+	    							);
+	    					discord.sendBotMessageAsync(newUserEmbed);
+    					}
+	    			});
+                }
+                if(Objects.nonNull(mineName))
+                {
+                	TextComponent component = null;
+                	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
+                	if(!DiscordInviteUrl.isEmpty())
+                	{
+                		component = Component.text()
+                				.append(Component.text("あなたのFMCアカウントとマイクラUUIDとの紐づけが完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！")
+                					.color(NamedTextColor.LIGHT_PURPLE))
+        	        			.append(Component.text("\nFMCサーバーの").color(NamedTextColor.LIGHT_PURPLE))
+        	        			.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+        	        			.append(Component.text("には参加しましたか？").color(NamedTextColor.LIGHT_PURPLE))
+        	        			.append(Component.text("\n"+DiscordInviteUrl).color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
+        			    			.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
+        			    			.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscord")))
+        			    		.append(Component.text("ここでは、個性豊かな色々なメンバーと交流ができます！\nなお、MinecraftとDiscord間のチャットが同期しているので、誰かが反応してくれるはずです...！").color(NamedTextColor.LIGHT_PURPLE))
+        			    		.build();
+                		bc.sendSpecificPlayerMessage(component, mineName);
+                	}
+                	else
+                	{
+                		component = Component.text()
+                				.append(Component.text("あなたのFMCアカウントとマイクラUUIDとの紐づけが完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！")
+                					.color(NamedTextColor.LIGHT_PURPLE))
+        			    		.build();
+                			bc.sendSpecificPlayerMessage(component, mineName);
+                	}
+        			
+                }
     		}
     	}
     	else if(res.contains("起動"))

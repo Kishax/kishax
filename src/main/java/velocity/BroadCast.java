@@ -9,6 +9,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class BroadCast
@@ -91,5 +92,16 @@ public class BroadCast
         
         // コンソールにも出力
         console.sendMessage(Component.text(message).color(color));
+    }
+    
+    public void sendSpecificPlayerMessage(TextComponent component, String specificPlayer)
+    {
+    	for (Player player : server.getAllPlayers())
+        {
+        	if(player.getUsername().equals(specificPlayer))
+        	{
+        		player.sendMessage(component);
+        	}
+        }
     }
 }

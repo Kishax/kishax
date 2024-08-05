@@ -9,7 +9,8 @@ public enum ColorUtil
     BLACK(0, 0, 0),
     WHITE(255, 255, 255),
     YELLOW(255, 255, 0),
-	ORANGE(255, 165, 0)
+	ORANGE(255, 165, 0),
+	PINK(255, 0, 127)
 	;
     /**
      * RGBの各成分から16進数の色コードを生成します。

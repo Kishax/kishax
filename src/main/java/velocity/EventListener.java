@@ -428,18 +428,17 @@ public class EventListener
 	        	    					avatarUrl = "https://minotar.net/avatar/"+player.getUniqueId().toString();
 	        	    	    			emojiId = null;
 	        	    	    			joinEmbed = null;
+	        	    	    			
 	        	    	    			// Discord絵文字を取得する
-	        	    	    			// 追加される絵文字は参加通知、データベース保存で使うので、ここだけ同期処理にする
-	        	    	    			synchronized (this)
-	        	    	    			{
-	        	    	    				emojiId = emoji.createOrgetEmojiId(player.getUsername(), avatarUrl);
-	        	    	    				
+	        	    	    			// EmojiIDを取得する非同期処理が完了したのちに処理を続ける
+	        	    	    			emoji.createOrgetEmojiId(player.getUsername(), avatarUrl).thenAccept(emojiId ->
+	            		    			{
 	        	    				        if(Objects.nonNull(emojiId))
 	        	    		    			{
 	        	    				        	joinEmbed = discord.createEmbed
 	    	        	    							(
 	    	        	    								emoji.getEmojiString(player.getUsername(), emojiId)+
-	    	        	    								player.getUsername()+"が"+config.getString("Servers.Hub","")+
+	    	        	    								player.getUsername()+"が"+serverInfo.getName()+
 	    	        	    								"サーバーに参加したぜよ！",
 	    	        	    								ColorUtil.GREEN.getRGB()
 	    	        	    							);
@@ -449,13 +448,13 @@ public class EventListener
 	        	    				        {
 	        	    				        	joinEmbed = discord.createEmbed
 	    	        	    							(
-	    	        	    								player.getUsername()+"が"+config.getString("Servers.Hub","")+
+	    	        	    								player.getUsername()+"が"+serverInfo.getName()+
 	    	        	    								"サーバーに参加したぜよ！",
 	    	        	    								ColorUtil.GREEN.getRGB()
 	    	        	    							);
 	    	        	    					discord.sendBotMessageAsync(joinEmbed);
 	        	    				        }
-	        	    	    			}
+	            		    			});
 	        	    				}
 	            				}
 	            			}
@@ -493,7 +492,7 @@ public class EventListener
 	            			ps.setString(4, player.getUniqueId().toString());
 	            			ps.executeUpdate();
 	            			
-	            			player.sendMessage(Component.text(NamedTextColor.GREEN+"MCIDの変更が検出されたため、データベースを更新しました。"));
+	            			player.sendMessage(Component.text("MCIDの変更が検出されたため、データベースを更新しました。").color(NamedTextColor.GREEN));
 	            			
 	            			// 過去の名前を解放するため、過去の名前のレコードがほかにもあったらそれをinvalid_loginへ移動
 	            			sql="SELECT COUNT(*) FROM minecraft WHERE name=?;";
@@ -519,34 +518,33 @@ public class EventListener
 	            			avatarUrl = "https://minotar.net/avatar/"+player.getUniqueId().toString();
 	    	    			emojiId = null;
 	    	    			joinEmbed = null;
+	    	    			
 	    	    			// Discord絵文字を取得する
-	    	    			// 追加される絵文字は参加通知、データベース保存で使うので、ここだけ同期処理にする
-	    	    			synchronized (this)
-	    	    			{
-	    	    				emojiId = emoji.createOrgetEmojiId(player.getUsername(), avatarUrl);
-	    	    				
-	    				        if(Objects.nonNull(emojiId))
-	    		    			{
-	    				        	joinEmbed = discord.createEmbed
+	    	    			// EmojiIDを取得する非同期処理が完了したのちに処理を続ける
+    	    				emoji.createOrgetEmojiId(player.getUsername(), avatarUrl).thenAccept(emojiId ->
+    		    			{
+    		    				if(Objects.nonNull(emojiId))
+        		    			{
+        				        	joinEmbed = discord.createEmbed
         	    							(
         	    								emoji.getEmojiString(player.getUsername(), emojiId)+
-        	    								player.getUsername()+"が"+config.getString("Servers.Hub","")+
+        	    								player.getUsername()+"が"+serverInfo.getName()+
         	    								"サーバーに参加したぜよ！",
         	    								ColorUtil.GREEN.getRGB()
         	    							);
         	    					discord.sendBotMessageAsync(joinEmbed);
-	    		    			}
-	    				        else
-	    				        {
-	    				        	joinEmbed = discord.createEmbed
+        		    			}
+        				        else
+        				        {
+        				        	joinEmbed = discord.createEmbed
         	    							(
-        	    								player.getUsername()+"が"+config.getString("Servers.Hub","")+
+        	    								player.getUsername()+"が"+serverInfo.getName()+
         	    								"サーバーに参加したぜよ！",
         	    								ColorUtil.GREEN.getRGB()
         	    							);
         	    					discord.sendBotMessageAsync(joinEmbed);
-	    				        }
-	    	    			}
+        				        }
+    		    			});
 	            		}
 	            	}
 	            }
@@ -578,55 +576,67 @@ public class EventListener
 	    			avatarUrl = "https://minotar.net/avatar/"+player.getUniqueId().toString();
 	    			emojiId = null;
 	    			joinEmbed = null;
-	    			// Discord絵文字を追加する
-	    			// 追加される絵文字は参加通知、データベース保存で使うので、ここだけ同期処理にする
-	    			emojiId = emoji.createOrgetEmojiId(player.getUsername(), avatarUrl);
 	    			
-	    			if(Objects.nonNull(emojiId))
+	    			// Discord絵文字を追加する
+	    			// EmojiIDを取得する非同期処理が完了したのちに処理を続ける
+	    			emoji.createOrgetEmojiId(player.getUsername(), avatarUrl).thenAccept(emojiId ->
 	    			{
-	    				// 絵文字が正常に追加され、emidを返した場合
-	    				sql="INSERT INTO minecraft (name,uuid,server, emid) VALUES (?,?,?,?);";
-		    			ps = conn.prepareStatement(sql);
-		    			ps.setString(1, player.getUsername());
-		    			ps.setString(2, player.getUniqueId().toString());
-		    			ps.setString(3, serverInfo.getName());
-		    			ps.setString(4, emojiId);
-		    			ps.executeUpdate();
-		    			
-		    			joinEmbed = discord.createEmbed
-    							(
-    								emoji.getEmojiString(player.getUsername(), emojiId)+
-    								player.getUsername()+"が"+config.getString("Servers.Hub","")+
-    								"サーバーに初参加です！",
-    								ColorUtil.ORANGE.getRGB()
-    							);
-    					discord.sendBotMessageAsync(joinEmbed);
-	    			}
-	    			else
-	    			{
-	    				// 絵文字が正常に追加されなかった場合
-		    			sql="INSERT INTO minecraft (name,uuid,server) VALUES (?,?,?);";
-		    			ps = conn.prepareStatement(sql);
-		    			ps.setString(1, player.getUsername());
-		    			ps.setString(2, player.getUniqueId().toString());
-		    			ps.setString(3, serverInfo.getName());
-		    			ps.executeUpdate();
-		    			
-				        joinEmbed = discord.createEmbed
-    							(
-    								player.getUsername()+"が"+serverInfo.getName()+
-    								"サーバーに初参加です！",
-    								ColorUtil.ORANGE.getRGB()
-    							);
-    					discord.sendBotMessageAsync(joinEmbed);
-	    			}
+	    				try
+	    				{
+	    					if(Objects.nonNull(emojiId))
+			    			{
+			    				// 絵文字が正常に追加され、emidを返した場合
+				    			ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server, emid) VALUES (?,?,?,?);");
+				    			ps.setString(1, player.getUsername());
+				    			ps.setString(2, player.getUniqueId().toString());
+				    			ps.setString(3, serverInfo.getName());
+				    			ps.setString(4, emojiId);
+				    			ps.executeUpdate();
+				    			
+				    			joinEmbed = discord.createEmbed
+		    							(
+		    								emoji.getEmojiString(player.getUsername(), emojiId)+
+		    								player.getUsername()+"が"+serverInfo.getName()+
+		    								"サーバーに初参加です！",
+		    								ColorUtil.ORANGE.getRGB()
+		    							);
+		    					discord.sendBotMessageAsync(joinEmbed);
+			    			}
+			    			else
+			    			{
+			    				// 絵文字が正常に追加されなかった場合
+				    			ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server) VALUES (?,?,?);");
+				    			ps.setString(1, player.getUsername());
+				    			ps.setString(2, player.getUniqueId().toString());
+				    			ps.setString(3, serverInfo.getName());
+				    			ps.executeUpdate();
+				    			
+						        joinEmbed = discord.createEmbed
+		    							(
+		    								player.getUsername()+"が"+serverInfo.getName()+
+		    								"サーバーに初参加です！",
+		    								ColorUtil.ORANGE.getRGB()
+		    							);
+		    					discord.sendBotMessageAsync(joinEmbed);
+			    			}
+	    				}
+	    				catch (SQLException e1)
+	    				{
+	    					// スタックトレースをログに出力
+	    		            logger.error("An onConnection error occurred: " + e1.getMessage());
+	    		            for (StackTraceElement element : e1.getStackTrace()) 
+	    		            {
+	    		                logger.error(element.toString());
+	    		            }
+	    				}
+	    			});
 	            }
 	            
 				// サーバー移動通知
 				logger.info("Player connected to server: " + serverInfo.getName());
 				if(serverInfo.getName().equalsIgnoreCase(config.getString("hub")))
 				{
-					bc.broadcastMessage(player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーにやってきました！", NamedTextColor.AQUA, serverInfo.getName());
+					bc.broadcastMessage(player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーに初めてやってきました！", NamedTextColor.AQUA, serverInfo.getName());
 				}
 				else
 				{
@@ -634,7 +644,16 @@ public class EventListener
 				}
 				
 				
-				player.sendMessage(Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに参加しました。").color(NamedTextColor.YELLOW));
+				player.sendMessage
+				(
+					Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
+						.append(Component.text("FMCサーバー").color(NamedTextColor.AQUA).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+						.append(Component.text("へようこそ！\n当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成とMinecraftアカウントと紐づける").color(NamedTextColor.AQUA))
+						.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+						.append(Component.text("を必須としています。\n"))
+						.append(Component.text("FMCユーザーは、サーバーを起動するためのリクエストを管理者へ送ることができます。\n今後色々なコンテンツを追加していく予定です！").color(NamedTextColor.AQUA))
+						.append(Component.text("正面にいるNPCをクリックして、UUID認証手続きへ移ります。").color(NamedTextColor.AQUA))
+				);
 				
 				if(serverInfo.getName().equals("Latest"))
 				{
@@ -660,10 +679,10 @@ public class EventListener
 	                logger.error(element.toString());
 	            }
 	        }
-			finally
+			/*finally
 			{
 				db.close_resorce(resultsets,conn,ps);
-			}
+			}*/
 		}).schedule();
 	}
 	

@@ -24,7 +24,6 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
-import velocity.Database;
 import velocity.DatabaseInterface;
 import velocity.Main;
 
@@ -311,16 +310,16 @@ public class SetServer
         			else
         			{
         				// MySQLサーバーにサーバーが登録されてなかった場合
-        				logger.info(NamedTextColor.RED+"このサーバーは、データベースに登録されていません。");
-        				player.sendMessage(Component.text(NamedTextColor.RED+"このサーバーは、データベースに登録されていません。"));
+        				logger.info("このサーバーは、データベースに登録されていません。");
+        				player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
         				return;
         			}
     			}
     			else
     			{
     				// MySQLサーバーにプレイヤー情報が登録されてなかった場合
-    				logger.info(NamedTextColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
-    				player.sendMessage(Component.text(NamedTextColor.RED+player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。"));
+    				logger.info(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。");
+    				player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
     			}
             }
             catch (SQLException | ClassNotFoundException e)

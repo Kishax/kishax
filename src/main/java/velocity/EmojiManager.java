@@ -21,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import javax.imageio.ImageIO;
 
@@ -49,17 +50,24 @@ public class EmojiManager
         this.db = db;
     }
     
-    public String createOrgetEmojiId(String emojiName, String imageUrl)
+    public CompletableFuture<String> createOrgetEmojiId(String emojiName, String imageUrl)
     {
+    	CompletableFuture<String> future = new CompletableFuture<>();
+    	
     	this.jda = DiscordListener.jda;
-        if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0) return null;
+        if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0)
+        {
+        	future.complete(null);
+            return future;
+        }
         
     	String guildId = Long.valueOf(config.getLong("Discord.GuildId")).toString();
         Guild guild = jda.getGuildById(guildId);
         if (Objects.isNull(guild))
         {
             logger.info("Guild not found!");
-            return null;
+            future.complete(null);
+            return future;
         }
         
         // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
@@ -72,9 +80,16 @@ public class EmojiManager
             emojiId = existingEmote.get().getId();
             logger.info(emojiName + "の絵文字はすでに追加されています。");
             logger.info("Existing Emoji ID: " + emojiId);
+            future.complete(emojiId);
         }
         else
         {
+        	if(Objects.isNull(imageUrl))
+        	{
+        		future.complete(null);
+                return future;
+        	}
+        		
         	try
             {
                 logger.info("Downloading image from URL: " + imageUrl);
@@ -93,8 +108,13 @@ public class EmojiManager
                     	logger.info(emojiName + "を絵文字に追加しました。");
                     	emojiId = success.getId(); // 絵文字IDを取得
                         logger.info("Emoji ID: " + emojiId);
+                        future.complete(emojiId);
                     },
-                    failure -> logger.error("Failed to create emoji: " + failure.getMessage())
+                    failure ->
+                    {
+                    	logger.error("Failed to create emoji: " + failure.getMessage());
+                    	future.complete(null);
+                    }
                 );
             }
             catch (IOException e)
@@ -104,9 +124,10 @@ public class EmojiManager
                 {
                     logger.error(element.toString());
                 }
+                future.complete(null);
             }
         }
-        return emojiId;
+        return future;
     }
     
     public String getEmojiString(String emojiName, String emojiId)
@@ -228,6 +249,11 @@ public class EmojiManager
         {
             db.close_resorce(resultsset, conn, ps);
         }
+    }
+    
+    public CompletableFuture<String> createOrgetEmojiId(String emojiName)
+    {
+    	return createOrgetEmojiId(emojiName, null);
     }
 
     private byte[] downloadImage(String imageUrl) throws IOException

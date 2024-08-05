@@ -16,7 +16,7 @@ Discord:
     GuildId: 
     ChannelId: 
     Webhook_URL: ""
-    Emoji_Add_Path: ""
+    InviteUrl: ""
     InvaderComingImageUrl: ""
     MaintenanceOnImageUrl: ""
     MaintenanceOffImageUrl: ""
