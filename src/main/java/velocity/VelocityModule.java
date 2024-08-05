@@ -64,5 +64,6 @@ public class VelocityModule extends AbstractModule
         bind(RomajiConversion.class);
         bind(DiscordListener.class);
         bind(DiscordEventListener.class);
+        bind(EmojiManager.class);
     }
 }

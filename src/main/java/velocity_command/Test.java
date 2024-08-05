@@ -5,26 +5,21 @@ import com.velocitypowered.api.command.CommandSource;
 
 import net.kyori.adventure.text.Component;
 import velocity.Config;
+import velocity.EmojiManager;
+import velocity.Main;
 
 public class Test
 {
-	private final Config config;
-	
 	@Inject
-	public Test(Config config)
+	public Test()
 	{
-		this.config = config;
+		//
 	}
 	
 	public void execute(CommandSource source, String[] args)
 	{
-		if(config.getString("Debug.Test","").isEmpty())
-		{
-			source.sendMessage(Component.text("Config not given"));
-			return;
-		}
-		
-		source.sendMessage(Component.text(config.getString("Debug.Test")));
+		//Main.getInjector().getInstance(EmojiManager.class).checkAndAddEmojis();
+		Main.getInjector().getInstance(EmojiManager.class).createEmoji("testemoji", "https://minotar.net/avatar/98242585b5ab492095540e4f3f899349");
 		return;
 	}
 }

@@ -13,7 +13,8 @@ Socket:
 
 Discord:
     Token: ""
-	ChannelId: ""
+    GuildId: 
+    ChannelId: 
     Webhook_URL: ""
     Emoji_Add_Path: ""
     InvaderComingImageUrl: ""

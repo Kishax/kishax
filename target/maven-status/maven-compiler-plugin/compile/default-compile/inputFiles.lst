@@ -27,6 +27,7 @@ C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\DatabaseInter
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\DiscordEventListener.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\DiscordListener.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\DoServerOnline.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\EmojiManager.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\EventListener.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\Luckperms.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\Main.java
@@ -40,6 +41,7 @@ C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\SocketSwitch.
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\VelocityModule.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\Cancel.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\CommandForwarder.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\ConfigTest.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\Debug.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\FMCCommand.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity_command\Hub.java

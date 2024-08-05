@@ -28,7 +28,7 @@ public class FMCCommand implements SimpleCommand
     private final Config config;
     private final PlayerList pl;
     
-    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","test","maintenance","conv"));
+    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","configtest","maintenance","conv","test"));
     public List<String> anylists = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
@@ -76,8 +76,8 @@ public class FMCCommand implements SimpleCommand
                         .append(Component.text("\n\n/fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp perm "))
                                 .hoverEvent(HoverEvent.showText(Component.text("ユーザーに対して権限の追加と除去"))))
-                        .append(Component.text("\n\n/fmcp test").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp test"))
+                        .append(Component.text("\n\n/fmcp configtest").color(NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.suggestCommand("/fmcp configtest"))
                                 .hoverEvent(HoverEvent.showText(Component.text("ConfigのDebug.Testの値を参照"))))
                         .append(Component.text("\n\n/fmcb　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp maintenance "))
@@ -85,6 +85,9 @@ public class FMCCommand implements SimpleCommand
                         .append(Component.text("\n\n/fmcb　conv").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp conv"))
                                 .hoverEvent(HoverEvent.showText(Component.text("ローマ字変換方式の切り替え"))))
+                        .append(Component.text("\n\n/fmcb　test").color(NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.suggestCommand("/fmcp test"))
+                                .hoverEvent(HoverEvent.showText(Component.text("デバッグで色々テストするだけ"))))
                         .build();
                 source.sendMessage(component);
             }
@@ -139,8 +142,8 @@ public class FMCCommand implements SimpleCommand
             	Main.getInjector().getInstance(Perm.class).execute(source, args);
                 break;
                 
-            case "test":
-            	Main.getInjector().getInstance(Test.class).execute(source, args);
+            case "configtest":
+            	Main.getInjector().getInstance(ConfigTest.class).execute(source, args);
             	break;
             	
             case "maintenance":
@@ -149,6 +152,10 @@ public class FMCCommand implements SimpleCommand
             
             case "conv":
             	Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
+            	break;
+            	
+            case "test":
+            	Main.getInjector().getInstance(Test.class).execute(source, args);
             	break;
             	
             default:

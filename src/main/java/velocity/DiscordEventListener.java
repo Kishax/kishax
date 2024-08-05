@@ -38,9 +38,6 @@ public class DiscordEventListener extends ListenerAdapter
 	@Override
     public void onMessageReceived(MessageReceivedEvent e) 
     {
-		// メッセージがフィルタリングされていないか確認
-	    logger.info("Received a message event");
-	    
         // DMやBot、Webhookのメッセージには反応しないようにする// e.isFromType(ChannelType.PRIVATE)
         if
         (
@@ -54,27 +51,25 @@ public class DiscordEventListener extends ListenerAdapter
         
         // メッセージ内容を取得
         String message = e.getMessage().getContentRaw();
-        logger.info("Message content: " + message);
+        String userName = e.getAuthor().getName();
         
         // メッセージが空でないことを確認
-        if (message.isEmpty())
+        if (!message.isEmpty())
         {
-            logger.info("Message content is empty");
+        	message = userName + " -> " + message;
+        	sendMixUrl(message);
             return;
         }
         
-        sendMixUrl(message);
-        
         // チャンネルIDやユーザーIDも取得可能
         //String channelId = e.getChannel().getId();
-        String userId = e.getAuthor().getId();
         
         List <Attachment> attachments = e.getMessage().getAttachments();
         int attachmentsSize = attachments.size();
         if(attachmentsSize > 0)
         {
         	TextComponent component = Component.text()
-        			.append(Component.text(userId+" -> Discordで画像か動画を上げています！"))
+        			.append(Component.text(userName+" -> Discordで画像か動画を上げています！").color(NamedTextColor.AQUA))
         			.build();
         			
         	TextComponent additionalComponent = null;
@@ -83,7 +78,7 @@ public class DiscordEventListener extends ListenerAdapter
             for (Attachment attachment : attachments)
             {
             	additionalComponent = Component.text()
-            			.append(Component.text(attachment.getUrl())
+            			.append(Component.text("\n"+attachment.getUrl())
         						.color(NamedTextColor.GRAY)
         						.decorate(TextDecoration.UNDERLINED))
         						.clickEvent(ClickEvent.openUrl(attachment.getUrl()))
@@ -134,7 +129,8 @@ public class DiscordEventListener extends ListenerAdapter
         }
         
         // 最後のURLの後のテキスト部分を追加
-        if (lastMatchEnd < string.length()) {
+        if (lastMatchEnd < string.length()) 
+        {
             textParts.add(string.substring(lastMatchEnd));
         }
         
