@@ -20,6 +20,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.imageio.ImageIO;
 
@@ -35,6 +36,7 @@ public class EmojiManager
 	private ResultSet[] resultsset = {minecrafts};
 	
     private JDA jda = null;
+    private String emojiId = null;
     private final Logger logger;
     private final Config config;
     private final Database db;
@@ -47,31 +49,36 @@ public class EmojiManager
         this.db = db;
     }
     
-    public void createEmoji(String emojiName, String imageUrl)
+    public String createOrgetEmojiId(String emojiName, String imageUrl)
     {
     	this.jda = DiscordListener.jda;
-        if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0) return;
+        if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0) return null;
         
     	String guildId = Long.valueOf(config.getLong("Discord.GuildId")).toString();
         Guild guild = jda.getGuildById(guildId);
         if (Objects.isNull(guild))
         {
             logger.info("Guild not found!");
-            return;
+            return null;
         }
         
-        // 絵文字が既に存在するかをチェック
-        boolean emojiExists = guild.getEmotes().stream()
-            .anyMatch(emote -> emote.getName().equals(emojiName));
-
-        if (emojiExists)
+        // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
+        Optional<Emote> existingEmote = guild.getEmotes().stream()
+            .filter(emote -> emote.getName().equals(emojiName))
+            .findFirst();
+        
+        if (existingEmote.isPresent())
         {
+            emojiId = existingEmote.get().getId();
             logger.info(emojiName + "の絵文字はすでに追加されています。");
+            logger.info("Existing Emoji ID: " + emojiId);
         }
         else
         {
         	try
             {
+                logger.info("Downloading image from URL: " + imageUrl);
+                
                 BufferedImage bufferedImage = ImageIO.read(new URL(imageUrl));
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(bufferedImage, "png", baos);
@@ -81,7 +88,12 @@ public class EmojiManager
                 // Create the emote with the specified name and icon
                 AuditableRestAction<Emote> action = guild.createEmote(emojiName, icon);
                 action.queue(
-                    success -> logger.info("Emoji created successfully!"),
+                    success -> 
+                    {
+                    	logger.info(emojiName + "を絵文字に追加しました。");
+                    	emojiId = success.getId(); // 絵文字IDを取得
+                        logger.info("Emoji ID: " + emojiId);
+                    },
                     failure -> logger.error("Failed to create emoji: " + failure.getMessage())
                 );
             }
@@ -94,6 +106,12 @@ public class EmojiManager
                 }
             }
         }
+        return emojiId;
+    }
+    
+    public String getEmojiString(String emojiName, String emojiId)
+    {
+    	return "<:" + emojiName + ":" + emojiId + ">";
     }
     
     public void checkAndAddEmojis()
@@ -118,20 +136,36 @@ public class EmojiManager
 
             while (minecrafts.next())
             {
+            	emojiId = null; // while文の中で、最初にemojiIDを初期化しておく
+            	
                 String mineName = minecrafts.getString("name");
                 String uuid = minecrafts.getString("uuid");
+                String dbEmojiId = minecrafts.getString("emid");
+                
+                // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
+                Optional<Emote> existingEmote = guild.getEmotes().stream()
+                    .filter(emote -> emote.getName().equals(mineName))
+                    .findFirst();
 
-                // 絵文字が既に存在するかをチェック
-                boolean emojiExists = guild.getEmotes().stream()
-                    .anyMatch(emote -> emote.getName().equals(mineName));
-
-                if (emojiExists)
+                if (existingEmote.isPresent())
                 {
+                    emojiId = existingEmote.get().getId();
                     logger.info(mineName + "の絵文字はすでに追加されています。");
+                    logger.info("Existing Emoji ID: " + emojiId);
+                    
+                    // もし、emojiIdがminecrafts.getString("emid")と違ったら更新する
+                    // データベース保存処理
+                    if(Objects.nonNull(emojiId) && !emojiId.equals(dbEmojiId))
+                    {
+                    	sql = "UPDATE minecraft SET emid=? WHERE uuid=?;";
+                    	ps = conn.prepareStatement(sql);
+                    	ps.setString(1, emojiId);
+                    	ps.setString(2, uuid);
+                    	ps.executeUpdate();
+                    }
                 }
                 else
                 {
-                    logger.info(mineName + "を絵文字に追加しました。");
                     String imageUrl = "https://minotar.net/avatar/" + uuid;
                     logger.info("Downloading image from URL: " + imageUrl); // 画像URLをログに出力
 
@@ -151,9 +185,24 @@ public class EmojiManager
                         // Create the emote with the specified name and icon
                         AuditableRestAction<Emote> action = guild.createEmote(mineName, icon);
                         action.queue(
-                            success -> logger.info("Emoji created successfully!"),
+                        	success -> 
+                            {
+                                logger.info(mineName + "を絵文字に追加しました。");
+                                emojiId = success.getId(); // 絵文字IDを取得
+                                logger.info("Emoji ID: " + emojiId);
+                            },
                             failure -> logger.error("Failed to create emoji: " + failure.getMessage())
                         );
+                        
+                        // データベース更新処理
+                        if(Objects.nonNull(emojiId))
+                        {
+                        	sql = "UPDATE minecraft SET emid=? WHERE uuid=?;";
+                        	ps = conn.prepareStatement(sql);
+                        	ps.setString(1, emojiId);
+                        	ps.setString(2, uuid);
+                        	ps.executeUpdate();
+                        }
                     }
                     catch (IOException e)
                     {
