@@ -580,48 +580,45 @@ public class EventListener
 	    			joinEmbed = null;
 	    			// Discord絵文字を追加する
 	    			// 追加される絵文字は参加通知、データベース保存で使うので、ここだけ同期処理にする
-	    			synchronized (this)
+	    			emojiId = emoji.createOrgetEmojiId(player.getUsername(), avatarUrl);
+	    			
+	    			if(Objects.nonNull(emojiId))
 	    			{
-	    				emojiId = emoji.createOrgetEmojiId(player.getUsername(), avatarUrl);
-	    				
-				        if(Objects.nonNull(emojiId))
-		    			{
-		    				// 絵文字が正常に追加され、emidを返した場合
-		    				sql="INSERT INTO minecraft (name,uuid,server, emid) VALUES (?,?,?,?);";
-			    			ps = conn.prepareStatement(sql);
-			    			ps.setString(1, player.getUsername());
-			    			ps.setString(2, player.getUniqueId().toString());
-			    			ps.setString(3, serverInfo.getName());
-			    			ps.setString(4, emojiId);
-			    			ps.executeUpdate();
-			    			
-			    			joinEmbed = discord.createEmbed
-	    							(
-	    								emoji.getEmojiString(player.getUsername(), emojiId)+
-	    								player.getUsername()+"が"+config.getString("Servers.Hub","")+
-	    								"サーバーに初参加です！",
-	    								ColorUtil.ORANGE.getRGB()
-	    							);
-	    					discord.sendBotMessageAsync(joinEmbed);
-		    			}
-		    			else
-		    			{
-		    				// 絵文字が正常に追加されなかった場合
-			    			sql="INSERT INTO minecraft (name,uuid,server) VALUES (?,?,?);";
-			    			ps = conn.prepareStatement(sql);
-			    			ps.setString(1, player.getUsername());
-			    			ps.setString(2, player.getUniqueId().toString());
-			    			ps.setString(3, serverInfo.getName());
-			    			ps.executeUpdate();
-			    			
-					        joinEmbed = discord.createEmbed
-	    							(
-	    								player.getUsername()+"が"+serverInfo.getName()+
-	    								"サーバーに初参加です！",
-	    								ColorUtil.ORANGE.getRGB()
-	    							);
-	    					discord.sendBotMessageAsync(joinEmbed);
-		    			}
+	    				// 絵文字が正常に追加され、emidを返した場合
+	    				sql="INSERT INTO minecraft (name,uuid,server, emid) VALUES (?,?,?,?);";
+		    			ps = conn.prepareStatement(sql);
+		    			ps.setString(1, player.getUsername());
+		    			ps.setString(2, player.getUniqueId().toString());
+		    			ps.setString(3, serverInfo.getName());
+		    			ps.setString(4, emojiId);
+		    			ps.executeUpdate();
+		    			
+		    			joinEmbed = discord.createEmbed
+    							(
+    								emoji.getEmojiString(player.getUsername(), emojiId)+
+    								player.getUsername()+"が"+config.getString("Servers.Hub","")+
+    								"サーバーに初参加です！",
+    								ColorUtil.ORANGE.getRGB()
+    							);
+    					discord.sendBotMessageAsync(joinEmbed);
+	    			}
+	    			else
+	    			{
+	    				// 絵文字が正常に追加されなかった場合
+		    			sql="INSERT INTO minecraft (name,uuid,server) VALUES (?,?,?);";
+		    			ps = conn.prepareStatement(sql);
+		    			ps.setString(1, player.getUsername());
+		    			ps.setString(2, player.getUniqueId().toString());
+		    			ps.setString(3, serverInfo.getName());
+		    			ps.executeUpdate();
+		    			
+				        joinEmbed = discord.createEmbed
+    							(
+    								player.getUsername()+"が"+serverInfo.getName()+
+    								"サーバーに初参加です！",
+    								ColorUtil.ORANGE.getRGB()
+    							);
+    					discord.sendBotMessageAsync(joinEmbed);
 	    			}
 	            }
 	            
