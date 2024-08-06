@@ -18,7 +18,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
-import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import common.ColorUtil;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.kyori.adventure.text.Component;
@@ -26,8 +25,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
 import velocity.Config;
 import velocity.DatabaseInterface;
-import velocity.DiscordListener;
-import velocity.EmojiManager;
 import velocity.EventListener;
 import velocity.Main;
 import velocity.PlayerDisconnect;
@@ -44,20 +41,10 @@ public class MessageEditor
 	public PreparedStatement ps = null;
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
 	
-	private final ProxyServer server;
 	private final Config config;
-	private final Logger logger;
-	private final DatabaseInterface db;
-	private final BroadCast bc;
 	private final ConsoleCommandSource console;
-	private final RomaToKanji conv;
-	private String chatserverName = "";
-	private final PlayerList pl;
-	private final PlayerDisconnect pd;
-	private final RomajiConversion rc;
 	private final DiscordListener discord;
 	private final EmojiManager emoji;
-	private WebhookMessageBuilder builder = null;
 	private String avatarUrl = null;
 	private String emojiId = null;
 	private MessageEmbed joinEmbed = null;
@@ -74,16 +61,8 @@ public class MessageEditor
 	)
 	{
 		this.plugin = plugin;
-		this.logger = logger;
-		this.server = server;
 		this.config = config;
-		this.db = db;
-		this.bc = bc;
 		this.console = console;
-		this.conv = conv;
-		this.pl = pl;
-		this.pd = pd;
-		this.rc = rc;
 		this.discord = discord;
 		this.emoji = emoji;
 	}

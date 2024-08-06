@@ -19,6 +19,8 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import common.ColorUtil;
+import discord.DiscordListener;
+import discord.EmojiManager;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;

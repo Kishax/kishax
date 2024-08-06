@@ -10,6 +10,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import discord.DiscordListener;
 import net.luckperms.api.LuckPermsProvider;
 import velocity_command.FMCCommand;
 import velocity_command.Hub;

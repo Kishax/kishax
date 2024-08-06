@@ -8,10 +8,10 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
+import discord.DiscordListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
-import velocity.DiscordListener;
 
 public class Debug
 {

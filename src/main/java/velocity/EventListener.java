@@ -38,6 +38,9 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import common.ColorUtil;
+import discord.DiscordListener;
+import discord.EmojiManager;
+import discord.MessageEditor;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -68,6 +71,7 @@ public class EventListener
 	private final RomajiConversion rc;
 	private final DiscordListener discord;
 	private final EmojiManager emoji;
+	private final MessageEditor discordME;
 	private WebhookMessageBuilder builder = null;
 	private String avatarUrl = null;
 	private String emojiId = null;
@@ -81,7 +85,7 @@ public class EventListener
 		Config config, DatabaseInterface db, BroadCast bc,
 		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
 		PlayerDisconnect pd, RomajiConversion rc, DiscordListener discord,
-		EmojiManager emoji
+		EmojiManager emoji, MessageEditor discordME
 	)
 	{
 		this.plugin = plugin;
@@ -97,6 +101,7 @@ public class EventListener
 		this.rc = rc;
 		this.discord = discord;
 		this.emoji = emoji;
+		this.discordME = discordME;
 	}
 	
 	@Subscribe
@@ -435,7 +440,7 @@ public class EventListener
 	        	    				
 	        	    				if(beforejoin_sa_minute>=config.getInt("Interval.Login",0))
 	        	    				{
-	        	    					JoinOrMoveDiscordMessageAsync(player, previousServerInfo, serverInfo);
+	        	    					discordME.JoinOrMoveDiscordMessageAsync(player, previousServerInfo, serverInfo);
 	        	    				}
 	            				}
 	            			}
@@ -496,7 +501,7 @@ public class EventListener
 	            				}
 	            			}
 	            			
-	            			JoinOrMoveDiscordMessageAsync(player, previousServerInfo, serverInfo);
+	            			discordME.JoinOrMoveDiscordMessageAsync(player, previousServerInfo, serverInfo);
 	            		}
 	            	}
 	            }
@@ -678,7 +683,7 @@ public class EventListener
 	            RegisteredServer server = currentServer.getServer();
 	            ServerInfo serverInfo = server.getServerInfo();
 	            
-	            ExitDiscordMessageAsync(player, serverInfo);
+	            discordME.ExitDiscordMessageAsync(player, serverInfo);
 	            
 	            try
 	        	{
