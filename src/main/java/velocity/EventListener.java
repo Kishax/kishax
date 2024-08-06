@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,11 +36,8 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import common.ColorUtil;
 import discord.DiscordListener;
-import discord.EmojiManager;
 import discord.MessageEditor;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -66,26 +62,21 @@ public class EventListener
 	private final ConsoleCommandSource console;
 	private final RomaToKanji conv;
 	private String chatserverName = "";
-	private final PlayerList pl;
+	private final PlayerUtil pu;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
 	private final DiscordListener discord;
-	private final EmojiManager emoji;
 	private final MessageEditor discordME;
 	private WebhookMessageBuilder builder = null;
-	private String avatarUrl = null;
-	private String emojiId = null;
-	private MessageEmbed joinEmbed = null;
-	private final String[] emojiIdHolder = new String[1];
 	
 	@Inject
 	public EventListener
 	(
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
+		ConsoleCommandSource console, RomaToKanji conv, PlayerUtil pu,
 		PlayerDisconnect pd, RomajiConversion rc, DiscordListener discord,
-		EmojiManager emoji, MessageEditor discordME
+		MessageEditor discordME
 	)
 	{
 		this.plugin = plugin;
@@ -96,11 +87,10 @@ public class EventListener
 		this.bc = bc;
 		this.console = console;
 		this.conv = conv;
-		this.pl = pl;
+		this.pu = pu;
 		this.pd = pd;
 		this.rc = rc;
 		this.discord = discord;
-		this.emoji = emoji;
 		this.discordME = discordME;
 	}
 	
@@ -440,7 +430,16 @@ public class EventListener
 	        	    				
 	        	    				if(beforejoin_sa_minute>=config.getInt("Interval.Login",0))
 	        	    				{
-	        	    					discordME.JoinOrMoveDiscordMessageAsync(player, previousServerInfo, serverInfo);
+	        	    					if (previousServerInfo.isPresent())
+	        	    			        {
+	        	    						// どこからか移動してきたとき
+	        	    						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+	        	    			        }
+	        	    					else
+	        	    			        {
+	        	    			        	// 1回目のどこかのサーバーに上陸したとき
+	        	    						discordME.AddEmbedSomeMessage("Join", player, serverInfo);
+	        	    			        }
 	        	    				}
 	            				}
 	            			}
@@ -501,7 +500,16 @@ public class EventListener
 	            				}
 	            			}
 	            			
-	            			discordME.JoinOrMoveDiscordMessageAsync(player, previousServerInfo, serverInfo);
+	            			if (previousServerInfo.isPresent())
+	    			        {
+	    						// どこからか移動してきたとき
+	    						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+	    			        }
+	    					else
+	    			        {
+	    			        	// 1回目のどこかのサーバーに上陸したとき
+	    						discordME.AddEmbedSomeMessage("Join", player, serverInfo);
+	    			        }
 	            		}
 	            	}
 	            }
@@ -560,71 +568,8 @@ public class EventListener
                 		player.sendMessage(component);
                 	}
                 	
-	    			avatarUrl = "https://minotar.net/avatar/"+player.getUniqueId().toString();
-	    			emojiId = null;
-	    			joinEmbed = null;
-	    			
-	    			// Discord絵文字を追加する
-	    			// EmojiIDを取得する非同期処理が完了したのちに処理を続ける
-	    			emoji.createOrgetEmojiId(player.getUsername(), avatarUrl).thenAccept(emojiId ->
-	    			{
-	    				try
-	    				{
-	    					if(Objects.nonNull(emojiId))
-			    			{
-			    				// 絵文字が正常に追加され、emidを返した場合
-				    			ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server, emid) VALUES (?,?,?,?);");
-				    			ps.setString(1, player.getUsername());
-				    			ps.setString(2, player.getUniqueId().toString());
-				    			ps.setString(3, serverInfo.getName());
-				    			ps.setString(4, emojiId);
-				    			ps.executeUpdate();
-				    			
-				    			joinEmbed = discord.createEmbed
-		    							(
-		    								emoji.getEmojiString(player.getUsername(), emojiId)+
-		    								player.getUsername()+"が"+serverInfo.getName()+
-		    								"サーバーに初参加です！",
-		    								ColorUtil.ORANGE.getRGB()
-		    							);
-				    			discord.sendBotMessageAndgetMessageId(joinEmbed).thenAccept(messageId ->
-    				        	{
-    				        		// messageIdをUUIDでマッピングし、あとで編集できるようにしておく
-    				        		PlayerMessageIds.put(player.getUniqueId().toString(), messageId);
-    		    				});
-			    			}
-			    			else
-			    			{
-			    				// 絵文字が正常に追加されなかった場合
-				    			ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server) VALUES (?,?,?);");
-				    			ps.setString(1, player.getUsername());
-				    			ps.setString(2, player.getUniqueId().toString());
-				    			ps.setString(3, serverInfo.getName());
-				    			ps.executeUpdate();
-				    			
-						        joinEmbed = discord.createEmbed
-		    							(
-		    								player.getUsername()+"が"+serverInfo.getName()+
-		    								"サーバーに初参加です！",
-		    								ColorUtil.ORANGE.getRGB()
-		    							);
-						        discord.sendBotMessageAndgetMessageId(joinEmbed).thenAccept(messageId ->
-    				        	{
-    				        		// messageIdをUUIDでマッピングし、あとで編集できるようにしておく
-    				        		PlayerMessageIds.put(player.getUniqueId().toString(), messageId);
-    		    				});
-			    			}
-	    				}
-	    				catch (SQLException e1)
-	    				{
-	    					// スタックトレースをログに出力
-	    		            logger.error("An onConnection error occurred: " + e1.getMessage());
-	    		            for (StackTraceElement element : e1.getStackTrace()) 
-	    		            {
-	    		                logger.error(element.toString());
-	    		            }
-	    				}
-	    			});
+	    			// たぶんfirstjoin
+                	discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
 	            }
 	            
 				// サーバー移動通知
@@ -651,8 +596,8 @@ public class EventListener
 				}
 				
 				// Amabassadorプラグインと競合している可能性あり
-				// Main.getInjector().getInstance(velocity.PlayerList.class).updatePlayers();
-				pl.updatePlayers();
+				// Main.getInjector().getInstance(velocity.PlayerUtil.class).updatePlayers();
+				pu.updatePlayers();
 			}
 			catch (Exception e1)// SQLException | IOException | ClassNotFoundException
 			{
@@ -682,8 +627,10 @@ public class EventListener
 	        {
 	            RegisteredServer server = currentServer.getServer();
 	            ServerInfo serverInfo = server.getServerInfo();
+	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
 	            
-	            discordME.ExitDiscordMessageAsync(player, serverInfo);
+	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo);
+	            //discordME.ExitDiscordMessageAsync(player, serverInfo);
 	            
 	            try
 	        	{

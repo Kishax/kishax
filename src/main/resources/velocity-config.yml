@@ -20,6 +20,8 @@ Discord:
     InvaderComingImageUrl: ""
     MaintenanceOnImageUrl: ""
     MaintenanceOffImageUrl: ""
+    FirstJoinEmojiName: ""
+    AddMemberEmojiName: ""
     JoinEmojiName: ""
     MoveEmojiName: ""
     ExitEmojiName: ""

@@ -1,5 +1,9 @@
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\common\ColorUtil.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\common\Main.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\DiscordEventListener.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\DiscordListener.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\EmojiManager.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\MessageEditor.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\spigot\AutoShutdown.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\spigot\Database.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\spigot\DoServerOffline.java
@@ -24,15 +28,12 @@ C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\BufferedSocke
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\Config.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\Database.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\DatabaseInterface.java
-C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\DiscordEventListener.java
-C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\DiscordListener.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\DoServerOnline.java
-C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\EmojiManager.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\EventListener.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\Luckperms.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\Main.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\PlayerDisconnect.java
-C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\PlayerList.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\PlayerUtil.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\RomajiConversion.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\RomaToKanji.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\velocity\SocketResponse.java

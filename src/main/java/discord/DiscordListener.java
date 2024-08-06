@@ -297,4 +297,53 @@ public class DiscordListener
             null  // Fields
         );
     }
+    
+    public void sendBotMessage(String content, MessageEmbed embed)
+    {
+    	CompletableFuture<String> future = new CompletableFuture<>();
+    	
+        if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord)
+        {
+        	future.complete(null);
+            return;
+        }
+        
+    	String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+        TextChannel channel = jda.getTextChannelById(channelId);
+        
+        if (Objects.isNull(channel))
+        {
+        	logger.error("Channel not found!");
+        	future.complete(null);
+            return;
+        }
+        
+    	if (Objects.nonNull(embed))
+        {
+    		// 埋め込みメッセージを送信
+            MessageAction messageAction = channel.sendMessageEmbeds(embed);
+            messageAction.queue(response -> logger.info("Send Successfully"),
+            		failure -> logger.error("Failed to send embedded message: " + failure.getMessage())
+            );
+        }
+    	
+    	if(Objects.nonNull(content) && !content.isEmpty())
+    	{
+    		// テキストメッセージを送信
+    		MessageAction messageAction = channel.sendMessage(content);
+            messageAction.queue(response -> logger.info("Send Successfully"),
+            		failure -> logger.error("Failed to send text message: " + failure.getMessage())
+            );
+    	}
+    }
+    
+    public void sendBotMessage(String content)
+    {
+    	sendBotMessage(content, null);
+    }
+    
+    public void sendBotMessage(MessageEmbed embed)
+    {
+    	sendBotMessage(null, embed);
+    }
 }

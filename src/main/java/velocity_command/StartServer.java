@@ -18,6 +18,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import discord.MessageEditor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -34,6 +35,7 @@ public class StartServer
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
+	private final MessageEditor discordME;
 	
 	public Connection conn = null;
 	public ResultSet minecrafts = null, mine_status = null;
@@ -41,7 +43,12 @@ public class StartServer
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public StartServer(Main plugin,ProxyServer server, Logger logger, Config config, DatabaseInterface db, ConsoleCommandSource console)
+	public StartServer
+	(
+		Main plugin, ProxyServer server, Logger logger, 
+		Config config, DatabaseInterface db, ConsoleCommandSource console,
+		MessageEditor discordME
+	)
 	{
 		this.plugin = plugin;
 		this.server = server;
@@ -49,6 +56,7 @@ public class StartServer
 		this.config = config;
 		this.db = db;
 		this.console = console;
+		this.discordME = discordME;
 	}
 	
 	public void execute(CommandSource source,String[] args)
@@ -154,6 +162,8 @@ public class StartServer
 
 					            // プロセスを開始
 					            processBuilder.start();
+					            
+					            discordME.AddEmbedSomeMessage("Start", player, args[1]);
 					            
 					            TextComponent component = Component.text()
         			    			    	.append(Component.text("UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))

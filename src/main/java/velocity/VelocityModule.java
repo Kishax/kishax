@@ -62,7 +62,7 @@ public class VelocityModule extends AbstractModule
         bind(DatabaseInterface.class).to(Database.class);
         bind(BroadCast.class);
         bind(SocketResponse.class);
-        bind(velocity.PlayerList.class);
+        bind(velocity.PlayerUtil.class);
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
         bind(RomajiConversion.class);

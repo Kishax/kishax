@@ -13,7 +13,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.Main;
-import velocity.PlayerList;
+import velocity.PlayerUtil;
 
 import org.slf4j.Logger;
 
@@ -26,17 +26,17 @@ public class FMCCommand implements SimpleCommand
 {
     private final ProxyServer server;
     private final Config config;
-    private final PlayerList pl;
+    private final PlayerUtil pu;
     
     public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","configtest","maintenance","conv","test"));
     public List<String> anylists = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
-    public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerList pl)
+    public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerUtil pu)
     {
         this.server = server;
         this.config = config;
-        this.pl = pl;
+        this.pu = pu;
     }
 
     @Override
@@ -258,12 +258,12 @@ public class FMCCommand implements SimpleCommand
                         {
                             case "add":
                             case "remove":
-                            	pl.loadPlayers(); // プレイヤーリストをロード
+                            	pu.loadPlayers(); // プレイヤーリストをロード
                                 List<String> permS = config.getList("Permission.Short_Name");
                                 
                                 if (permS.contains(args[2].toLowerCase()))
                                 {
-                                    for (String player : pl.getPlayerList())
+                                    for (String player : pu.getPlayerList())
                                     {
                                         ret.add(player);
                                     }

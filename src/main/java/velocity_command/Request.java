@@ -17,20 +17,19 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import discord.MessageEditor;
 import velocity.Config;
-import velocity.Database;
 import velocity.DatabaseInterface;
-import velocity.Main;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class Request
 {
-	private final Main plugin;
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
 	private final DatabaseInterface db;
+	private final MessageEditor discordME;
 	
 	public Connection conn = null;
 	public ResultSet minecrafts = null, reqstatus = null;
@@ -38,13 +37,17 @@ public class Request
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public Request(Main plugin, ProxyServer server, Logger logger, Config config, DatabaseInterface db)
+	public Request
+	(
+		ProxyServer server, Logger logger, 
+		Config config, DatabaseInterface db, MessageEditor discordME
+	)
 	{
-		this.plugin = plugin;
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
+		this.discordME = discordME;
 	}
 
 	public void execute(CommandSource source,String[] args)
@@ -192,7 +195,10 @@ public class Request
 	            			);
 		        }
             	pb.start();
+            	
             	player.sendMessage(Component.text("送信されました。").color(NamedTextColor.GREEN));
+            	
+            	discordME.AddEmbedSomeMessage("Request", player, args[1]);
             	
             	// add log
             	sql = "INSERT INTO mine_log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);";

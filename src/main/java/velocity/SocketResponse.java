@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +22,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import common.ColorUtil;
 import discord.DiscordListener;
 import discord.EmojiManager;
+import discord.MessageEditor;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -42,14 +44,17 @@ public class SocketResponse
 	private final Database db;
 	private final EmojiManager emoji;
 	private final DiscordListener discord;
-	private String mineName = null;
+	private final PlayerUtil pu;
+	private final MessageEditor discordME;
+	private String mineName = null, reqType = null, reqServerName = null;
 	
 	@Inject
 	public SocketResponse
 	(
 		Main plugin, ProxyServer server, Logger logger,
 		Config config, Luckperms lp, BroadCast bc, 
-		Database db, EmojiManager emoji, DiscordListener discord
+		Database db, EmojiManager emoji, DiscordListener discord,
+		PlayerUtil pu, MessageEditor discordME
 	)
 	{
 		this.server = server;
@@ -60,6 +65,8 @@ public class SocketResponse
         this.db = db;
         this.emoji = emoji;
         this.discord = discord;
+        this.pu = pu;
+        this.discordME = discordME;
 	}
 	
 	public void resaction(String res)
@@ -69,24 +76,34 @@ public class SocketResponse
     	
     	if(res.contains("PHP"))
     	{
-    		if (res.contains("\\n")) res = res.replace("\\n", "");
-    		
+    		//if (res.contains("\\n")) res = res.replace("\\n", "");
     		if (res.contains("req"))
     		{
-    			if(res.contains("start"))
-    			{
-    				res = res.replace("PHP->req->start->", "");
-    				bc.broadcastMessage(res, NamedTextColor.GREEN, null);
-    			}
-    			if(res.contains("cancel"))
-    			{
-    				res = res.replace("PHP->req->cancel->", "");
-    				bc.broadcastMessage(res, NamedTextColor.RED, null);
-    			}
-    			if(res.contains("nores"))
-    			{
-    				res = res.replace("PHP->req->nores->", "");
-    			}
+				String pattern = "PHP->req->(.*?)->(.*?)->(.*?)->";
+
+                // パターンをコンパイル
+                Pattern compiledPattern = Pattern.compile(pattern);
+                Matcher matcher = compiledPattern.matcher(res);
+
+                // パターンにマッチする部分を抽出
+                if (matcher.find())
+                {
+                	reqType = matcher.group(1);
+                	mineName = matcher.group(2);
+                	reqServerName = matcher.group(3);
+                	
+                	Optional<Player> playerOptional = pu.getPlayerByName(mineName);
+
+                	if (playerOptional.isPresent())
+                	{
+                	    Player player = playerOptional.get();
+                	    if(res.contains("Start")) player.sendMessage(Component.text("管理者が"+mineName+"の"+reqServerName+"サーバー起動リクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
+                		if(res.contains("Cancel")) player.sendMessage(Component.text("管理者が"+mineName+"の"+reqServerName+"サーバー起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
+                		if(res.contains("NoRes")) player.sendMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.BLUE));
+                	}
+                	
+                	discordME.AddEmbedSomeMessage(reqType, mineName, reqServerName);
+                }
     		}
     		if (res.contains("uuid"))
     		{
@@ -98,62 +115,47 @@ public class SocketResponse
                 Pattern compiledPattern = Pattern.compile(pattern);
                 Matcher matcher = compiledPattern.matcher(res);
 
-                mineName = null;
                 // パターンにマッチする部分を抽出
                 if (matcher.find())
                 {
                 	mineName = matcher.group(1);
-                	emoji.createOrgetEmojiId(mineName).thenAccept(emojiId ->
-	    			{
-	    				MessageEmbed newUserEmbed = null;
-    					if(Objects.nonNull(emojiId))
-		    			{
-    						newUserEmbed = discord.createEmbed
-	    							(
-	    								emoji.getEmojiString(mineName, emojiId)+
-	    								mineName+"が新規FMCメンバーになりました！",
-	    								ColorUtil.PINK.getRGB()
-	    							);
-	    					discord.sendBotMessageAndgetMessageId(newUserEmbed);
-		    			}
-    					else
-    					{
-    						newUserEmbed = discord.createEmbed
-	    							(
-	    								mineName+"が新規FMCメンバーになりました！",
-	    								ColorUtil.PINK.getRGB()
-	    							);
-	    					discord.sendBotMessageAndgetMessageId(newUserEmbed);
-    					}
-	    			});
-                }
-                if(Objects.nonNull(mineName))
-                {
-                	TextComponent component = null;
-                	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
-                	if(!DiscordInviteUrl.isEmpty())
+                	
+                	Optional<Player> playerOptional = pu.getPlayerByName(mineName);
+
+                	if (playerOptional.isPresent())
                 	{
-                		component = Component.text()
-                				.append(Component.text("\nUUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-        	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
-        	        			.append(Component.text("\n\nFMCサーバーの").color(NamedTextColor.AQUA))
-        	        			.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
-        	        					.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
-            			    			.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscordへいこう！"))))
-        	        			.append(Component.text("には参加しましたか？").color(NamedTextColor.AQUA))
-        			    		.append(Component.text("\nここでは、個性豊かな色々なメンバーと交流ができます！\nなお、マイクラとDiscord間のチャットは同期しているので、誰かが反応してくれるはずです...！").color(NamedTextColor.AQUA))
-        			    		.build();
-                		bc.sendSpecificPlayerMessage(component, mineName);
+                	    Player player = playerOptional.get();
+                	    
+                	    TextComponent component = null;
+                    	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
+                    	if(!DiscordInviteUrl.isEmpty())
+                    	{
+                    		component = Component.text()
+                    				.append(Component.text("\nUUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+            	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
+            	        			.append(Component.text("\n\nFMCサーバーの").color(NamedTextColor.AQUA))
+            	        			.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
+            	        					.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
+                			    			.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscordへいこう！"))))
+            	        			.append(Component.text("には参加しましたか？").color(NamedTextColor.AQUA))
+            			    		.append(Component.text("\nここでは、個性豊かな色々なメンバーと交流ができます！\nなお、マイクラとDiscord間のチャットは同期しているので、誰かが反応してくれるはずです...！").color(NamedTextColor.AQUA))
+            			    		.build();
+                    		//bc.sendSpecificPlayerMessage(component, mineName);
+                    	}
+                    	else
+                    	{
+                    		component = Component.text()
+                    				.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+            	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
+            			    		.build();
+                    			//bc.sendSpecificPlayerMessage(component, mineName);
+                    	}
+                    	
+                    	player.sendMessage(component);
+                	    
                 	}
-                	else
-                	{
-                		component = Component.text()
-                				.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-        	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
-        			    		.build();
-                			bc.sendSpecificPlayerMessage(component, mineName);
-                	}
-        			
+                	
+                	discordME.AddEmbedSomeMessage("AddMember", mineName);
                 }
     		}
     	}

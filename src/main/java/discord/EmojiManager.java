@@ -134,6 +134,8 @@ public class EmojiManager
     
     public String getEmojiString(String emojiName, String emojiId)
     {
+    	if(Objects.isNull(emojiId)) return null;
+    	
     	return "<:" + emojiName + ":" + emojiId + ">";
     }
     

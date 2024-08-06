@@ -44,8 +44,7 @@ public class PlayerDisconnect
 	(
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
-		DiscordListener discord
+		ConsoleCommandSource console, RomaToKanji conv, DiscordListener discord
 	)
 	{
 		this.plugin = plugin;

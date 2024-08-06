@@ -2,227 +2,367 @@ package discord;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.SQLException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
-import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import common.ColorUtil;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.BroadCast;
 import velocity.Config;
-import velocity.DatabaseInterface;
+import velocity.Database;
 import velocity.EventListener;
 import velocity.Main;
 import velocity.PlayerDisconnect;
-import velocity.PlayerList;
-import velocity.RomaToKanji;
-import velocity.RomajiConversion;
+import velocity.PlayerUtil;
 
 public class MessageEditor
 {
-	public final Main plugin;
+	private PreparedStatement ps = null;
 	public Connection conn = null;
-	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
-	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs, ismente};
-	public PreparedStatement ps = null;
-	public static Map<String, String> PlayerMessageIds = new HashMap<>();
-	
+	public final Main plugin;
+	private final Logger logger;
 	private final Config config;
-	private final ConsoleCommandSource console;
+	private final Database db;
 	private final DiscordListener discord;
 	private final EmojiManager emoji;
-	private String avatarUrl = null;
-	private String emojiId = null;
-	private MessageEmbed joinEmbed = null;
-	private final String[] emojiIdHolder = new String[1];
+	private final PlayerUtil pu;
+	private String emojiId = null, avatarUrl = null, addMessage = null, 
+			Emoji = null, FaceEmoji = null, reqServerName = null, 
+			targetServerName = null, uuid = null, playerName = null;
+	private MessageEmbed sendEmbed = null;
+	private MessageEmbed createEmbed = null;
 	
 	@Inject
 	public MessageEditor
 	(
 		Main plugin, Logger logger, ProxyServer server,
-		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console, RomaToKanji conv, PlayerList pl,
-		PlayerDisconnect pd, RomajiConversion rc, DiscordListener discord,
-		EmojiManager emoji
+		Config config, Database db, DiscordListener discord,
+		EmojiManager emoji, PlayerUtil pu
 	)
 	{
 		this.plugin = plugin;
+		this.logger = logger;
 		this.config = config;
-		this.console = console;
+		this.db = db;
 		this.discord = discord;
 		this.emoji = emoji;
+		this.pu = pu;
 	}
 	
-	public void ExitDiscordMessageAsync(Player player, ServerInfo serverInfo)
+	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName) 
 	{
-		console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
-		
-		emojiId = null;
-		joinEmbed = null;
-		String ExitEmojiName = config.getString("Discord.ExitEmojiName","");
-		// Discord絵文字を取得する
-		// EmojiIDを取得する非同期処理が完了したのちに処理を続ける
-		CompletableFuture<String> exitEmojiFuture = emoji.createOrgetEmojiId(ExitEmojiName);
-		CompletableFuture<Void> allOf = CompletableFuture.allOf(exitEmojiFuture);
-
-		allOf.thenRun(() ->
+		if(Objects.isNull(player))
 		{
-			try
+			// player変数がnullかつalternativePlayerNameが与えられていたとき
+			if(Objects.nonNull(alternativePlayerName))
 			{
-				String currentServerName = serverInfo.getName();
-		        String exitEmojiId = exitEmojiFuture.get(); // exitEmojiId の取得
-	        	// PlayersMessageIdsマップから、messageIdを取得
-	        	String messageId = EventListener.PlayerMessageIds.getOrDefault(player.getUniqueId().toString(), null);
-	        	
-            	if(!ExitEmojiName.isEmpty() && Objects.nonNull(messageId))
-            	{
-    				if(Objects.nonNull(exitEmojiId))
-    				{
-    					// ExitEmojiNameという名前のEmojiがあってそのEmojiIdを取得できた場合
-    					// 絵文字String作成
-	    				String ExitEmoji = emoji.getEmojiString(ExitEmojiName, exitEmojiId);
-	    				discord.editBotEmbed
-	    				(
-	    					messageId, // 編集するメッセージID
-	    					"\n\n" + ExitEmoji + player.getUsername() + "が" +
-	    					currentServerName + "サーバーから退出しました。"
-	    				);
-    				}
-    				else
-    				{
-    					discord.editBotEmbed
-	    				(
-	    					emojiIdHolder[0], // 編集するメッセージID
-	    					"\n\n" + player.getUsername() + "が" +
-	    					currentServerName + "サーバーから退出しました。"
-	    				);
-    				}
-            	}
+				// データベースからuuidを取ってくる
+				uuid = pu.getPlayerUUIDByName(alternativePlayerName);
+				playerName = alternativePlayerName;
 			}
-			catch (Exception e1)
-    		{
-    			e1.printStackTrace();
-    		}
-			finally
+			else
 			{
-				// Velocityネットワークからの退出ゆえ、messageIdとUUIDのマッピングをクリアにする
-				PlayerMessageIds.remove(player.getUniqueId().toString());
+				logger.error("MessageEditor.AddEmbedSomeMessageメソッドの使い方が間違っています。");
+				return;
 			}
-    	});
+		}
+		else
+		{
+			uuid = player.getUniqueId().toString();
+			playerName = player.getUsername();
+		}
+		
+	    avatarUrl = "https://minotar.net/avatar/" + uuid;
+	    
+	    String EmojiName = config.getString("Discord." + type + "EmojiName", "");
+
+	    CompletableFuture<String> EmojiFutureId = emoji.createOrgetEmojiId(EmojiName);
+	    CompletableFuture<String> FaceEmojiFutureId = emoji.createOrgetEmojiId(playerName, avatarUrl);
+	    CompletableFuture<Void> allOf = CompletableFuture.allOf(EmojiFutureId, FaceEmojiFutureId);
+
+	    allOf.thenRun(() -> 
+	    {
+	        try 
+	        {
+	            String currentServerName = null;
+	            if (Objects.nonNull(serverInfo)) 
+	            {
+	                currentServerName = serverInfo.getName();
+	            } 
+	            else 
+	            {
+	                currentServerName = "";
+	            }
+
+	            targetServerName = serverName;
+	            if (Objects.isNull(serverName)) 
+	            {
+	                targetServerName = "";
+	            }
+
+	            String EmojiId = EmojiFutureId.get(); // プラスとかマイナスとかの絵文字ID取得
+	            String FaceEmojiId = FaceEmojiFutureId.get(); // minecraftのアバターの顔の絵文字Id取得
+	            Emoji = emoji.getEmojiString(EmojiName, EmojiId);
+	            FaceEmoji = emoji.getEmojiString(playerName, FaceEmojiId);
+	            
+	            String messageId = EventListener.PlayerMessageIds.getOrDefault(uuid, null);
+
+	            addMessage = null;
+	            switch (type) 
+	            {
+	            	case "AddMember":
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
+	                	{
+                            logger.info("Emoji ID retrieved: " + emojiId);
+
+                            addMessage = Emoji + FaceEmoji +
+                                    player.getUsername() + "が新規FMCメンバーになりました！:congratulations: ";
+                        }
+	                	else
+	                	{
+                            logger.info("Emoji ID is null");
+                            addMessage = player.getUsername() + "が新規FMCメンバーになりました！:congratulations: ";
+                        }
+
+                        createEmbed = discord.createEmbed
+                                (
+                                		addMessage,
+                                        ColorUtil.PINK.getRGB()
+                                );
+                        discord.sendBotMessage(createEmbed);
+	            		break;
+	            		
+	                case "Start":
+	    	            if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	    	            {
+	                        addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
+	                        		targetServerName+ "サーバーを起動させました。";
+	                        discord.editBotEmbed(messageId, addMessage);
+	    	            }
+	                    break;
+	
+	                case "Exit":
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	                	{
+		                    addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
+		                            currentServerName + "サーバーから退出しました。";
+		                    discord.editBotEmbed(messageId, addMessage);
+		                    EventListener.PlayerMessageIds.remove(uuid);
+	                	}
+	                    break;
+	
+	                case "Move":
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	                	{
+		                    addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
+		                            currentServerName + "サーバーへ移動しました。";
+		                    discord.editBotEmbed(messageId, addMessage);
+	                	}
+	                    break;
+	
+	                case "Request":
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	                	{
+		                    addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
+		                            reqServerName + "サーバーの起動リクエストを送りました。";
+		                    discord.editBotEmbed(messageId, addMessage);
+	                	}
+	                    break;
+	                    
+	                case "Join":
+	                	try {
+		                	conn = db.getConnection();
+		                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
+		                	{
+	                            logger.info("Emoji ID retrieved: " + emojiId);
+	                            // 絵文字IDをアップデートしておく
+	                            if(Objects.nonNull(conn))
+	                            {
+	                            	ps = conn.prepareStatement("UPDATE minecraft SET emid=? WHERE uuid=?;");
+		                            ps.setString(1, FaceEmojiId);
+		                            ps.setString(2, uuid);
+		                            ps.executeUpdate();
+	                            }
+	
+	                            addMessage = Emoji + FaceEmoji +
+	                                    playerName + "が" + serverInfo.getName() +
+	                                    "サーバーに参加しました。";
+	                        } 
+		                	else 
+		                	{
+	                            logger.info("Emoji ID is null");
+	                            if(Objects.nonNull(conn))
+	                            {
+	                            	// 絵文字IDをアップデートしておく
+		                            ps = conn.prepareStatement("UPDATE minecraft SET emid=? WHERE uuid=?;");
+		                            ps.setString(1, null);
+		                            ps.setString(2, uuid);
+		                            ps.executeUpdate();
+	                            }
+	
+	                            addMessage = playerName + "が" + serverInfo.getName() +
+	                                    "サーバーに参加しました。";
+	                        }
+	
+	                        createEmbed = discord.createEmbed
+	                                (
+	                                		addMessage,
+	                                        ColorUtil.GREEN.getRGB()
+	                                );
+	                        discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 ->
+	                        {
+	                            logger.info("Message sent with ID: " + messageId2);
+	                            EventListener.PlayerMessageIds.put(uuid, messageId2);
+	                        });
+	                	}
+	                	catch (SQLException | ClassNotFoundException e1) 
+                        {
+                            logger.error("An onConnection error occurred: " + e1.getMessage());
+                            for (StackTraceElement element : e1.getStackTrace()) 
+                            {
+                                logger.error(element.toString());
+                            }
+                        }
+                        break;
+                        
+	                case "FirstJoin":
+                        try {
+                            conn = db.getConnection();
+                            if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
+                                logger.info("Emoji ID retrieved: " + emojiId);
+                                ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server, emid) VALUES (?,?,?,?);");
+                                ps.setString(1, playerName);
+                                ps.setString(2, uuid);
+                                ps.setString(3, serverInfo.getName());
+                                ps.setString(4, FaceEmojiId);
+                                ps.executeUpdate();
+
+                                addMessage = Emoji + FaceEmoji +
+                                        playerName + "が" + serverInfo.getName() +
+                                        "サーバーに初参加です！";
+                            } else {
+                                logger.info("Emoji ID is null");
+                                ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server) VALUES (?,?,?);");
+                                ps.setString(1, playerName);
+                                ps.setString(2, uuid);
+                                ps.setString(3, serverInfo.getName());
+                                ps.executeUpdate();
+
+                                addMessage = playerName + "が" + serverInfo.getName() +
+                                        "サーバーに初参加です！";
+                            }
+
+                            createEmbed = discord.createEmbed
+                                    (
+                                            addMessage,
+                                            ColorUtil.ORANGE.getRGB()
+                                    );
+                            discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+                                logger.info("Message sent with ID: " + messageId2);
+                                EventListener.PlayerMessageIds.put(uuid, messageId2);
+                            });
+                        } 
+                        catch (SQLException | ClassNotFoundException e1) 
+                        {
+                            logger.error("An onConnection error occurred: " + e1.getMessage());
+                            for (StackTraceElement element : e1.getStackTrace()) 
+                            {
+                                logger.error(element.toString());
+                            }
+                        }
+	                    break;
+	
+	                case "RequestOK":
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	                	{
+		                    emoji.createOrgetEmojiId(playerName, avatarUrl).thenAccept(emojiId -> 
+		                    {
+		                        addMessage = "管理者が" + Emoji + FaceEmoji + playerName + "の" +
+		                                reqServerName + "サーバー起動リクエストを受諾しました。";
+		                        sendEmbed = discord.createEmbed
+		                                (
+		                                        addMessage,
+		                                        ColorUtil.GREEN.getRGB()
+		                                );
+		                        discord.sendBotMessage(sendEmbed);
+		                    });
+	                	}
+	                    break;
+	
+	                case "RequestCancel":
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	                	{
+		                    emoji.createOrgetEmojiId(playerName, avatarUrl).thenAccept(emojiId ->
+		                    {
+		                        addMessage = "管理者が" + Emoji + FaceEmoji + playerName + "の" +
+		                                reqServerName + "サーバー起動リクエストをキャンセルしました。";
+		                        sendEmbed = discord.createEmbed
+		                                (
+		                                        addMessage,
+		                                        ColorUtil.RED.getRGB()
+		                                );
+		                        discord.sendBotMessage(sendEmbed);
+		                    });
+	                	}
+	                    break;
+	
+	                case "RequestNoRes":
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId))
+	                	{
+		                    emoji.createOrgetEmojiId(playerName, avatarUrl).thenAccept(emojiId -> 
+		                    {
+		                        addMessage = "管理者が" + Emoji + FaceEmoji + playerName + "の" +
+		                                reqServerName + "サーバー起動リクエストに対して、応答しませんでした。";
+		                        sendEmbed = discord.createEmbed
+		                                (
+		                                        addMessage,
+		                                        ColorUtil.RED.getRGB()
+		                                );
+		                        discord.sendBotMessage(sendEmbed);
+		                    });
+	                	}
+	                    break;
+	
+	                default:
+	                    break;
+	            }
+	        }
+	        catch (Exception e1)
+	        {
+	            e1.printStackTrace();
+	        }
+	    });
 	}
 	
-	public void JoinOrMoveDiscordMessageAsync(Player player, Optional <RegisteredServer> previousServerInfo, ServerInfo serverInfo)
+	public void AddEmbedSomeMessage(String type, Player player, String reqServer)
 	{
-		avatarUrl = "https://minotar.net/avatar/"+player.getUniqueId().toString();
-		emojiId = null;
-		joinEmbed = null;
-		String MoveEmojiName = config.getString("Discord.MoveEmojiName","");
-		// Discord絵文字を取得する
-		// EmojiIDを取得する非同期処理が完了したのちに処理を続ける
-		CompletableFuture<String> emojiIdFuture = emoji.createOrgetEmojiId(player.getUsername(), avatarUrl);
-		CompletableFuture<String> moveEmojiIdFuture = emoji.createOrgetEmojiId(MoveEmojiName);
-		
-		// 両方の非同期処理が完了した後に結果を処理する
-		CompletableFuture<Void> allOf = CompletableFuture.allOf(emojiIdFuture, moveEmojiIdFuture);
-
-		allOf.thenRun(() ->
-		{
-			try
-			{
-				String emojiId = emojiIdFuture.get(); // emojiId の取得
-		        String moveEmojiId = moveEmojiIdFuture.get(); // moveEmojiId の取得
-				// プレイヤーが以前のサーバーから移動した場合に処理を行う
-		        if (previousServerInfo.isPresent())
-		        {
-		        	// PlayersMessageIdsマップから、messageIdを取得
-		        	String messageId = EventListener.PlayerMessageIds.getOrDefault(player.getUniqueId().toString(), null);
-		        	
-		            String previousServerName = previousServerInfo.get().getServerInfo().getName();
-		            String currentServerName = serverInfo.getName();
-		            String hubServerName = config.getString("Servers.Hub","");
-		            
-		            // ホームサーバーから別のサーバーに移動したことを確認
-		            if (previousServerName.equals(hubServerName) && !currentServerName.equals(hubServerName))
-		            {
-		            	// サーバー移動処理
-		            	if(!MoveEmojiName.isEmpty() && Objects.nonNull(messageId))
-		            	{
-		    				if(Objects.nonNull(moveEmojiId))
-		    				{
-		    					// MoveEmojiNameという名前のEmojiがあってそのEmojiIdを取得できた場合
-		    					// 絵文字String作成
-    		    				String MoveEmoji = emoji.getEmojiString(MoveEmojiName, moveEmojiId);
-    		    				discord.editBotEmbed
-    		    				(
-    		    					messageId, // 編集するメッセージID
-    		    					"\n\n" + MoveEmoji + player.getUsername() + "が" +
-    		    					currentServerName + "サーバーへ移動しました。"
-    		    				);
-		    				}
-		    				else
-		    				{
-		    					discord.editBotEmbed
-    		    				(
-    		    					emojiIdHolder[0], // 編集するメッセージID
-    		    					"\n\n" + player.getUsername() + "が" +
-    		    					currentServerName + "サーバーへ移動しました。"
-    		    				);
-		    				}
-		            	}
-		            }
-		        }
-		        else
-		        {
-		        	// どこかサーバーに上陸したとき
-		        	if(Objects.nonNull(emojiId))
-	    			{
-			        	joinEmbed = discord.createEmbed
-    							(
-    								emoji.getEmojiString(player.getUsername(), emojiId)+
-    								player.getUsername()+"が"+serverInfo.getName()+
-    								"サーバーに参加しました。",
-    								ColorUtil.GREEN.getRGB()
-    							);
-			        	discord.sendBotMessageAndgetMessageId(joinEmbed).thenAccept(messageId ->
-			        	{
-			        		// messageIdをUUIDでマッピングし、あとで編集できるようにしておく
-			        		PlayerMessageIds.put(player.getUniqueId().toString(), messageId);
-	    				});
-	    			}
-			        else
-			        {
-			        	joinEmbed = discord.createEmbed
-    							(
-    								player.getUsername()+"が"+serverInfo.getName()+
-    								"サーバーに参加しました。",
-    								ColorUtil.GREEN.getRGB()
-    							);
-			        	discord.sendBotMessageAndgetMessageId(joinEmbed).thenAccept(messageId ->
-			        	{
-			        		// messageIdをUUIDでマッピングし、あとで編集できるようにしておく
-			        		PlayerMessageIds.put(player.getUniqueId().toString(), messageId);
-	    				});
-			        }
-		        }
-			}
-			catch (Exception e1)
-			{
-				e1.printStackTrace();
-			}
-		});
+		AddEmbedSomeMessage(reqServer, player, null, reqServer, null);
+	}
+	
+	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo)
+	{
+		AddEmbedSomeMessage(type, player, serverInfo, null, null);
+	}
+	
+	public void AddEmbedSomeMessage(String type, Player player)
+	{
+		AddEmbedSomeMessage(type, player, null, null, null);
+	}
+	
+	public void AddEmbedSomeMessage(String type, String alternativePlayerName)
+	{
+		AddEmbedSomeMessage(type, null, null, null, alternativePlayerName);
+	}
+	
+	public void AddEmbedSomeMessage(String type, String alternativePlayerName, String reqServer)
+	{
+		AddEmbedSomeMessage(type, null, null, reqServer, alternativePlayerName);
 	}
 }
