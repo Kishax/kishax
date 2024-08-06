@@ -11,9 +11,13 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,6 +49,12 @@ import net.kyori.adventure.text.format.TextDecoration;
 public class EventListener
 {
 	public final Main plugin;
+	public Connection conn = null;
+	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
+	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs, ismente};
+	public PreparedStatement ps = null;
+	public static Map<String, String> PlayerMessageIds = new HashMap<>();
+	
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -58,15 +68,11 @@ public class EventListener
 	private final RomajiConversion rc;
 	private final DiscordListener discord;
 	private final EmojiManager emoji;
-	
 	private WebhookMessageBuilder builder = null;
-	public Connection conn = null;
-	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
-	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs, ismente};
-	public PreparedStatement ps = null;
 	private String avatarUrl = null;
 	private String emojiId = null;
 	private MessageEmbed joinEmbed = null;
+	private final String[] emojiIdHolder = new String[1];
 	
 	@Inject
 	public EventListener
@@ -318,6 +324,8 @@ public class EventListener
 		Player player = e.getPlayer();
 		RegisteredServer serverConnection = e.getServer();
         ServerInfo serverInfo = serverConnection.getServerInfo();
+        Optional <RegisteredServer> previousServerInfo = e.getPreviousServer();
+        
         if(Objects.isNull(serverInfo))
         {
         	pd.playerDisconnect
@@ -427,36 +435,7 @@ public class EventListener
 	        	    				
 	        	    				if(beforejoin_sa_minute>=config.getInt("Interval.Login",0))
 	        	    				{
-	        	    					avatarUrl = "https://minotar.net/avatar/"+player.getUniqueId().toString();
-	        	    	    			emojiId = null;
-	        	    	    			joinEmbed = null;
-	        	    	    			
-	        	    	    			// Discord絵文字を取得する
-	        	    	    			// EmojiIDを取得する非同期処理が完了したのちに処理を続ける
-	        	    	    			emoji.createOrgetEmojiId(player.getUsername(), avatarUrl).thenAccept(emojiId ->
-	            		    			{
-	        	    				        if(Objects.nonNull(emojiId))
-	        	    		    			{
-	        	    				        	joinEmbed = discord.createEmbed
-	    	        	    							(
-	    	        	    								emoji.getEmojiString(player.getUsername(), emojiId)+
-	    	        	    								player.getUsername()+"が"+serverInfo.getName()+
-	    	        	    								"サーバーに参加したぜよ！",
-	    	        	    								ColorUtil.GREEN.getRGB()
-	    	        	    							);
-	    	        	    					discord.sendBotMessageAsync(joinEmbed);
-	        	    		    			}
-	        	    				        else
-	        	    				        {
-	        	    				        	joinEmbed = discord.createEmbed
-	    	        	    							(
-	    	        	    								player.getUsername()+"が"+serverInfo.getName()+
-	    	        	    								"サーバーに参加したぜよ！",
-	    	        	    								ColorUtil.GREEN.getRGB()
-	    	        	    							);
-	    	        	    					discord.sendBotMessageAsync(joinEmbed);
-	        	    				        }
-	            		    			});
+	        	    					JoinOrMoveDiscordMessageAsync(player, previousServerInfo, serverInfo);
 	        	    				}
 	            				}
 	            			}
@@ -517,36 +496,7 @@ public class EventListener
 	            				}
 	            			}
 	            			
-	            			avatarUrl = "https://minotar.net/avatar/"+player.getUniqueId().toString();
-	    	    			emojiId = null;
-	    	    			joinEmbed = null;
-	    	    			
-	    	    			// Discord絵文字を取得する
-	    	    			// EmojiIDを取得する非同期処理が完了したのちに処理を続ける
-    	    				emoji.createOrgetEmojiId(player.getUsername(), avatarUrl).thenAccept(emojiId ->
-    		    			{
-    		    				if(Objects.nonNull(emojiId))
-        		    			{
-        				        	joinEmbed = discord.createEmbed
-        	    							(
-        	    								emoji.getEmojiString(player.getUsername(), emojiId)+
-        	    								player.getUsername()+"が"+serverInfo.getName()+
-        	    								"サーバーに参加したぜよ！",
-        	    								ColorUtil.GREEN.getRGB()
-        	    							);
-        	    					discord.sendBotMessageAsync(joinEmbed);
-        		    			}
-        				        else
-        				        {
-        				        	joinEmbed = discord.createEmbed
-        	    							(
-        	    								player.getUsername()+"が"+serverInfo.getName()+
-        	    								"サーバーに参加したぜよ！",
-        	    								ColorUtil.GREEN.getRGB()
-        	    							);
-        	    					discord.sendBotMessageAsync(joinEmbed);
-        				        }
-    		    			});
+	            			JoinOrMoveDiscordMessageAsync(player, previousServerInfo, serverInfo);
 	            		}
 	            	}
 	            }
@@ -632,7 +582,11 @@ public class EventListener
 		    								"サーバーに初参加です！",
 		    								ColorUtil.ORANGE.getRGB()
 		    							);
-		    					discord.sendBotMessageAsync(joinEmbed);
+				    			discord.sendBotMessageAndgetMessageId(joinEmbed).thenAccept(messageId ->
+    				        	{
+    				        		// messageIdをUUIDでマッピングし、あとで編集できるようにしておく
+    				        		PlayerMessageIds.put(player.getUniqueId().toString(), messageId);
+    		    				});
 			    			}
 			    			else
 			    			{
@@ -649,7 +603,11 @@ public class EventListener
 		    								"サーバーに初参加です！",
 		    								ColorUtil.ORANGE.getRGB()
 		    							);
-		    					discord.sendBotMessageAsync(joinEmbed);
+						        discord.sendBotMessageAndgetMessageId(joinEmbed).thenAccept(messageId ->
+    				        	{
+    				        		// messageIdをUUIDでマッピングし、あとで編集できるようにしておく
+    				        		PlayerMessageIds.put(player.getUniqueId().toString(), messageId);
+    		    				});
 			    			}
 	    				}
 	    				catch (SQLException e1)
@@ -718,8 +676,10 @@ public class EventListener
 	        player.getCurrentServer().ifPresent(currentServer ->
 	        {
 	            RegisteredServer server = currentServer.getServer();
-	            String serverName = server.getServerInfo().getName();
-	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverName).color(NamedTextColor.GREEN));
+	            ServerInfo serverInfo = server.getServerInfo();
+	            
+	            ExitDiscordMessageAsync(player, serverInfo);
+	            
 	            try
 	        	{
 	            	conn = db.getConnection();
@@ -746,7 +706,7 @@ public class EventListener
 	            		ps = conn.prepareStatement(sql);
 	            		ps.setString(1, player.getUsername());
 	            		ps.setString(2, player.getUniqueId().toString());
-	            		ps.setString(3, serverName);
+	            		ps.setString(3, serverInfo.getName());
 	            		ps.setBoolean(4, true);
 	            		ps.setInt(5, int_bj_sa);
 	            		ps.executeUpdate();
@@ -764,6 +724,8 @@ public class EventListener
     	}).schedule();
     }
     
+	
+	
     public String getPlayerNameFromUUID(UUID uuid)
     {
         String uuidString = uuid.toString().replace("-", "");

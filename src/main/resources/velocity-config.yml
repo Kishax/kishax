@@ -20,6 +20,14 @@ Discord:
     InvaderComingImageUrl: ""
     MaintenanceOnImageUrl: ""
     MaintenanceOffImageUrl: ""
+    JoinEmojiName: ""
+    MoveEmojiName: ""
+    ExitEmojiName: ""
+    StartEmojiName: ""
+    RequestEmojiName: ""
+    RequestOKName: ""
+    RequestCancelName: ""
+    RequestNoResName: ""
 
 Interval:
     Login: 

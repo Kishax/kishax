@@ -1,6 +1,11 @@
 package velocity;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import javax.security.auth.login.LoginException;
 
@@ -11,6 +16,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -98,7 +104,90 @@ public class DiscordListener
         });
     }
     
-    public void editWebhookMessage(String messageId, String newContent)
+    public void editBotEmbed(String messageId, String additionalDescription)
+    {
+        getBotMessage(messageId, currentEmbed ->
+        {
+        	if(Objects.isNull(currentEmbed))
+        	{
+        		logger.info("No embed found to edit.");
+        		return;
+        	}
+            if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
+            
+            // チャンネルIDは適切に設定してください
+            String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+            TextChannel channel = jda.getTextChannelById(channelId);
+            
+            if (Objects.isNull(channel)) {
+                logger.info("Channel not found!");
+                return;
+            }
+            
+            // 現在のEmbedに新しい説明を追加
+            MessageEmbed newEmbed = addDescriptionToEmbed(currentEmbed, additionalDescription);
+            
+            MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
+            messageAction.queue(
+                success -> logger.info("Message edited successfully"),
+                error ->
+                {
+                	error.printStackTrace();
+                	logger.info("Failed to edit message with ID: " + messageId);
+                }
+            );
+        });
+    }
+    
+    public void getBotMessage(String messageId, Consumer<MessageEmbed> embedConsumer)
+    {
+        if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
+        
+        // チャンネルIDは適切に設定してください
+        String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+        TextChannel channel = jda.getTextChannelById(channelId);
+        
+        if (Objects.isNull(channel))
+        {
+            logger.info("Channel not found!");
+            return;
+        }
+        
+        channel.retrieveMessageById(messageId).queue(
+            message ->
+            {
+                List<MessageEmbed> embeds = message.getEmbeds();
+                logger.info("Message retrieved with " + embeds.size() + " embeds.");
+                logger.info("Message Id: "+messageId);
+                if (!embeds.isEmpty()) {
+                    // 最初のEmbedを取得して消費
+                    embedConsumer.accept(embeds.get(0));
+                } else {
+                    logger.info("No embeds found in the message.");
+                    embedConsumer.accept(null);
+                }
+            },
+            error ->
+            {
+                error.printStackTrace();
+                embedConsumer.accept(null);
+            }
+        );
+    }
+    
+    public MessageEmbed addDescriptionToEmbed(MessageEmbed embed, String additionalDescription)
+    {
+        EmbedBuilder builder = new EmbedBuilder(embed);
+        
+        String existingDescription = embed.getDescription();
+        String newDescription = (existingDescription != null ? existingDescription : "") + additionalDescription;
+        
+        builder.setDescription(newDescription);
+        
+        return builder.build();
+    }
+    
+    public void editBotEmbedReplacedAll(String messageId, MessageEmbed newEmbed)
     {
     	 if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
     	 
@@ -106,74 +195,88 @@ public class DiscordListener
         String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
         TextChannel channel = jda.getTextChannelById(channelId);
         
-        if (Objects.nonNull(channel))
-        {
-            MessageAction messageAction = channel.editMessageById(messageId, newContent);
-            messageAction.queue(
-                success -> logger.info("Message edited successfully"),
-                error -> error.printStackTrace()
-            );
-        }
-        else
+        if(Objects.isNull(channel))
         {
         	logger.info("Channel not found!");
+        	return;
         }
-    }
-    
-    public void sendBotMessageAsync(String content, MessageEmbed embed)
-    {
-        if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
         
-        server.getScheduler().buildTask(plugin, () ->
+        MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
+        messageAction.queue(
+            success -> logger.info("Message edited successfully"),
+            error -> error.printStackTrace()
+        );
+    }
+    
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, MessageEmbed embed)
+    {
+    	CompletableFuture<String> future = new CompletableFuture<>();
+    	
+        if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord)
         {
-        	String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
-            TextChannel channel = jda.getTextChannelById(channelId);
-            
-            if (Objects.nonNull(channel))
+        	future.complete(null);
+            return future;
+        }
+        
+    	String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+        TextChannel channel = jda.getTextChannelById(channelId);
+        
+        if (Objects.isNull(channel))
+        {
+        	logger.error("Channel not found!");
+        	future.complete(null);
+            return future;
+        }
+        
+    	if (Objects.nonNull(embed))
+        {
+    		// 埋め込みメッセージを送信
+            MessageAction messageAction = channel.sendMessageEmbeds(embed);
+            messageAction.queue(response ->
             {
-            	if (Objects.nonNull(embed))
-                {
-            		// 埋め込みメッセージを送信
-                    MessageAction messageAction = channel.sendMessageEmbeds(embed);
-                    messageAction.queue(response ->
-                    {
-                        // メッセージIDとチャンネルIDを取得
-                        String messageId = response.getId();
-                        logger.info("Message ID: " + messageId);
-                        logger.info("Channel ID: " + channel.getId());
-                    });
-                }
-            	
-            	if(Objects.nonNull(content) && !content.isEmpty())
-            	{
-            		// テキストメッセージを送信
-            		MessageAction messageAction = channel.sendMessage(content);
-                    messageAction.queue(response ->
-                    {
-                        // メッセージIDとチャンネルIDを取得
-                        String messageId = response.getId();
-                        logger.info("Message ID: " + messageId);
-                    	logger.info("Channel ID: " + channel.getId());
-                    });
-            	}
-                
-            }
-            else
+                // メッセージIDとチャンネルIDを取得
+                String messageId = response.getId();
+                future.complete(messageId);
+                //logger.info("Message ID: " + messageId);
+                //logger.info("Channel ID: " + channel.getId());
+            }, failure -> 
             {
-                logger.error("Channel not found!");
+            	logger.error("Failed to send embedded message: " + failure.getMessage());
+                future.complete(null);
+            });
+        }
+    	
+    	if(Objects.nonNull(content) && !content.isEmpty())
+    	{
+    		// テキストメッセージを送信
+    		MessageAction messageAction = channel.sendMessage(content);
+            messageAction.queue(response ->
+            {
+                // メッセージIDとチャンネルIDを取得
+                String messageId = response.getId();
+                //logger.info("Message ID: " + messageId);
+            	//logger.info("Channel ID: " + channel.getId());
+            	future.complete(messageId);
+            }, failure ->
+            {
+            	logger.error("Failed to send text message: " + failure.getMessage());
+                future.complete(null);
             }
-        }).schedule();
+            );
+    	}
+    	
+    	return future;
     }
     
-    public void sendBotMessageAsync(String content)
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content)
     {
-    	sendBotMessageAsync(content,null);
+    	return sendBotMessageAndgetMessageId(content,null);
     }
     
     
-    public void sendBotMessageAsync(MessageEmbed embed)
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(MessageEmbed embed)
     {
-    	sendBotMessageAsync(null, embed);
+    	return sendBotMessageAndgetMessageId(null, embed);
     }
     
     public MessageEmbed createEmbed(String description, int color)

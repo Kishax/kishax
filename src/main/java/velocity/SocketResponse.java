@@ -112,7 +112,7 @@ public class SocketResponse
 	    								mineName+"が新規FMCメンバーになりました！",
 	    								ColorUtil.PINK.getRGB()
 	    							);
-	    					discord.sendBotMessageAsync(newUserEmbed);
+	    					discord.sendBotMessageAndgetMessageId(newUserEmbed);
 		    			}
     					else
     					{
@@ -121,7 +121,7 @@ public class SocketResponse
 	    								mineName+"が新規FMCメンバーになりました！",
 	    								ColorUtil.PINK.getRGB()
 	    							);
-	    					discord.sendBotMessageAsync(newUserEmbed);
+	    					discord.sendBotMessageAndgetMessageId(newUserEmbed);
     					}
 	    			});
                 }
