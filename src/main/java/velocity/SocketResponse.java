@@ -73,7 +73,6 @@ public class SocketResponse
     {
     	if (Objects.isNull(res)) return;
     	if (res.contains("サーバー->"))	return;
-    	
     	if(res.contains("PHP"))
     	{
     		//if (res.contains("\\n")) res = res.replace("\\n", "");
@@ -84,7 +83,7 @@ public class SocketResponse
                 // パターンをコンパイル
                 Pattern compiledPattern = Pattern.compile(pattern);
                 Matcher matcher = compiledPattern.matcher(res);
-
+                
                 // パターンにマッチする部分を抽出
                 if (matcher.find())
                 {

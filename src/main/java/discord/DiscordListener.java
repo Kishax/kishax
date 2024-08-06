@@ -96,7 +96,7 @@ public class DiscordListener
         
         client.send(message).thenAccept(response ->
         {
-        	logger.info("Message sent with ID: " + response.getId());
+        	//logger.info("Message sent with ID: " + response.getId());
         }).exceptionally(throwable ->
         {
             throwable.printStackTrace();
@@ -110,7 +110,7 @@ public class DiscordListener
         {
         	if(Objects.isNull(currentEmbed))
         	{
-        		logger.info("No embed found to edit.");
+        		//logger.info("No embed found to edit.");
         		return;
         	}
             if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
@@ -120,7 +120,7 @@ public class DiscordListener
             TextChannel channel = jda.getTextChannelById(channelId);
             
             if (Objects.isNull(channel)) {
-                logger.info("Channel not found!");
+                //logger.info("Channel not found!");
                 return;
             }
             
@@ -129,7 +129,7 @@ public class DiscordListener
             
             MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
             messageAction.queue(
-                success -> logger.info("Message edited successfully"),
+                success -> {	},
                 error ->
                 {
                 	error.printStackTrace();
@@ -149,7 +149,7 @@ public class DiscordListener
         
         if (Objects.isNull(channel))
         {
-            logger.info("Channel not found!");
+            //logger.info("Channel not found!");
             return;
         }
         
@@ -157,12 +157,15 @@ public class DiscordListener
             message ->
             {
                 List<MessageEmbed> embeds = message.getEmbeds();
-                logger.info("Message retrieved with " + embeds.size() + " embeds.");
-                logger.info("Message Id: "+messageId);
-                if (!embeds.isEmpty()) {
+                //logger.info("Message retrieved with " + embeds.size() + " embeds.");
+                //logger.info("Message Id: "+messageId);
+                if (!embeds.isEmpty()) 
+                {
                     // 最初のEmbedを取得して消費
                     embedConsumer.accept(embeds.get(0));
-                } else {
+                } 
+                else 
+                {
                     logger.info("No embeds found in the message.");
                     embedConsumer.accept(null);
                 }
@@ -197,13 +200,13 @@ public class DiscordListener
         
         if(Objects.isNull(channel))
         {
-        	logger.info("Channel not found!");
+        	//logger.info("Channel not found!");
         	return;
         }
         
         MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
         messageAction.queue(
-            success -> logger.info("Message edited successfully"),
+            success -> {	},
             error -> error.printStackTrace()
         );
     }
@@ -313,7 +316,7 @@ public class DiscordListener
         
         if (Objects.isNull(channel))
         {
-        	logger.error("Channel not found!");
+        	//logger.error("Channel not found!");
         	future.complete(null);
             return;
         }
@@ -322,7 +325,7 @@ public class DiscordListener
         {
     		// 埋め込みメッセージを送信
             MessageAction messageAction = channel.sendMessageEmbeds(embed);
-            messageAction.queue(response -> logger.info("Send Successfully"),
+            messageAction.queue(response -> {	},
             		failure -> logger.error("Failed to send embedded message: " + failure.getMessage())
             );
         }
@@ -331,7 +334,7 @@ public class DiscordListener
     	{
     		// テキストメッセージを送信
     		MessageAction messageAction = channel.sendMessage(content);
-            messageAction.queue(response -> logger.info("Send Successfully"),
+            messageAction.queue(response -> {	},
             		failure -> logger.error("Failed to send text message: " + failure.getMessage())
             );
     	}

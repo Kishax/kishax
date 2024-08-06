@@ -19,7 +19,6 @@ import velocity.Config;
 import velocity.Database;
 import velocity.EventListener;
 import velocity.Main;
-import velocity.PlayerDisconnect;
 import velocity.PlayerUtil;
 
 public class MessageEditor
@@ -34,8 +33,8 @@ public class MessageEditor
 	private final EmojiManager emoji;
 	private final PlayerUtil pu;
 	private String emojiId = null, avatarUrl = null, addMessage = null, 
-			Emoji = null, FaceEmoji = null, reqServerName = null, 
-			targetServerName = null, uuid = null, playerName = null;
+			Emoji = null, FaceEmoji = null, targetServerName = null,
+			uuid = null, playerName = null;
 	private MessageEmbed sendEmbed = null;
 	private MessageEmbed createEmbed = null;
 	
@@ -61,17 +60,15 @@ public class MessageEditor
 		if(Objects.isNull(player))
 		{
 			// player変数がnullかつalternativePlayerNameが与えられていたとき
-			if(Objects.nonNull(alternativePlayerName))
-			{
-				// データベースからuuidを取ってくる
-				uuid = pu.getPlayerUUIDByName(alternativePlayerName);
-				playerName = alternativePlayerName;
-			}
-			else
+			if(Objects.isNull(alternativePlayerName))
 			{
 				logger.error("MessageEditor.AddEmbedSomeMessageメソッドの使い方が間違っています。");
 				return;
 			}
+			
+			// データベースからuuidを取ってくる
+			uuid = pu.getPlayerUUIDByName(alternativePlayerName);
+			playerName = alternativePlayerName;
 		}
 		else
 		{
@@ -120,15 +117,12 @@ public class MessageEditor
 	            	case "AddMember":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
 	                	{
-                            logger.info("Emoji ID retrieved: " + emojiId);
-
                             addMessage = Emoji + FaceEmoji +
-                                    player.getUsername() + "が新規FMCメンバーになりました！:congratulations: ";
+                                    playerName + "が新規FMCメンバーになりました！:congratulations: ";
                         }
 	                	else
 	                	{
-                            logger.info("Emoji ID is null");
-                            addMessage = player.getUsername() + "が新規FMCメンバーになりました！:congratulations: ";
+                            addMessage = playerName + "が新規FMCメンバーになりました！:congratulations: ";
                         }
 
                         createEmbed = discord.createEmbed
@@ -171,7 +165,7 @@ public class MessageEditor
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
 	                	{
 		                    addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
-		                            reqServerName + "サーバーの起動リクエストを送りました。";
+		                            targetServerName + "サーバーの起動リクエストを送りました。";
 		                    discord.editBotEmbed(messageId, addMessage);
 	                	}
 	                    break;
@@ -218,7 +212,7 @@ public class MessageEditor
 	                                );
 	                        discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 ->
 	                        {
-	                            logger.info("Message sent with ID: " + messageId2);
+	                            //logger.info("Message sent with ID: " + messageId2);
 	                            EventListener.PlayerMessageIds.put(uuid, messageId2);
 	                        });
 	                	}
@@ -235,8 +229,9 @@ public class MessageEditor
 	                case "FirstJoin":
                         try {
                             conn = db.getConnection();
-                            if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
-                                logger.info("Emoji ID retrieved: " + emojiId);
+                            if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
+                            {
+                                //logger.info("Emoji ID retrieved: " + emojiId);
                                 ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server, emid) VALUES (?,?,?,?);");
                                 ps.setString(1, playerName);
                                 ps.setString(2, uuid);
@@ -247,8 +242,10 @@ public class MessageEditor
                                 addMessage = Emoji + FaceEmoji +
                                         playerName + "が" + serverInfo.getName() +
                                         "サーバーに初参加です！";
-                            } else {
-                                logger.info("Emoji ID is null");
+                            }
+                            else
+                            {
+                                //logger.info("Emoji ID is null");
                                 ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server) VALUES (?,?,?);");
                                 ps.setString(1, playerName);
                                 ps.setString(2, uuid);
@@ -265,7 +262,7 @@ public class MessageEditor
                                             ColorUtil.ORANGE.getRGB()
                                     );
                             discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
-                                logger.info("Message sent with ID: " + messageId2);
+                                //logger.info("Message sent with ID: " + messageId2);
                                 EventListener.PlayerMessageIds.put(uuid, messageId2);
                             });
                         } 
@@ -280,53 +277,44 @@ public class MessageEditor
 	                    break;
 	
 	                case "RequestOK":
-	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
 	                	{
-		                    emoji.createOrgetEmojiId(playerName, avatarUrl).thenAccept(emojiId -> 
-		                    {
-		                        addMessage = "管理者が" + Emoji + FaceEmoji + playerName + "の" +
-		                                reqServerName + "サーバー起動リクエストを受諾しました。";
-		                        sendEmbed = discord.createEmbed
-		                                (
-		                                        addMessage,
-		                                        ColorUtil.GREEN.getRGB()
-		                                );
-		                        discord.sendBotMessage(sendEmbed);
-		                    });
+	                        addMessage = Emoji + "管理者が" + FaceEmoji + playerName + "の" +
+	                                targetServerName + "サーバー起動リクエストを受諾しました。";
+	                        sendEmbed = discord.createEmbed
+	                                (
+	                                        addMessage,
+	                                        ColorUtil.GREEN.getRGB()
+	                                );
+	                        discord.sendBotMessage(sendEmbed);
 	                	}
 	                    break;
 	
 	                case "RequestCancel":
-	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
 	                	{
-		                    emoji.createOrgetEmojiId(playerName, avatarUrl).thenAccept(emojiId ->
-		                    {
-		                        addMessage = "管理者が" + Emoji + FaceEmoji + playerName + "の" +
-		                                reqServerName + "サーバー起動リクエストをキャンセルしました。";
-		                        sendEmbed = discord.createEmbed
-		                                (
-		                                        addMessage,
-		                                        ColorUtil.RED.getRGB()
-		                                );
-		                        discord.sendBotMessage(sendEmbed);
-		                    });
+	                        addMessage = Emoji + "管理者が" + FaceEmoji + playerName + "の" +
+	                                targetServerName + "サーバー起動リクエストをキャンセルしました。";
+	                        sendEmbed = discord.createEmbed
+	                                (
+	                                        addMessage,
+	                                        ColorUtil.RED.getRGB()
+	                                );
+	                        discord.sendBotMessage(sendEmbed);
 	                	}
 	                    break;
 	
 	                case "RequestNoRes":
-	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId))
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji))
 	                	{
-		                    emoji.createOrgetEmojiId(playerName, avatarUrl).thenAccept(emojiId -> 
-		                    {
-		                        addMessage = "管理者が" + Emoji + FaceEmoji + playerName + "の" +
-		                                reqServerName + "サーバー起動リクエストに対して、応答しませんでした。";
-		                        sendEmbed = discord.createEmbed
-		                                (
-		                                        addMessage,
-		                                        ColorUtil.RED.getRGB()
-		                                );
-		                        discord.sendBotMessage(sendEmbed);
-		                    });
+	                        addMessage = Emoji + "管理者が" + FaceEmoji + playerName + "の" +
+	                                targetServerName + "サーバー起動リクエストに対して、応答しませんでした。";
+	                        sendEmbed = discord.createEmbed
+	                                (
+	                                        addMessage,
+	                                        ColorUtil.BLUE.getRGB()
+	                                );
+	                        discord.sendBotMessage(sendEmbed);
 	                	}
 	                    break;
 	
@@ -341,9 +329,9 @@ public class MessageEditor
 	    });
 	}
 	
-	public void AddEmbedSomeMessage(String type, Player player, String reqServer)
+	public void AddEmbedSomeMessage(String type, Player player, String serverName)
 	{
-		AddEmbedSomeMessage(reqServer, player, null, reqServer, null);
+		AddEmbedSomeMessage(type, player, null, serverName, null);
 	}
 	
 	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo)
@@ -361,8 +349,8 @@ public class MessageEditor
 		AddEmbedSomeMessage(type, null, null, null, alternativePlayerName);
 	}
 	
-	public void AddEmbedSomeMessage(String type, String alternativePlayerName, String reqServer)
+	public void AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName)
 	{
-		AddEmbedSomeMessage(type, null, null, reqServer, alternativePlayerName);
+		AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName);
 	}
 }

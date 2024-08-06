@@ -80,8 +80,8 @@ public class EmojiManager
         if (existingEmote.isPresent())
         {
             emojiId = existingEmote.get().getId();
-            logger.info(emojiName + "の絵文字はすでに追加されています。");
-            logger.info("Existing Emoji ID: " + emojiId);
+            //logger.info(emojiName + "の絵文字はすでに追加されています。");
+            //logger.info("Existing Emoji ID: " + emojiId);
             future.complete(emojiId);
         }
         else
@@ -109,7 +109,7 @@ public class EmojiManager
                     {
                     	logger.info(emojiName + "を絵文字に追加しました。");
                     	emojiId = success.getId(); // 絵文字IDを取得
-                        logger.info("Emoji ID: " + emojiId);
+                        //logger.info("Emoji ID: " + emojiId);
                         future.complete(emojiId);
                     },
                     failure ->

@@ -106,6 +106,7 @@ public class PlayerUtil
 			conn = db.getConnection();
 			String sql = "SELECT uuid FROM minecraft WHERE name=? ORDER BY id DESC LIMIT 1;";
 			ps = conn.prepareStatement(sql);
+			ps.setString(1, playerName);
 			dbuuid = ps.executeQuery();
 			if(dbuuid.next())
 			{

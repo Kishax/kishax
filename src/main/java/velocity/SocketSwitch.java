@@ -186,7 +186,7 @@ public class SocketSwitch
                             socket2.close();
                             break;
                         }
-                        logger.info("New client connected(Buffered)");
+                        // logger.info("New client connected(Buffered)");
                         new BufferedSocketServerThread(socket2, plugin, logger, sr).start();
                     }
                     catch (Exception e)
