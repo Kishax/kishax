@@ -14,11 +14,8 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import club.minnced.discord.webhook.send.WebhookEmbed;
-import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
-import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import common.ColorUtil;
 import discord.DiscordListener;
+import discord.MessageEditor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -31,10 +28,7 @@ public class Maintenance
 {
 	private final DatabaseInterface db;
 	private final PlayerDisconnect pd;
-	private final Config config;
-	private final DiscordListener discord;
-	private WebhookMessageBuilder builder = null;
-	private WebhookEmbed embed = null;
+	private final MessageEditor discordME;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null, issuperadmin = null;
@@ -49,13 +43,12 @@ public class Maintenance
 	(
 		Main plugin, ProxyServer server, Logger logger,
 		Config config, DatabaseInterface db, PlayerDisconnect pd,
-		DiscordListener discord
+		DiscordListener discord, MessageEditor discordME
 	)
 	{
-		this.config = config;
 		this.db = db;
 		this.pd = pd;
-		this.discord = discord;
+		this.discordME = discordME;
 	}
 
 	public void execute(CommandSource source,String[] args)
@@ -83,7 +76,7 @@ public class Maintenance
 	        {
 	        	case 0:
 	        	case 1:
-	        		source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN));
+	        		source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
 	            	break;
 	            	
 	        	case 2:
@@ -106,7 +99,7 @@ public class Maintenance
 	        				break;
 	        				
 	        			default:
-	        				source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN));
+	        				source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
 	        				break;
 	        		}
         			break;
@@ -116,35 +109,35 @@ public class Maintenance
 	        		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
 	        		if(!(args1.contains(args[1].toLowerCase())))
         			{
-	        			source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN)));
+	        			source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
         				break;
         			}
 	        		
 	        		if(!(args2.contains(args[2].toLowerCase())))
         			{
-	        			source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN)));
+	        			source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
         				break;
         			}
 	        		
-	        		source.sendMessage(Component.text("discord通知をtrueにするかfalseにするかを決定してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN)));
+	        		source.sendMessage(Component.text("discord通知をtrueにするかfalseにするかを決定してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
         			break;
         			
 	        	case 4:
         			if(!(args1.contains(args[1].toLowerCase())))
         			{
-        				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN)));
+        				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
         			if(!(args2.contains(args[2].toLowerCase())))
         			{
-        				source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN)));
+        				source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
         			if(!(args3.contains(args[3].toLowerCase())))
         			{
-        				source.sendMessage(Component.text("第4引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN)));
+        				source.sendMessage(Component.text("第4引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
@@ -164,18 +157,7 @@ public class Maintenance
         							ps.executeUpdate();
         							source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
         							
-        							builder = new WebhookMessageBuilder();
-        					        builder.setUsername("サーバー");
-        					        if(!config.getString("Discord.MaintenanceOffImageUrl","").isEmpty())
-        					        {
-        					        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOffImageUrl"));
-        					        }
-        					        embed = new WebhookEmbedBuilder()
-        					            .setColor(ColorUtil.RED.getRGB())  // Embedの色
-        					            .setDescription("メンテナンスモードが無効になりました。\nまだまだ遊べるドン！")
-        					            .build();
-        					        builder.addEmbeds(embed);
-        					        discord.sendWebhookMessage(builder);
+        							discordME.AddEmbedSomeMessage("MenteOff");
         						}
         						else
         						{
@@ -187,18 +169,7 @@ public class Maintenance
         							ps.executeUpdate();
         							pd.menteDisconnect(superadminUUIDs);
         							
-        							builder = new WebhookMessageBuilder();
-        					        builder.setUsername("サーバー");
-        					        if(!config.getString("Discord.MaintenanceOnImageUrl","").isEmpty())
-        					        {
-        					        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOnImageUrl"));
-        					        }
-        					        embed = new WebhookEmbedBuilder()
-        					            .setColor(ColorUtil.BLUE.getRGB())  // Embedの色
-        					            .setDescription("メンテナンスモードが有効になりました。\nいまは遊べないカッ...")
-        					            .build();
-        					        builder.addEmbeds(embed);
-        					        discord.sendWebhookMessage(builder);
+        							discordME.AddEmbedSomeMessage("MenteOn");
         						}
         					}
         					break;
@@ -234,7 +205,7 @@ public class Maintenance
 	        		break;
 	        		
 	        	default:
-	        		source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.GREEN));
+	        		source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
 	        		break;
 	        }
 			return;

@@ -6,16 +6,12 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import velocity.Config;
 import velocity.Database;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -58,6 +54,13 @@ public class EmojiManager
     	
     	this.jda = DiscordListener.jda;
         if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0)
+        {
+        	future.complete(null);
+            return future;
+        }
+        
+        // emojiNameが空白かnullだった場合
+        if(emojiName.isEmpty() || Objects.isNull(emojiName))
         {
         	future.complete(null);
             return future;

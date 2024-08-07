@@ -1,7 +1,9 @@
 package discord;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +29,7 @@ public class DiscordEventListener extends ListenerAdapter
 	private final Logger logger;
 	private final Config config;
 	private final BroadCast bc;
+	public static String PlayerChatMessageId = null;
 	
 	@Inject
 	public DiscordEventListener(Logger logger, Config config, BroadCast bc)
@@ -44,7 +47,7 @@ public class DiscordEventListener extends ListenerAdapter
         (
         	e.getAuthor().isBot() || 
         	e.getMessage().isWebhookMessage() || 
-        	!e.getChannel().getId().equals(Long.valueOf(config.getLong("Discord.ChannelId")).toString())
+        	!e.getChannel().getId().equals(Long.valueOf(config.getLong("Discord.ChatChannelId")).toString())
         )
 		{
 			return;
@@ -54,13 +57,19 @@ public class DiscordEventListener extends ListenerAdapter
         String message = e.getMessage().getContentRaw();
         String userName = e.getAuthor().getName();
         
+        
+        //メッセージつき、添付ありだったときに、マイクラに送れてない↓
+        //添付あり、メッセージなしは送れてると思う
+        //添付なし、メッセージなしは送らない。
+        
         // メッセージが空でないことを確認
         if (!message.isEmpty())
         {
         	message = userName + " -> " + message;
         	sendMixUrl(message);
-            return;
         }
+        
+        DiscordEventListener.PlayerChatMessageId = null;
         
         // チャンネルIDやユーザーIDも取得可能
         //String channelId = e.getChannel().getId();

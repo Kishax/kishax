@@ -28,7 +28,7 @@ public class FMCCommand implements SimpleCommand
     private final Config config;
     private final PlayerUtil pu;
     
-    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","configtest","maintenance","conv","test"));
+    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","configtest","maintenance","conv","test","chat"));
     public List<String> anylists = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
@@ -85,6 +85,9 @@ public class FMCCommand implements SimpleCommand
                         .append(Component.text("\n\n/fmcb　conv").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp conv"))
                                 .hoverEvent(HoverEvent.showText(Component.text("ローマ字変換方式の切り替え"))))
+                        .append(Component.text("\n\n/fmcp　chat <switch|status>").color(NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.suggestCommand("/fmcp chat"))
+                                .hoverEvent(HoverEvent.showText(Component.text("チャットメッセージタイプの切り替え"))))
                         .append(Component.text("\n\n/fmcb　test").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp test"))
                                 .hoverEvent(HoverEvent.showText(Component.text("デバッグで色々テストするだけ"))))
@@ -158,6 +161,10 @@ public class FMCCommand implements SimpleCommand
             	Main.getInjector().getInstance(Test.class).execute(source, args);
             	break;
             	
+            case "chat":
+            	Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
+            	break;
+            	
             default:
                 source.sendMessage(Component.text("Unknown subcommand: " + subCommand));
         }
@@ -212,6 +219,13 @@ public class FMCCommand implements SimpleCommand
                         
                     case "maintenance":
                     	for (String args1 : Maintenance.args1)
+                    	{
+                    		ret.add(args1);
+                    	}
+                    	return ret;
+                    	
+                    case "chat":
+                    	for (String args1 : SwitchChatType.args1)
                     	{
                     		ret.add(args1);
                     	}

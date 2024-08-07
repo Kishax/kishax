@@ -13,6 +13,9 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
+import club.minnced.discord.webhook.send.WebhookEmbed;
+import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
+import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import common.ColorUtil;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import velocity.Config;
@@ -35,8 +38,9 @@ public class MessageEditor
 	private String avatarUrl = null, addMessage = null, 
 			Emoji = null, FaceEmoji = null, targetServerName = null,
 			uuid = null, playerName = null;
-	private MessageEmbed sendEmbed = null;
-	private MessageEmbed createEmbed = null;
+	private MessageEmbed sendEmbed = null, createEmbed = null;
+	private WebhookMessageBuilder builder = null;
+	private WebhookEmbed embed = null;
 	
 	@Inject
 	public MessageEditor
@@ -58,21 +62,19 @@ public class MessageEditor
 	public void AddEmbedSomeMessage
 	(
 		String type, Player player, ServerInfo serverInfo, 
-		String serverName, String alternativePlayerName, int playTime
+		String serverName, String alternativePlayerName, int playTime,
+		String chatMessage
 	) 
 	{
 		if(Objects.isNull(player))
 		{
 			// player変数がnullかつalternativePlayerNameが与えられていたとき
-			if(Objects.isNull(alternativePlayerName))
+			if(Objects.nonNull(alternativePlayerName))
 			{
-				logger.error("MessageEditor.AddEmbedSomeMessageメソッドの使い方が間違っています。");
-				return;
+				// データベースからuuidを取ってくる
+				uuid = pu.getPlayerUUIDByName(alternativePlayerName);
+				playerName = alternativePlayerName;
 			}
-			
-			// データベースからuuidを取ってくる
-			uuid = pu.getPlayerUUIDByName(alternativePlayerName);
-			playerName = alternativePlayerName;
 		}
 		else
 		{
@@ -84,6 +86,8 @@ public class MessageEditor
 	    
 	    String EmojiName = config.getString("Discord." + type + "EmojiName", "");
 
+	    // 第二引数に画像URLが入っていないため、もし、EmojiNameという絵文字がなかったら、追加せずにnullで返る
+	    // createOrgetEmojiIdの第一引数がnull Or Emptyであった場合、nullで返るので、DiscordBotへのリクエスト回数を減らせる
 	    CompletableFuture<String> EmojiFutureId = emoji.createOrgetEmojiId(EmojiName);
 	    CompletableFuture<String> FaceEmojiFutureId = emoji.createOrgetEmojiId(playerName, avatarUrl);
 	    CompletableFuture<Void> allOf = CompletableFuture.allOf(EmojiFutureId, FaceEmojiFutureId);
@@ -118,6 +122,104 @@ public class MessageEditor
 	            addMessage = null;
 	            switch (type) 
 	            {
+	            	case "MenteOn":
+	            		builder = new WebhookMessageBuilder();
+				        builder.setUsername("サーバー");
+				        if(!config.getString("Discord.MaintenanceOnImageUrl","").isEmpty())
+				        {
+				        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOnImageUrl"));
+				        }
+				        
+				        embed = new WebhookEmbedBuilder()
+				            .setColor(ColorUtil.BLUE.getRGB())  // Embedの色
+				            .setDescription("メンテナンスモードが有効になりました。\nいまは遊べないカッ...")
+				            .build();
+				        builder.addEmbeds(embed);
+				        
+				        discord.sendWebhookMessage(builder);
+	            		break;
+	            	
+	            	case "MenteOff":
+	            		builder = new WebhookMessageBuilder();
+				        builder.setUsername("サーバー");
+				        if(!config.getString("Discord.MaintenanceOffImageUrl","").isEmpty())
+				        {
+				        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOffImageUrl"));
+				        }
+				        
+				        embed = new WebhookEmbedBuilder()
+				            .setColor(ColorUtil.RED.getRGB())  // Embedの色
+				            .setDescription("メンテナンスモードが無効になりました。\nまだまだ遊べるドン！")
+				            .build();
+				        builder.addEmbeds(embed);
+				        
+				        discord.sendWebhookMessage(builder);
+	            		break;
+	            		
+	            	case "Invader":
+	            		// Invader専用の絵文字は追加する予定はないので、Emojiのnullチェックは不要
+	            		if(Objects.nonNull(FaceEmoji))
+	            		{
+	            			addMessage = "侵入者が現れました。\n\n:arrow_down: 侵入者情報:arrow_down:\nスキン: " + FaceEmoji
+	            					+ "\n\nプレイヤーネーム: " + playerName + "\n\nプレイヤーUUID: " + uuid;
+	            			
+	            			createEmbed = discord.createEmbed
+	                                (
+	                                		addMessage,
+	                                        ColorUtil.RED.getRGB()
+	                                );
+	            			
+	            			discord.sendBotMessage(createEmbed);
+	            		}
+	            		break;
+	            		
+	            	case "Chat":
+	            		// Chat専用の絵文字は追加する予定はないので、Emojiのnullチェックは不要
+	            		if(Objects.nonNull(FaceEmoji))
+	            		{
+	            			if(config.getBoolean("Discord.ChatType", false))
+	            			{
+	            				// 編集embedによるChatメッセージ送信
+	            				if(Objects.isNull(DiscordEventListener.PlayerChatMessageId))
+	            				{
+	            					// 直前にEmbedによるChatメッセージを送信しなかった場合
+	            					// EmbedChatMessageを送って、MessageIdを
+	            					createEmbed = discord.createEmbed
+	    	                                (
+	    	                                		addMessage,
+	    	                                        ColorUtil.GREEN.getRGB()
+	    	                                );
+	            					
+	    	                        discord.sendBotMessageAndgetMessageId(createEmbed, true).thenAccept(messageId2 ->
+	    	                        {
+	    	                            //logger.info("Message sent with ID: " + messageId2);
+	    	                            DiscordEventListener.PlayerChatMessageId = messageId2;
+	    	                        });
+	            				}
+	            				else
+	            				{
+	            					if (Objects.nonNull(messageId)) 
+	        	                	{
+	        		                    addMessage = "\n\n" + "<" + FaceEmoji + playerName + ">" + 
+	        		                    		"\n" + chatMessage;
+	        		                    discord.editBotEmbed(messageId, addMessage);
+	        		                    EventListener.PlayerMessageIds.remove(uuid);
+	        	                	}
+	            				}
+	            			}
+	            			else
+	            			{
+	            				// デフォルトのChatメッセージ送信(Webhook送信)
+	            				builder = new WebhookMessageBuilder();
+	            		        builder.setUsername(playerName);
+	            		        builder.setAvatarUrl(avatarUrl);
+	            		        builder.setContent(chatMessage);
+	            		        
+	            		        discord.sendWebhookMessage(builder);
+	            			}
+	            		}
+	            		break;
+	            		
 	            	case "AddMember":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
 	                	{
@@ -335,31 +437,41 @@ public class MessageEditor
 	
 	public void AddEmbedSomeMessage(String type, Player player, String serverName)
 	{
-		AddEmbedSomeMessage(type, player, null, serverName, null, 0);
+		AddEmbedSomeMessage(type, player, null, serverName, null, 0, null);
 	}
 	
 	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo)
 	{
-		AddEmbedSomeMessage(type, player, serverInfo, null, null, 0);
+		AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, null);
 	}
 	
 	public void AddEmbedSomeMessage(String type, Player player)
 	{
-		AddEmbedSomeMessage(type, player, null, null, null, 0);
+		AddEmbedSomeMessage(type, player, null, null, null, 0, null);
 	}
 	
 	public void AddEmbedSomeMessage(String type, String alternativePlayerName)
 	{
-		AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, 0);
+		AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, 0, null);
 	}
 	
 	public void AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName)
 	{
-		AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, 0);
+		AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, 0, null);
 	}
 	
 	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, int playTime)
 	{
-		AddEmbedSomeMessage(type, player, serverInfo, null, null, playTime);
+		AddEmbedSomeMessage(type, player, serverInfo, null, null, playTime, null);
+	}
+	
+	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage)
+	{
+		AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, chatMessage);
+	}
+	
+	public void AddEmbedSomeMessage(String type)
+	{
+		AddEmbedSomeMessage(type, null, null, null, null, 0, null);
 	}
 }

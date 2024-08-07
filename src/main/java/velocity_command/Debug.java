@@ -3,31 +3,24 @@ package velocity_command;
 import java.io.IOException;
 import java.util.Map;
 
-import org.slf4j.Logger;
-
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
-import discord.DiscordListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
 
 public class Debug
 {
-	private final Logger logger;
 	private final Config config;
-	private final DiscordListener discord;
 	
 	private String value1 = null, value2 = null;
-	private long value3 = 0, value4 = 0;
+	private long value3 = 0, value4 = 0, value5 = 0, value6 = 0;
 	
 	@Inject
-	public Debug(Logger logger, Config config, DiscordListener discord)
+	public Debug(Config config)
 	{
-		this.logger = logger;
 		this.config = config;
-		this.discord = discord;
 	}
 	
 	public void execute(CommandSource source,String[] args)
@@ -67,7 +60,24 @@ public class Debug
 	        source.sendMessage(Component.text("コンフィグの設定が不十分です。").color(NamedTextColor.RED));
 	    }
 		
-		
+	    if (config.getLong("Debug.ChatChannelId", 0) != 0 && config.getLong("Discord.ChatChannelId", 0) != 0)
+	    {
+	    	// Long.valueOf(value3).toString()
+	    	// 置換する前にDiscord-Botをログアウトさせておく
+	    	// 現在、Discord-Tokenは一つしか扱っていないため、コメントアウトにしておく
+	    	// discord.logoutDiscordBot();
+	    	
+	        value5 = config.getLong("Debug.ChatChannelId");
+	        value6 = config.getLong("Discord.ChatChannelId");
+	        DiscordConfig.put("ChatChannelId", value5);
+	        DebugConfig.put("ChatChannelId", value6);
+	    }
+	    else
+	    {
+	        source.sendMessage(Component.text("コンフィグの設定が不十分です。").color(NamedTextColor.RED));
+	    }
+	    
+	    
 		if(config.getBoolean("Debug.Mode"))
 		{
 			source.sendMessage(Component.text("デバッグモードがOFFになりました。").color(NamedTextColor.GREEN));

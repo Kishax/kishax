@@ -1,5 +1,9 @@
 package velocity;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,8 +13,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.slf4j.Logger;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -20,6 +29,8 @@ public class PlayerUtil
 {
 	private final ProxyServer server;
 	private final DatabaseInterface db;
+	private final Logger logger;
+	
 	private Connection conn = null;
 	private PreparedStatement ps = null;
 	private ResultSet playerlist = null, dbuuid = null, bj_logs = null;
@@ -28,9 +39,10 @@ public class PlayerUtil
 	private boolean isLoaded = false;
 	
 	@Inject
-	public PlayerUtil(ProxyServer server, DatabaseInterface db)
+	public PlayerUtil(ProxyServer server, Logger logger, DatabaseInterface db)
 	{
 		this.server = server;
+		this.logger = logger;
 		this.db = db;
 	}
 	
@@ -176,6 +188,41 @@ public class PlayerUtil
             int minutes = remainingSeconds / 60;
             seconds = remainingSeconds % 60;
             return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        }
+    }
+	
+	public String getPlayerNameFromUUID(UUID uuid)
+    {
+        String uuidString = uuid.toString().replace("-", "");
+        String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuidString;
+        
+        try
+        {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(urlString))
+                    .header("User-Agent", "Mozilla/5.0")
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200)
+            {
+                // JSONレスポンスを解析
+                Gson gson = new Gson();
+                JsonObject jsonResponse = gson.fromJson(response.body(), JsonObject.class);
+                return jsonResponse.get("name").getAsString();
+            }
+            else
+            {
+            	logger.error("GETリクエストに失敗しました。HTTPエラーコード: " + response.statusCode());
+                return null;
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return null;
         }
     }
 }

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
+import discord.DiscordEventListener;
 import discord.DiscordListener;
 import velocity.EventListener;
 
@@ -31,9 +32,11 @@ public class Test
 				//logger.info(args[0]);
 				for(Map.Entry<String, String> entry : EventListener.PlayerMessageIds.entrySet())
 				{
-					logger.info("key: " + entry.getKey());
-					logger.info("value: " + entry.getValue());
+					logger.info("PlayerMessageIdkey: " + entry.getKey());
+					logger.info("PlayerMessageIdvalue: " + entry.getValue());
 				}
+				
+				logger.info("PlayerChatMessageId: "+DiscordEventListener.PlayerChatMessageId);
 				break;
 				
 			case 2:

@@ -1,6 +1,7 @@
 package velocity;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,11 +14,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import club.minnced.discord.webhook.send.WebhookEmbed;
-import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
-import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import common.ColorUtil;
-import discord.DiscordListener;
+import discord.MessageEditor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -26,13 +23,10 @@ public class PlayerDisconnect
 {
 	public final Main plugin;
 	private final ProxyServer server;
-	private final Config config;
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
-	private final DiscordListener discord;
-	private WebhookMessageBuilder builder = null;
-	private WebhookEmbed embed = null;
+	private final MessageEditor discordME;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null;
@@ -43,17 +37,16 @@ public class PlayerDisconnect
 	public PlayerDisconnect
 	(
 		Main plugin, Logger logger, ProxyServer server,
-		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console, RomaToKanji conv, DiscordListener discord
+		DatabaseInterface db, BroadCast bc, ConsoleCommandSource console,
+		RomaToKanji conv, MessageEditor discordME
 	)
 	{
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
-		this.config = config;
 		this.db = db;
 		this.console = console;
-		this.discord = discord;
+		this.discordME = discordME;
 	}
 	
 	public void menteDisconnect(List<String> UUIDs)
@@ -94,18 +87,7 @@ public class PlayerDisconnect
 			ps.setString(2, player.getUniqueId().toString());
 			ps.executeUpdate();
 			
-			builder = new WebhookMessageBuilder();
-	        builder.setUsername("サーバー");
-	        if(!config.getString("Discord.InvaderComingImageUrl","").isEmpty())
-	        {
-	        	builder.setAvatarUrl(config.getString("Discord.InvaderComingImageUrl"));
-	        }
-	        embed = new WebhookEmbedBuilder()
-	            .setColor(ColorUtil.RED.getRGB())  // Embedの色
-	            .setDescription("侵入者が現れました。")
-	            .build();
-	        builder.addEmbeds(embed);
-	        discord.sendWebhookMessage(builder);
+			discordME.AddEmbedSomeMessage("Invader", player);
 		}
 		catch (SQLException | ClassNotFoundException e)
 		{

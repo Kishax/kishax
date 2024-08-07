@@ -1,9 +1,5 @@
 package velocity;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,14 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
@@ -35,8 +28,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
-import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import discord.DiscordListener;
 import discord.MessageEditor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -65,9 +56,8 @@ public class EventListener
 	private final PlayerUtil pu;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
-	private final DiscordListener discord;
 	private final MessageEditor discordME;
-	private WebhookMessageBuilder builder = null;
+	private ServerInfo serverInfo = null;
 	
 	@Inject
 	public EventListener
@@ -75,8 +65,7 @@ public class EventListener
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
 		ConsoleCommandSource console, RomaToKanji conv, PlayerUtil pu,
-		PlayerDisconnect pd, RomajiConversion rc, DiscordListener discord,
-		MessageEditor discordME
+		PlayerDisconnect pd, RomajiConversion rc, MessageEditor discordME
 	)
 	{
 		this.plugin = plugin;
@@ -90,7 +79,6 @@ public class EventListener
 		this.pu = pu;
 		this.pd = pd;
 		this.rc = rc;
-		this.discord = discord;
 		this.discordME = discordME;
 	}
 	
@@ -104,11 +92,13 @@ public class EventListener
 	    String originalMessage = e.getMessage();
 	    
 	    
+	    
 	    // プレイヤーの現在のサーバーを取得
         player.getCurrentServer().ifPresent(serverConnection ->
         {
             RegisteredServer server = serverConnection.getServer();
-            chatserverName = server.getServerInfo().getName();
+            serverInfo = server.getServerInfo();
+            chatserverName = serverInfo.getName();
         });
         
         // マルチバイト文字の長さを取得
@@ -179,11 +169,7 @@ public class EventListener
     		        		String kanaMessage = conv.ConvRomaToKana(originalMessage);
             		        String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
             		        
-            		        builder = new WebhookMessageBuilder();
-        			        builder.setUsername(player.getUsername());
-        			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
-        			        builder.setContent(kanjiMessage);
-        			        discord.sendWebhookMessage(builder);
+            		        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
         			        
             		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
             		        bc.broadcastComponent(component, chatserverName, true);
@@ -194,11 +180,7 @@ public class EventListener
     		        		String kanaMessage = rc.Romaji(originalMessage);
     		        		String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
     		        		
-    		        		builder = new WebhookMessageBuilder();
-        			        builder.setUsername(player.getUsername());
-        			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
-        			        builder.setContent(kanjiMessage);
-        			        discord.sendWebhookMessage(builder);
+    		        		discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
         			        
             		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
             		        bc.broadcastComponent(component, chatserverName, true);
@@ -207,11 +189,7 @@ public class EventListener
     		        }
     		        else
     		        {
-    		        	builder = new WebhookMessageBuilder();
-    			        builder.setUsername(player.getUsername());
-    			        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
-    			        builder.setContent(originalMessage);
-    			        discord.sendWebhookMessage(builder);
+    			        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, originalMessage);
     		        	return;
     		        }
     		    }
@@ -281,11 +259,7 @@ public class EventListener
     		    component = component.append(Component.text(")").color(NamedTextColor.GOLD));
     		    bc.broadcastComponent(component, chatserverName, true);
     		    
-    		    builder = new WebhookMessageBuilder();
-		        builder.setUsername(player.getUsername());
-		        builder.setAvatarUrl("https://minotar.net/avatar/"+player.getUniqueId().toString());
-		        builder.setContent(mixtext);
-		        discord.sendWebhookMessage(builder);
+    		    discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext);
     		    return;
     		}
     		catch (Exception ex) {
@@ -457,7 +431,7 @@ public class EventListener
 	            		{
 	            			// 一番最初に登録した名前と一致しなかったら
 	            			// MOJANG-APIからとってきた名前でレコードを更新させる
-	            			String current_name = getPlayerNameFromUUID(player.getUniqueId());
+	            			String current_name = pu.getPlayerNameFromUUID(player.getUniqueId());
 	            			if(Objects.isNull(current_name) || !(current_name.equals(player.getUsername())))
 	            			{
 	            				pd.playerDisconnect
@@ -518,7 +492,7 @@ public class EventListener
 	            	// DBにデータがなかったら (初参加)
 	            	// MojangAPIによるUUID-MCIDチェックも行う
 	            	// データベースに同一の名前がないか確認
-	            	String current_name = getPlayerNameFromUUID(player.getUniqueId());
+	            	String current_name = pu.getPlayerNameFromUUID(player.getUniqueId());
 	    			if(Objects.isNull(current_name) || !(current_name.equals(player.getUsername())) || yu.next())
 	    			{
 	    				sql="INSERT INTO minecraft (name,uuid,server,ban) VALUES (?,?,?,?);";
@@ -654,42 +628,5 @@ public class EventListener
 	        	}
 	        });
     	}).schedule();
-    }
-    
-	
-	
-    public String getPlayerNameFromUUID(UUID uuid)
-    {
-        String uuidString = uuid.toString().replace("-", "");
-        String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuidString;
-        
-        try
-        {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(urlString))
-                    .header("User-Agent", "Mozilla/5.0")
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200)
-            {
-                // JSONレスポンスを解析
-                Gson gson = new Gson();
-                JsonObject jsonResponse = gson.fromJson(response.body(), JsonObject.class);
-                return jsonResponse.get("name").getAsString();
-            }
-            else
-            {
-            	logger.error("GETリクエストに失敗しました。HTTPエラーコード: " + response.statusCode());
-                return null;
-            }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return null;
-        }
     }
 }

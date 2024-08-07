@@ -104,7 +104,7 @@ public class DiscordListener
         });
     }
     
-    public void editBotEmbed(String messageId, String additionalDescription)
+    public void editBotEmbed(String messageId, String additionalDescription, boolean isChat)
     {
         getBotMessage(messageId, currentEmbed ->
         {
@@ -113,10 +113,19 @@ public class DiscordListener
         		//logger.info("No embed found to edit.");
         		return;
         	}
-            if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
+        	
+        	String channelId = null;
+        	if(isChat)
+        	{
+        		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) return;
+        		channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
+        	}
+        	else
+        	{
+        		if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
+        		channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+        	}
             
-            // チャンネルIDは適切に設定してください
-            String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
             TextChannel channel = jda.getTextChannelById(channelId);
             
             if (Objects.isNull(channel)) {
@@ -136,15 +145,28 @@ public class DiscordListener
                 	logger.info("Failed to edit message with ID: " + messageId);
                 }
             );
-        });
+        }, isChat);
     }
     
-    public void getBotMessage(String messageId, Consumer<MessageEmbed> embedConsumer)
+    public void editBotEmbed(String messageId, String additionalDescription)
     {
-        if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
+    	editBotEmbed(messageId, additionalDescription, false);
+    }
+    
+    public void getBotMessage(String messageId, Consumer<MessageEmbed> embedConsumer, boolean isChat)
+    {
+    	String channelId = null;
+    	if(isChat)
+    	{
+    		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) return;
+    		channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
+    	}
+    	else
+    	{
+    		if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
+    		channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+    	}
         
-        // チャンネルIDは適切に設定してください
-        String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
         TextChannel channel = jda.getTextChannelById(channelId);
         
         if (Objects.isNull(channel))
@@ -211,17 +233,32 @@ public class DiscordListener
         );
     }
     
-    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, MessageEmbed embed)
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, MessageEmbed embed, boolean isChat)
     {
     	CompletableFuture<String> future = new CompletableFuture<>();
     	
-        if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord)
-        {
-        	future.complete(null);
-            return future;
-        }
+    	String channelId = null;
+    	if(isChat)
+    	{
+    		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord)
+    		{
+    			future.complete(null);
+                return future;
+    		}
+    		
+    		channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
+    	}
+    	else
+    	{
+    		if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord)
+            {
+            	future.complete(null);
+                return future;
+            }
+    		
+    		channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+    	}
         
-    	String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
         TextChannel channel = jda.getTextChannelById(channelId);
         
         if (Objects.isNull(channel))
@@ -273,13 +310,23 @@ public class DiscordListener
     
     public CompletableFuture<String> sendBotMessageAndgetMessageId(String content)
     {
-    	return sendBotMessageAndgetMessageId(content,null);
+    	return sendBotMessageAndgetMessageId(content, null, false);
     }
     
     
     public CompletableFuture<String> sendBotMessageAndgetMessageId(MessageEmbed embed)
     {
-    	return sendBotMessageAndgetMessageId(null, embed);
+    	return sendBotMessageAndgetMessageId(null, embed, false);
+    }
+    
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, boolean isChat)
+    {
+    	return sendBotMessageAndgetMessageId(content, null, isChat);
+    }
+    
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(MessageEmbed embed, boolean isChat)
+    {
+    	return sendBotMessageAndgetMessageId(null, embed, isChat);
     }
     
     public MessageEmbed createEmbed(String description, int color)

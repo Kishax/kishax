@@ -15,9 +15,10 @@ Discord:
     Token: ""
     GuildId: 
     ChannelId: 
+    ChatChannelId: 
+    ChatType: false
     Webhook_URL: ""
     InviteUrl: ""
-    InvaderComingImageUrl: ""
     MaintenanceOnImageUrl: ""
     MaintenanceOffImageUrl: ""
     FirstJoinEmojiName: ""
@@ -39,7 +40,8 @@ Interval:
 
 Debug:
     Mode: false
-    ChannelId: ""
+    ChannelId: 
+    ChatChannelId: 
     Webhook_URL: ""
     Test: 
 
