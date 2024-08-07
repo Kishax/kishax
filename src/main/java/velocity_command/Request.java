@@ -30,6 +30,7 @@ public class Request
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final MessageEditor discordME;
+	private String currentServerName = null;
 	
 	public Connection conn = null;
 	public ResultSet minecrafts = null, reqstatus = null;
@@ -62,6 +63,13 @@ public class Request
             	player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
             	return;
             }
+            
+            // プレイヤーの現在のサーバーを取得
+	        player.getCurrentServer().ifPresent(serverConnection ->
+	        {
+	            RegisteredServer server = serverConnection.getServer();
+	            currentServerName = server.getServerInfo().getName();
+	        });
             
             String targetServerName = args[1];
             boolean containsServer = false;
@@ -152,7 +160,7 @@ public class Request
 		        
 		        if (req_type.isEmpty())
 		        {
-		        	player.sendMessage(Component.text("リクエストが集中しています！\\nしばらくしてやり直してください。").color(NamedTextColor.BLUE));
+		        	player.sendMessage(Component.text("リクエストが集中しています！\nしばらくしてやり直してください。").color(NamedTextColor.BLUE));
 		        	return;
 		        }
 		        
@@ -174,7 +182,7 @@ public class Request
 	            					player.getUsername(),
 	            					player.getUniqueId().toString(),
 	            					config.getString("Servers.Hub"),
-	            					args[1].toString(),
+	            					args[1],
 	            					req_type,
 	            					config.getString("Servers."+args[1]+".Bat_Path"),
 	            					"test"
@@ -189,7 +197,7 @@ public class Request
 	            					player.getUsername(),
 	            					player.getUniqueId().toString(),
 	            					config.getString("Servers.Hub"),
-	            					args[1].toString(),
+	            					args[1],
 	            					req_type,
 	            					config.getString("Servers."+args[1]+".Bat_Path")
 	            			);
@@ -205,7 +213,7 @@ public class Request
     			ps = conn.prepareStatement(sql);
     			ps.setString(1, player.getUsername());
     			ps.setString(2, player.getUniqueId().toString());
-    			ps.setString(3, player.getCurrentServer().toString());
+    			ps.setString(3, currentServerName);
     			ps.setBoolean(4, true);
     			ps.setString(5, args[1]);
     			ps.executeUpdate();

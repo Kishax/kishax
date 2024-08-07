@@ -67,7 +67,7 @@ public class EmojiManager
         Guild guild = jda.getGuildById(guildId);
         if (Objects.isNull(guild))
         {
-            logger.info("Guild not found!");
+            //logger.info("Guild not found!");
             future.complete(null);
             return future;
         }
@@ -94,7 +94,7 @@ public class EmojiManager
         		
         	try
             {
-                logger.info("Downloading image from URL: " + imageUrl);
+                //logger.info("Downloading image from URL: " + imageUrl);
                 
                 BufferedImage bufferedImage = ImageIO.read(new URL(imageUrl));
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -139,7 +139,7 @@ public class EmojiManager
     	return "<:" + emojiName + ":" + emojiId + ">";
     }
     
-    public void checkAndAddEmojis()
+    public void updateEmojiIdsToDatabase()
     {
         this.jda = DiscordListener.jda;
         if (Objects.isNull(jda) || config.getLong("Discord.ChannelId", 0) == 0) return;
@@ -147,7 +147,7 @@ public class EmojiManager
         MessageChannel channel = jda.getTextChannelById(config.getLong("Discord.ChannelId"));
         if (Objects.isNull(channel))
         {
-            logger.info("Channel not found!");
+            //logger.info("Channel not found!");
             return;
         }
 
@@ -175,8 +175,8 @@ public class EmojiManager
                 if (existingEmote.isPresent())
                 {
                     emojiId = existingEmote.get().getId();
-                    logger.info(mineName + "の絵文字はすでに追加されています。");
-                    logger.info("Existing Emoji ID: " + emojiId);
+                    //logger.info(mineName + "の絵文字はすでに追加されています。");
+                    //logger.info("Existing Emoji ID: " + emojiId);
                     
                     // もし、emojiIdがminecrafts.getString("emid")と違ったら更新する
                     // データベース保存処理
@@ -192,14 +192,14 @@ public class EmojiManager
                 else
                 {
                     String imageUrl = "https://minotar.net/avatar/" + uuid;
-                    logger.info("Downloading image from URL: " + imageUrl); // 画像URLをログに出力
+                    //logger.info("Downloading image from URL: " + imageUrl); // 画像URLをログに出力
 
                     try
                     {
                         BufferedImage bufferedImage = ImageIO.read(new URL(imageUrl));
                         if (Objects.isNull(bufferedImage))
                         {
-                            logger.info("Failed to read image from URL: " + imageUrl);
+                            logger.error("Failed to read image from URL: " + imageUrl);
                             continue;
                         }
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -214,7 +214,7 @@ public class EmojiManager
                             {
                                 logger.info(mineName + "を絵文字に追加しました。");
                                 emojiId = success.getId(); // 絵文字IDを取得
-                                logger.info("Emoji ID: " + emojiId);
+                                //logger.info("Emoji ID: " + emojiId);
                             },
                             failure -> logger.error("Failed to create emoji: " + failure.getMessage())
                         );
@@ -258,22 +258,5 @@ public class EmojiManager
     public CompletableFuture<String> createOrgetEmojiId(String emojiName)
     {
     	return createOrgetEmojiId(emojiName, null);
-    }
-
-    private byte[] downloadImage(String imageUrl) throws IOException
-    {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url(imageUrl).build();
-        try (Response response = client.newCall(request).execute())
-        {
-            if (response.isSuccessful() && response.body() != null)
-            {
-                try (InputStream inputStream = response.body().byteStream())
-                {
-                    return inputStream.readAllBytes();
-                }
-            }
-        }
-        return null;
     }
 }

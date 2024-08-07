@@ -3,6 +3,9 @@ package velocity;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,6 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.google.inject.Inject;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.ServerInfo;
 
 public class PlayerUtil
 {
@@ -18,8 +22,8 @@ public class PlayerUtil
 	private final DatabaseInterface db;
 	private Connection conn = null;
 	private PreparedStatement ps = null;
-	private ResultSet playerlist = null, dbuuid = null;
-	private ResultSet[] resultsets = {playerlist, dbuuid};
+	private ResultSet playerlist = null, dbuuid = null, bj_logs = null;
+	private ResultSet[] resultsets = {playerlist, dbuuid, bj_logs};
 	private List<String> Players = new CopyOnWriteArrayList<>();
 	private boolean isLoaded = false;
 	
@@ -123,4 +127,55 @@ public class PlayerUtil
 			return null;
 		}
 	}
+	
+	public int getPlayerTime(Player player, ServerInfo serverInfo)
+	{
+		try
+    	{
+        	conn = db.getConnection();
+    		
+    		// calc playtime
+    		String sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
+    		ps = conn.prepareStatement(sql);
+    		ps.setString(1, player.getUniqueId().toString());
+    		ps.setBoolean(2, true);
+    		bj_logs = ps.executeQuery();
+    		
+    		if(bj_logs.next())
+    		{
+    			long now_timestamp = Instant.now().getEpochSecond();
+                Timestamp bj_time = bj_logs.getTimestamp("time");
+                long bj_timestamp = bj_time.getTime() / 1000L;
+    			
+    			long bj_sa = now_timestamp-bj_timestamp;
+        		
+    			return (int) bj_sa;
+    		}
+    	}
+    	catch (SQLException | ClassNotFoundException e1)
+		{
+            e1.printStackTrace();
+            return 0;
+        }
+		return 0;
+	}
+	
+	public String secondsToStr(int seconds) {
+        if (seconds < 60) {
+            if (seconds < 10) {
+                return String.format("00:00:0%d", seconds);
+            }
+            return String.format("00:00:%d", seconds);
+        } else if (seconds < 3600) {
+            int minutes = seconds / 60;
+            seconds = seconds % 60;
+            return String.format("00:%02d:%02d", minutes, seconds);
+        } else {
+            int hours = seconds / 3600;
+            int remainingSeconds = seconds % 3600;
+            int minutes = remainingSeconds / 60;
+            seconds = remainingSeconds % 60;
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        }
+    }
 }

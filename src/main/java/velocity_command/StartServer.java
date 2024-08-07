@@ -23,19 +23,17 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
-import velocity.Database;
 import velocity.DatabaseInterface;
-import velocity.Main;
 
 public class StartServer
 {
-	private final Main plugin;
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
 	private final MessageEditor discordME;
+	private String currentServerName = null;
 	
 	public Connection conn = null;
 	public ResultSet minecrafts = null, mine_status = null;
@@ -45,12 +43,10 @@ public class StartServer
 	@Inject
 	public StartServer
 	(
-		Main plugin, ProxyServer server, Logger logger, 
-		Config config, DatabaseInterface db, ConsoleCommandSource console,
-		MessageEditor discordME
+		ProxyServer server, Logger logger, Config config,
+		DatabaseInterface db, ConsoleCommandSource console, MessageEditor discordME
 	)
 	{
-		this.plugin = plugin;
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
@@ -70,6 +66,13 @@ public class StartServer
 				player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
 				return;
 			}
+			
+			// プレイヤーの現在のサーバーを取得
+	        player.getCurrentServer().ifPresent(serverConnection ->
+	        {
+	            RegisteredServer server = serverConnection.getServer();
+	            currentServerName = server.getServerInfo().getName();
+	        });
 			
 			String targetServerName = args[1];
 			boolean containsServer = false;
@@ -184,7 +187,7 @@ public class StartServer
 		            			ps = conn.prepareStatement(sql);
 		            			ps.setString(1, player.getUsername());
 		            			ps.setString(2, player.getUniqueId().toString());
-		            			ps.setString(3, player.getCurrentServer().toString());
+		            			ps.setString(3, currentServerName);
 		            			ps.setBoolean(4, true);
 		            			ps.setString(5, "start");
 		            			ps.executeUpdate();

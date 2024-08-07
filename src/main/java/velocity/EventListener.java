@@ -568,12 +568,11 @@ public class EventListener
                 		player.sendMessage(component);
                 	}
                 	
-	    			// たぶんfirstjoin
                 	discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
 	            }
 	            
 				// サーバー移動通知
-				logger.info("Player connected to server: " + serverInfo.getName());
+				//logger.info("Player connected to server: " + serverInfo.getName());
 				if(serverInfo.getName().equalsIgnoreCase(config.getString("hub")))
 				{
 					bc.broadcastMessage(player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーに初めてやってきました！", NamedTextColor.AQUA, serverInfo.getName());
@@ -629,40 +628,21 @@ public class EventListener
 	            ServerInfo serverInfo = server.getServerInfo();
 	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
 	            
-	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo);
-	            //discordME.ExitDiscordMessageAsync(player, serverInfo);
+	            int playTime = pu.getPlayerTime(player, serverInfo);
+	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo, playTime);
 	            
 	            try
 	        	{
 	            	conn = db.getConnection();
-	        		
-	        		// calc playtime
-	        		String sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
-	        		ps = conn.prepareStatement(sql);
-	        		ps.setString(1, player.getUniqueId().toString());
-	        		ps.setBoolean(2, true);
-	        		bj_logs = ps.executeQuery();
-	        		
-	        		if(bj_logs.next())
-	        		{
-	        			long now_timestamp = Instant.now().getEpochSecond();
-	                    Timestamp bj_time = bj_logs.getTimestamp("time");
-	                    long bj_timestamp = bj_time.getTime() / 1000L;
-	        			
-	        			long bj_sa = now_timestamp-bj_timestamp;
-	            		
-	        			int int_bj_sa = (int) bj_sa;
-	        					
-	            		// add log
-	            		sql = "INSERT INTO mine_log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
-	            		ps = conn.prepareStatement(sql);
-	            		ps.setString(1, player.getUsername());
-	            		ps.setString(2, player.getUniqueId().toString());
-	            		ps.setString(3, serverInfo.getName());
-	            		ps.setBoolean(4, true);
-	            		ps.setInt(5, int_bj_sa);
-	            		ps.executeUpdate();
-	        		}
+            		// add log
+            		String sql = "INSERT INTO mine_log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
+            		ps = conn.prepareStatement(sql);
+            		ps.setString(1, player.getUsername());
+            		ps.setString(2, player.getUniqueId().toString());
+            		ps.setString(3, serverInfo.getName());
+            		ps.setBoolean(4, true);
+            		ps.setInt(5, playTime);
+            		ps.executeUpdate();
 	        	}
 	        	catch (SQLException | ClassNotFoundException e1)
 	    		{

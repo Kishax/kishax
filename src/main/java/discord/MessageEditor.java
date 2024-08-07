@@ -32,7 +32,7 @@ public class MessageEditor
 	private final DiscordListener discord;
 	private final EmojiManager emoji;
 	private final PlayerUtil pu;
-	private String emojiId = null, avatarUrl = null, addMessage = null, 
+	private String avatarUrl = null, addMessage = null, 
 			Emoji = null, FaceEmoji = null, targetServerName = null,
 			uuid = null, playerName = null;
 	private MessageEmbed sendEmbed = null;
@@ -55,7 +55,11 @@ public class MessageEditor
 		this.pu = pu;
 	}
 	
-	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName) 
+	public void AddEmbedSomeMessage
+	(
+		String type, Player player, ServerInfo serverInfo, 
+		String serverName, String alternativePlayerName, int playTime
+	) 
 	{
 		if(Objects.isNull(player))
 		{
@@ -145,8 +149,9 @@ public class MessageEditor
 	                case "Exit":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
 	                	{
+	                		String convStringTime = pu.secondsToStr(playTime);
 		                    addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
-		                            currentServerName + "サーバーから退出しました。";
+		                            currentServerName + "サーバーから退出しました。\n\n:alarm_clock: プレイ時間: "+convStringTime;
 		                    discord.editBotEmbed(messageId, addMessage);
 		                    EventListener.PlayerMessageIds.remove(uuid);
 	                	}
@@ -175,7 +180,6 @@ public class MessageEditor
 		                	conn = db.getConnection();
 		                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
 		                	{
-	                            logger.info("Emoji ID retrieved: " + emojiId);
 	                            // 絵文字IDをアップデートしておく
 	                            if(Objects.nonNull(conn))
 	                            {
@@ -191,7 +195,7 @@ public class MessageEditor
 	                        } 
 		                	else 
 		                	{
-	                            logger.info("Emoji ID is null");
+	                            //logger.info("Emoji ID is null");
 	                            if(Objects.nonNull(conn))
 	                            {
 	                            	// 絵文字IDをアップデートしておく
@@ -331,26 +335,31 @@ public class MessageEditor
 	
 	public void AddEmbedSomeMessage(String type, Player player, String serverName)
 	{
-		AddEmbedSomeMessage(type, player, null, serverName, null);
+		AddEmbedSomeMessage(type, player, null, serverName, null, 0);
 	}
 	
 	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo)
 	{
-		AddEmbedSomeMessage(type, player, serverInfo, null, null);
+		AddEmbedSomeMessage(type, player, serverInfo, null, null, 0);
 	}
 	
 	public void AddEmbedSomeMessage(String type, Player player)
 	{
-		AddEmbedSomeMessage(type, player, null, null, null);
+		AddEmbedSomeMessage(type, player, null, null, null, 0);
 	}
 	
 	public void AddEmbedSomeMessage(String type, String alternativePlayerName)
 	{
-		AddEmbedSomeMessage(type, null, null, null, alternativePlayerName);
+		AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, 0);
 	}
 	
 	public void AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName)
 	{
-		AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName);
+		AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, 0);
+	}
+	
+	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, int playTime)
+	{
+		AddEmbedSomeMessage(type, player, serverInfo, null, null, playTime);
 	}
 }
