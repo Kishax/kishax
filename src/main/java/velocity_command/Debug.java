@@ -78,31 +78,24 @@ public class Debug
 	    }
 	    
 	    
-		if(config.getBoolean("Debug.Mode"))
+		if(config.getBoolean("Debug.Mode", false))
 		{
 			source.sendMessage(Component.text("デバッグモードがOFFになりました。").color(NamedTextColor.GREEN));
 			DebugConfig.put("Mode", false);
-			try
-			{
-				config.saveConfig();
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
 		}
 		else
 		{
 			source.sendMessage(Component.text("デバッグモードがONになりました。").color(NamedTextColor.GREEN));
 			DebugConfig.put("Mode", true);
-			try
-			{
-				config.saveConfig();
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
+		}
+		
+		try
+		{
+			config.saveConfig();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
 		}
 	}
 }

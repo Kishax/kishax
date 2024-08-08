@@ -1,5 +1,6 @@
 package velocity_command;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,7 +42,6 @@ public class SwitchChatType
     			switch(args[1].toLowerCase())
         		{
         			case "status":
-        				
         				if (config.getBoolean("Discord.ChatType", false))
         	            {
         					component = Component.text("現在のチャットタイプは、編集Embedメッセージタイプです。").color(NamedTextColor.GREEN);
@@ -51,10 +51,6 @@ public class SwitchChatType
         					component = Component.text("現在のチャットタイプは、プレーンテキストメッセージタイプです。").color(NamedTextColor.GREEN);
         				}
         				source.sendMessage(component);
-        				break;
-        				
-        			default:
-        				source.sendMessage(Component.text("usage: /fmcp　chat <switch|status>").color(NamedTextColor.GREEN));
         				break;
         				
         			case "switch":
@@ -69,6 +65,21 @@ public class SwitchChatType
         					DiscordConfig.put("ChatType", true);
         					component = Component.text("チャットタイプを編集Embedメッセージタイプに変更しました。").color(NamedTextColor.GREEN);
         				}
+        				
+        				source.sendMessage(component);
+        				
+        				try
+        				{
+        					config.saveConfig();
+        				}
+        				catch (IOException e)
+        				{
+        					e.printStackTrace();
+        				}
+        				break;
+        				
+        			default:
+        				source.sendMessage(Component.text("usage: /fmcp　chat <switch|status>").color(NamedTextColor.GREEN));
         				break;
         		}
     			break;

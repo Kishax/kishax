@@ -1,4 +1,7 @@
 # FMC Configuration File
+EventMessage:
+    Join: ""
+
 MySQL:
     Host: ""
     Database: ""
@@ -19,8 +22,6 @@ Discord:
     ChatType: false
     Webhook_URL: ""
     InviteUrl: ""
-    MaintenanceOnImageUrl: ""
-    MaintenanceOffImageUrl: ""
     FirstJoinEmojiName: ""
     AddMemberEmojiName: ""
     JoinEmojiName: ""
@@ -31,6 +32,8 @@ Discord:
     RequestOKName: ""
     RequestCancelName: ""
     RequestNoResName: ""
+    MenteOnEmojiName: ""
+    MenteOffEmojiName: ""
 
 Interval:
     Login: 

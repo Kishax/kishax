@@ -28,6 +28,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
+import discord.DiscordEventListener;
 import discord.MessageEditor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -86,7 +87,6 @@ public class EventListener
 	public void onChat(PlayerChatEvent e)
 	{
 		if (e.getMessage().startsWith("/")) return;
-	    if (config.getString("Discord.Webhook_URL", "").isEmpty()) return;
 
 	    Player player = e.getPlayer();
 	    String originalMessage = e.getMessage();
@@ -143,6 +143,40 @@ public class EventListener
     		    }
 
     		    Component component = Component.text(space+"(").color(NamedTextColor.GOLD);
+    		    
+    	        boolean isEnglish = false;
+    	        String originalFirstExcludedMessage = null;
+    	        if (originalMessage.length() >= 1)
+    	        {
+    	        	String firstOneChars = originalMessage.substring(0, 1);
+    	        	if(".".equalsIgnoreCase(firstOneChars))
+        	        {
+        	        	isEnglish = true;
+        	        	originalFirstExcludedMessage = originalMessage.substring(1);
+        	        }
+    	        }
+    	        
+    	        if (originalMessage.length() >= 2)
+    	        {
+    	        	String firstTwoChars = originalMessage.substring(0, 2);
+    	        	if("@n".equalsIgnoreCase(firstTwoChars))
+        	        {
+        	        	// 新しいEmbedをDiscordに送る(通知を鳴らす)
+        	        	DiscordEventListener.PlayerChatMessageId = null;
+        	        	originalFirstExcludedMessage = originalMessage.substring(2);
+        	        }
+    	        }
+    	        
+    	        if (originalMessage.length() >= 3)
+    	        {
+    	        	String firstThreeChars = originalMessage.substring(0, 3);
+    	        	if ("@en".equalsIgnoreCase(firstThreeChars))
+        	        {
+        	        	isEnglish = true;
+        	        	originalFirstExcludedMessage = originalMessage.substring(3);
+        	        }
+    	        }
+    	        
     		    // URLが含まれてなかったら
     		    if (!isUrl)
     		    {
@@ -155,50 +189,68 @@ public class EventListener
     		        // カタカナの検出
     		        String katakanaPattern = "[\\u30A0-\\u30FF]+";
     		        
+    		        if (isEnglish)
+        	        {
+        	        	// 英語なので、翻訳しない
+    		        	// 日本語であったら
+    			        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, originalFirstExcludedMessage);
+    		        	return;
+        	        }
+    		        
     		        if
     		        (
-    		        	!detectMatches(originalMessage, kanjiPattern) &&
-    		        	!detectMatches(originalMessage, hiraganaPattern) &&
-    		        	!detectMatches(originalMessage, katakanaPattern)
+    		        	detectMatches(originalMessage, kanjiPattern) ||
+    		        	detectMatches(originalMessage, hiraganaPattern) ||
+    		        	detectMatches(originalMessage, katakanaPattern)
     		        )
     		        {
-    		        	// 日本語でなかったら
-    		        	if(config.getBoolean("Conv.Mode"))
-    		        	{
-    		        		// Map方式
-    		        		String kanaMessage = conv.ConvRomaToKana(originalMessage);
-            		        String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-            		        
-            		        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
-        			        
-            		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
-            		        bc.broadcastComponent(component, chatserverName, true);
-    		        	}
-    		        	else
-    		        	{
-    		        		// pde方式
-    		        		String kanaMessage = rc.Romaji(originalMessage);
-    		        		String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-    		        		
-    		        		discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
-        			        
-            		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
-            		        bc.broadcastComponent(component, chatserverName, true);
-    		        	}
-        		        return;
-    		        }
-    		        else
-    		        {
+    		        	// 日本語であったら
     			        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, originalMessage);
     		        	return;
     		        }
+    		        
+    		        if(config.getBoolean("Conv.Mode"))
+		        	{
+		        		// Map方式
+		        		String kanaMessage = conv.ConvRomaToKana(originalMessage);
+        		        String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+        		        
+        		        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
+    			        
+        		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
+        		        bc.broadcastComponent(component, chatserverName, true);
+		        	}
+		        	else
+		        	{
+		        		// pde方式
+		        		String kanaMessage = rc.Romaji(originalMessage);
+		        		String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+		        		
+		        		discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
+    			        
+        		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
+        		        bc.broadcastComponent(component, chatserverName, true);
+		        	}
+    		        return;
     		    }
 
-    		    // 最後のURLの後のテキスト部分を追加
-    		    if (lastMatchEnd < originalMessage.length())
+    		    if(isEnglish)
     		    {
-    		        textParts.add(originalMessage.substring(lastMatchEnd));
+    		    	// 最後のURLの後のテキスト部分を追加
+        		    if (lastMatchEnd < originalFirstExcludedMessage.length())
+        		    {
+        		        textParts.add(originalFirstExcludedMessage.substring(lastMatchEnd));
+        		    }
     		    }
+    		    else
+    		    {
+    		    	// 最後のURLの後のテキスト部分を追加
+        		    if (lastMatchEnd < originalMessage.length())
+        		    {
+        		        textParts.add(originalMessage.substring(lastMatchEnd));
+        		    }
+    		    }
+    		    
 
     		    // テキスト部分を結合
     		    int textPartsSize = textParts.size();
@@ -212,20 +264,29 @@ public class EventListener
     		            String text = textParts.get(i);
     		            String kanaMessage = null;
     		            String kanjiMessage = null;
-    		            if(config.getBoolean("Conv.Mode"))
-    		        	{
-    		        		// Map方式
-    		            	kanaMessage = conv.ConvRomaToKana(text);
-        		            kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-    		        	}
+    		            if(isEnglish)
+    		            {
+    		            	// 英語
+    		            	mixtext += text;
+    		            }
     		            else
     		            {
-    		            	// pde方式
-    		            	kanaMessage = rc.Romaji(text);
-        		            kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+    		            	// 日本語
+    		            	if(config.getBoolean("Conv.Mode"))
+        		        	{
+        		        		// Map方式
+        		            	kanaMessage = conv.ConvRomaToKana(text);
+            		            kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+        		        	}
+        		            else
+        		            {
+        		            	// pde方式
+        		            	kanaMessage = rc.Romaji(text);
+            		            kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
+        		            }
+        		            mixtext += kanjiMessage;
+        		            component = component.append(Component.text(kanjiMessage).color(NamedTextColor.GOLD));
     		            }
-    		            mixtext += kanjiMessage;
-    		            component = component.append(Component.text(kanjiMessage).color(NamedTextColor.GOLD));
     		        }
 
     		        if (i < urlsSize)
@@ -256,8 +317,11 @@ public class EventListener
     		        }
     		    }
     		    
-    		    component = component.append(Component.text(")").color(NamedTextColor.GOLD));
-    		    bc.broadcastComponent(component, chatserverName, true);
+    		    if(!isEnglish)
+    		    {
+    		    	component = component.append(Component.text(")").color(NamedTextColor.GOLD));
+        		    bc.broadcastComponent(component, chatserverName, true);
+    		    }
     		    
     		    discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext);
     		    return;
@@ -376,48 +440,41 @@ public class EventListener
 	            	}
 	            	else
 	            	{
+	            		// メッセージ送信
 	            		player.sendMessage(Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに参加しました。").color(NamedTextColor.YELLOW));
-	            		
+	            		String joinMessage = config.getString("EventMessage.Join","");
+						if(!joinMessage.isEmpty())
+						{
+							// \\n を \n に変換
+					        joinMessage = joinMessage.replace("\\n", "\n");
+					        
+							player.sendMessage(Component.text(joinMessage).color(NamedTextColor.AQUA));
+						}
+						
+	            		// 2時間経ってたら
+        				sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
+        				ps = conn.prepareStatement(sql);
+        				ps.setString(1, player.getUniqueId().toString());
+        				ps.setBoolean(2, true);
+        				logs = ps.executeQuery();
+        				
+        				long beforejoin_sa_minute = 0;
+        				if(logs.next())
+        				{
+    	    				long now_timestamp = Instant.now().getEpochSecond();
+    	    				
+        					// TIMESTAMP型のカラムを取得
+        	                Timestamp beforejoin_timeget = logs.getTimestamp("time");
+
+        	                // Unixタイムスタンプに変換
+        	                long beforejoin_timestamp = beforejoin_timeget.getTime() / 1000L;
+        	                
+    	    				long beforejoin_sa = now_timestamp-beforejoin_timestamp;
+    	    				beforejoin_sa_minute = beforejoin_sa/60;
+        				}
+        				
 	            		if(player.getUsername().equals(yuyu.getString("name")))
 	            		{
-	            			if(!config.getString("Discord.Webhook_URL","").isEmpty())
-	            			{
-	            				// 2時間経ってたら
-	            				sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
-	            				ps = conn.prepareStatement(sql);
-	            				ps.setString(1, player.getUniqueId().toString());
-	            				ps.setBoolean(2, true);
-	            				logs = ps.executeQuery();
-	            				
-	            				if(logs.next())
-	            				{
-	        	    				long now_timestamp = Instant.now().getEpochSecond();
-	        	    				
-	            					// TIMESTAMP型のカラムを取得
-	            	                Timestamp beforejoin_timeget = logs.getTimestamp("time");
-
-	            	                // Unixタイムスタンプに変換
-	            	                long beforejoin_timestamp = beforejoin_timeget.getTime() / 1000L;
-	            	                
-	        	    				long beforejoin_sa = now_timestamp-beforejoin_timestamp;
-	        	    				long beforejoin_sa_minute = beforejoin_sa/60;
-	        	    				
-	        	    				if(beforejoin_sa_minute>=config.getInt("Interval.Login",0))
-	        	    				{
-	        	    					if (previousServerInfo.isPresent())
-	        	    			        {
-	        	    						// どこからか移動してきたとき
-	        	    						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
-	        	    			        }
-	        	    					else
-	        	    			        {
-	        	    			        	// 1回目のどこかのサーバーに上陸したとき
-	        	    						discordME.AddEmbedSomeMessage("Join", player, serverInfo);
-	        	    			        }
-	        	    				}
-	            				}
-	            			}
-	            			
 	            			//　add log
 	            			sql = "INSERT INTO mine_log (name,uuid,server,`join`) VALUES (?,?,?,?);";
 	            			ps = conn.prepareStatement(sql);
@@ -473,8 +530,11 @@ public class EventListener
 	            					ps.executeUpdate();
 	            				}
 	            			}
-	            			
-	            			if (previousServerInfo.isPresent())
+	            		}
+	            		
+	            		if(beforejoin_sa_minute>=config.getInt("Interval.Login",0))
+	    				{
+	    					if (previousServerInfo.isPresent())
 	    			        {
 	    						// どこからか移動してきたとき
 	    						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
@@ -484,7 +544,7 @@ public class EventListener
 	    			        	// 1回目のどこかのサーバーに上陸したとき
 	    						discordME.AddEmbedSomeMessage("Join", player, serverInfo);
 	    			        }
-	            		}
+	    				}
 	            	}
 	            }
 	            else

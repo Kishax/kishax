@@ -118,42 +118,45 @@ public class MessageEditor
 	            FaceEmoji = emoji.getEmojiString(playerName, FaceEmojiId);
 	            
 	            String messageId = EventListener.PlayerMessageIds.getOrDefault(uuid, null);
-
+	            String chatMessageId = DiscordEventListener.PlayerChatMessageId;
+	            
 	            addMessage = null;
 	            switch (type) 
 	            {
 	            	case "MenteOn":
-	            		builder = new WebhookMessageBuilder();
-				        builder.setUsername("サーバー");
-				        if(!config.getString("Discord.MaintenanceOnImageUrl","").isEmpty())
-				        {
-				        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOnImageUrl"));
-				        }
-				        
-				        embed = new WebhookEmbedBuilder()
-				            .setColor(ColorUtil.BLUE.getRGB())  // Embedの色
-				            .setDescription("メンテナンスモードが有効になりました。\nいまは遊べないカッ...")
-				            .build();
-				        builder.addEmbeds(embed);
-				        
-				        discord.sendWebhookMessage(builder);
+				        if (Objects.nonNull(Emoji)) 
+	                	{
+                            addMessage = Emoji + "メンテナンスモードが有効になりました。\nいまは遊べないカッ...";
+                        }
+	                	else
+	                	{
+                            addMessage = "メンテナンスモードが有効になりました。";
+                        }
+
+                        createEmbed = discord.createEmbed
+                                (
+                                		addMessage,
+                                        ColorUtil.BLUE.getRGB()
+                                );
+                        discord.sendBotMessage(createEmbed);
 	            		break;
 	            	
 	            	case "MenteOff":
-	            		builder = new WebhookMessageBuilder();
-				        builder.setUsername("サーバー");
-				        if(!config.getString("Discord.MaintenanceOffImageUrl","").isEmpty())
-				        {
-				        	builder.setAvatarUrl(config.getString("Discord.MaintenanceOffImageUrl"));
-				        }
-				        
-				        embed = new WebhookEmbedBuilder()
-				            .setColor(ColorUtil.RED.getRGB())  // Embedの色
-				            .setDescription("メンテナンスモードが無効になりました。\nまだまだ遊べるドン！")
-				            .build();
-				        builder.addEmbeds(embed);
-				        
-				        discord.sendWebhookMessage(builder);
+	            		if (Objects.nonNull(Emoji)) 
+	                	{
+                            addMessage = Emoji + "メンテナンスモードが無効になりました。\nまだまだ遊べるドン！";
+                        }
+	                	else
+	                	{
+                            addMessage = "メンテナンスモードが無効になりました。";
+                        }
+
+                        createEmbed = discord.createEmbed
+                                (
+                                		addMessage,
+                                        ColorUtil.BLUE.getRGB()
+                                );
+                        discord.sendBotMessage(createEmbed);
 	            		break;
 	            		
 	            	case "Invader":
@@ -180,10 +183,13 @@ public class MessageEditor
 	            			if(config.getBoolean("Discord.ChatType", false))
 	            			{
 	            				// 編集embedによるChatメッセージ送信
-	            				if(Objects.isNull(DiscordEventListener.PlayerChatMessageId))
+	            				if(Objects.isNull(chatMessageId))
 	            				{
 	            					// 直前にEmbedによるChatメッセージを送信しなかった場合
 	            					// EmbedChatMessageを送って、MessageIdを
+	            					addMessage = "\n\n" + "<" + FaceEmoji + playerName + "> " + 
+        		                    		chatMessage;
+	            					
 	            					createEmbed = discord.createEmbed
 	    	                                (
 	    	                                		addMessage,
@@ -198,13 +204,10 @@ public class MessageEditor
 	            				}
 	            				else
 	            				{
-	            					if (Objects.nonNull(messageId)) 
-	        	                	{
-	        		                    addMessage = "\n\n" + "<" + FaceEmoji + playerName + ">" + 
-	        		                    		"\n" + chatMessage;
-	        		                    discord.editBotEmbed(messageId, addMessage);
-	        		                    EventListener.PlayerMessageIds.remove(uuid);
-	        	                	}
+	            					//logger.info("chatMessageId: "+ chatMessageId);
+        		                    addMessage = "\n\n" + "<" + FaceEmoji + playerName + "> " + 
+        		                    		 chatMessage;
+        		                    discord.editBotEmbed(chatMessageId, addMessage, true);
 	            				}
 	            			}
 	            			else

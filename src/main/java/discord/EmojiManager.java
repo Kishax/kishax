@@ -60,7 +60,7 @@ public class EmojiManager
         }
         
         // emojiNameが空白かnullだった場合
-        if(emojiName.isEmpty() || Objects.isNull(emojiName))
+        if (Objects.isNull(emojiName) || emojiName.isEmpty())
         {
         	future.complete(null);
             return future;
@@ -138,6 +138,7 @@ public class EmojiManager
     public String getEmojiString(String emojiName, String emojiId)
     {
     	if(Objects.isNull(emojiId)) return null;
+    	if(Objects.isNull(emojiName) || emojiName.isEmpty()) return null;
     	
     	return "<:" + emojiName + ":" + emojiId + ">";
     }
