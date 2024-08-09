@@ -107,24 +107,32 @@ public class DiscordListener
         });
     }
     
-    public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat) {
+    public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat) 
+    {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
-        getBotMessage(messageId, currentEmbed -> {
-            if (Objects.isNull(currentEmbed)) {
+        getBotMessage(messageId, currentEmbed -> 
+        {
+            if (Objects.isNull(currentEmbed))
+            {
                 future.completeExceptionally(new RuntimeException("No embed found to edit."));
                 return;
             }
 
             String channelId = null;
-            if (isChat) {
-                if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) {
+            if (isChat) 
+            {
+                if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord)
+                {
                     future.completeExceptionally(new RuntimeException("Chat channel ID is invalid or Discord is not enabled."));
                     return;
                 }
                 channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
-            } else {
-                if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) {
+            } 
+            else 
+            {
+                if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) 
+                {
                     future.completeExceptionally(new RuntimeException("Channel ID is invalid or Discord is not enabled."));
                     return;
                 }
@@ -132,7 +140,8 @@ public class DiscordListener
             }
 
             TextChannel channel = jda.getTextChannelById(channelId);
-            if (Objects.isNull(channel)) {
+            if (Objects.isNull(channel)) 
+            {
                 future.completeExceptionally(new RuntimeException("Channel not found!"));
                 return;
             }
@@ -143,7 +152,8 @@ public class DiscordListener
 
             messageAction.queue(
                 success -> future.complete(null),
-                error -> {
+                error -> 
+                {
                     future.completeExceptionally(error);
                     logger.info("Failed to edit message with ID: " + messageId);
                 }
