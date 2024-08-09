@@ -29,24 +29,18 @@ public class Test
 		switch(args.length)
 		{
 			case 1:
-				//logger.info(args[0]);
-				for(Map.Entry<String, String> entry : EventListener.PlayerMessageIds.entrySet())
+				/*for(Map.Entry<String, String> entry : EventListener.PlayerMessageIds.entrySet())
 				{
 					logger.info("PlayerMessageIdkey: " + entry.getKey());
 					logger.info("PlayerMessageIdvalue: " + entry.getValue());
 				}
 				
-				logger.info("PlayerChatMessageId: "+DiscordEventListener.PlayerChatMessageId);
+				logger.info("PlayerChatMessageId: "+DiscordEventListener.PlayerChatMessageId);*/
+				discord.sendButtonMessage();
 				break;
 				
 			case 2:
-				logger.info(args[1]);
-				/*MessageEmbed joinEmbed = discord.createEmbed
-				(
-					"編集に成功しました。",
-					ColorUtil.GREEN.getRGB()
-				);*/
-				discord.editBotEmbed(args[1], "\n追加メッセージです。");
+				//discord.editBotEmbed(args[1], "\n追加メッセージです。");
 				break;
 				
 			default:

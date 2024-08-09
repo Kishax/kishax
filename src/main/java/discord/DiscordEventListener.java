@@ -13,8 +13,13 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import net.dv8tion.jda.api.entities.Message.Attachment;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -29,16 +34,42 @@ public class DiscordEventListener extends ListenerAdapter
 	private final Logger logger;
 	private final Config config;
 	private final BroadCast bc;
+	private final DiscordListener discord;
+	
 	public static String PlayerChatMessageId = null;
 	
 	@Inject
-	public DiscordEventListener(Logger logger, Config config, BroadCast bc)
+	public DiscordEventListener
+	(
+		Logger logger, Config config, BroadCast bc,
+		DiscordListener discord
+	)
 	{
 		this.logger = logger;
 		this.config = config;
 		this.bc = bc;
+		this.discord = discord;
 	}
 	
+	public void onButtonInteraction(ButtonInteractionEvent event) {
+        // ボタンIDを取得
+        String buttonId = event.getComponentId();
+
+        if (buttonId.equals("start_process")) {
+            // ボタンを押したユーザーを取得
+            User user = event.getUser();
+            
+            // 処理Aを開始
+            discord.startProcessA(user);
+
+            // ボタンを削除
+            event.getMessage().editMessageComponents().queue();
+
+            // ユーザーをメンションしてメッセージを送信
+            event.reply(user.getAsMention() + " 処理Aが開始されました。").queue();
+        }
+    }
+
 	@Override
     public void onMessageReceived(MessageReceivedEvent e) 
     {
@@ -56,11 +87,6 @@ public class DiscordEventListener extends ListenerAdapter
         // メッセージ内容を取得
         String message = e.getMessage().getContentRaw();
         String userName = e.getAuthor().getName();
-        
-        
-        //メッセージつき、添付ありだったときに、マイクラに送れてない↓
-        //添付あり、メッセージなしは送れてると思う
-        //添付なし、メッセージなしは送らない。
         
         // メッセージが空でないことを確認
         if (!message.isEmpty())

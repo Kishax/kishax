@@ -19,6 +19,7 @@ Discord:
     GuildId: 
     ChannelId: 
     ChatChannelId: 
+    AdminChannelId: 
     ChatType: false
     Webhook_URL: ""
     InviteUrl: ""
@@ -46,6 +47,7 @@ Debug:
     Mode: false
     ChannelId: 
     ChatChannelId: 
+    AdminChannelId: 
     Webhook_URL: ""
     Test: 
 

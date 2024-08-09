@@ -18,8 +18,11 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import velocity.Config;
 import velocity.Main;
@@ -34,6 +37,8 @@ public class DiscordListener
     private final Logger logger;
     private final Config config;
     public static boolean isDiscord = false;
+    private String channelId = null;
+    private MessageChannel channel= null;
     
     @Inject
     public DiscordListener(Main plugin, ProxyServer server, Logger logger, Config config)
@@ -44,7 +49,6 @@ public class DiscordListener
     	this.config = config;
     }
     
-    //sendWebhookMessage("メンテナンスモードが無効になりました。\\nまだまだ遊べるドン！", "サーバー", "https://keypforev.ddns.net/assets/img/icon/donchan.png");
     public void loginDiscordBotAsync()
     {
     	if(config.getString("Discord.Token","").isEmpty()) return;
@@ -88,11 +92,33 @@ public class DiscordListener
     	});
     }
     
+    // ボタンを含むメッセージを送信するメソッド
+    public void sendButtonMessage()
+    {
+    	if (config.getLong("Discord.AdminChannelId", 0) == 0 || !isDiscord) return;
+		channelId = Long.valueOf(config.getLong("Discord.AdminChannelId")).toString();
+		
+    	channel = jda.getTextChannelById(channelId);
+        if (Objects.isNull(channel)) return;
+        
+        Button button = Button.primary("start_process", "処理Aを開始");
+
+        channel.sendMessage("このボタンを押して処理Aを開始してください。")
+                .setActionRow(button)
+                .queue();
+    }
+
+    // 処理Aの実装
+    public void startProcessA(User user) {
+        // 処理Aのロジックをここに書く
+    }
+    
     public void sendWebhookMessage(WebhookMessageBuilder builder)
     {
-    	if(config.getString("Discord.Webhook_URL","").isEmpty()) return;
+    	String webhookUrl = config.getString("Discord.Webhook_URL","");
+    	if(webhookUrl.isEmpty()) return;
     		
-        WebhookClient client = WebhookClient.withUrl(config.getString("Discord.Webhook_URL"));
+        WebhookClient client = WebhookClient.withUrl(webhookUrl);
         
         //.addField(new EmbedField(true, "フィールド1", "値1"))
         WebhookMessage message = builder.build();
@@ -172,7 +198,6 @@ public class DiscordListener
     
     public void getBotMessage(String messageId, Consumer<MessageEmbed> embedConsumer, boolean isChat)
     {
-    	String channelId = null;
     	if(isChat)
     	{
     		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) return;
@@ -234,14 +259,10 @@ public class DiscordListener
     	 if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
     	 
         // チャンネルIDは適切に設定してください
-        String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
-        TextChannel channel = jda.getTextChannelById(channelId);
+        channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+        channel = jda.getTextChannelById(channelId);
         
-        if(Objects.isNull(channel))
-        {
-        	//logger.info("Channel not found!");
-        	return;
-        }
+        if(Objects.isNull(channel)) return;
         
         MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
         messageAction.queue(

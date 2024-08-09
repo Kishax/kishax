@@ -15,7 +15,7 @@ public class Debug
 	private final Config config;
 	
 	private String value1 = null, value2 = null;
-	private long value3 = 0, value4 = 0, value5 = 0, value6 = 0;
+	private long value3 = 0, value4 = 0, value5 = 0, value6 = 0, value7 = 0, value8 = 0;
 	
 	@Inject
 	public Debug(Config config)
@@ -57,16 +57,11 @@ public class Debug
 	    }
 	    else
 	    {
-	        source.sendMessage(Component.text("コンフィグの設定が不十分です。").color(NamedTextColor.RED));
+	        source.sendMessage(Component.text("コンフィグの設定が不十分です。(ChannelId)").color(NamedTextColor.RED));
 	    }
 		
 	    if (config.getLong("Debug.ChatChannelId", 0) != 0 && config.getLong("Discord.ChatChannelId", 0) != 0)
 	    {
-	    	// Long.valueOf(value3).toString()
-	    	// 置換する前にDiscord-Botをログアウトさせておく
-	    	// 現在、Discord-Tokenは一つしか扱っていないため、コメントアウトにしておく
-	    	// discord.logoutDiscordBot();
-	    	
 	        value5 = config.getLong("Debug.ChatChannelId");
 	        value6 = config.getLong("Discord.ChatChannelId");
 	        DiscordConfig.put("ChatChannelId", value5);
@@ -74,9 +69,20 @@ public class Debug
 	    }
 	    else
 	    {
-	        source.sendMessage(Component.text("コンフィグの設定が不十分です。").color(NamedTextColor.RED));
+	        source.sendMessage(Component.text("コンフィグの設定が不十分です。(ChatChannelId)").color(NamedTextColor.RED));
 	    }
 	    
+	    if (config.getLong("Debug.AdminChannelId", 0) != 0 && config.getLong("Discord.AdminChannelId", 0) != 0)
+	    {
+	        value7 = config.getLong("Debug.AdminChannelId");
+	        value8 = config.getLong("Discord.AdminChannelId");
+	        DiscordConfig.put("AdminChannelId", value7);
+	        DebugConfig.put("AdminChannelId", value8);
+	    }
+	    else
+	    {
+	        source.sendMessage(Component.text("コンフィグの設定が不十分です。(AdminChannelId)").color(NamedTextColor.RED));
+	    }
 	    
 		if(config.getBoolean("Debug.Mode", false))
 		{
