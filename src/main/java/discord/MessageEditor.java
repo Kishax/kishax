@@ -365,6 +365,9 @@ public class MessageEditor
 	    	            return CompletableFuture.completedFuture(null);
 	
 	                case "Move":
+	                	//int playTime3 = pu.getPlayerTime(player, serverInfo);
+	                	//String convStringTime = pu.secondsToStr(playTime3);
+	                	
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
 	                	{
 		                    addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +

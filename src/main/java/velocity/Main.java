@@ -87,13 +87,6 @@ public class Main
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent e)
     {
-    	/*Main.isVelocity = false; //フラグをfalseに
-    	server.getScheduler().buildTask(this, () ->
-    	{
-    		getInjector().getInstance(MessageEditor.class).AddEmbedSomeMessage("End");
-        	getInjector().getInstance(DiscordListener.class).logoutDiscordBot(); // Discordボットのログアウトを非同期で実行
-    	});*/
-    	
     	ssw.stopSocketClient();
 		logger.info( "Client Socket Stopping..." );
 		ssw.stopSocketServer();
