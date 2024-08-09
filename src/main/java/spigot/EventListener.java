@@ -37,6 +37,9 @@ public final class EventListener implements Listener
 	            World world = e.getPlayer().getWorld();
 	            // 時間を朝に設定 (1000 ticks = 朝6時)
 	            world.setTime(1000);
+	            // 天気を晴れに設定
+	            world.setStorm(false);
+	            world.setThundering(false);
 	            // メッセージをプレイヤーに送信
 	            e.getPlayer().sendMessage("おはようございます！時間を朝にしました。");
 	        }
