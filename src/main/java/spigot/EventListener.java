@@ -1,5 +1,6 @@
 package spigot;
 
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -28,6 +29,17 @@ public final class EventListener implements Listener
 	@EventHandler
     public void onPlayerBedEnter(PlayerBedEnterEvent e)
 	{
-		e.getPlayer().sendMessage("あんま寝てると寝ぼけてまうぞ！！");
+		if(Rcon.isMCVC)
+		{
+			// プレイヤーがベッドに入ったかどうかを確認
+	        if (e.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK)
+	        {
+	            World world = e.getPlayer().getWorld();
+	            // 時間を朝に設定 (1000 ticks = 朝6時)
+	            world.setTime(1000);
+	            // メッセージをプレイヤーに送信
+	            e.getPlayer().sendMessage("おはようございます！時間を朝にしました。");
+	        }
+		}
     }
 }

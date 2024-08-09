@@ -75,14 +75,17 @@ public class DiscordListener
     	}).schedule();
     }
     
-    public void logoutDiscordBot()
+    public CompletableFuture<Void> logoutDiscordBot()
     {
-    	if (Objects.nonNull(jda))
+    	return CompletableFuture.runAsync(() ->
     	{
-            jda.shutdown();
-            isDiscord = false;
-            logger.info("Discord-Botがログアウトしました。");
-        }
+	    	if (Objects.nonNull(jda))
+	    	{
+	            jda.shutdown();
+	            isDiscord = false;
+	            logger.info("Discord-Botがログアウトしました。");
+	        }
+    	});
     }
     
     public void sendWebhookMessage(WebhookMessageBuilder builder)
@@ -104,53 +107,57 @@ public class DiscordListener
         });
     }
     
-    public void editBotEmbed(String messageId, String additionalDescription, boolean isChat)
-    {
-        getBotMessage(messageId, currentEmbed ->
-        {
-        	if(Objects.isNull(currentEmbed))
-        	{
-        		//logger.info("No embed found to edit.");
-        		return;
-        	}
-        	
-        	String channelId = null;
-        	if(isChat)
-        	{
-        		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) return;
-        		channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
-        	}
-        	else
-        	{
-        		if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
-        		channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
-        	}
-            
-            TextChannel channel = jda.getTextChannelById(channelId);
-            
-            if (Objects.isNull(channel)) {
-                //logger.info("Channel not found!");
+    public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
+        getBotMessage(messageId, currentEmbed -> {
+            if (Objects.isNull(currentEmbed)) {
+                future.completeExceptionally(new RuntimeException("No embed found to edit."));
                 return;
             }
-            
+
+            String channelId = null;
+            if (isChat) {
+                if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) {
+                    future.completeExceptionally(new RuntimeException("Chat channel ID is invalid or Discord is not enabled."));
+                    return;
+                }
+                channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
+            } else {
+                if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) {
+                    future.completeExceptionally(new RuntimeException("Channel ID is invalid or Discord is not enabled."));
+                    return;
+                }
+                channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+            }
+
+            TextChannel channel = jda.getTextChannelById(channelId);
+            if (Objects.isNull(channel)) {
+                future.completeExceptionally(new RuntimeException("Channel not found!"));
+                return;
+            }
+
             // 現在のEmbedに新しい説明を追加
             MessageEmbed newEmbed = addDescriptionToEmbed(currentEmbed, additionalDescription);
-            
             MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
+
             messageAction.queue(
-                success -> {	},
-                error ->
-                {
-                	error.printStackTrace();
-                	logger.info("Failed to edit message with ID: " + messageId);
+                success -> future.complete(null),
+                error -> {
+                    future.completeExceptionally(error);
+                    logger.info("Failed to edit message with ID: " + messageId);
                 }
             );
         }, isChat);
+
+        return future;
     }
+
+
     
-    public void editBotEmbed(String messageId, String additionalDescription)
+    public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription)
     {
-    	editBotEmbed(messageId, additionalDescription, false);
+    	return editBotEmbed(messageId, additionalDescription, false);
     }
     
     public void getBotMessage(String messageId, Consumer<MessageEmbed> embedConsumer, boolean isChat)

@@ -28,7 +28,7 @@ public class FMCCommand implements SimpleCommand
     private final Config config;
     private final PlayerUtil pu;
     
-    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","configtest","maintenance","conv","test","chat"));
+    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","configtest","maintenance","conv","test","chat","cend"));
     public List<String> anylists = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
@@ -91,6 +91,9 @@ public class FMCCommand implements SimpleCommand
                         .append(Component.text("\n\n/fmcb　test").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp test"))
                                 .hoverEvent(HoverEvent.showText(Component.text("デバッグで色々テストするだけ"))))
+                        .append(Component.text("\n\n/fmcb　cend").color(NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.suggestCommand("/fmcp cend"))
+                                .hoverEvent(HoverEvent.showText(Component.text("DiscordのプレイヤーごとのEmbedを編集して、プロキシサーバーをシャットダウン"))))
                         .build();
                 source.sendMessage(component);
             }
@@ -163,6 +166,10 @@ public class FMCCommand implements SimpleCommand
             	
             case "chat":
             	Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
+            	break;
+            	
+            case "cend":
+            	Main.getInjector().getInstance(CEnd.class).execute(invocation);
             	break;
             	
             default:

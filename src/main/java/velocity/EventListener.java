@@ -53,7 +53,7 @@ public class EventListener
 	private final BroadCast bc;
 	private final ConsoleCommandSource console;
 	private final RomaToKanji conv;
-	private String chatserverName = "";
+	private String chatserverName = "", originalMessage = null, joinMessage = null;
 	private final PlayerUtil pu;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
@@ -89,7 +89,7 @@ public class EventListener
 		if (e.getMessage().startsWith("/")) return;
 
 	    Player player = e.getPlayer();
-	    String originalMessage = e.getMessage();
+	    originalMessage = e.getMessage();
 	    
 	    
 	    
@@ -145,14 +145,13 @@ public class EventListener
     		    Component component = Component.text(space+"(").color(NamedTextColor.GOLD);
     		    
     	        boolean isEnglish = false;
-    	        String originalFirstExcludedMessage = null;
     	        if (originalMessage.length() >= 1)
     	        {
     	        	String firstOneChars = originalMessage.substring(0, 1);
     	        	if(".".equalsIgnoreCase(firstOneChars))
         	        {
         	        	isEnglish = true;
-        	        	originalFirstExcludedMessage = originalMessage.substring(1);
+        	        	originalMessage = originalMessage.substring(1);
         	        }
     	        }
     	        
@@ -163,7 +162,7 @@ public class EventListener
         	        {
         	        	// 新しいEmbedをDiscordに送る(通知を鳴らす)
         	        	DiscordEventListener.PlayerChatMessageId = null;
-        	        	originalFirstExcludedMessage = originalMessage.substring(2);
+        	        	originalMessage = originalMessage.substring(2);
         	        }
     	        }
     	        
@@ -173,7 +172,7 @@ public class EventListener
     	        	if ("@en".equalsIgnoreCase(firstThreeChars))
         	        {
         	        	isEnglish = true;
-        	        	originalFirstExcludedMessage = originalMessage.substring(3);
+        	        	originalMessage = originalMessage.substring(3);
         	        }
     	        }
     	        
@@ -189,19 +188,12 @@ public class EventListener
     		        // カタカナの検出
     		        String katakanaPattern = "[\\u30A0-\\u30FF]+";
     		        
-    		        if (isEnglish)
-        	        {
-        	        	// 英語なので、翻訳しない
-    		        	// 日本語であったら
-    			        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, originalFirstExcludedMessage);
-    		        	return;
-        	        }
-    		        
     		        if
     		        (
     		        	detectMatches(originalMessage, kanjiPattern) ||
     		        	detectMatches(originalMessage, hiraganaPattern) ||
-    		        	detectMatches(originalMessage, katakanaPattern)
+    		        	detectMatches(originalMessage, katakanaPattern) ||
+    		        	isEnglish
     		        )
     		        {
     		        	// 日本語であったら
@@ -234,23 +226,11 @@ public class EventListener
     		        return;
     		    }
 
-    		    if(isEnglish)
+		    	// 最後のURLの後のテキスト部分を追加
+    		    if (lastMatchEnd < originalMessage.length())
     		    {
-    		    	// 最後のURLの後のテキスト部分を追加
-        		    if (lastMatchEnd < originalFirstExcludedMessage.length())
-        		    {
-        		        textParts.add(originalFirstExcludedMessage.substring(lastMatchEnd));
-        		    }
+    		        textParts.add(originalMessage.substring(lastMatchEnd));
     		    }
-    		    else
-    		    {
-    		    	// 最後のURLの後のテキスト部分を追加
-        		    if (lastMatchEnd < originalMessage.length())
-        		    {
-        		        textParts.add(originalMessage.substring(lastMatchEnd));
-        		    }
-    		    }
-    		    
 
     		    // テキスト部分を結合
     		    int textPartsSize = textParts.size();
@@ -441,8 +421,8 @@ public class EventListener
 	            	else
 	            	{
 	            		// メッセージ送信
-	            		player.sendMessage(Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに参加しました。").color(NamedTextColor.YELLOW));
-	            		String joinMessage = config.getString("EventMessage.Join","");
+	            		bc.broadcastComponent(Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに参加しました。").color(NamedTextColor.YELLOW), serverInfo.getName(), true);
+	            		joinMessage = config.getString("EventMessage.Join","");
 						if(!joinMessage.isEmpty())
 						{
 							// \\n を \n に変換

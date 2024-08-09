@@ -3,7 +3,11 @@ package discord;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -11,10 +15,11 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import club.minnced.discord.webhook.send.WebhookEmbed;
-import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import common.ColorUtil;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -23,12 +28,14 @@ import velocity.Database;
 import velocity.EventListener;
 import velocity.Main;
 import velocity.PlayerUtil;
+import velocity_command.Maintenance;
 
 public class MessageEditor
 {
 	private PreparedStatement ps = null;
 	public Connection conn = null;
 	public final Main plugin;
+	private final ProxyServer server;
 	private final Logger logger;
 	private final Config config;
 	private final Database db;
@@ -37,7 +44,7 @@ public class MessageEditor
 	private final PlayerUtil pu;
 	private String avatarUrl = null, addMessage = null, 
 			Emoji = null, FaceEmoji = null, targetServerName = null,
-			uuid = null, playerName = null;
+			uuid = null, playerName = null, currentServerName = null;
 	private MessageEmbed sendEmbed = null, createEmbed = null;
 	private WebhookMessageBuilder builder = null;
 	private WebhookEmbed embed = null;
@@ -52,6 +59,7 @@ public class MessageEditor
 	{
 		this.plugin = plugin;
 		this.logger = logger;
+		this.server = server;
 		this.config = config;
 		this.db = db;
 		this.discord = discord;
@@ -59,11 +67,11 @@ public class MessageEditor
 		this.pu = pu;
 	}
 	
-	public void AddEmbedSomeMessage
+	public CompletableFuture<Void> AddEmbedSomeMessage
 	(
 		String type, Player player, ServerInfo serverInfo, 
 		String serverName, String alternativePlayerName, int playTime,
-		String chatMessage
+		String chatMessage, UUID playerUUID
 	) 
 	{
 		if(Objects.isNull(player))
@@ -72,8 +80,15 @@ public class MessageEditor
 			if(Objects.nonNull(alternativePlayerName))
 			{
 				// データベースからuuidを取ってくる
-				uuid = pu.getPlayerUUIDByName(alternativePlayerName);
+				uuid = pu.getPlayerUUIDByNameFromDB(alternativePlayerName);
 				playerName = alternativePlayerName;
+			}
+			// プレイヤー変数がnullかつalternativePlayerNameがnullかつplayerUUIDが与えられていた時
+			else if(Objects.nonNull(playerUUID))
+			{
+				// データベースからnameを取ってくる
+				uuid = playerUUID.toString();
+				playerName = pu.getPlayerNameByUUIDFromDB(playerUUID);
 			}
 		}
 		else
@@ -90,13 +105,12 @@ public class MessageEditor
 	    // createOrgetEmojiIdの第一引数がnull Or Emptyであった場合、nullで返るので、DiscordBotへのリクエスト回数を減らせる
 	    CompletableFuture<String> EmojiFutureId = emoji.createOrgetEmojiId(EmojiName);
 	    CompletableFuture<String> FaceEmojiFutureId = emoji.createOrgetEmojiId(playerName, avatarUrl);
-	    CompletableFuture<Void> allOf = CompletableFuture.allOf(EmojiFutureId, FaceEmojiFutureId);
 
-	    allOf.thenRun(() -> 
+	    return CompletableFuture.allOf(EmojiFutureId, FaceEmojiFutureId)
+	            .thenCompose(v ->
 	    {
 	        try 
 	        {
-	            String currentServerName = null;
 	            if (Objects.nonNull(serverInfo)) 
 	            {
 	                currentServerName = serverInfo.getName();
@@ -106,10 +120,13 @@ public class MessageEditor
 	                currentServerName = "";
 	            }
 
-	            targetServerName = serverName;
 	            if (Objects.isNull(serverName)) 
 	            {
 	                targetServerName = "";
+	            }
+	            else
+	            {
+	            	targetServerName = serverName;
 	            }
 
 	            String EmojiId = EmojiFutureId.get(); // プラスとかマイナスとかの絵文字ID取得
@@ -123,6 +140,86 @@ public class MessageEditor
 	            addMessage = null;
 	            switch (type) 
 	            {
+	            	case "End":
+	            		List<CompletableFuture<Void>> futures = new ArrayList<>();
+	            		for (Player eachPlayer : server.getAllPlayers())
+	            		{
+	            		    // プレイヤーの現在のサーバーを取得
+	            		    CompletableFuture<Void> future = eachPlayer.getCurrentServer()
+	            		        .map(serverConnection ->
+	            		        {
+	            		            RegisteredServer registerServer = serverConnection.getServer();
+	            		            ServerInfo playerServerInfo = registerServer.getServerInfo();
+	            		            int playTime2 = pu.getPlayerTime(eachPlayer, playerServerInfo);
+	            		            // AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
+	            		            return AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo, playTime2);
+	            		        })
+	            		        .orElse(CompletableFuture.completedFuture(null)); // サーバーが取得できない場合は即完了するFuture
+
+	            		    futures.add(future);
+	            		}
+	            		
+	            		// 全ての非同期処理が完了するのを待つ
+	            		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+	            		    .thenRun(() -> 
+	            		    {
+	            		        // 全てのAddEmbedSomeMessageの処理が完了した後に実行される
+	            		        discord.logoutDiscordBot().thenRun(() -> server.shutdown());
+	            		    });
+	            		
+	            		return CompletableFuture.completedFuture(null);
+	            		
+	            	case "Exit":
+	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
+	                	{
+	                		String convStringTime = pu.secondsToStr(playTime);
+	                		// すべての処理が完了するまで待つ
+	                        CompletableFuture<Void> editFuture = CompletableFuture.completedFuture(null);
+	                        
+	                		// Velocityサーバー停止のフラグが立っていたら
+	                		if(!Main.isVelocity)
+	                		{
+	                			// poweroffの絵文字を取りに行く
+	                			String EndEmojiName = config.getString("Discord.EndEmojiName","");
+	                			editFuture = emoji.createOrgetEmojiId(EndEmojiName).thenAccept(EndEmojiId ->
+	                			{
+	                                if (Objects.nonNull(EndEmojiId)) 
+	                                {
+	                                    String EndEmoji = emoji.getEmojiString(EndEmojiName, EndEmojiId);
+	                                    addMessage = "\n\n" + EndEmoji + "プロキシサーバーが停止しました。" + "\n\n" + Emoji + FaceEmoji + playerName + "が" +
+	                                        currentServerName + "サーバーから退出しました。\n\n:alarm_clock: プレイ時間: " + convStringTime;
+	                                }
+	                            });
+	                			
+	                			// 編集を行う
+		                        return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
+	                		}
+	                		// メンテのフラグが立っていたら
+	                		else if (Maintenance.isMente)
+	                		{
+	                			Maintenance.isMente = false;
+	                			addMessage = "\n\n" + ":red_circle: メンテナンスモードになりました。" + "\n\n" + Emoji + FaceEmoji + playerName + "が" +
+                                        currentServerName + "サーバーから退出しました。\n\n:alarm_clock: プレイ時間: " + convStringTime;
+	                			if(!player.hasPermission("group.super-admin"))
+	                			{
+	                				EventListener.PlayerMessageIds.remove(uuid);
+	                				// 編集を行う
+	    	                        return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
+	                			}
+	                		}
+	                		else
+	                		{
+	                			addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
+			                            currentServerName + "サーバーから退出しました。\n\n:alarm_clock: プレイ時間: "+convStringTime;
+	                			EventListener.PlayerMessageIds.remove(uuid);
+	                			// 編集を行う
+		                        return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
+	                		}
+	                		
+	                		// 編集を行う
+	                        return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
+	                	}
+	                	
 	            	case "MenteOn":
 				        if (Objects.nonNull(Emoji)) 
 	                	{
@@ -132,14 +229,30 @@ public class MessageEditor
 	                	{
                             addMessage = "メンテナンスモードが有効になりました。";
                         }
-
+				        
                         createEmbed = discord.createEmbed
                                 (
                                 		addMessage,
-                                        ColorUtil.BLUE.getRGB()
+                                        ColorUtil.AQUA.getRGB()
                                 );
                         discord.sendBotMessage(createEmbed);
-	            		break;
+                        
+                        for (Player eachPlayer : server.getAllPlayers())
+	            		{
+	            		    // プレイヤーの現在のサーバーを取得
+	            			Optional<ServerConnection> optionalServerConnection = eachPlayer.getCurrentServer();
+	            			if (optionalServerConnection.isPresent())
+	            			{
+	            				ServerConnection serverConnection = optionalServerConnection.get();
+	            				RegisteredServer registerServer = serverConnection.getServer();
+            		            ServerInfo playerServerInfo = registerServer.getServerInfo();
+            		            int playTime2 = pu.getPlayerTime(eachPlayer, playerServerInfo);
+            		            // AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
+            		            AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo, playTime2);
+	            			}
+	            		}
+                        
+                        return CompletableFuture.completedFuture(null);
 	            	
 	            	case "MenteOff":
 	            		if (Objects.nonNull(Emoji)) 
@@ -154,10 +267,10 @@ public class MessageEditor
                         createEmbed = discord.createEmbed
                                 (
                                 		addMessage,
-                                        ColorUtil.BLUE.getRGB()
+                                        ColorUtil.RED.getRGB()
                                 );
                         discord.sendBotMessage(createEmbed);
-	            		break;
+                        return CompletableFuture.completedFuture(null);
 	            		
 	            	case "Invader":
 	            		// Invader専用の絵文字は追加する予定はないので、Emojiのnullチェックは不要
@@ -174,7 +287,7 @@ public class MessageEditor
 	            			
 	            			discord.sendBotMessage(createEmbed);
 	            		}
-	            		break;
+	            		return CompletableFuture.completedFuture(null);
 	            		
 	            	case "Chat":
 	            		// Chat専用の絵文字は追加する予定はないので、Emojiのnullチェックは不要
@@ -221,7 +334,7 @@ public class MessageEditor
 	            		        discord.sendWebhookMessage(builder);
 	            			}
 	            		}
-	            		break;
+	            		return CompletableFuture.completedFuture(null);
 	            		
 	            	case "AddMember":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
@@ -240,7 +353,7 @@ public class MessageEditor
                                         ColorUtil.PINK.getRGB()
                                 );
                         discord.sendBotMessage(createEmbed);
-	            		break;
+                        return CompletableFuture.completedFuture(null);
 	            		
 	                case "Start":
 	    	            if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
@@ -249,18 +362,7 @@ public class MessageEditor
 	                        		targetServerName+ "サーバーを起動させました。";
 	                        discord.editBotEmbed(messageId, addMessage);
 	    	            }
-	                    break;
-	
-	                case "Exit":
-	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
-	                	{
-	                		String convStringTime = pu.secondsToStr(playTime);
-		                    addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
-		                            currentServerName + "サーバーから退出しました。\n\n:alarm_clock: プレイ時間: "+convStringTime;
-		                    discord.editBotEmbed(messageId, addMessage);
-		                    EventListener.PlayerMessageIds.remove(uuid);
-	                	}
-	                    break;
+	    	            return CompletableFuture.completedFuture(null);
 	
 	                case "Move":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
@@ -269,7 +371,7 @@ public class MessageEditor
 		                            currentServerName + "サーバーへ移動しました。";
 		                    discord.editBotEmbed(messageId, addMessage);
 	                	}
-	                    break;
+	                	return CompletableFuture.completedFuture(null);
 	
 	                case "Request":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) 
@@ -278,7 +380,7 @@ public class MessageEditor
 		                            targetServerName + "サーバーの起動リクエストを送りました。";
 		                    discord.editBotEmbed(messageId, addMessage);
 	                	}
-	                    break;
+	                	return CompletableFuture.completedFuture(null);
 	                    
 	                case "Join":
 	                	try {
@@ -333,7 +435,7 @@ public class MessageEditor
                                 logger.error(element.toString());
                             }
                         }
-                        break;
+	                	return CompletableFuture.completedFuture(null);
                         
 	                case "FirstJoin":
                         try {
@@ -383,7 +485,7 @@ public class MessageEditor
                                 logger.error(element.toString());
                             }
                         }
-	                    break;
+                        return CompletableFuture.completedFuture(null);
 	
 	                case "RequestOK":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
@@ -397,7 +499,7 @@ public class MessageEditor
 	                                );
 	                        discord.sendBotMessage(sendEmbed);
 	                	}
-	                    break;
+	                	return CompletableFuture.completedFuture(null);
 	
 	                case "RequestCancel":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
@@ -411,7 +513,7 @@ public class MessageEditor
 	                                );
 	                        discord.sendBotMessage(sendEmbed);
 	                	}
-	                    break;
+	                	return CompletableFuture.completedFuture(null);
 	
 	                case "RequestNoRes":
 	                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji))
@@ -425,56 +527,62 @@ public class MessageEditor
 	                                );
 	                        discord.sendBotMessage(sendEmbed);
 	                	}
-	                    break;
+	                	return CompletableFuture.completedFuture(null);
 	
 	                default:
-	                    break;
+	                	return CompletableFuture.completedFuture(null);
 	            }
 	        }
 	        catch (Exception e1)
 	        {
 	            e1.printStackTrace();
+	            return CompletableFuture.completedFuture(null);
 	        }
 	    });
 	}
 	
-	public void AddEmbedSomeMessage(String type, Player player, String serverName)
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, String serverName)
 	{
-		AddEmbedSomeMessage(type, player, null, serverName, null, 0, null);
+		return AddEmbedSomeMessage(type, player, null, serverName, null, 0, null, null);
 	}
 	
-	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo)
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo)
 	{
-		AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, null);
+		return AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, null, null);
 	}
 	
-	public void AddEmbedSomeMessage(String type, Player player)
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player)
 	{
-		AddEmbedSomeMessage(type, player, null, null, null, 0, null);
+		return AddEmbedSomeMessage(type, player, null, null, null, 0, null, null);
 	}
 	
-	public void AddEmbedSomeMessage(String type, String alternativePlayerName)
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName)
 	{
-		AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, 0, null);
+		return AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, 0, null, null);
 	}
 	
-	public void AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName)
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName)
 	{
-		AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, 0, null);
+		return AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, 0, null, null);
 	}
 	
-	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, int playTime)
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, int playTime)
 	{
-		AddEmbedSomeMessage(type, player, serverInfo, null, null, playTime, null);
+		return AddEmbedSomeMessage(type, player, serverInfo, null, null, playTime, null, null);
 	}
 	
-	public void AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage)
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage)
 	{
-		AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, chatMessage);
+		return AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, chatMessage, null);
 	}
 	
-	public void AddEmbedSomeMessage(String type)
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type)
 	{
-		AddEmbedSomeMessage(type, null, null, null, null, 0, null);
+		return AddEmbedSomeMessage(type, null, null, null, null, 0, null, null);
+	}
+	
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, UUID playerUUID)
+	{
+		return AddEmbedSomeMessage(type, null, null, null, null, 0, null, playerUUID);
 	}
 }

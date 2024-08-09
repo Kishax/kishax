@@ -13,6 +13,8 @@ import com.google.inject.Inject;
 
 public class Rcon
 {
+	public static boolean isMCVC = false;
+	
 	private final common.Main plugin;
 	private volatile boolean isRconActive = false;
 	private Thread rconMonitorThread;
@@ -57,6 +59,7 @@ public class Rcon
         		// RCONの状態を監視するスレッドを開始
                 rconMonitorThread = new Thread(() -> monitorRcon("localhost", rconPort, rconPassword));
                 rconMonitorThread.start();
+                isMCVC = true;
         	}
         }
         else

@@ -30,6 +30,7 @@ public class Maintenance
 	private final PlayerDisconnect pd;
 	private final MessageEditor discordME;
 	
+	public static boolean isMente;
 	public Connection conn = null;
 	public ResultSet ismente = null, issuperadmin = null;
 	public ResultSet[] resultsets = {ismente, issuperadmin};
@@ -149,6 +150,9 @@ public class Maintenance
         					{
         						if(ismente.getBoolean("online"))
         						{
+        							Maintenance.isMente = false; // フラグをtrueに
+        							discordME.AddEmbedSomeMessage("MenteOff");
+        							
         							// メンテナンスモードが有効の場合
         							sql = "UPDATE mine_status SET online=? WHERE name=?;";
         							ps = conn.prepareStatement(sql);
@@ -156,11 +160,12 @@ public class Maintenance
         							ps.setString(2, "Maintenance");
         							ps.executeUpdate();
         							source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
-        							
-        							discordME.AddEmbedSomeMessage("MenteOff");
         						}
         						else
         						{
+        							Maintenance.isMente = true; // フラグをtrueに
+        							discordME.AddEmbedSomeMessage("MenteOn");
+        							
         							// メンテナンスモードが無効の場合
         							sql = "UPDATE mine_status SET online=? WHERE name=?;";
         							ps = conn.prepareStatement(sql);
@@ -168,8 +173,6 @@ public class Maintenance
         							ps.setString(2, "Maintenance");
         							ps.executeUpdate();
         							pd.menteDisconnect(superadminUUIDs);
-        							
-        							discordME.AddEmbedSomeMessage("MenteOn");
         						}
         					}
         					break;

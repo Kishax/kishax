@@ -33,8 +33,8 @@ public class PlayerUtil
 	
 	private Connection conn = null;
 	private PreparedStatement ps = null;
-	private ResultSet playerlist = null, dbuuid = null, bj_logs = null;
-	private ResultSet[] resultsets = {playerlist, dbuuid, bj_logs};
+	private ResultSet playerlist = null, dbuuid = null, bj_logs = null, dbname = null;
+	private ResultSet[] resultsets = {playerlist, dbuuid, bj_logs, dbname};
 	private List<String> Players = new CopyOnWriteArrayList<>();
 	private boolean isLoaded = false;
 	
@@ -115,7 +115,26 @@ public class PlayerUtil
                 .findFirst();
     }
 	
-	public String getPlayerUUIDByName(String playerName)
+	public Player getPlayerFromUUID(String uuidString)
+	{
+		try
+		{
+            // StringをUUIDに変換
+            UUID uuid = UUID.fromString(uuidString);
+            
+            // UUIDからプレイヤーを取得
+            Optional<Player> player = server.getPlayer(uuid);
+            return player.orElse(null); // プレイヤーが見つからない場合はnullを返す
+        }
+		catch (IllegalArgumentException e)
+		{
+            // UUIDの形式が正しくない場合の処理
+            System.out.println("UUIDの形式が無効です: " + uuidString);
+            return null;
+        }
+    }
+	
+	public String getPlayerUUIDByNameFromDB(String playerName)
 	{
 		try
 		{
@@ -127,6 +146,31 @@ public class PlayerUtil
 			if(dbuuid.next())
 			{
 				return dbuuid.getString("uuid");
+			}
+			else
+			{
+				return null;
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public String getPlayerNameByUUIDFromDB(UUID playerUUID)
+	{
+		try
+		{
+			conn = db.getConnection();
+			String sql = "SELECT name FROM minecraft WHERE uuid=? ORDER BY id DESC LIMIT 1;";
+			ps = conn.prepareStatement(sql);
+			ps.setString(1, playerUUID.toString());
+			dbname = ps.executeQuery();
+			if(dbname.next())
+			{
+				return dbname.getString("uuid");
 			}
 			else
 			{

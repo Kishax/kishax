@@ -11,7 +11,9 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import discord.DiscordListener;
+import discord.MessageEditor;
 import net.luckperms.api.LuckPermsProvider;
+import velocity_command.CEnd;
 import velocity_command.FMCCommand;
 import velocity_command.Hub;
 
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 
 public class Main
 {
+	public static boolean isVelocity = true;
 	private static Injector injector = null;
 	
 	private final ProxyServer server;
@@ -65,6 +68,7 @@ public class Main
     	CommandManager commandManager = server.getCommandManager();
         commandManager.register("fmcp", getInjector().getInstance(FMCCommand.class));
         commandManager.register("hub", getInjector().getInstance(Hub.class));
+        commandManager.register("cend", getInjector().getInstance(CEnd.class));
         
 		// Client side
 	    ssw.startSocketClient("Hello!\nStart Server!!");
@@ -83,11 +87,17 @@ public class Main
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent e)
     {
+    	/*Main.isVelocity = false; //フラグをfalseに
+    	server.getScheduler().buildTask(this, () ->
+    	{
+    		getInjector().getInstance(MessageEditor.class).AddEmbedSomeMessage("End");
+        	getInjector().getInstance(DiscordListener.class).logoutDiscordBot(); // Discordボットのログアウトを非同期で実行
+    	});*/
+    	
     	ssw.stopSocketClient();
 		logger.info( "Client Socket Stopping..." );
 		ssw.stopSocketServer();
 		ssw.stopBufferedSocketServer();
-		getInjector().getInstance(DiscordListener.class).logoutDiscordBot(); // Discordボットのログアウトを非同期で実行
     	logger.info("Socket Server stopping...");
     	logger.info("Buffered Socket Server stopping...");
 		logger.info( "プラグインが無効になりました。" );
