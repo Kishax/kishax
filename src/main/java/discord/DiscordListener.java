@@ -3,6 +3,7 @@ package discord;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.security.auth.login.LoginException;
@@ -22,6 +23,7 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import velocity.Config;
@@ -101,18 +103,24 @@ public class DiscordListener
     	channel = jda.getTextChannelById(channelId);
         if (Objects.isNull(channel)) return;
         
-        Button button = Button.primary("start_process", "処理Aを開始");
+        Button button1 = Button.primary("button_1", "Start Process A1");
+        Button button2 = Button.primary("button_2", "Start Process A2");
 
-        channel.sendMessage("このボタンを押して処理Aを開始してください。")
-                .setActionRow(button)
-                .queue();
+        // メッセージにボタンを添えて送信
+        MessageAction action = channel.sendMessage("Choose an option:")
+                .setActionRow(button1, button2);
+
+        action.queue(message -> 
+        {
+            // 3分後にボタンを削除
+            CompletableFuture.delayedExecutor(3, TimeUnit.MINUTES).execute(() -> 
+            {
+            	message.reply("応答しませんでした。");
+                message.editMessageComponents().queue(); // ボタンを削除
+            });
+        });
     }
 
-    // 処理Aの実装
-    public void startProcessA(User user) {
-        // 処理Aのロジックをここに書く
-    }
-    
     public void sendWebhookMessage(WebhookMessageBuilder builder)
     {
     	String webhookUrl = config.getString("Discord.Webhook_URL","");

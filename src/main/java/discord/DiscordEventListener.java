@@ -51,23 +51,30 @@ public class DiscordEventListener extends ListenerAdapter
 		this.discord = discord;
 	}
 	
-	public void onButtonInteraction(ButtonInteractionEvent event) {
+	public void onButtonInteraction(ButtonInteractionEvent event) 
+	{
         // ボタンIDを取得
         String buttonId = event.getComponentId();
-
-        if (buttonId.equals("start_process")) {
-            // ボタンを押したユーザーを取得
-            User user = event.getUser();
-            
-            // 処理Aを開始
-            discord.startProcessA(user);
-
-            // ボタンを削除
-            event.getMessage().editMessageComponents().queue();
-
-            // ユーザーをメンションしてメッセージを送信
-            event.reply(user.getAsMention() + " 処理Aが開始されました。").queue();
+        
+        // ボタンを押したユーザーを取得
+        User user = event.getUser();
+        event.deferEdit().queue(); // ボタンのインタラクションを即座に応答
+        
+        String buttonMessage = null;
+        if (buttonId.equals("button_1")) 
+        {
+        	buttonMessage = user.getAsMention() + "button1が押されました。";
         }
+        else if (buttonId.equals("button_2")) 
+        {
+        	buttonMessage = user.getAsMention() + "button2が押されました。";
+        }
+        
+        // ユーザーをメンションしてメッセージを送信
+        event.reply(buttonMessage).queue();
+        
+        // ボタンを削除
+        event.getMessage().editMessageComponents().queue();
     }
 
 	@Override
