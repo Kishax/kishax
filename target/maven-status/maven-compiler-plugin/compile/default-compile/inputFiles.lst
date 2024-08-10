@@ -1,9 +1,11 @@
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\common\ColorUtil.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\common\Main.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\Discord.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\DiscordEventListener.java
-C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\DiscordListener.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\DiscordInterface.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\EmojiManager.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\MessageEditor.java
+C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\discord\MessageEditorInterface.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\spigot\AutoShutdown.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\spigot\Database.java
 C:\Users\maeka\eclipse-workspace\fmc-plugin\src\main\java\spigot\DoServerOffline.java

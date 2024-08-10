@@ -52,7 +52,7 @@ public class EmojiManager
     {
     	CompletableFuture<String> future = new CompletableFuture<>();
     	
-    	this.jda = DiscordListener.jda;
+    	this.jda = Discord.jda;
         if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0)
         {
         	future.complete(null);
@@ -145,7 +145,7 @@ public class EmojiManager
     
     public void updateEmojiIdsToDatabase()
     {
-        this.jda = DiscordListener.jda;
+        this.jda = Discord.jda;
         if (Objects.isNull(jda) || config.getLong("Discord.ChannelId", 0) == 0) return;
 
         MessageChannel channel = jda.getTextChannelById(config.getLong("Discord.ChannelId"));

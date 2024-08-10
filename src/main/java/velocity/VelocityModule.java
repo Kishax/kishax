@@ -4,10 +4,12 @@ import com.google.inject.AbstractModule;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import discord.Discord;
 import discord.DiscordEventListener;
-import discord.DiscordListener;
+import discord.DiscordInterface;
 import discord.EmojiManager;
 import discord.MessageEditor;
+import discord.MessageEditorInterface;
 import net.luckperms.api.LuckPerms;
 
 import org.slf4j.Logger;
@@ -66,9 +68,9 @@ public class VelocityModule extends AbstractModule
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
         bind(RomajiConversion.class);
-        bind(DiscordListener.class);
+        bind(DiscordInterface.class).to(Discord.class);
         bind(DiscordEventListener.class);
         bind(EmojiManager.class);
-        bind(MessageEditor.class);
+        bind(MessageEditorInterface.class).to(MessageEditor.class);
     }
 }

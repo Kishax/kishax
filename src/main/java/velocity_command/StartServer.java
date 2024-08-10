@@ -18,10 +18,11 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
-import discord.MessageEditor;
+import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import velocity.BroadCast;
 import velocity.Config;
 import velocity.DatabaseInterface;
 
@@ -32,7 +33,8 @@ public class StartServer
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
-	private final MessageEditor discordME;
+	private final BroadCast bc;
+	private final MessageEditorInterface discordME;
 	private String currentServerName = null;
 	
 	public Connection conn = null;
@@ -44,7 +46,8 @@ public class StartServer
 	public StartServer
 	(
 		ProxyServer server, Logger logger, Config config,
-		DatabaseInterface db, ConsoleCommandSource console, MessageEditor discordME
+		DatabaseInterface db, ConsoleCommandSource console, MessageEditorInterface discordME,
+		BroadCast bc
 	)
 	{
 		this.server = server;
@@ -52,6 +55,7 @@ public class StartServer
 		this.config = config;
 		this.db = db;
 		this.console = console;
+		this.bc = bc;
 		this.discordME = discordME;
 	}
 	
@@ -150,7 +154,13 @@ public class StartServer
 									player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
 									return;
 								}
-								// /startでサーバー起動
+								
+								// 全サーバーにプレイヤーがサーバーを起動したことを通知
+								TextComponent notifyComponent = Component.text()
+										.append(Component.text(player.getUsername()+"が"+args[1]+"サーバーを起動しました。\nまもなく"+args[1]+"サーバーが起動します。"))
+										.build();
+								bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
+								
 								// stにセッションタイムを入れる
 								sql = "UPDATE minecraft SET st=CURRENT_TIMESTAMP WHERE uuid=?;";
 								ps = conn.prepareStatement(sql);
@@ -159,11 +169,7 @@ public class StartServer
 								
 					            // バッチファイルのパスを指定
 					            String batchFilePath = config.getString("Servers."+args[1]+".Bat_Path");
-
-					            // ProcessBuilderを作成
 					            ProcessBuilder processBuilder = new ProcessBuilder(batchFilePath);
-
-					            // プロセスを開始
 					            processBuilder.start();
 					            
 					            discordME.AddEmbedSomeMessage("Start", player, args[1]);

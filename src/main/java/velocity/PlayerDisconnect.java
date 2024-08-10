@@ -14,7 +14,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import discord.MessageEditor;
+import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -26,7 +26,7 @@ public class PlayerDisconnect
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
-	private final MessageEditor discordME;
+	private final MessageEditorInterface discordME;
 	
 	public Connection conn = null;
 	public ResultSet ismente = null;
@@ -38,7 +38,7 @@ public class PlayerDisconnect
 	(
 		Main plugin, Logger logger, ProxyServer server,
 		DatabaseInterface db, BroadCast bc, ConsoleCommandSource console,
-		RomaToKanji conv, MessageEditor discordME
+		RomaToKanji conv, MessageEditorInterface discordME
 	)
 	{
 		this.plugin = plugin;

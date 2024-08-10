@@ -29,7 +29,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import discord.DiscordEventListener;
-import discord.MessageEditor;
+import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -53,11 +53,12 @@ public class EventListener
 	private final BroadCast bc;
 	private final ConsoleCommandSource console;
 	private final RomaToKanji conv;
-	private String chatserverName = "", originalMessage = null, joinMessage = null;
+	private String chatServerName = null, originalMessage = null, joinMessage = null;
+	private Component component = null;
 	private final PlayerUtil pu;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
-	private final MessageEditor discordME;
+	private final MessageEditorInterface discordME;
 	private ServerInfo serverInfo = null;
 	
 	@Inject
@@ -66,7 +67,7 @@ public class EventListener
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
 		ConsoleCommandSource console, RomaToKanji conv, PlayerUtil pu,
-		PlayerDisconnect pd, RomajiConversion rc, MessageEditor discordME
+		PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME
 	)
 	{
 		this.plugin = plugin;
@@ -98,7 +99,7 @@ public class EventListener
         {
             RegisteredServer server = serverConnection.getServer();
             serverInfo = server.getServerInfo();
-            chatserverName = serverInfo.getName();
+            chatServerName = serverInfo.getName();
         });
         
         // マルチバイト文字の長さを取得
@@ -142,7 +143,7 @@ public class EventListener
     		        lastMatchEnd = matcher.end();
     		    }
 
-    		    Component component = Component.text(space+"(").color(NamedTextColor.GOLD);
+    		    component = Component.text(space+"(").color(NamedTextColor.GOLD);
     		    
     	        boolean isEnglish = false;
     	        if (originalMessage.length() >= 1)
@@ -210,7 +211,7 @@ public class EventListener
         		        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
     			        
         		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
-        		        bc.broadcastComponent(component, chatserverName, true);
+        		        bc.sendSpecificServerMessage(component, chatServerName);
 		        	}
 		        	else
 		        	{
@@ -221,7 +222,7 @@ public class EventListener
 		        		discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
     			        
         		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
-        		        bc.broadcastComponent(component, chatserverName, true);
+        		        bc.sendSpecificServerMessage(component, chatServerName);
 		        	}
     		        return;
     		    }
@@ -300,7 +301,7 @@ public class EventListener
     		    if(!isEnglish)
     		    {
     		    	component = component.append(Component.text(")").color(NamedTextColor.GOLD));
-        		    bc.broadcastComponent(component, chatserverName, true);
+        		    bc.sendSpecificServerMessage(component, chatServerName);
     		    }
     		    
     		    discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext);
@@ -421,7 +422,8 @@ public class EventListener
 	            	else
 	            	{
 	            		// メッセージ送信
-	            		bc.broadcastComponent(Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに参加しました。").color(NamedTextColor.YELLOW), serverInfo.getName(), true);
+	            		component = Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに参加しました。").color(NamedTextColor.YELLOW);
+	            		bc.sendSpecificServerMessage(component, serverInfo.getName());
 	            		joinMessage = config.getString("EventMessage.Join","");
 						if(!joinMessage.isEmpty())
 						{
@@ -589,11 +591,13 @@ public class EventListener
 				//logger.info("Player connected to server: " + serverInfo.getName());
 				if(serverInfo.getName().equalsIgnoreCase(config.getString("hub")))
 				{
-					bc.broadcastMessage(player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーに初めてやってきました！", NamedTextColor.AQUA, serverInfo.getName());
+					component = Component.text(player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーに初めてやってきました！").color(NamedTextColor.AQUA);
+					bc.sendExceptServerMessage(component, serverInfo.getName());
 				}
 				else
 				{
-					bc.broadcastMessage("サーバー移動通知: "+player.getUsername()+" -> "+serverInfo.getName(), NamedTextColor.AQUA, serverInfo.getName());
+					component = Component.text("サーバー移動通知: "+player.getUsername()+" -> "+serverInfo.getName()).color(NamedTextColor.AQUA);
+					bc.sendExceptServerMessage(component, serverInfo.getName());
 				}
 				
 				

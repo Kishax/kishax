@@ -51,7 +51,7 @@ public class SwitchRomajiConvType
 	        
 			if(config.getBoolean("Conv.Mode"))
 			{
-				bc.broadcastComponent(Component.text("ローマ字変換がpde方式になりました。").color(NamedTextColor.GREEN), "", true);
+				source.sendMessage(Component.text("ローマ字変換がpde方式になりました。").color(NamedTextColor.GREEN));
 				ConvConfig.put("Mode", false);
 				try
 				{
@@ -96,7 +96,7 @@ public class SwitchRomajiConvType
 	        
 			if(config.getBoolean("Conv.Mode"))
 			{
-				bc.broadcastComponent(Component.text("ローマ字変換がpde方式になりました。").color(NamedTextColor.GREEN), convserverName, true);
+				source.sendMessage(Component.text("ローマ字変換がpde方式になりました。").color(NamedTextColor.GREEN));
 				ConvConfig.put("Mode", false);
 				try
 				{
@@ -109,7 +109,7 @@ public class SwitchRomajiConvType
 			}
 			else
 			{
-				bc.broadcastComponent(Component.text("ローマ字変換がMap方式になりました。").color(NamedTextColor.GREEN), convserverName, true);
+				source.sendMessage(Component.text("ローマ字変換がMap方式になりました。").color(NamedTextColor.GREEN));
 				ConvConfig.put("Mode", true);
 				try
 				{

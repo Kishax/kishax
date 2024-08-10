@@ -1,6 +1,5 @@
 package velocity_command;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,7 +16,8 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
-import discord.MessageEditor;
+import discord.DiscordInterface;
+import discord.MessageEditorInterface;
 import velocity.Config;
 import velocity.DatabaseInterface;
 import net.kyori.adventure.text.Component;
@@ -29,7 +29,8 @@ public class Request
 	private final Config config;
 	private final Logger logger;
 	private final DatabaseInterface db;
-	private final MessageEditor discordME;
+	private final DiscordInterface discord;
+	private final MessageEditorInterface discordME;
 	private String currentServerName = null;
 	
 	public Connection conn = null;
@@ -41,13 +42,15 @@ public class Request
 	public Request
 	(
 		ProxyServer server, Logger logger, 
-		Config config, DatabaseInterface db, MessageEditor discordME
+		Config config, DatabaseInterface db, DiscordInterface discord,
+		MessageEditorInterface discordME
 	)
 	{
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
+		this.discord = discord;
 		this.discordME = discordME;
 	}
 
@@ -170,42 +173,12 @@ public class Request
 				ps.setString(1,player.getUniqueId().toString());
 				ps.executeUpdate();
 		        
-		        String pythonScriptPath = config.getString("Servers.Request_Path");
-            	// ProcessBuilderを作成
-		        ProcessBuilder pb = null;
-		        if(config.getBoolean("Debug.Mode"))
-		        {
-		        	pb = new ProcessBuilder
-	            			(
-	            					"python",
-	            					pythonScriptPath, 
-	            					player.getUsername(),
-	            					player.getUniqueId().toString(),
-	            					config.getString("Servers.Hub"),
-	            					args[1],
-	            					req_type,
-	            					config.getString("Servers."+args[1]+".Bat_Path"),
-	            					"test"
-	            			);
-		        }
-		        else
-		        {
-		        	pb = new ProcessBuilder
-	            			(
-	            					"python",
-	            					pythonScriptPath, 
-	            					player.getUsername(),
-	            					player.getUniqueId().toString(),
-	            					config.getString("Servers.Hub"),
-	            					args[1],
-	            					req_type,
-	            					config.getString("Servers."+args[1]+".Bat_Path")
-	            			);
-		        }
-            	pb.start();
-            	
+            	// discord:アドミンチャンネルへボタン送信
+				discord.sendRequestButtonWithMessage(player.getUsername()+"が"+args[1]+"サーバーの起動リクエストを送信しました。\n起動しますか？");
+				
             	player.sendMessage(Component.text("送信されました。").color(NamedTextColor.GREEN));
             	
+            	// discordへリクエスト通知&ボタン送信
             	discordME.AddEmbedSomeMessage("Request", player, args[1]);
             	
             	// add log
@@ -218,7 +191,7 @@ public class Request
     			ps.setString(5, args[1]);
     			ps.executeUpdate();
             }
-            catch (IOException | SQLException | ClassNotFoundException e)
+            catch (SQLException | ClassNotFoundException e)
             {
             	e.printStackTrace();
             }

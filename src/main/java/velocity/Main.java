@@ -10,8 +10,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import discord.DiscordListener;
-import discord.MessageEditor;
+import discord.Discord;
 import net.luckperms.api.LuckPermsProvider;
 import velocity_command.CEnd;
 import velocity_command.FMCCommand;
@@ -30,7 +29,6 @@ public class Main
 	private final Logger logger;
 	private final Path dataDirectory;
 	// Guice注入後、取得するインスタンス(フィールド)郡
-	public SocketSwitch ssw = null;
 	
     @Inject
     public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory)
@@ -52,9 +50,8 @@ public class Main
         injector = Guice.createInjector(new VelocityModule(this, server, logger, dataDirectory, LuckPermsProvider.get()));
         
         // 依存性が解決された@Injectを使用するクラスのインスタンスを取得
-    	ssw = getInjector().getInstance(SocketSwitch.class);
     	
-    	getInjector().getInstance(DiscordListener.class).loginDiscordBotAsync(); // Discordボットのログインを非同期で実行		
+    	getInjector().getInstance(Discord.class).loginDiscordBotAsync(); // Discordボットのログインを非同期で実行		
     	
     	getInjector().getInstance(DoServerOnline.class).UpdateDatabase();
     	
@@ -71,10 +68,10 @@ public class Main
         commandManager.register("cend", getInjector().getInstance(CEnd.class));
         
 		// Client side
-	    ssw.startSocketClient("Hello!\nStart Server!!");
+        getInjector().getInstance(SocketSwitch.class).startSocketClient("Hello!\nStart Server!!");
 	    // Server side
-	    ssw.startSocketServer();
-	    ssw.startBufferedSocketServer();
+        getInjector().getInstance(SocketSwitch.class).startSocketServer();
+        getInjector().getInstance(SocketSwitch.class).startBufferedSocketServer();
 	    
 	    logger.info("プラグインが有効になりました。");
     }
@@ -87,10 +84,10 @@ public class Main
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent e)
     {
-    	ssw.stopSocketClient();
+    	getInjector().getInstance(SocketSwitch.class).stopSocketClient();
 		logger.info( "Client Socket Stopping..." );
-		ssw.stopSocketServer();
-		ssw.stopBufferedSocketServer();
+		getInjector().getInstance(SocketSwitch.class).stopSocketServer();
+		getInjector().getInstance(SocketSwitch.class).stopBufferedSocketServer();
     	logger.info("Socket Server stopping...");
     	logger.info("Buffered Socket Server stopping...");
 		logger.info( "プラグインが無効になりました。" );

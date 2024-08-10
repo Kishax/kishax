@@ -1,25 +1,26 @@
 package discord;
 
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.velocitypowered.api.proxy.Player;
 
 import net.dv8tion.jda.api.entities.Message.Attachment;
-import net.dv8tion.jda.api.entities.MessageChannel;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -28,53 +29,182 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.BroadCast;
 import velocity.Config;
+import velocity.Database;
+import velocity.PlayerUtil;
 
 public class DiscordEventListener extends ListenerAdapter
 {
+	public static String PlayerChatMessageId = null;
+
+	public static boolean isReqRespond = false;
+	
 	private final Logger logger;
 	private final Config config;
+	private final Database db;
 	private final BroadCast bc;
-	private final DiscordListener discord;
-	
-	public static String PlayerChatMessageId = null;
+	private final PlayerUtil pu;
+	private final DiscordInterface discord;
+	private final MessageEditorInterface discordME;
+	private Connection conn = null;
+	private PreparedStatement ps = null;
 	
 	@Inject
 	public DiscordEventListener
 	(
-		Logger logger, Config config, BroadCast bc,
-		DiscordListener discord
+		Logger logger, Config config, Database db,
+		BroadCast bc, PlayerUtil pu, DiscordInterface discord, 
+		MessageEditorInterface discordME
 	)
 	{
 		this.logger = logger;
 		this.config = config;
+		this.db = db;
 		this.bc = bc;
+		this.pu = pu;
 		this.discord = discord;
+		this.discordME = discordME;
 	}
 	
-	public void onButtonInteraction(ButtonInteractionEvent event) 
+	@Override
+	public void onButtonInteraction(ButtonInteractionEvent e) 
 	{
         // ボタンIDを取得
-        String buttonId = event.getComponentId();
+        String buttonId = e.getComponentId();
+        String buttonMessage = e.getMessage().getContentRaw();
+        
+        if(Objects.isNull(buttonMessage) || Objects.isNull(buttonId)) return;
         
         // ボタンを押したユーザーを取得
-        User user = event.getUser();
-        event.deferEdit().queue(); // ボタンのインタラクションを即座に応答
+        User user = e.getUser();
         
-        String buttonMessage = null;
-        if (buttonId.equals("button_1")) 
+        String pattern = null, sql = null, replyMessage = null, 
+        		reqServerName = null, reqPlayerName = null, batchFilePath = null, reqPlayerUUID = null;
+        Pattern compiledPattern = null;
+        Matcher matcher = null;
+        ProcessBuilder processBuilder = null;
+        
+        switch(buttonId)
         {
-        	buttonMessage = user.getAsMention() + "button1が押されました。";
+        	case "reqOK":
+        		isReqRespond =  true; // フラグをtrueに
+        		replyMessage = user.getAsMention() + "startが押されました。";
+        		// プレイヤー名・サーバー名、取得
+            	pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
+                compiledPattern = Pattern.compile(pattern);
+                matcher = compiledPattern.matcher(buttonMessage);
+                if (matcher.find())
+                {
+                	reqPlayerName = matcher.group(1);
+                	reqServerName = matcher.group(2);
+                	reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+                			
+                	try
+                    {
+                    	conn = db.getConnection();
+                    	sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+                    	ps = conn.prepareStatement(sql);
+                    	ps.setString(1, reqPlayerName);
+                    	ps.setString(2, reqPlayerUUID);
+                    	ps.setBoolean(3, true);
+                    	ps.setString(4, reqServerName);
+                    	ps.setString(5, "ok");
+                    	ps.executeUpdate();
+                    }
+                    catch (SQLException | ClassNotFoundException e1)
+                    {
+                    	e1.printStackTrace();
+                    }
+                	
+                	// サーバー起動メソッド開始
+                	// バッチファイルのパスを指定
+                    batchFilePath = config.getString("Servers."+reqServerName+".Bat_Path");
+                    processBuilder = new ProcessBuilder(batchFilePath);
+                    try 
+                    {
+						processBuilder.start();
+					} 
+                    catch (IOException e1) 
+                    {
+						e1.printStackTrace();
+					}
+                    
+                    // Discord通知
+                    discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
+                    
+                    // マイクラサーバーへ通知
+                    Optional<Player> playerInfo = pu.getPlayerByName(reqPlayerName);
+                    if(playerInfo.isPresent())
+                    {
+                    	Player player = playerInfo.get();
+                    	player.sendMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
+                    }
+                }
+                else
+                {
+                	replyMessage = "エラーが発生しました。\npattern形式が無効です。";
+                }
+                
+                e.reply(replyMessage).queue();
+                
+                // ボタンを削除
+                e.getMessage().editMessageComponents().queue();
+        		break;
+        		
+        	case "reqCancel":
+        		isReqRespond =  true; // フラグをtrueに
+        		replyMessage = user.getAsMention() + "stopが押されました。";
+        		// プレイヤー名・サーバー名、取得
+            	pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
+                compiledPattern = Pattern.compile(pattern);
+                matcher = compiledPattern.matcher(buttonMessage);
+                if (matcher.find())
+                {
+                	reqPlayerName = matcher.group(1);
+                	reqServerName = matcher.group(2);
+                	reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+                			
+                	try
+                    {
+                    	conn = db.getConnection();
+                    	sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+                    	ps = conn.prepareStatement(sql);
+                    	ps.setString(1, reqPlayerName);
+                    	ps.setString(2, reqPlayerUUID);
+                    	ps.setBoolean(3, true);
+                    	ps.setString(4, reqServerName);
+                    	ps.setString(5, "cancel");
+                    	ps.executeUpdate();
+                    }
+                    catch (SQLException | ClassNotFoundException e1)
+                    {
+                    	e1.printStackTrace();
+                    }
+                	
+                    // Discord通知
+                    discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
+                    
+                    // マイクラサーバーへ通知
+                    Optional<Player> playerInfo = pu.getPlayerByName(reqPlayerName);
+                    if(playerInfo.isPresent())
+                    {
+                    	Player player = playerInfo.get();
+                    	player.sendMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
+                    }
+                }
+                else
+                {
+                	replyMessage = "エラーが発生しました。\npattern形式が無効です。";
+                }
+                
+                e.reply(replyMessage).queue();
+                
+                // ボタンを削除
+                e.getMessage().editMessageComponents().queue();
+        		break;
+        		
+        	default:
+        		break;
         }
-        else if (buttonId.equals("button_2")) 
-        {
-        	buttonMessage = user.getAsMention() + "button2が押されました。";
-        }
-        
-        // ユーザーをメンションしてメッセージを送信
-        event.reply(buttonMessage).queue();
-        
-        // ボタンを削除
-        event.getMessage().editMessageComponents().queue();
     }
 
 	@Override
@@ -132,7 +262,8 @@ public class DiscordEventListener extends ListenerAdapter
             	component = component.append(additionalComponent);
                 i++;
             }
-        	bc.broadcastComponent(component, null, false);
+            
+            bc.broadCastMessage(component);
         }
     }
 	
@@ -167,7 +298,7 @@ public class DiscordEventListener extends ListenerAdapter
         if(!isUrl)
         {
         	//if (string.contains("\\n")) string = string.replace("\\n", "\n");
-        	bc.broadcastMessage(string, NamedTextColor.AQUA, null);
+        	bc.broadCastMessage(Component.text(string).color(NamedTextColor.AQUA));
         	return;
         }
         
@@ -240,7 +371,7 @@ public class DiscordEventListener extends ListenerAdapter
         	}
         }
         
-		bc.broadcastComponent(component,null,false);
+        bc.broadCastMessage(component);
 		return;
     }
 }

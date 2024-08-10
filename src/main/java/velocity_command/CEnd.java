@@ -9,7 +9,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import discord.MessageEditor;
+import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Main;
@@ -19,13 +19,13 @@ public class CEnd implements SimpleCommand
 	private final Main plugin;
 	private final ProxyServer server;
 	private final Logger logger;
-	private final MessageEditor discordME;
+	private final MessageEditorInterface discordME;
 	
 	@Inject
     public CEnd
     (
     	Main plugin, ProxyServer server, Logger logger, 
-    	MessageEditor discordME
+    	MessageEditorInterface discordME
     )
 	{
 		this.plugin = plugin;

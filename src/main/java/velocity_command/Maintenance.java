@@ -14,8 +14,8 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import discord.DiscordListener;
-import discord.MessageEditor;
+import discord.Discord;
+import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -28,7 +28,7 @@ public class Maintenance
 {
 	private final DatabaseInterface db;
 	private final PlayerDisconnect pd;
-	private final MessageEditor discordME;
+	private final MessageEditorInterface discordME;
 	
 	public static boolean isMente;
 	public Connection conn = null;
@@ -44,7 +44,7 @@ public class Maintenance
 	(
 		Main plugin, ProxyServer server, Logger logger,
 		Config config, DatabaseInterface db, PlayerDisconnect pd,
-		DiscordListener discord, MessageEditor discordME
+		Discord discord, MessageEditorInterface discordME
 	)
 	{
 		this.db = db;

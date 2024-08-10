@@ -1,6 +1,7 @@
 package discord;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ import velocity.Main;
 import velocity.PlayerUtil;
 import velocity_command.Maintenance;
 
-public class MessageEditor
+public class MessageEditor implements MessageEditorInterface
 {
 	private PreparedStatement ps = null;
 	public Connection conn = null;
@@ -39,7 +40,7 @@ public class MessageEditor
 	private final Logger logger;
 	private final Config config;
 	private final Database db;
-	private final DiscordListener discord;
+	private final DiscordInterface discord;
 	private final EmojiManager emoji;
 	private final PlayerUtil pu;
 	private String avatarUrl = null, addMessage = null, 
@@ -53,7 +54,7 @@ public class MessageEditor
 	public MessageEditor
 	(
 		Main plugin, Logger logger, ProxyServer server,
-		Config config, Database db, DiscordListener discord,
+		Config config, Database db, DiscordInterface discord,
 		EmojiManager emoji, PlayerUtil pu
 	)
 	{
@@ -67,6 +68,7 @@ public class MessageEditor
 		this.pu = pu;
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage
 	(
 		String type, Player player, ServerInfo serverInfo, 
@@ -386,7 +388,8 @@ public class MessageEditor
 	                	return CompletableFuture.completedFuture(null);
 	                    
 	                case "Join":
-	                	try {
+	                	try 
+	                	{
 		                	conn = db.getConnection();
 		                	if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) 
 		                	{
@@ -544,46 +547,55 @@ public class MessageEditor
 	    });
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, String serverName)
 	{
 		return AddEmbedSomeMessage(type, player, null, serverName, null, 0, null, null);
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo)
 	{
 		return AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, null, null);
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player)
 	{
 		return AddEmbedSomeMessage(type, player, null, null, null, 0, null, null);
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName)
 	{
 		return AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, 0, null, null);
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName)
 	{
 		return AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, 0, null, null);
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, int playTime)
 	{
 		return AddEmbedSomeMessage(type, player, serverInfo, null, null, playTime, null, null);
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage)
 	{
 		return AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, chatMessage, null);
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type)
 	{
 		return AddEmbedSomeMessage(type, null, null, null, null, 0, null, null);
 	}
 	
+	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, UUID playerUUID)
 	{
 		return AddEmbedSomeMessage(type, null, null, null, null, 0, null, playerUUID);

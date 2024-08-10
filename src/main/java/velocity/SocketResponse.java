@@ -1,6 +1,7 @@
 package velocity;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -19,11 +20,9 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import common.ColorUtil;
-import discord.DiscordListener;
+import discord.DiscordInterface;
 import discord.EmojiManager;
-import discord.MessageEditor;
-import net.dv8tion.jda.api.entities.MessageEmbed;
+import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -43,9 +42,9 @@ public class SocketResponse
 	private final BroadCast bc;
 	private final Database db;
 	private final EmojiManager emoji;
-	private final DiscordListener discord;
+	private final DiscordInterface discord;
 	private final PlayerUtil pu;
-	private final MessageEditor discordME;
+	private final MessageEditorInterface discordME;
 	private String mineName = null, reqType = null, reqServerName = null;
 	
 	@Inject
@@ -53,8 +52,8 @@ public class SocketResponse
 	(
 		Main plugin, ProxyServer server, Logger logger,
 		Config config, Luckperms lp, BroadCast bc, 
-		Database db, EmojiManager emoji, DiscordListener discord,
-		PlayerUtil pu, MessageEditor discordME
+		Database db, EmojiManager emoji, DiscordInterface discord,
+		PlayerUtil pu, MessageEditorInterface discordME
 	)
 	{
 		this.server = server;
@@ -75,35 +74,6 @@ public class SocketResponse
     	if (res.contains("サーバー->"))	return;
     	if(res.contains("PHP"))
     	{
-    		//if (res.contains("\\n")) res = res.replace("\\n", "");
-    		if (res.contains("req"))
-    		{
-				String pattern = "PHP->req->(.*?)->(.*?)->(.*?)->";
-
-                // パターンをコンパイル
-                Pattern compiledPattern = Pattern.compile(pattern);
-                Matcher matcher = compiledPattern.matcher(res);
-                
-                // パターンにマッチする部分を抽出
-                if (matcher.find())
-                {
-                	reqType = matcher.group(1);
-                	mineName = matcher.group(2);
-                	reqServerName = matcher.group(3);
-                	
-                	Optional<Player> playerOptional = pu.getPlayerByName(mineName);
-
-                	if (playerOptional.isPresent())
-                	{
-                	    Player player = playerOptional.get();
-                	    if(res.contains("Start")) player.sendMessage(Component.text("管理者が"+mineName+"の"+reqServerName+"サーバー起動リクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
-                		if(res.contains("Cancel")) player.sendMessage(Component.text("管理者が"+mineName+"の"+reqServerName+"サーバー起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
-                		if(res.contains("NoRes")) player.sendMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.BLUE));
-                	}
-                	
-                	discordME.AddEmbedSomeMessage(reqType, mineName, reqServerName);
-                }
-    		}
     		if (res.contains("uuid"))
     		{
     			// PHPの方でlpテーブルへの追加は完了済み
@@ -232,16 +202,16 @@ public class SocketResponse
     	}
     	else if(res.contains("プレイヤー不在"))
     	{
-    		bc.broadcastMessage(res, NamedTextColor.RED, null);
+    		bc.broadCastMessage(Component.text(res).color(NamedTextColor.RED));
     	}
     	else
     	{	
     		// Discordからのメッセージ処理
-    		sendmixurl(res);
+    		sendMixUrl(res);
     	}
     }
     
-    public void sendmixurl(String string)
+    public void sendMixUrl(String string)
     {
     	// 正規表現パターンを定義（URLを見つけるための正規表現）
         String urlRegex = "https?://\\S+";
@@ -272,7 +242,7 @@ public class SocketResponse
         if(!isUrl)
         {
         	//if (string.contains("\\n")) string = string.replace("\\n", "\n");
-        	bc.broadcastMessage(string, NamedTextColor.AQUA, null);
+        	bc.broadCastMessage(Component.text(string).color(NamedTextColor.AQUA));
         	return;
         }
         
@@ -344,7 +314,7 @@ public class SocketResponse
         	}
         }
         
-		bc.broadcastComponent(component,null,false);
+        bc.broadCastMessage(component);
 		return;
     }
     
