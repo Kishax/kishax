@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.inject.Inject;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
@@ -41,6 +42,7 @@ public class SocketResponse
 	private final Luckperms lp;
 	private final BroadCast bc;
 	private final Database db;
+	private final ConsoleCommandSource console;
 	private final EmojiManager emoji;
 	private final DiscordInterface discord;
 	private final PlayerUtil pu;
@@ -52,8 +54,8 @@ public class SocketResponse
 	(
 		Main plugin, ProxyServer server, Logger logger,
 		Config config, Luckperms lp, BroadCast bc, 
-		Database db, EmojiManager emoji, DiscordInterface discord,
-		PlayerUtil pu, MessageEditorInterface discordME
+		Database db, ConsoleCommandSource console, EmojiManager emoji, 
+		DiscordInterface discord, PlayerUtil pu, MessageEditorInterface discordME
 	)
 	{
 		this.server = server;
@@ -62,6 +64,7 @@ public class SocketResponse
         this.lp = lp;
         this.bc = bc;
         this.db = db;
+        this.console = console;
         this.emoji = emoji;
         this.discord = discord;
         this.pu = pu;
@@ -170,6 +173,7 @@ public class SocketResponse
         					ps.setString(2,player.getUniqueId().toString());
         					ps.executeUpdate();
         					player.sendMessage(component);
+        					console.sendMessage(component);
         				}
         				catch (SQLException | ClassNotFoundException e)
         				{
@@ -178,7 +182,9 @@ public class SocketResponse
         			}
         			else
         			{
-        				player.sendMessage(Component.text(res).color(NamedTextColor.AQUA));
+        				component = Component.text(res).color(NamedTextColor.AQUA);
+        				player.sendMessage(component);
+        				console.sendMessage(component);
         			}
                 }
             }
