@@ -1,12 +1,16 @@
 package velocity_command;
 
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
 import discord.DiscordInterface;
+import net.kyori.adventure.text.Component;
 
 public class Test
 {
@@ -33,7 +37,12 @@ public class Test
 				}
 				
 				logger.info("PlayerChatMessageId: "+DiscordEventListener.PlayerChatMessageId);*/
-				discord.sendRequestButtonWithMessage("起動しますか？");
+				for(Entry<String, Boolean> entry : Request.PlayerReqFlags.entrySet())
+				{
+					source.sendMessage(Component.text("PlayerMessageIdkey: " + entry.getKey()));
+					source.sendMessage(Component.text("PlayerMessageIdvalue: " + entry.getValue()));
+				}
+				
 				break;
 				
 			case 2:

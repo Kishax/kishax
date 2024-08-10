@@ -1,6 +1,7 @@
 package discord;
 
 import java.io.IOException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -31,12 +32,11 @@ import velocity.BroadCast;
 import velocity.Config;
 import velocity.Database;
 import velocity.PlayerUtil;
+import velocity_command.Request;
 
 public class DiscordEventListener extends ListenerAdapter
 {
 	public static String PlayerChatMessageId = null;
-
-	public static boolean isReqRespond = false;
 	
 	private final Logger logger;
 	private final Config config;
@@ -86,7 +86,6 @@ public class DiscordEventListener extends ListenerAdapter
         switch(buttonId)
         {
         	case "reqOK":
-        		isReqRespond =  true; // フラグをtrueに
         		replyMessage = user.getAsMention() + "startが押されました。";
         		// プレイヤー名・サーバー名、取得
             	pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
@@ -132,12 +131,11 @@ public class DiscordEventListener extends ListenerAdapter
                     discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
                     
                     // マイクラサーバーへ通知
-                    Optional<Player> playerInfo = pu.getPlayerByName(reqPlayerName);
-                    if(playerInfo.isPresent())
-                    {
-                    	Player player = playerInfo.get();
-                    	player.sendMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
-                    }
+                    bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
+                    
+                    // フラグから削除
+                    String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+                    Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
                 }
                 else
                 {
@@ -151,7 +149,6 @@ public class DiscordEventListener extends ListenerAdapter
         		break;
         		
         	case "reqCancel":
-        		isReqRespond =  true; // フラグをtrueに
         		replyMessage = user.getAsMention() + "stopが押されました。";
         		// プレイヤー名・サーバー名、取得
             	pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
@@ -184,12 +181,11 @@ public class DiscordEventListener extends ListenerAdapter
                     discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
                     
                     // マイクラサーバーへ通知
-                    Optional<Player> playerInfo = pu.getPlayerByName(reqPlayerName);
-                    if(playerInfo.isPresent())
-                    {
-                    	Player player = playerInfo.get();
-                    	player.sendMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
-                    }
+                    bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
+                    
+                    // フラグから削除
+                    String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+                    Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
                 }
                 else
                 {

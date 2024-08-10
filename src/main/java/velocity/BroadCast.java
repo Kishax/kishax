@@ -30,6 +30,9 @@ public class BroadCast
         {
 			player.sendMessage(component);
         }
+		
+		// コンソールにも出力
+    	console.sendMessage(component);
 	}
 	
 	private void sendServerMessageManager(Component component, String excepServer, Boolean only)

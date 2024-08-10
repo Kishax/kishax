@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -18,38 +20,43 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import discord.DiscordInterface;
 import discord.MessageEditorInterface;
+import velocity.BroadCast;
 import velocity.Config;
 import velocity.DatabaseInterface;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class Request
 {
-	private final ProxyServer server;
-	private final Config config;
-	private final Logger logger;
-	private final DatabaseInterface db;
-	private final DiscordInterface discord;
-	private final MessageEditorInterface discordME;
-	private String currentServerName = null;
-	
+	public static Map<String, Boolean> PlayerReqFlags = new HashMap<>();
 	public Connection conn = null;
 	public ResultSet minecrafts = null, reqstatus = null;
 	public ResultSet[] resultsets = {minecrafts,reqstatus};
 	public PreparedStatement ps = null;
 	
+	private final ProxyServer server;
+	private final Config config;
+	private final Logger logger;
+	private final DatabaseInterface db;
+	private final BroadCast bc;
+	private final DiscordInterface discord;
+	private final MessageEditorInterface discordME;
+	private String currentServerName = null;
+	
 	@Inject
 	public Request
 	(
 		ProxyServer server, Logger logger, 
-		Config config, DatabaseInterface db, DiscordInterface discord,
-		MessageEditorInterface discordME
+		Config config, DatabaseInterface db, BroadCast bc,
+		DiscordInterface discord, MessageEditorInterface discordME
 	)
 	{
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
+		this.bc = bc;
 		this.discord = discord;
 		this.discordME = discordME;
 	}
@@ -173,6 +180,14 @@ public class Request
 				ps.setString(1,player.getUniqueId().toString());
 				ps.executeUpdate();
 		        
+				Request.PlayerReqFlags.put(player.getUniqueId().toString(), true); // フラグを設定
+				
+				// 全サーバーにプレイヤーがサーバーを起動したことを通知
+				TextComponent notifyComponent = Component.text()
+						.append(Component.text(player.getUsername()+"が"+args[1]+"サーバーの起動リクエストを送信しました。").color(NamedTextColor.AQUA))
+						.build();
+				bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
+				
             	// discord:アドミンチャンネルへボタン送信
 				discord.sendRequestButtonWithMessage(player.getUsername()+"が"+args[1]+"サーバーの起動リクエストを送信しました。\n起動しますか？");
 				

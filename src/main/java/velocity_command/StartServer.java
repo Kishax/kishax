@@ -157,7 +157,7 @@ public class StartServer
 								
 								// 全サーバーにプレイヤーがサーバーを起動したことを通知
 								TextComponent notifyComponent = Component.text()
-										.append(Component.text(player.getUsername()+"が"+args[1]+"サーバーを起動しました。\nまもなく"+args[1]+"サーバーが起動します。"))
+										.append(Component.text(player.getUsername()+"が"+args[1]+"サーバーを起動しました。\nまもなく"+args[1]+"サーバーが起動します。").color(NamedTextColor.AQUA))
 										.build();
 								bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
 								

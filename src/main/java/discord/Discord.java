@@ -34,10 +34,12 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import velocity.BroadCast;
 import velocity.Config;
 import velocity.Database;
 import velocity.Main;
 import velocity.PlayerUtil;
+import velocity_command.Request;
 import club.minnced.discord.webhook.send.WebhookMessage;
 
 public class Discord implements DiscordInterface
@@ -50,6 +52,7 @@ public class Discord implements DiscordInterface
     private final Logger logger;
     private final Config config;
     private final Database db;
+    private final BroadCast bc;
     private final PlayerUtil pu;
     private final MessageEditorInterface discordME;
     private String channelId = null;
@@ -61,8 +64,8 @@ public class Discord implements DiscordInterface
     public Discord
     (
     	Main plugin, ProxyServer server, Logger logger, 
-    	Config config, Database db, PlayerUtil pu,
-    	MessageEditorInterface discordME
+    	Config config, Database db, BroadCast bc, 
+    	PlayerUtil pu, MessageEditorInterface discordME
     )
     {
     	this.plugin = plugin;
@@ -70,6 +73,7 @@ public class Discord implements DiscordInterface
     	this.logger = logger;
     	this.config = config;
     	this.db = db;
+    	this.bc = bc;
     	this.pu = pu;
     	this.discordME = discordME;
     }
@@ -128,8 +132,6 @@ public class Discord implements DiscordInterface
     	channel = jda.getTextChannelById(channelId);
         if (Objects.isNull(channel)) return;
         
-        DiscordEventListener.isReqRespond = false; //フラグを初期化
-        
         Button button1 = Button.success("reqOK", "YES");
         Button button2 = Button.danger("reqCancel", "NO");
         
@@ -143,7 +145,7 @@ public class Discord implements DiscordInterface
             CompletableFuture.delayedExecutor(3, TimeUnit.MINUTES).execute(() -> 
             {
             	// フラグが立っていなかったら
-            	if(!DiscordEventListener.isReqRespond)
+            	if(!Request.PlayerReqFlags.isEmpty())
             	{
             		String buttonMessage2 = message.getContentRaw();
                 	
@@ -180,32 +182,19 @@ public class Discord implements DiscordInterface
                         	e1.printStackTrace();
                         }
                     	
-                    	// サーバー起動メソッド開始
-                    	// バッチファイルのパスを指定
-                        batchFilePath = config.getString("Servers."+reqServerName+".Bat_Path");
-                        processBuilder = new ProcessBuilder(batchFilePath);
-                        try 
-                        {
-    						processBuilder.start();
-    					} 
-                        catch (IOException e1) 
-                        {
-    						e1.printStackTrace();
-    					}
-                        
                         // Discord通知
                         discordME.AddEmbedSomeMessage("RequestNoRes", reqPlayerName);
                         
                         // マイクラサーバーへ通知
-                        Optional<Player> playerInfo = pu.getPlayerByName(reqPlayerName);
-                        if(playerInfo.isPresent())
-                        {
-                        	Player player = playerInfo.get();
-                        	player.sendMessage(Component.text("管理者がリクエストに応答しませんでした。").color(NamedTextColor.BLUE));
-                        }
+                        bc.broadCastMessage(Component.text("管理者がリクエストに応答しませんでした。").color(NamedTextColor.BLUE));
+                        
+                        message.reply("誰も応答しませんでした。").queue();
+                        message.editMessageComponents().queue(); // ボタンを削除
+                        
+                        // フラグから削除
+                        String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+                        Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
                     }
-                	message.reply("誰も応答しませんでした。").queue();
-                    message.editMessageComponents().queue(); // ボタンを削除
             	}
             });
         });
