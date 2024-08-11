@@ -38,7 +38,9 @@ Moving to specific server as server command
 Requesting to let server start-up to Admin through discord like this.<br>
 ![alt text](images/req_button.png)<br>
 If someone presses `YES` button, here will be like this.<br>
-![alt text](images/reqsul_notification.png)
+![alt text](images/reqsul_notification.png)<br>
+Here is minecraft's player chat area.<br>
+![alt text](images/req_minecraft_chat.png)<br>
 ### `/fmcp start <server>`
 Let server start by bat file of windows
 ### `/fmcp cancel`
