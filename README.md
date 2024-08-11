@@ -10,6 +10,10 @@ A mod with similar functionality to spigot is currently under development.<br>
 ### `/hub`
 ### `/fmcp hub`
 Moving to hub server<br>
+### `/fmcp cend`
+After executing, Velocity will be shutdown!<br>
+Before being shutdown, discord's embed editing like this.
+![alt text](https://keypforev.ddns.net/assets/img/github/proxy_shutdown.png)
 ### `/fmcp maintenance <status | switch> discord <true | false>`
 This enable server to be maintenance mode, which is that for example, it is openable for only Admin who has permission:group.super-admin, others disconnecting.<br>
 If arg5 sets "true", server can notify to Discord whether maintenance mode is true or not.<br>
