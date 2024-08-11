@@ -6,6 +6,15 @@ So this plugin is maybe good for plugin developers.<br>
 Freely to edit!<br>
 A mod with similar functionality to spigot is currently under development.<br>
 [FMC-Fabric-Mod](https://github.com/bella2391/FMC-Plugin/tree/fabric)
+## Linkage to Discord
+For Velocity Server, Velocity Server notifys Embed's message or plane-text-message under each events.<br>
+When server switching, joining, disconnecting like this.
+![alt text](https://keypforev.ddns.net/assets/img/github/event_message.png)
+When chatting like this.
+![alt text](https://keypforev.ddns.net/assets/img/github/chat_message.png)
+## Convert Romaji to Kanji
+This brings an automatic chat conversion Romaji to Kanji like this.
+![alt text](https://keypforev.ddns.net/assets/img/github/chat_conv.png)
 ## Velocity Command list
 ### `/hub`
 ### `/fmcp hub`
@@ -33,6 +42,8 @@ In FMC Server, using python and php script for requesting to Discord<br>
 Let server start by bat file of windows
 ### `/fmcp cancel`
 Only sending "canceled event"
+### `/fmcp conv`
+Switching converting type of Romaji to Kanji.
 ## Socket Server
 Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
 ### Reason
