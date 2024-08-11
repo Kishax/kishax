@@ -3,8 +3,8 @@
 This is able to use in both Velocity and Spigot.<br>
 But this is created for myself for my server.<br>
 So this plugin is maybe good for plugin developers.<br>
-Freely to edit!<br>
 [FMC-Fabric-Mod](https://github.com/bella2391/FMC-Plugin/tree/fabric) with similar functionality to spigot is currently under development.<br>
+Freely to edit!<br>
 
 ## Linkage to Discord
 For Velocity Server, Velocity Server notifys Embed's message or plain-text-message under each events.<br>
