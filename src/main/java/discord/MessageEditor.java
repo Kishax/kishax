@@ -221,6 +221,7 @@ public class MessageEditor implements MessageEditorInterface
 	                		// 編集を行う
 	                        return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
 	                	}
+	                	return CompletableFuture.completedFuture(null);
 	                	
 	            	case "MenteOn":
 				        if (Objects.nonNull(Emoji)) 

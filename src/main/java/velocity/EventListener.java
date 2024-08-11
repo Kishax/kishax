@@ -92,8 +92,6 @@ public class EventListener
 	    Player player = e.getPlayer();
 	    originalMessage = e.getMessage();
 	    
-	    
-	    
 	    // プレイヤーの現在のサーバーを取得
         player.getCurrentServer().ifPresent(serverConnection ->
         {
@@ -601,7 +599,7 @@ public class EventListener
 				}
 				
 				
-				if(serverInfo.getName().equals("Latest"))
+				/*if(serverInfo.getName().equals("Latest"))
 				{
 					TextComponent component = Component.text()
 		    			    	.append(Component.text("BLUE MAP").decorate(TextDecoration.BOLD).color(NamedTextColor.BLUE))
@@ -610,7 +608,7 @@ public class EventListener
 	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)地図を見る"))))
 		    			    	.build();
 					player.sendMessage(component);
-				}
+				}*/
 				
 				// Amabassadorプラグインと競合している可能性あり
 				// Main.getInjector().getInstance(velocity.PlayerUtil.class).updatePlayers();

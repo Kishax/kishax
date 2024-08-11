@@ -74,7 +74,7 @@ public class SocketResponse
 	public void resaction(String res)
     {
     	if (Objects.isNull(res)) return;
-    	if (res.contains("サーバー->"))	return;
+    	//if (res.contains("サーバー->"))	return;
     	if(res.contains("PHP"))
     	{
     		if (res.contains("uuid"))
@@ -173,18 +173,17 @@ public class SocketResponse
         					ps.setString(2,player.getUniqueId().toString());
         					ps.executeUpdate();
         					player.sendMessage(component);
-        					console.sendMessage(component);
+        					console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
         				}
         				catch (SQLException | ClassNotFoundException e)
         				{
-        					logger.error("",e);
+        					logger.error("A SocketResponse error: ",e);
         				}
         			}
         			else
         			{
-        				component = Component.text(res).color(NamedTextColor.AQUA);
-        				player.sendMessage(component);
-        				console.sendMessage(component);
+        				player.sendMessage(Component.text(res).color(NamedTextColor.AQUA));
+        				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
         			}
                 }
             }

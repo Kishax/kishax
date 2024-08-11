@@ -72,7 +72,7 @@ public class PlayerDisconnect
 		console.sendMessage(Component.text("メンテナンスモードが有効になりました。\nスーパーアドミン以外を退出させました。").color(NamedTextColor.GREEN));
 	}
 	
-	public void playerDisconnect(Boolean bool,Player player,TextComponent component)
+	public void playerDisconnect(Boolean bool, Player player, TextComponent component)
 	{
 		player.disconnect(component);
 		
