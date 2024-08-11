@@ -50,7 +50,7 @@ Switching converting type of Romaji to Kanji.
 ### `/fmcp chat <switch | status>`
 Switching the way of sending chating message to Discord. <br>
 There are Embed editing type or Plane text message type.<br>
-* Embed editing type<br> (Using Bot)
+* Embed editing type (Using Bot)<br>
 ![alt text](images/embed_editing_type.png)<br>
 * Plane text message type (Using Webhook)<br>
 ![alt text](images/plain_text_message_type.png)<br>
