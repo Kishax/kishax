@@ -9,12 +9,12 @@ A mod with similar functionality to spigot is currently under development.<br>
 ## Linkage to Discord
 For Velocity Server, Velocity Server notifys Embed's message or plane-text-message under each events.<br>
 When server switching, joining, disconnecting like this.<br>
-![alt text](https://keypforev.ddns.net/assets/img/github/event_message.png)
+![alt text](images/event_message.png)
 When chatting like this.<br>
-![alt text](https://keypforev.ddns.net/assets/img/github/chat_message.png)
+![alt text](images/chat_message.png)
 ## Convert Romaji to Kanji
 This brings an automatic chat conversion Romaji to Kanji like this.<br>
-![alt text](https://keypforev.ddns.net/assets/img/github/chat_conv.png)
+![alt text](images/chat_conv.png)
 ## Velocity Command list
 ### `/hub`
 ### `/fmcp hub`
@@ -22,7 +22,7 @@ Moving to hub server<br>
 ### `/fmcp cend`
 After executing, Velocity will be shutdown!<br>
 Before being shutdown, discord's embed editing like this.
-![alt text](https://keypforev.ddns.net/assets/img/github/proxy_shutdown.png)
+![alt text](images/proxy_shutdown.png)
 ### `/fmcp maintenance <status | switch> discord <true | false>`
 This enable server to be maintenance mode, which is that for example, it is openable for only Admin who has permission:group.super-admin, others disconnecting.<br>
 If arg5 sets "true", server can notify to Discord whether maintenance mode is true or not.<br>
@@ -36,10 +36,9 @@ In FMC Server, using python script for getting minecrafts' status<br>
 Moving to specific server as server command
 ### `/fmcp req <server>`
 Requesting to let server start-up to Admin through discord like this.<br>
-![alt text](https://keypforev.ddns.net/assets/img/github/req_button.png)
+![alt text](images/req_button.png)<br>
+If someone presses `YES` button, here will be like this.<br>
 ![alt text](images/reqsul_notification.png)
-In FMC Server, using python and php script for requesting to Discord<br>
->Here is [python and php scripts](https://github.com/bella2391/Discord_Button)
 ### `/fmcp start <server>`
 Let server start by bat file of windows
 ### `/fmcp cancel`
