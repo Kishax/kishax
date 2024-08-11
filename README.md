@@ -1,6 +1,11 @@
 # FMC Plugin
 ## Comment 
-This is able to use in both Velocity and Spigot.<br>But this is created for myself for my server.<br>So this plugin is maybe good for plugin developers.<br>Freely to edit!<br>
+This is able to use in both Velocity and Spigot.<br>
+But this is created for myself for my server.<br>
+So this plugin is maybe good for plugin developers.<br>
+Freely to edit!<br>
+A mod with similar functionality to spigot is currently under development.<br>
+[FMC-Fabric-Mod](https://github.com/bella2391/FMC-Plugin/tree/fabric)
 ## Velocity Command list
 ### `/hub`
 ### `/fmcp hub`
