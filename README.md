@@ -11,7 +11,7 @@ For Velocity Server, Velocity Server notifys Embed's message or plain-text-messa
 When server switching, joining, disconnecting like this.<br>
 ![alt text](images/event_message.png)
 When chatting like this.<br>
-![alt text](images/chat_message.png)
+![alt text](images/chat_message2.png)
 ## Convert Romaji to Kanji
 This brings an automatic chat conversion Romaji to Kanji like this.<br>
 ![alt text](images/chat_conv.png)
