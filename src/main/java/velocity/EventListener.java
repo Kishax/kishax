@@ -45,7 +45,7 @@ public class EventListener
 	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs, ismente};
 	public PreparedStatement ps = null;
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
-	
+
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
