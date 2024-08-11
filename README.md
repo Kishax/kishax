@@ -7,7 +7,7 @@ Freely to edit!<br>
 A mod with similar functionality to spigot is currently under development.<br>
 [FMC-Fabric-Mod](https://github.com/bella2391/FMC-Plugin/tree/fabric)
 ## Linkage to Discord
-For Velocity Server, Velocity Server notifys Embed's message or plane-text-message under each events.<br>
+For Velocity Server, Velocity Server notifys Embed's message or plain-text-message under each events.<br>
 When server switching, joining, disconnecting like this.<br>
 ![alt text](images/event_message.png)
 When chatting like this.<br>
@@ -47,11 +47,17 @@ Let server start by bat file of windows
 Only sending "canceled event"
 ### `/fmcp conv`
 Switching converting type of Romaji to Kanji.
+### `/fmcp chat <switch | status>`
+Switching the way of sending chating message to Discord. <br>
+There are Embed editing type or Plane text message type.<br>
+* Embed editing type<br>
+![alt text](images/embed_editing_type.png)<br>
+* Plane text message type<br>
+![alt text](images/plain_text_message_type.png)<br>
 ### `/fmcp debug`
 Switching debug mode. In details, this is only replacing config value each other. For example, Discord.ChannelId and Debug.ChannelId.
 ### `/fmcp reload`
 Reloading configuration.
-
 ## Socket Server
 Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
 ### Reason
