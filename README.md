@@ -8,12 +8,12 @@ A mod with similar functionality to spigot is currently under development.<br>
 [FMC-Fabric-Mod](https://github.com/bella2391/FMC-Plugin/tree/fabric)
 ## Linkage to Discord
 For Velocity Server, Velocity Server notifys Embed's message or plane-text-message under each events.<br>
-When server switching, joining, disconnecting like this.
+When server switching, joining, disconnecting like this.<br>
 ![alt text](https://keypforev.ddns.net/assets/img/github/event_message.png)
-When chatting like this.
+When chatting like this.<br>
 ![alt text](https://keypforev.ddns.net/assets/img/github/chat_message.png)
 ## Convert Romaji to Kanji
-This brings an automatic chat conversion Romaji to Kanji like this.
+This brings an automatic chat conversion Romaji to Kanji like this.<br>
 ![alt text](https://keypforev.ddns.net/assets/img/github/chat_conv.png)
 ## Velocity Command list
 ### `/hub`
