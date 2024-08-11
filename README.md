@@ -9,7 +9,7 @@ A mod with similar functionality to spigot is currently under development.<br>
 ## Linkage to Discord
 For Velocity Server, Velocity Server notifys Embed's message or plain-text-message under each events.<br>
 When server switching, joining, disconnecting like this.<br>
-![alt text](images/event_message.png)
+![alt text](images/event_message.png)<br>
 When chatting like this.<br>
 ![alt text](images/chat_message2.png)
 ## Convert Romaji to Kanji
