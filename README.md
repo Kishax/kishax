@@ -50,9 +50,9 @@ Switching converting type of Romaji to Kanji.
 ### `/fmcp chat <switch | status>`
 Switching the way of sending chating message to Discord. <br>
 There are Embed editing type or Plane text message type.<br>
-* Embed editing type<br>
+* Embed editing type<br> (Using Bot)
 ![alt text](images/embed_editing_type.png)<br>
-* Plane text message type<br>
+* Plane text message type (Using Webhook)<br>
 ![alt text](images/plain_text_message_type.png)<br>
 ### `/fmcp debug`
 Switching debug mode. In details, this is only replacing config value each other. For example, Discord.ChannelId and Debug.ChannelId.
