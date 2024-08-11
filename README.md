@@ -35,7 +35,9 @@ In FMC Server, using python script for getting minecrafts' status<br>
 ### `/fmcp stp <server>`
 Moving to specific server as server command
 ### `/fmcp req <server>`
-Requesting to let server start-up to Admin through discord and python<br>
+Requesting to let server start-up to Admin through discord like this.<br>
+![alt text](https://keypforev.ddns.net/assets/img/github/req_button.png)
+![alt text](images/reqsul_notification.png)
 In FMC Server, using python and php script for requesting to Discord<br>
 >Here is [python and php scripts](https://github.com/bella2391/Discord_Button)
 ### `/fmcp start <server>`
@@ -44,6 +46,11 @@ Let server start by bat file of windows
 Only sending "canceled event"
 ### `/fmcp conv`
 Switching converting type of Romaji to Kanji.
+### `/fmcp debug`
+Switching debug mode. In details, this is only replacing config value each other. For example, Discord.ChannelId and Debug.ChannelId.
+### `/fmcp reload`
+Reloading configuration.
+
 ## Socket Server
 Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
 ### Reason
