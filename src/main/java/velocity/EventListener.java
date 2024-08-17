@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +48,6 @@ public class EventListener
 	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs, ismente};
 	public PreparedStatement ps = null;
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
-
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -60,6 +62,8 @@ public class EventListener
 	private final RomajiConversion rc;
 	private final MessageEditorInterface discordME;
 	private ServerInfo serverInfo = null;
+	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
 	
 	@Inject
 	public EventListener
@@ -334,6 +338,22 @@ public class EventListener
 	public void onServerSwitch(ServerConnectedEvent e)
 	{
 		Player player = e.getPlayer();
+		if(!disconnectTasks.isEmpty())
+		{
+			for(Player disconnectPlayer : disconnectTasks.keySet())
+			{
+				if(disconnectPlayer.getUniqueId().equals(player.getUniqueId()))
+				{
+					disconnectTasks.remove(disconnectPlayer);
+				}
+			}
+		}
+		
+		/*if (disconnectTasks.containsKey(player)) 
+        {
+			disconnectTasks.remove(player);
+        }*/
+		
 		RegisteredServer serverConnection = e.getServer();
         ServerInfo serverInfo = serverConnection.getServerInfo();
         Optional <RegisteredServer> previousServerInfo = e.getPreviousServer();
@@ -512,19 +532,28 @@ public class EventListener
 	            			}
 	            		}
 	            		
-	            		if(beforejoin_sa_minute>=config.getInt("Interval.Login",0))
-	    				{
-	    					if (previousServerInfo.isPresent())
-	    			        {
-	    						// どこからか移動してきたとき
-	    						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
-	    			        }
-	    					else
-	    			        {
-	    			        	// 1回目のどこかのサーバーに上陸したとき
-	    						discordME.AddEmbedSomeMessage("Join", player, serverInfo);
-	    			        }
-	    				}
+	            		// AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
+	            		if(EventListener.PlayerMessageIds.containsKey(player.getUniqueId().toString()))
+	            		{
+	            			// どこからか移動してきたとき
+    						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+	            		}
+	            		else
+	            		{
+	            			if(beforejoin_sa_minute>=config.getInt("Interval.Login",0))
+		    				{
+		    					if (previousServerInfo.isPresent())
+		    			        {
+		    						// どこからか移動してきたとき
+		    						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+		    			        }
+		    					else
+		    			        {
+		    			        	// 1回目のどこかのサーバーに上陸したとき
+		    						discordME.AddEmbedSomeMessage("Join", player, serverInfo);
+		    			        }
+		    				}
+	            		}
 	            	}
 	            }
 	            else
@@ -634,41 +663,54 @@ public class EventListener
     public void onPlayerDisconnect(DisconnectEvent e)
     {
     	Player player = e.getPlayer();
-    	
-        server.getScheduler().buildTask(plugin, () ->
-    	{
-			// プレイヤーが最後にいたサーバーを取得
-	        player.getCurrentServer().ifPresent(currentServer ->
-	        {
-	            RegisteredServer server = currentServer.getServer();
-	            ServerInfo serverInfo = server.getServerInfo();
-	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
-	            
-	            int playTime = pu.getPlayerTime(player, serverInfo);
-	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo, playTime);
-	            
-	            try
-	        	{
-	            	conn = db.getConnection();
-            		// add log
-            		String sql = "INSERT INTO mine_log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
-            		ps = conn.prepareStatement(sql);
-            		ps.setString(1, player.getUsername());
-            		ps.setString(2, player.getUniqueId().toString());
-            		ps.setString(3, serverInfo.getName());
-            		ps.setBoolean(4, true);
-            		ps.setInt(5, playTime);
-            		ps.executeUpdate();
-	        	}
-	        	catch (SQLException | ClassNotFoundException e1)
-	    		{
-	                e1.printStackTrace();
-	            }
-	        	finally
-	        	{
-	        		db.close_resorce(resultsets, conn, ps);
-	        	}
-	        });
-    	}).schedule();
+    	Runnable task = () -> {
+            // プレイヤーがReconnectしなかった場合に実行する処理
+    		server.getScheduler().buildTask(plugin, () ->
+        	{
+    			// プレイヤーが最後にいたサーバーを取得
+    	        player.getCurrentServer().ifPresent(currentServer ->
+    	        {
+    	            RegisteredServer server = currentServer.getServer();
+    	            ServerInfo serverInfo = server.getServerInfo();
+    	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
+    	            
+    	            int playTime = pu.getPlayerTime(player, serverInfo);
+    	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo, playTime);
+    	            
+    	            try
+    	        	{
+    	            	conn = db.getConnection();
+                		// add log
+                		String sql = "INSERT INTO mine_log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
+                		ps = conn.prepareStatement(sql);
+                		ps.setString(1, player.getUsername());
+                		ps.setString(2, player.getUniqueId().toString());
+                		ps.setString(3, serverInfo.getName());
+                		ps.setBoolean(4, true);
+                		ps.setInt(5, playTime);
+                		ps.executeUpdate();
+    	        	}
+    	        	catch (SQLException | ClassNotFoundException e1)
+    	    		{
+    	                e1.printStackTrace();
+    	            }
+    	        	finally
+    	        	{
+    	        		db.close_resorce(resultsets, conn, ps);
+    	        	}
+    	        });
+        	}).schedule();
+        };
+        
+        // タイマーを設定し、一定時間後に処理Aを実行
+        disconnectTasks.put(player, task);
+        scheduler.schedule(() -> 
+        {
+            if (disconnectTasks.containsKey(player)) 
+            {
+                task.run();
+                disconnectTasks.remove(player);
+            }
+        }, 10, TimeUnit.SECONDS);  // 10秒の遅延
     }
 }
