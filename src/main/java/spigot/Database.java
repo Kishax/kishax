@@ -24,11 +24,11 @@ public class Database
 	{
 		if
 		(
-			plugin.getConfig().getString("MySQL.Host").isEmpty() || 
-			plugin.getConfig().getInt("MySQL.Port") == 0 || 
-			plugin.getConfig().getString("MySQL.Database").isEmpty() || 
-			plugin.getConfig().getString("MySQL.User").isEmpty() || 
-			plugin.getConfig().getString("MySQL.Password").isEmpty()
+			plugin.getConfig().getString("MySQL.Host", "").isEmpty() || 
+			plugin.getConfig().getInt("MySQL.Port", 0) == 0 || 
+			plugin.getConfig().getString("MySQL.Database", "").isEmpty() || 
+			plugin.getConfig().getString("MySQL.User", "").isEmpty() || 
+			plugin.getConfig().getString("MySQL.Password", "").isEmpty()
 		)
 		{
 			return null;

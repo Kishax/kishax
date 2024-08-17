@@ -36,6 +36,7 @@ public class CommandForward
 			// コンソールから打った場合
 			allcmd = "?" + allcmd;
 		}
+		
 		ssw.startSocketClient(allcmd);
 	}
 }

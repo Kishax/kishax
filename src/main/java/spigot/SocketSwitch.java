@@ -25,14 +25,17 @@ public class SocketSwitch
 	}
 	
 	//Client side
-	public void startSocketClient(String sendmsg) {
-	    if (plugin.getConfig().getInt("Socket.Client_Port") == 0) {
+	public void startSocketClient(String sendmsg) 
+	{
+	    if (plugin.getConfig().getInt("Socket.Client_Port") == 0) 
+	    {
 	        plugin.getLogger().info("Client Socket is canceled for config value not given");
 	        return;
 	    }
 	    plugin.getLogger().info("Client Socket is Available");
 
-	    clientThread = new Thread(() -> {
+	    clientThread = new Thread(() -> 
+	    {
 	        sendMessage(sendmsg);
 	    });
 
