@@ -9,8 +9,7 @@
   "dependencies": [
       {
         "id": "luckperms",
-        "version": "5.4.137",
-        "scope": "provided"
+        "optional": false
       }
    ],
    "main": "velocity.Main"
