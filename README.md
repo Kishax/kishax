@@ -45,8 +45,8 @@ Here is minecraft's player chat area.<br>
 Let server start by bat file of windows
 ### `/fmcp cancel`
 Only sending "canceled event"
-### `/fmcp conv`
-Switching converting type of Romaji to Kanji.
+### `/fmcp conv <add | remove | reload | switch> [<add | remove>:key] [<add>:value] [<add>:<true | false>]`
+Switching converting type of Romaji to Kanji, reloading romaji.csv from `plugins/fmc/romaji.csv`. That of csv file has a lot of maps of conversion romaji to kana. Player can add/remove a word into the csv file. 
 ### `/fmcp chat <switch | status>`
 Switching the way of sending chating message to Discord. <br>
 There are Embed editing type or Plane text message type.<br>
@@ -81,7 +81,7 @@ Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
   socket_close($socket);
 ```
 ## Spigot Command list
-### `/fmc fv <cmd>`
+### `/fmc fv <player> <proxy_cmd>`
 Forwarding Velocity's command in Spigot
 ### `/fmc reload`
 Reloading config
