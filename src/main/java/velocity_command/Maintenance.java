@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -52,7 +53,7 @@ public class Maintenance
 		this.discordME = discordME;
 	}
 
-	public void execute(CommandSource source,String[] args)
+	public void execute(@NotNull CommandSource source,String[] args)
 	{
 		try
 		{

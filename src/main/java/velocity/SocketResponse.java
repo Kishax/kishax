@@ -1,7 +1,6 @@
 package velocity;
 
 import java.sql.Connection;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -21,8 +20,6 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import discord.DiscordInterface;
-import discord.EmojiManager;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -43,19 +40,17 @@ public class SocketResponse
 	private final BroadCast bc;
 	private final Database db;
 	private final ConsoleCommandSource console;
-	private final EmojiManager emoji;
-	private final DiscordInterface discord;
 	private final PlayerUtil pu;
 	private final MessageEditorInterface discordME;
-	private String mineName = null, reqType = null, reqServerName = null;
+	private String mineName = null;
 	
 	@Inject
 	public SocketResponse
 	(
 		Main plugin, ProxyServer server, Logger logger,
 		Config config, Luckperms lp, BroadCast bc, 
-		Database db, ConsoleCommandSource console, EmojiManager emoji, 
-		DiscordInterface discord, PlayerUtil pu, MessageEditorInterface discordME
+		Database db, ConsoleCommandSource console, PlayerUtil pu, 
+		MessageEditorInterface discordME
 	)
 	{
 		this.server = server;
@@ -65,8 +60,6 @@ public class SocketResponse
         this.bc = bc;
         this.db = db;
         this.console = console;
-        this.emoji = emoji;
-        this.discord = discord;
         this.pu = pu;
         this.discordME = discordME;
 	}
@@ -98,7 +91,7 @@ public class SocketResponse
                 	{
                 	    Player player = playerOptional.get();
                 	    
-                	    TextComponent component = null;
+                	    TextComponent component;
                     	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
                     	if(!DiscordInviteUrl.isEmpty())
                     	{
@@ -263,16 +256,16 @@ public class SocketResponse
         int textPartsSize = textParts.size();
         int urlsSize = urls.size();
         
+		TextComponent additionalComponent;
+		String getUrl;
         for (int i = 0; i < textPartsSize; i++)
         {
         	Boolean isText = false;
         	if(Objects.nonNull(textParts) && textPartsSize != 0)
         	{
-        		String text = null;
-        		text = textParts.get(i);
+        		String text = textParts.get(i);
         		
         		//if (text.contains("\\n")) text = text.replace("\\n", "\n");
-        		TextComponent additionalComponent = null;
         		additionalComponent = Component.text()
         				.append(Component.text(text))
         				.color(NamedTextColor.AQUA)
@@ -292,7 +285,6 @@ public class SocketResponse
         	//if(Objects.nonNull(urls) && urlsSize != 0)
         	if (i < urlsSize)
         	{
-        		String getUrl = null;
         		if (isText)
         		{
         			// textがなかったら、先頭の改行は無くす(=URLのみ)
@@ -307,7 +299,6 @@ public class SocketResponse
             		getUrl = "\n"+urls.get(i);
             	}
             	
-        		TextComponent additionalComponent = null;
         		additionalComponent = Component.text()
             				.append(Component.text(getUrl)
     						.color(NamedTextColor.GRAY)
@@ -320,11 +311,10 @@ public class SocketResponse
         }
         
         bc.broadCastMessage(component);
-		return;
     }
     
-    public void sendresponse(String res,ByteArrayDataOutput dataOut)
+    public void sendresponse(String res, ByteArrayDataOutput dataOut)
     {
-		return;
+		//
 	}
 }

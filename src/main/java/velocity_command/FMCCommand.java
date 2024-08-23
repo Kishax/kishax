@@ -1,10 +1,18 @@
 package velocity_command;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.slf4j.Logger;
+
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -14,13 +22,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.Main;
 import velocity.PlayerUtil;
-
-import org.slf4j.Logger;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 public class FMCCommand implements SimpleCommand
 {
@@ -108,72 +109,39 @@ public class FMCCommand implements SimpleCommand
 
         switch (subCommand.toLowerCase())
         {
-            case "debug":
-            	Main.getInjector().getInstance(Debug.class).execute(source, args);
-                break;
+            case "debug" -> Main.getInjector().getInstance(Debug.class).execute(source, args);
 
-            case "start":
-            	Main.getInjector().getInstance(StartServer.class).execute(source, args);
-                break;
+            case "start" -> Main.getInjector().getInstance(StartServer.class).execute(source, args);
 
-            case "ss":
-            	Main.getInjector().getInstance(SetServer.class).execute(source, args);
-                break;
+            case "ss" -> Main.getInjector().getInstance(SetServer.class).execute(source, args);
 
-            case "hub":
-            	Main.getInjector().getInstance(Hub.class).execute(invocation);
-                break;
+            case "hub" -> Main.getInjector().getInstance(Hub.class).execute(invocation);
 
-            case "retry":
-            	Main.getInjector().getInstance(Retry.class).execute(source, args);
-                break;
+            case "retry" -> Main.getInjector().getInstance(Retry.class).execute(source, args);
 
-            case "reload":
-            	Main.getInjector().getInstance(ReloadConfig.class).execute(source, args);
-                break;
+            case "reload" -> Main.getInjector().getInstance(ReloadConfig.class).execute(source, args);
 
-            case "stp":
-            	Main.getInjector().getInstance(ServerTeleport.class).execute(source, args);
-                break;
+            case "stp" -> Main.getInjector().getInstance(ServerTeleport.class).execute(source, args);
 
-            case "req":
-            	Main.getInjector().getInstance(Request.class).execute(source, args);
-                break;
+            case "req" -> Main.getInjector().getInstance(Request.class).execute(source, args);
 
-            case "cancel":
-            	Main.getInjector().getInstance(Cancel.class).execute(source, args);
-                break;
+            case "cancel" -> Main.getInjector().getInstance(Cancel.class).execute(source, args);
 
-            case "perm":
-            	Main.getInjector().getInstance(Perm.class).execute(source, args);
-                break;
+            case "perm" -> Main.getInjector().getInstance(Perm.class).execute(source, args);
                 
-            case "configtest":
-            	Main.getInjector().getInstance(ConfigTest.class).execute(source, args);
-            	break;
+            case "configtest" -> Main.getInjector().getInstance(ConfigTest.class).execute(source, args);
             	
-            case "maintenance":
-            	Main.getInjector().getInstance(Maintenance.class).execute(source, args);
-            	break;
+            case "maintenance" -> Main.getInjector().getInstance(Maintenance.class).execute(source, args);
             
-            case "conv":
-            	Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
-            	break;
+            case "conv" -> Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
             	
-            case "test":
-            	Main.getInjector().getInstance(Test.class).execute(source, args);
-            	break;
+            case "test" -> Main.getInjector().getInstance(Test.class).execute(source, args);
             	
-            case "chat":
-            	Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
-            	break;
+            case "chat" -> Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
             	
-            case "cend":
-            	Main.getInjector().getInstance(CEnd.class).execute(invocation);
-            	break;
+            case "cend" -> Main.getInjector().getInstance(CEnd.class).execute(invocation);
             	
-            default:
-                source.sendMessage(Component.text("Unknown subcommand: " + subCommand));
+            default -> source.sendMessage(Component.text("Unknown subcommand: " + subCommand));
         }
     }
 
@@ -186,99 +154,118 @@ public class FMCCommand implements SimpleCommand
 
         switch (args.length)
         {
-        	case 0:
-            case 1:
+        	case 0, 1->
+            {
                 for (String subcmd : subcommands)
                 {
                     if (!source.hasPermission("fmc.proxy." + subcmd)) continue;
                     ret.add(subcmd);
                 }
                 return ret;
-
-            case 2:
+            }
+            case 2->
+            {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
 
                 switch (args[0].toLowerCase())
                 {
-                    case "something":
+                    case "something" -> 
+                    {
                         for (String any : anylists)
                         {
                             ret.add(any);
                         }
                         return ret;
+                    }
 
-                    case "start":
-                    case "ss":
-                    case "req":
-                    case "stp":
-                        for (RegisteredServer server : server.getAllServers())
+                    case "start", "ss", "req", "stp" -> 
+                    {
+                        for (RegisteredServer registerServer : server.getAllServers())
                         {
-                            ret.add(server.getServerInfo().getName());
+                            ret.add(registerServer.getServerInfo().getName());
                         }
                         return ret;
-                        
-                    case "perm":
+                    }
+                    case "perm" -> 
+                    {
                         for (String args1 : Perm.args1)
                         {
                             ret.add(args1);
                         }
                         return ret;
-                        
-                    case "maintenance":
-                    	for (String args1 : Maintenance.args1)
-                    	{
-                    		ret.add(args1);
-                    	}
-                    	return ret;
-                    	
-                    case "chat":
-                    	for (String args1 : SwitchChatType.args1)
-                    	{
-                    		ret.add(args1);
-                    	}
-                    	return ret;
-                    	
-                    default:
+                    }
+                    case "maintenance" -> 
+                    {
+                        for (String args1 : Maintenance.args1)
+                        {
+                            ret.add(args1);
+                        }
+                        return ret;
+                    }
+                    case "chat" -> 
+                    {
+                        for (String args1 : SwitchChatType.args1)
+                        {
+                            ret.add(args1);
+                        }
+                        return ret;
+                    }
+                    default -> 
+                    {
                         return Collections.emptyList();
+                    }
                 }
-            case 3:
+            }
+            case 3->
+            {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
                 
                 switch (args[0].toLowerCase())
                 {
-                	case "perm":
+                	case "perm"->
+                    {
                 		switch (args[1].toLowerCase())
                         {
-                            case "add":
-                            case "remove":
+                            case "add", "remove" -> 
+                            {
                                 List<String> permS = config.getList("Permission.Short_Name");
                                 for (String permS1 : permS)
                                 {
                                     ret.add(permS1);
                                 }
                                 return ret;
+                            }
                         }
-                	case "maintenance":
+                    }
+
+                	case "maintenance"->
+                    {
                 		switch (args[1].toLowerCase())
                         {
-                            case "switch":
-                            	for(String args2 : Maintenance.args2)
-                            	{
-                            		ret.add(args2);
-                            	}
-                            	return ret;
+                            case "switch" -> 
+                            {
+                                for(String args2 : Maintenance.args2)
+                                {
+                                    ret.add(args2);
+                                }
+                                return ret;
+                            }
                         }
+                    }
                 }
-            case 4:
+            }
+            case 4->
+            {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
 
                 switch (args[0].toLowerCase())
                 {
-                	case "perm":
+                	case "perm"->
+                    {
                 		switch (args[1].toLowerCase())
                         {
-                            case "add":
-                            case "remove":
+                            case "add","remove"->
+                            {
                             	pu.loadPlayers(); // プレイヤーリストをロード
                                 List<String> permS = config.getList("Permission.Short_Name");
                                 
@@ -290,22 +277,31 @@ public class FMCCommand implements SimpleCommand
                                     }
                                 }
                                 return ret;
+                            }
                         }
-                	case "maintenance":
+                    }
+                	case "maintenance"->
+                    {
                 		switch (args[1].toLowerCase())
                         {
-                            case "switch":
+                            case "switch"->
+                            {
                             	switch (args[2].toLowerCase())
                             	{
-                            		case "discord":
+                            		case "discord"->
+                                    {
                             			for(String args3 : Maintenance.args3)
                                     	{
                                     		ret.add(args3);
                                     	}
                                     	return ret;
+                                    }
                             	}
+                            }
                         }
+                    }
                 }
+            }
         }
         return Collections.emptyList();
     }

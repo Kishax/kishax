@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Random;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -25,11 +26,9 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.DatabaseInterface;
-import velocity.Main;
 
 public class SetServer
 {
-	private final Main plugin;
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -41,16 +40,15 @@ public class SetServer
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public SetServer(Main plugin,ProxyServer server, Logger logger, Config config, DatabaseInterface db)
+	public SetServer(ProxyServer server, Logger logger, Config config, DatabaseInterface db)
 	{
-		this.plugin = plugin;
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
 	}
 	
-	public void execute(CommandSource source,String[] args)
+	public void execute(@NotNull CommandSource source,String[] args)
 	{
 		if (source instanceof Player)
 		{

@@ -7,13 +7,11 @@ import com.google.inject.Inject;
 
 public class ServerHomeDir
 {
-	private final common.Main plugin;
 	private final File dataFolder;
 	
 	@Inject
 	public ServerHomeDir(common.Main plugin)
 	{
-		this.plugin = plugin;
 		this.dataFolder = plugin.getDataFolder();
 	}
 	

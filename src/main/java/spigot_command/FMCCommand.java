@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.bukkit.ChatColor;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.potion.PotionEffectType;
@@ -21,9 +20,9 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import spigot.Main;
 
-public class FMCCommand implements CommandExecutor,TabExecutor
+public class FMCCommand implements TabExecutor
 {
-	private List<String> subcommands = new ArrayList<>(Arrays.asList("reload","potion","medic","fly","test","fv","mcvc"));
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","test","fv","mcvc"));
 	
 	@Inject
 	public FMCCommand()
@@ -34,6 +33,8 @@ public class FMCCommand implements CommandExecutor,TabExecutor
 	@Override
     public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
 	{
+		if(sender == null) return true;
+
     	if (args.length == 0 || !subcommands.contains(args[0].toLowerCase()))
     	{
     		BaseComponent[] component =
@@ -70,37 +71,34 @@ public class FMCCommand implements CommandExecutor,TabExecutor
     	}
     	
 
-      switch (args[0].toLowerCase())
-      {
-      	  case "fv":
-      		  Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
-      		  return true;
-      		  
-	      case "reload":
-	    	  Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);
-	    	  return true;
-	    	  
-	      case "potion":
-	    	  Main.getInjector().getInstance(Potion.class).execute(sender, cmd, label, args);
-	    	  return true;
-	    	  
-	      case "medic":
-	    	  Main.getInjector().getInstance(Medic.class).execute(sender, cmd, label, args);
-	    	  return true;
-	    	  
-	      case "fly":
-	    	  Main.getInjector().getInstance(Fly.class).execute(sender, cmd, label, args);
-	    	  return true;
-	    	  
-	      case "test":
-	    	  Main.getInjector().getInstance(Test.class).execute(sender, cmd, label, args);
-	    	  return true;
-	    	  
-	      case "mcvc":
-	    	  Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
-	    	  return true; 
-	      }
-	      return true;
+		switch (args[0].toLowerCase())
+		{
+			case "fv" -> 
+			{
+				Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
+				return true;
+			}
+				
+			case "reload" -> 
+			{
+				Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);
+				return true;
+			}
+				
+			case "test" -> 
+			{
+				Main.getInjector().getInstance(Test.class).execute(sender, cmd, label, args);
+				return true;
+			}
+				
+			case "mcvc" -> 
+			{
+				Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
+				return true; 
+			}
+		}
+
+		return true;
 	}
 
     @SuppressWarnings("deprecation")
@@ -111,31 +109,39 @@ public class FMCCommand implements CommandExecutor,TabExecutor
 
     	switch (args.length)
     	{
-	    	case 1:
-	    		for (String subcmd : subcommands)
-	    		{
-	    			if (!sender.hasPermission("fmc." + subcmd)) continue;
-	      
-	    			ret.add(subcmd);
-	    		}
-	    		return StringUtil.copyPartialMatches(args[0].toLowerCase(), ret, new ArrayList<String>());
+	    	case 1 -> 
+			{
+				for (String subcmd : subcommands)
+				{
+					if (!sender.hasPermission("fmc." + subcmd)) continue;
+					
+					ret.add(subcmd);
+				}
+				return StringUtil.copyPartialMatches(args[0].toLowerCase(), ret, new ArrayList<>());
+			}
 	    	
-	    	case 2:
-	    		if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
-	    		switch (args[0].toLowerCase())
-	    		{
-	    			case "potion":
-	    				for (PotionEffectType potion : PotionEffectType.values())
-	    				{
-	    					if (!sender.hasPermission("fmc.potion." + potion.getName().toLowerCase())) continue;    		   
-	    					ret.add(potion.getName());
-	    				}
-	    				return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<String>());
-	    			case "test":
-	    				
-	    				return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<String>());
-	    		}
+	    	case 2 -> 
+			{
+				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
+				switch (args[0].toLowerCase())
+				{
+					case "potion" -> 
+					{
+						for (PotionEffectType potion : PotionEffectType.values())
+						{
+							if (!sender.hasPermission("fmc.potion." + potion.getName().toLowerCase())) continue;
+							ret.add(potion.getName());
+						}
+						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
+					}
+					case "test" -> 
+					{
+						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
+					}
+				}
+            }
     	}
+
     	return Collections.emptyList();
     }
 }

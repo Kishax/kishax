@@ -8,18 +8,19 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
-import velocity.Config;
-import velocity.Database;
-import velocity.DatabaseInterface;
-import velocity.Main;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import velocity.Config;
+import velocity.DatabaseInterface;
+import velocity.Main;
 
 public class ServerTeleport
 {
@@ -38,7 +39,7 @@ public class ServerTeleport
 		this.db = db;
 	}
     
-    public void execute(CommandSource source,String[] args)
+    public void execute(@NotNull CommandSource source,String[] args)
     {
         if (!(source instanceof Player))
         {

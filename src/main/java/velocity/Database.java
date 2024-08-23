@@ -5,8 +5,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -14,21 +12,23 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
-
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 public class Database implements DatabaseInterface
 {
 	private final Config config;
+	private final Logger logger;
     private Connection conn = null;
     public ResultSet mine_status = null;
 	public ResultSet[] resultsets = {mine_status};
     
     @Inject
-    public Database(Main plugin, ProxyServer server, Logger logger, Config config, ConsoleCommandSource console)
+    public Database
+	(
+		Main plugin, ProxyServer server, Logger logger, 
+		Config config, ConsoleCommandSource console
+	)
     {
+		this.logger = logger;
     	this.config = config;
     }
 
@@ -81,7 +81,11 @@ public class Database implements DatabaseInterface
 	                }
 			    	catch (SQLException e)
 			    	{
-	                    e.printStackTrace();
+						logger.error("A mysql close-resource error occurred: " + e.getMessage());
+						for (StackTraceElement element : e.getStackTrace()) 
+						{
+							logger.error(element.toString());
+						}
 	                }
 			    }
 			}
@@ -95,7 +99,11 @@ public class Database implements DatabaseInterface
             }
 			catch (SQLException e)
 			{
-                e.printStackTrace();
+                logger.error("A SQLException error occurred: " + e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) 
+				{
+					logger.error(element.toString());
+				}
             }
 		}
 		
@@ -107,7 +115,11 @@ public class Database implements DatabaseInterface
             }
 			catch (SQLException e)
 			{
-                e.printStackTrace();
+                logger.error("A SQLException error occurred: " + e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) 
+				{
+					logger.error(element.toString());
+				}
             }
 		}
 	}

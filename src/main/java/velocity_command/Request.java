@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -20,12 +21,12 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import discord.DiscordInterface;
 import discord.MessageEditorInterface;
-import velocity.BroadCast;
-import velocity.Config;
-import velocity.DatabaseInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import velocity.BroadCast;
+import velocity.Config;
+import velocity.DatabaseInterface;
 
 public class Request
 {
@@ -61,7 +62,7 @@ public class Request
 		this.discordME = discordME;
 	}
 
-	public void execute(CommandSource source,String[] args)
+	public void execute(@NotNull CommandSource source,String[] args)
 	{
 		if (source instanceof Player)
 		{

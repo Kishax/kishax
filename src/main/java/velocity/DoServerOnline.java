@@ -14,13 +14,13 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class DoServerOnline
 {
-	private final Config config;
     private Connection conn = null;
     private PreparedStatement ps = null;
     public ResultSet mine_status = null;
@@ -30,15 +30,14 @@ public class DoServerOnline
     private final ProxyServer server;
     private final ConsoleCommandSource console;
     private final Database db;
-    private Map<String, Integer> serverConfigInfo = new HashMap<>();
-    private Map<String, Integer> serverDBInfo = new HashMap<>();
+    private final Map<String, Integer> serverConfigInfo = new HashMap<>();
+    private final Map<String, Integer> serverDBInfo = new HashMap<>();
     
     @Inject
-    public DoServerOnline(Main plugin, ProxyServer server, Logger logger, Config config, Database db, ConsoleCommandSource console)
+    public DoServerOnline(Main plugin, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console)
     {
     	this.plugin = plugin;
     	this.logger = logger;
-    	this.config = config;
     	this.db = db;
     	this.server = server;
     	this.console = console;
@@ -74,10 +73,11 @@ public class DoServerOnline
 				ps.setString(2, "Proxy");
 				ps.executeUpdate();
 				
-        		for (RegisteredServer server : server.getAllServers())
+        		for (RegisteredServer registeredServer : server.getAllServers())
                 {
-					String serverConfigName = server.getServerInfo().getName();
-                	int serverConfigPort = server.getServerInfo().getAddress().getPort();
+					ServerInfo serverInfo = registeredServer.getServerInfo();
+					String serverConfigName = serverInfo.getName();
+                	int serverConfigPort = serverInfo.getAddress().getPort();
                 	serverConfigInfo.put(serverConfigName, serverConfigPort);
                 }
 				
@@ -177,7 +177,11 @@ public class DoServerOnline
         	}
         	catch (ClassNotFoundException | SQLException e1)
     		{
-    			e1.printStackTrace();
+    			logger.error("A ClassNotFoundException | SQLException error occurred: " + e1.getMessage());
+				for (StackTraceElement element : e1.getStackTrace()) 
+				{
+					logger.error(element.toString());
+				}
     		}
     		finally
     		{

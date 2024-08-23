@@ -1,16 +1,8 @@
 package velocity;
 
-import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.plugin.annotation.DataDirectory;
-import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -18,11 +10,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+
+import com.google.inject.Inject;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+
 public class Config
 {
-	private ProxyServer server;
     private Config instance = null;
     private Map<String, Object> config = null;
+    private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
     
@@ -87,9 +88,9 @@ public class Config
                 addContents += "\n\n    Proxy:\n        Memory: ";
                 
                 // 例: サーバー名を追加する部分
-                for (RegisteredServer server : server.getAllServers())
+                for (RegisteredServer registeredServer : server.getAllServers())
                 {
-                	addContents += "\n    "+server.getServerInfo().getName()+":";
+                	addContents += "\n    "+registeredServer.getServerInfo().getName()+":";
                 	addContents += "\n        Memory: ";
                 	addContents += "\n        Bat_Path: \"\"";
                 }
@@ -176,14 +177,7 @@ public class Config
 
             if (i == keys.length - 1)	return value;
 
-            if (value instanceof Map) 
-            {
-                currentMap = (Map<String, Object>) value;
-            }
-            else
-            {
-                return null; // キーがマップではない場合
-            }
+            currentMap = getStringObjectMap(value);
         }
         return null;
     }
@@ -221,9 +215,9 @@ public class Config
     public int getInt(String path, int defaultValue)
     {
         Object value = getNestedValue(path);
-        if (value instanceof Number)
+        if (value instanceof Number number)
         {
-            return ((Number) value).intValue();
+            return number.intValue();
         }
         return defaultValue;
     }
@@ -237,9 +231,9 @@ public class Config
     public long getLong(String path, long defaultValue)
     {
         Object value = getNestedValue(path);
-        if (value instanceof Number)
+        if (value instanceof Number number)
         {
-            return ((Number) value).longValue();
+            return number.longValue();
         }
         return defaultValue;
     }
@@ -260,5 +254,80 @@ public class Config
     public List<String> getList(String path)
     {
         return getList(path, Collections.emptyList());
+    }
+
+    public Map<String, Object> getStringObjectMap(String key)
+    {
+        Object mapObject = getConfig().get(key);
+        if(mapObject instanceof Map<?, ?> tempMap)
+        {
+            tempMap = (Map<?, ?>) mapObject;
+            // Mapのキーと値が正しい型であるかを確認
+            boolean isStringObjectMap = true;
+            for (Map.Entry<?, ?> entry : tempMap.entrySet()) 
+            {
+                if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof Object)) 
+                {
+                    isStringObjectMap = false;
+                    break;
+                }
+            }
+
+            if(isStringObjectMap)
+            {
+                @SuppressWarnings("unchecked") // checked by above, So this annotation doen not need
+                Map<String, Object> mapConfig = (Map<String, Object>) mapObject;
+                return mapConfig;
+            }
+        }
+
+        return null;
+    }
+
+    public Map<String, Object> getStringObjectMap(Object mapObject)
+    {
+        if(mapObject instanceof Map<?, ?> tempMap)
+        {
+            tempMap = (Map<?, ?>) mapObject;
+            // Mapのキーと値が正しい型であるかを確認
+            boolean isStringObjectMap = true;
+            for (Map.Entry<?, ?> entry : tempMap.entrySet()) 
+            {
+                if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof Object)) 
+                {
+                    isStringObjectMap = false;
+                    break;
+                }
+            }
+
+            if(isStringObjectMap)
+            {
+                @SuppressWarnings("unchecked") // checked by above, So this annotation doen not need
+                Map<String, Object> mapConfig = (Map<String, Object>) mapObject;
+                return mapConfig;
+            }
+        }
+
+        return null;
+    }
+
+    public Map<String, Object> getStringObjectMap2(String key)
+    {
+        Object mapObject = getConfig().get(key);
+        if(mapObject instanceof Map<?, ?> tempMap)
+        {
+            tempMap = (Map<?, ?>) mapObject;
+            boolean isStringObjectMap = tempMap.keySet().stream().allMatch(k -> k instanceof String) &&
+                                tempMap.values().stream().allMatch(v -> v instanceof Object);
+            
+            if(isStringObjectMap)
+            {
+                @SuppressWarnings("unchecked") // checked by above, So this annotation doen not need
+                Map<String, Object> mapConfig = (Map<String, Object>) mapObject;
+                return mapConfig;
+            }
+        }
+        
+        return null;
     }
 }

@@ -7,7 +7,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
@@ -18,7 +20,6 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
-import velocity.Database;
 import velocity.DatabaseInterface;
 import velocity.Luckperms;
 import velocity.Main;
@@ -27,6 +28,7 @@ import velocity.Main;
 public class Perm
 {
 	private final Config config;
+	private final Logger logger;
 	private final Luckperms lp;
 	private final DatabaseInterface db;
 	
@@ -39,23 +41,29 @@ public class Perm
 	public static List<String> permD = null;
 	
 	@Inject
-	public Perm(Main plugin,ProxyServer server, Config config, Luckperms lp, DatabaseInterface db)
+	public Perm
+	(
+		Main plugin, ProxyServer server, Config config, 
+		Logger logger, Luckperms lp, DatabaseInterface db
+	)
 	{
 		this.config = config;
+		this.logger = logger;
 		this.lp = lp;
 		this.db = db;
 	}
 	
-	public void execute(CommandSource source,String[] args)
+	public void execute(@NotNull CommandSource source,String[] args)
 	{
-		List<String> permS = config.getList("Permission.Short_Name");
-		List<String> permD = config.getList("Permission.Detail_Name");
+		permS = config.getList("Permission.Short_Name");
+		permD = config.getList("Permission.Detail_Name");
 		
 		if(!(permS.size() == permD.size()))
 		{
 			source.sendMessage(Component.text("コンフィグのDetail_NameとShort_Nameの要素の数を同じにしてください。").color(NamedTextColor.RED));
 			return;
 		}
+
         try
         {
         	conn = db.getConnection();
@@ -67,19 +75,20 @@ public class Perm
 			boolean containsPlayer = false;
 			boolean ispermindb = false;
 	        
-			String permD1 = "";
+			String permD1;
 			
 	        switch(args.length)
 	        {
-	        	case 0:
-	        	case 1:
+	        	case 0,1->
+				{
 	        		source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
-	            	break;
-	            	
-	        	case 2:
+				}
+	        	case 2->
+				{
         			switch(args[1].toLowerCase())
 	        		{
-	        			case "list":
+	        			case "list"->
+						{
 	        				TextComponent component = Component.text()
 	        					.append(Component.text("FMC Specific Permission List")
 		    			    	.color(NamedTextColor.GOLD)
@@ -102,7 +111,7 @@ public class Perm
 		        					
 	        		        		if(isperm.next())
 	        		        		{
-	        		        			TextComponent additionalComponent = null;
+	        		        			TextComponent additionalComponent;
 	        		        			additionalComponent = Component.text()
 	        		        						.append(Component.text("\n"+minecrafts.getString("name"))
 	        		        							.color(NamedTextColor.WHITE))
@@ -117,7 +126,7 @@ public class Perm
 	        				
 	        				if(!(ispermindb))
 	        				{
-	        					TextComponent additionalComponent = null;
+	        					TextComponent additionalComponent;
 	        					additionalComponent = Component.text()
 	        							.append(Component.text("\nコンフィグで設定されているすべての権限が見つかりませんでした。"))
         								.color(NamedTextColor.GREEN)
@@ -126,15 +135,15 @@ public class Perm
 	        				}
 	        				
 	        				source.sendMessage(component);
-	        				break;
-	        				
-	        			default:
+						}
+	        			default->
+						{
 	        				source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
-	        				break;
+						}
 	        		}
-        			break;
-        			
-	        	case 3:
+				}
+	        	case 3->
+				{
 	        		// 以下はパーミッションが所持していることが確認されている上で、permというコマンドを使っているので、確認の必要なし
 	        		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
 	        		if(!(args1.contains(args[1].toLowerCase())))
@@ -150,9 +159,9 @@ public class Perm
         			}
 	        		
 	        		source.sendMessage(Component.text("対象のプレイヤー名を入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
-        			break;
-        			
-	        	case 4:
+				}
+	        	case 4->
+				{
         			if(!(args1.contains(args[1].toLowerCase())))
         			{
         				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
@@ -194,7 +203,8 @@ public class Perm
     		        
     				switch(args[1].toLowerCase())
 	        		{
-        				case "add":
+        				case "add"->
+						{
         					if(ispermindb)
         					{
         						source.sendMessage(Component.text(args[3]+"はすでにpermission: "+permD1+"を持っているため、追加できません。").color(NamedTextColor.RED));
@@ -202,8 +212,9 @@ public class Perm
         					}
         					SetAdmin(permD1,args[3],true,source);
         					break;
-        					
-        				case "remove":
+        				}	
+        				case "remove"->
+						{
         					if(!(ispermindb))
         					{
         						source.sendMessage(Component.text(args[3]+"はpermission: "+permD1+"を持っていないため、除去できません。").color(NamedTextColor.RED));
@@ -211,24 +222,27 @@ public class Perm
         					}
         					SetAdmin(permD1,args[3],false,source);
         					break;
+						}
 	        		}
-	        		break;
-	        		
-	        	default:
+				}
+	        	default->
+				{
 	        		source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
-	        		break;
+				}
 	        }
-	        return;
         }
         catch (SQLException | ClassNotFoundException e)
         {
-        	e.printStackTrace();
+        	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
         finally
         {
         	db.close_resorce(resultsets, conn, ps);
         }
-		return;
 	}
 	
 	public void SetAdmin(String permission,String name,Boolean bool,CommandSource source)
@@ -276,7 +290,11 @@ public class Perm
 		}
 		catch (SQLException | ClassNotFoundException e)
         {
-        	e.printStackTrace();
+        	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
 	}
 }

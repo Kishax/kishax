@@ -1,17 +1,10 @@
 package discord;
 
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Emote;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Icon;
-import net.dv8tion.jda.api.entities.MessageChannel;
-import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
-import velocity.Config;
-import velocity.Database;
-
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,12 +20,21 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Emote;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Icon;
+import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
+import velocity.Config;
+import velocity.Database;
+
 public class EmojiManager
 {
 	private Connection conn = null;
 	private PreparedStatement ps = null;
 	private ResultSet minecrafts = null;
-	private ResultSet[] resultsset = {minecrafts};
+	private final ResultSet[] resultsset = {minecrafts};
 	
     private JDA jda = null;
     private String emojiId = null;
@@ -48,7 +50,7 @@ public class EmojiManager
         this.db = db;
     }
     
-    public CompletableFuture<String> createOrgetEmojiId(String emojiName, String imageUrl)
+    public CompletableFuture<String> createOrgetEmojiId(String emojiName, String imageUrl) throws URISyntaxException
     {
     	CompletableFuture<String> future = new CompletableFuture<>();
     	
@@ -66,7 +68,7 @@ public class EmojiManager
             return future;
         }
         
-    	String guildId = Long.valueOf(config.getLong("Discord.GuildId")).toString();
+    	String guildId = Long.toString(config.getLong("Discord.GuildId"));
         Guild guild = jda.getGuildById(guildId);
         if (Objects.isNull(guild))
         {
@@ -76,6 +78,7 @@ public class EmojiManager
         }
         
         // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
+        @SuppressWarnings("null")
         Optional<Emote> existingEmote = guild.getEmotes().stream()
             .filter(emote -> emote.getName().equals(emojiName))
             .findFirst();
@@ -95,36 +98,42 @@ public class EmojiManager
                 return future;
         	}
         		
-        	try
+        	try 
             {
-                //logger.info("Downloading image from URL: " + imageUrl);
-                
-                BufferedImage bufferedImage = ImageIO.read(new URL(imageUrl));
+                URI uri = new URI(imageUrl);
+                URL url = uri.toURL();
+            
+                BufferedImage bufferedImage = ImageIO.read(url);
+                if (Objects.isNull(bufferedImage))
+                {
+                    logger.error("Failed to read image from URL: " + imageUrl);
+                    future.complete(null);
+                    return future;
+                }
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(bufferedImage, "png", baos);
                 byte[] imageBytes = baos.toByteArray();
                 Icon icon = Icon.from(imageBytes);
-
+            
                 // Create the emote with the specified name and icon
                 AuditableRestAction<Emote> action = guild.createEmote(emojiName, icon);
                 action.queue(
                     success -> 
                     {
-                    	logger.info(emojiName + "を絵文字に追加しました。");
-                    	emojiId = success.getId(); // 絵文字IDを取得
-                        //logger.info("Emoji ID: " + emojiId);
+                        logger.info(emojiName + "を絵文字に追加しました。");
+                        emojiId = success.getId(); // 絵文字IDを取得
                         future.complete(emojiId);
                     },
-                    failure ->
+                    failure -> 
                     {
-                    	logger.error("Failed to create emoji: " + failure.getMessage());
-                    	future.complete(null);
+                        logger.error("Failed to create emoji: " + failure.getMessage());
+                        future.complete(null);
                     }
                 );
-            }
-            catch (IOException e)
+            } 
+            catch (IOException | URISyntaxException e) 
             {
-            	logger.error("A createEmoji error occurred: " + e.getMessage());
+                logger.error("A createEmoji error occurred: " + e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) 
                 {
                     logger.error(element.toString());
@@ -200,7 +209,11 @@ public class EmojiManager
 
                     try
                     {
-                        BufferedImage bufferedImage = ImageIO.read(new URL(imageUrl));
+                        //logger.info("Downloading image from URL: " + imageUrl);
+                        
+                        URI uri = new URI(imageUrl);
+                        URL url = uri.toURL();
+                        BufferedImage bufferedImage = ImageIO.read(url);
                         if (Objects.isNull(bufferedImage))
                         {
                             logger.error("Failed to read image from URL: " + imageUrl);
@@ -233,7 +246,7 @@ public class EmojiManager
                         	ps.executeUpdate();
                         }
                     }
-                    catch (IOException e)
+                    catch (IOException | URISyntaxException e)
                     {
                         logger.error("Failed to download image: " + e.getMessage());
                         for (StackTraceElement element : e.getStackTrace())
@@ -246,7 +259,6 @@ public class EmojiManager
         }
         catch (SQLException | ClassNotFoundException e)
         {
-            // スタックトレースをログに出力
             logger.error("A checkAndAddEmojis error occurred: " + e.getMessage());
             for (StackTraceElement element : e.getStackTrace())
             {
@@ -261,6 +273,18 @@ public class EmojiManager
     
     public CompletableFuture<String> createOrgetEmojiId(String emojiName)
     {
-    	return createOrgetEmojiId(emojiName, null);
+    	try 
+        {
+            return createOrgetEmojiId(emojiName, null);
+        } 
+        catch (URISyntaxException e) 
+        {
+            logger.error("A URISyntaxException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace())
+            {
+                logger.error(element.toString());
+            }
+            return null;
+        }
     }
 }

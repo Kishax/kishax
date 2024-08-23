@@ -1,22 +1,27 @@
 package velocity;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+
+import com.google.inject.Inject;
+
 public class RomaToKanji
 {
     private static final Map<String, String> ROMA_TO_KANA_MAP = new LinkedHashMap<>();
-    
+    private final Logger logger;
+	
     static {
     	ROMA_TO_KANA_MAP.put(".","。");
     	ROMA_TO_KANA_MAP.put("-","ー");
@@ -251,6 +256,12 @@ public class RomaToKanji
     	ROMA_TO_KANA_MAP.put("m","ん");
     }
 
+	@Inject
+	public RomaToKanji(Logger logger)
+	{
+		this.logger = logger;
+	}
+
     public String ConvRomaToKana(String word)
     {
     	// Map.Entryをリストに変換して逆順にソート
@@ -289,9 +300,13 @@ public class RomaToKanji
             String kanji = parseKanjiFromJson(responseBody);
             return kanji;
         }
-        catch (Exception e)
+        catch (IOException | InterruptedException | URISyntaxException e)
         {
-            e.printStackTrace();
+            logger.error("An IOException | InterruptedException | URISyntaxException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
             return "";
         }
     }

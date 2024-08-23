@@ -34,7 +34,6 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import discord.DiscordEventListener;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -99,8 +98,8 @@ public class EventListener
 	    // プレイヤーの現在のサーバーを取得
         player.getCurrentServer().ifPresent(serverConnection ->
         {
-            RegisteredServer server = serverConnection.getServer();
-            serverInfo = server.getServerInfo();
+            RegisteredServer registeredServer = serverConnection.getServer();
+            serverInfo = registeredServer.getServerInfo();
             chatServerName = serverInfo.getName();
         });
         
@@ -245,8 +244,8 @@ public class EventListener
     		        if (Objects.nonNull(textParts) && textPartsSize != 0)
     		        {
     		            String text = textParts.get(i);
-    		            String kanaMessage = null;
-    		            String kanjiMessage = null;
+    		            String kanaMessage;
+    		            String kanjiMessage;
     		            if(isEnglish)
     		            {
     		            	// 英語
@@ -307,9 +306,9 @@ public class EventListener
     		    }
     		    
     		    discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext);
-    		    return;
     		}
-    		catch (Exception ex) {
+    		catch (Exception ex) 
+			{
     			// スタックトレースをログに出力
 	            logger.error("An onChat error occurred: " + ex.getMessage());
 	            for (StackTraceElement element : ex.getStackTrace()) 
@@ -355,7 +354,7 @@ public class EventListener
         }*/
 		
 		RegisteredServer serverConnection = e.getServer();
-        ServerInfo serverInfo = serverConnection.getServerInfo();
+        serverInfo = serverConnection.getServerInfo();
         Optional <RegisteredServer> previousServerInfo = e.getPreviousServer();
         
         if(Objects.isNull(serverInfo))
@@ -404,6 +403,7 @@ public class EventListener
 							);
 							return;
 						}
+
 						player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
 					}
 				}
@@ -526,6 +526,7 @@ public class EventListener
 	            					ps.executeUpdate();
 	            					
 	            					sql="DELETE from minecraft WHERE name=?;";
+									ps = conn.prepareStatement(sql);
 	            					ps.setString(1, yuyu.getString("name"));
 	            					ps.executeUpdate();
 	            				}
@@ -581,7 +582,6 @@ public class EventListener
 	    				return;
 	    			}
 	    			
-	    			TextComponent component = null;
                 	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
                 	if(!DiscordInviteUrl.isEmpty())
                 	{
@@ -643,7 +643,7 @@ public class EventListener
 				// Main.getInjector().getInstance(velocity.PlayerUtil.class).updatePlayers();
 				pu.updatePlayers();
 			}
-			catch (Exception e1)// SQLException | IOException | ClassNotFoundException
+			catch (ClassNotFoundException | SQLException e1)// SQLException | IOException | ClassNotFoundException
 			{
 				// スタックトレースをログに出力
 	            logger.error("An onConnection error occurred: " + e1.getMessage());
@@ -670,8 +670,8 @@ public class EventListener
     			// プレイヤーが最後にいたサーバーを取得
     	        player.getCurrentServer().ifPresent(currentServer ->
     	        {
-    	            RegisteredServer server = currentServer.getServer();
-    	            ServerInfo serverInfo = server.getServerInfo();
+    	            RegisteredServer registeredServer = currentServer.getServer();
+    	            serverInfo = registeredServer.getServerInfo();
     	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
     	            
     	            int playTime = pu.getPlayerTime(player, serverInfo);
@@ -692,7 +692,11 @@ public class EventListener
     	        	}
     	        	catch (SQLException | ClassNotFoundException e1)
     	    		{
-    	                e1.printStackTrace();
+    	                logger.error("A SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
+						for (StackTraceElement element : e1.getStackTrace()) 
+						{
+							logger.error(element.toString());
+						}
     	            }
     	        	finally
     	        	{

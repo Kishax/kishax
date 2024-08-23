@@ -1,5 +1,7 @@
 package velocity_command;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
@@ -16,7 +18,7 @@ public class ConfigTest
 		this.config = config;
 	}
 	
-	public void execute(CommandSource source, String[] args)
+	public void execute(@NotNull CommandSource source, String[] args)
 	{
 		if(config.getString("Debug.Test","").isEmpty())
 		{
@@ -25,6 +27,5 @@ public class ConfigTest
 		}
 		
 		source.sendMessage(Component.text(config.getString("Debug.Test")));
-		return;
 	}
 }

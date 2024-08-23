@@ -1,20 +1,19 @@
 package velocity;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Objects;
 
 import org.slf4j.Logger;
 
-import com.google.inject.Inject;
-
 public class BufferedSocketServerThread extends Thread
 {
-    private Socket socket;
     public Main plugin;
     public Logger logger;
     public SocketResponse sr;
+    private final Socket socket;
     
     public BufferedSocketServerThread(Socket socket, Main plugin, Logger logger, SocketResponse sr)
     {
@@ -24,6 +23,7 @@ public class BufferedSocketServerThread extends Thread
         this.sr = sr;
     }
 
+    @Override
     public void run()
     {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));)
@@ -41,7 +41,11 @@ public class BufferedSocketServerThread extends Thread
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            logger.error("An Exception error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
         finally
         {
@@ -52,9 +56,13 @@ public class BufferedSocketServerThread extends Thread
                 	socket.close();
                 }
             }
-            catch (Exception e)
+            catch (IOException e)
             {
-                e.printStackTrace();
+                logger.error("An IOException error occurred: " + e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) 
+                {
+                    logger.error(element.toString());
+                }
             }
         }
     }

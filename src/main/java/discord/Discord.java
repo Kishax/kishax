@@ -1,12 +1,10 @@
 package discord;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -18,10 +16,10 @@ import javax.security.auth.login.LoginException;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import club.minnced.discord.webhook.WebhookClient;
+import club.minnced.discord.webhook.send.WebhookMessage;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -29,7 +27,6 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import net.kyori.adventure.text.Component;
@@ -40,7 +37,6 @@ import velocity.Database;
 import velocity.Main;
 import velocity.PlayerUtil;
 import velocity_command.Request;
-import club.minnced.discord.webhook.send.WebhookMessage;
 
 public class Discord implements DiscordInterface
 {
@@ -127,7 +123,7 @@ public class Discord implements DiscordInterface
     public void sendRequestButtonWithMessage(String buttonMessage)
     {
     	if (config.getLong("Discord.AdminChannelId", 0) == 0 || !isDiscord) return;
-		channelId = Long.valueOf(config.getLong("Discord.AdminChannelId")).toString();
+		channelId = Long.toString(config.getLong("Discord.AdminChannelId"));
 		
     	channel = jda.getTextChannelById(channelId);
         if (Objects.isNull(channel)) return;
@@ -149,26 +145,20 @@ public class Discord implements DiscordInterface
             	{
             		String buttonMessage2 = message.getContentRaw();
                 	
-                	String pattern = null, sql = null, reqServerName = null, 
-                			reqPlayerName = null, batchFilePath = null, reqPlayerUUID = null;
-                    Pattern compiledPattern = null;
-                    Matcher matcher = null;
-                    ProcessBuilder processBuilder = null;
-                	
             		// プレイヤー名・サーバー名、取得
-                	pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
-                    compiledPattern = Pattern.compile(pattern);
-                    matcher = compiledPattern.matcher(buttonMessage2);
+                	String pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
+                    Pattern compiledPattern = Pattern.compile(pattern);
+                    Matcher matcher = compiledPattern.matcher(buttonMessage2);
                     if (matcher.find())
                     {
-                    	reqPlayerName = matcher.group(1);
-                    	reqServerName = matcher.group(2);
-                    	reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+                    	String reqPlayerName = matcher.group(1);
+                    	String reqServerName = matcher.group(2);
+                    	String reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
                     			
                     	try
                         {
                         	conn = db.getConnection();
-                        	sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+                        	String sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
                         	ps = conn.prepareStatement(sql);
                         	ps.setString(1, reqPlayerName);
                         	ps.setString(2, reqPlayerUUID);
@@ -179,7 +169,11 @@ public class Discord implements DiscordInterface
                         }
                         catch (SQLException | ClassNotFoundException e1)
                         {
-                        	e1.printStackTrace();
+                        	logger.error("A discord error occurred: " + e1.getMessage());
+						for (StackTraceElement element : e1.getStackTrace()) 
+						{
+							logger.error(element.toString());
+						}
                         }
                     	
                         // Discord通知
@@ -216,7 +210,11 @@ public class Discord implements DiscordInterface
         	//logger.info("Message sent with ID: " + response.getId());
         }).exceptionally(throwable ->
         {
-            throwable.printStackTrace();
+            logger.error("A sendWebhookMessage error occurred: " + throwable.getMessage());
+            for (StackTraceElement element : throwable.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
             return null;
         });
     }
@@ -234,7 +232,6 @@ public class Discord implements DiscordInterface
                 return;
             }
 
-            String channelId = null;
             if (isChat) 
             {
                 if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord)
@@ -242,7 +239,8 @@ public class Discord implements DiscordInterface
                     future.completeExceptionally(new RuntimeException("Chat channel ID is invalid or Discord is not enabled."));
                     return;
                 }
-                channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
+
+                channelId = Long.toString(config.getLong("Discord.ChatChannelId"));
             } 
             else 
             {
@@ -251,10 +249,11 @@ public class Discord implements DiscordInterface
                     future.completeExceptionally(new RuntimeException("Channel ID is invalid or Discord is not enabled."));
                     return;
                 }
-                channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+
+                channelId = Long.toString(config.getLong("Discord.ChannelId"));
             }
 
-            TextChannel channel = jda.getTextChannelById(channelId);
+            channel = jda.getTextChannelById(channelId);
             if (Objects.isNull(channel)) 
             {
                 future.completeExceptionally(new RuntimeException("Channel not found!"));
@@ -290,15 +289,15 @@ public class Discord implements DiscordInterface
     	if(isChat)
     	{
     		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) return;
-    		channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
+            channelId = Long.toString(config.getLong("Discord.ChatChannelId"));
     	}
     	else
     	{
     		if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
-    		channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+    		channelId = Long.toString(config.getLong("Discord.ChannelId"));
     	}
         
-        TextChannel channel = jda.getTextChannelById(channelId);
+        channel = jda.getTextChannelById(channelId);
         
         if (Objects.isNull(channel))
         {
@@ -325,7 +324,12 @@ public class Discord implements DiscordInterface
             },
             error ->
             {
-                error.printStackTrace();
+                logger.error("A getBotMessage error occurred: " + error.getMessage());
+                for (StackTraceElement element : error.getStackTrace()) 
+                {
+                    logger.error(element.toString());
+                }
+
                 embedConsumer.accept(null);
             }
         );
@@ -350,7 +354,7 @@ public class Discord implements DiscordInterface
     	 if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
     	 
         // チャンネルIDは適切に設定してください
-        channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+        channelId = Long.toString(config.getLong("Discord.ChannelId"));
         channel = jda.getTextChannelById(channelId);
         
         if(Objects.isNull(channel)) return;
@@ -358,7 +362,14 @@ public class Discord implements DiscordInterface
         MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
         messageAction.queue(
             success -> {	},
-            error -> error.printStackTrace()
+            error -> 
+            {
+                logger.error("A editBotEmbedReplacedAll error occurred: " + error.getMessage());
+                for (StackTraceElement element : error.getStackTrace()) 
+                {
+                    logger.error(element.toString());
+                }
+            }
         );
     }
     
@@ -367,7 +378,6 @@ public class Discord implements DiscordInterface
     {
     	CompletableFuture<String> future = new CompletableFuture<>();
     	
-    	String channelId = null;
     	if(isChat)
     	{
     		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord)
@@ -376,7 +386,7 @@ public class Discord implements DiscordInterface
                 return future;
     		}
     		
-    		channelId = Long.valueOf(config.getLong("Discord.ChatChannelId")).toString();
+    		channelId = Long.toString(config.getLong("Discord.ChatChannelId"));
     	}
     	else
     	{
@@ -386,10 +396,10 @@ public class Discord implements DiscordInterface
                 return future;
             }
     		
-    		channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
+    		channelId = Long.toString(config.getLong("Discord.ChannelId"));
     	}
         
-        TextChannel channel = jda.getTextChannelById(channelId);
+        channel = jda.getTextChannelById(channelId);
         
         if (Objects.isNull(channel))
         {
@@ -493,8 +503,8 @@ public class Discord implements DiscordInterface
             return;
         }
         
-    	String channelId = Long.valueOf(config.getLong("Discord.ChannelId")).toString();
-        TextChannel channel = jda.getTextChannelById(channelId);
+    	channelId = Long.toString(config.getLong("Discord.ChannelId"));
+        channel = jda.getTextChannelById(channelId);
         
         if (Objects.isNull(channel))
         {

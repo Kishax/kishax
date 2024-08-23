@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -59,12 +60,10 @@ public class StartServer
 		this.discordME = discordME;
 	}
 	
-	public void execute(CommandSource source,String[] args)
+	public void execute(@NotNull CommandSource source,String[] args)
 	{
-		if (source instanceof Player)
+		if (source instanceof Player player)
 		{
-            // プレイヤーがコマンドを実行した場合の処理
-			Player player = (Player) source;
 			if(args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty())
 			{
 				player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));

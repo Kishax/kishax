@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.logging.Level;
 
 import com.google.inject.Inject;
 
@@ -52,7 +53,11 @@ public class DoServerOffline
 		}
 		catch (SQLException | ClassNotFoundException e2)
 		{
-			e2.printStackTrace();
+			plugin.getLogger().log(Level.SEVERE, "A SQLException | ClassNotFoundException error occurred: {0}", e2.getMessage());
+            for (StackTraceElement element : e2.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
 		}
         finally
         {
