@@ -46,7 +46,7 @@ Let server start by bat file of windows
 ### `/fmcp cancel`
 Only sending "canceled event"
 ### `/fmcp conv <add | remove | reload | switch> [<add | remove>:key] [<add>:value] [<add>:<true | false>]`
-Switching converting type of Romaji to Kanji, reloading romaji.csv from `plugins/fmc/romaji.csv`. That of csv file has a lot of maps of conversion romaji to kana. Player can add/remove a word into the csv file. 
+Switching converting type of Romaji to Kanji, reloading romaji.csv from `plugins/fmc/romaji.csv`, or adding/removing a theirself word into the csv file that has a lot of maps of conversion romaji to kana. 
 ### `/fmcp chat <switch | status>`
 Switching the way of sending chating message to Discord. <br>
 There are Embed editing type or Plane text message type.<br>
