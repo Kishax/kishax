@@ -93,7 +93,6 @@ public class SwitchChatType
 					default -> source.sendMessage(Component.text("usage: /fmcp chat <switch|status>").color(NamedTextColor.GREEN));
 				}
             }
-            	
             default -> source.sendMessage(Component.text("usage: /fmcp chat <switch|status>").color(NamedTextColor.GREEN));
         }
 	}

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 
@@ -22,6 +23,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.Main;
 import velocity.PlayerUtil;
+import velocity.RomajiConversion;
 
 public class FMCCommand implements SimpleCommand
 {
@@ -30,7 +32,7 @@ public class FMCCommand implements SimpleCommand
     private final PlayerUtil pu;
     
     public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","configtest","maintenance","conv","test","chat","cend"));
-    public List<String> anylists = new ArrayList<>(Arrays.asList("true", "false"));
+    public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
     public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerUtil pu)
@@ -80,19 +82,19 @@ public class FMCCommand implements SimpleCommand
                         .append(Component.text("\n\n/fmcp configtest").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp configtest"))
                                 .hoverEvent(HoverEvent.showText(Component.text("ConfigのDebug.Testの値を参照"))))
-                        .append(Component.text("\n\n/fmcb　maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.AQUA)
+                        .append(Component.text("\n\n/fmcb maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp maintenance "))
                                 .hoverEvent(HoverEvent.showText(Component.text("メンテナンスモードの切り替え"))))
-                        .append(Component.text("\n\n/fmcb　conv").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp conv"))
+                        .append(Component.text("\n\n/fmcb conv").color(NamedTextColor.AQUA)
+                                .clickEvent(ClickEvent.suggestCommand("/fmcp conv <add|remove|switch|reload> [<add|remove>:key] [<add>:value] [<add>:true|false]"))
                                 .hoverEvent(HoverEvent.showText(Component.text("ローマ字変換方式の切り替え"))))
-                        .append(Component.text("\n\n/fmcp　chat <switch|status>").color(NamedTextColor.AQUA)
+                        .append(Component.text("\n\n/fmcp chat <switch|status>").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp chat"))
                                 .hoverEvent(HoverEvent.showText(Component.text("チャットメッセージタイプの切り替え"))))
-                        .append(Component.text("\n\n/fmcb　test").color(NamedTextColor.AQUA)
+                        .append(Component.text("\n\n/fmcb test").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp test"))
                                 .hoverEvent(HoverEvent.showText(Component.text("デバッグで色々テストするだけ"))))
-                        .append(Component.text("\n\n/fmcb　cend").color(NamedTextColor.AQUA)
+                        .append(Component.text("\n\n/fmcb cend").color(NamedTextColor.AQUA)
                                 .clickEvent(ClickEvent.suggestCommand("/fmcp cend"))
                                 .hoverEvent(HoverEvent.showText(Component.text("DiscordのプレイヤーごとのEmbedを編集して、プロキシサーバーをシャットダウン"))))
                         .build();
@@ -154,7 +156,7 @@ public class FMCCommand implements SimpleCommand
 
         switch (args.length)
         {
-        	case 0, 1->
+        	case 0, 1 ->
             {
                 for (String subcmd : subcommands)
                 {
@@ -163,7 +165,7 @@ public class FMCCommand implements SimpleCommand
                 }
                 return ret;
             }
-            case 2->
+            case 2 ->
             {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
 
@@ -171,7 +173,7 @@ public class FMCCommand implements SimpleCommand
                 {
                     case "something" -> 
                     {
-                        for (String any : anylists)
+                        for (String any : bools)
                         {
                             ret.add(any);
                         }
@@ -210,18 +212,51 @@ public class FMCCommand implements SimpleCommand
                         }
                         return ret;
                     }
+                    case "conv" ->
+                    {
+                        for (String arg1 : SwitchRomajiConvType.args1)
+                        {
+                            if(source.hasPermission("fmc.proxy.conv."+arg1)) 
+                            {
+                                ret.add(arg1);
+                            }
+                        }
+                        for(String arg1_1 : SwitchRomajiConvType.args1_1)
+                        {
+                            if(source.hasPermission("fmc.proxy.conv.*"))
+                            {
+                                ret.add(arg1_1);
+                            }
+                        }
+                        return ret;
+                    }
                     default -> 
                     {
                         return Collections.emptyList();
                     }
                 }
             }
-            case 3->
+            case 3 ->
             {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
                 
                 switch (args[0].toLowerCase())
                 {
+                    case "conv" ->
+                    {
+                        switch(args[1].toLowerCase())
+                        {
+                            case "add", "remove" ->
+                            {
+                                for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) 
+                                {
+                                    ret.add(entry.getKey());
+                                }
+
+                                return ret;
+                            }
+                        }
+                    }
                 	case "perm"->
                     {
                 		switch (args[1].toLowerCase())
@@ -233,6 +268,7 @@ public class FMCCommand implements SimpleCommand
                                 {
                                     ret.add(permS1);
                                 }
+                                
                                 return ret;
                             }
                         }
@@ -254,17 +290,35 @@ public class FMCCommand implements SimpleCommand
                     }
                 }
             }
-            case 4->
+            case 4 ->
             {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
 
                 switch (args[0].toLowerCase())
                 {
+                    case "conv" ->
+                    {
+                        switch (args[1].toLowerCase())
+                        {
+                            case "add"->
+                            {
+                                for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) 
+                                {
+                                    if(entry.getKey().equalsIgnoreCase(args[2]))
+                                    {
+                                        ret.add(entry.getValue());
+                                    }
+                                }
+
+                                return ret;
+                            }
+                        }
+                    }
                 	case "perm"->
                     {
                 		switch (args[1].toLowerCase())
                         {
-                            case "add","remove"->
+                            case "add", "remove"->
                             {
                             	pu.loadPlayers(); // プレイヤーリストをロード
                                 List<String> permS = config.getList("Permission.Short_Name");
@@ -302,7 +356,34 @@ public class FMCCommand implements SimpleCommand
                     }
                 }
             }
+            case 5 ->
+            {
+                if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
+
+                switch (args[0].toLowerCase())
+                {
+                    case "conv" ->
+                    {
+                        switch (args[1].toLowerCase())
+                        {
+                            case "add"->
+                            {
+                                if(source.hasPermission("fmc.proxy.conv.*"))
+                                {
+                                    for(String bool : bools)
+                                    {
+                                        ret.add(bool);
+                                    }
+                                    
+                                    return ret;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
+
         return Collections.emptyList();
     }
 }

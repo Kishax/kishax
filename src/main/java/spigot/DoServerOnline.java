@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.logging.Level;
 
 import com.google.inject.Inject;
 
@@ -43,7 +44,8 @@ public class DoServerOnline
 			{
 				// サーバーをオンラインに
 				ssw.startSocketClient(serverName+"サーバーが起動しました。");
-				plugin.getLogger().info(serverName+"サーバーが起動しました。");
+				plugin.getLogger().info(String.format("""
+					%sサーバーが起動しました。""", serverName));
 				
 				String sql = "UPDATE mine_status SET online=? WHERE name=?;";
 				ps = conn.prepareStatement(sql);
@@ -57,7 +59,11 @@ public class DoServerOnline
 		}
 		catch (SQLException | ClassNotFoundException e)
 		{
-			e.printStackTrace();
+			plugin.getLogger().log(Level.SEVERE, "A sendWebhookMessage error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
 		}
         finally
         {

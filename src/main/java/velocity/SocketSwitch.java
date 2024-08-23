@@ -2,6 +2,7 @@ package velocity;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -75,7 +76,11 @@ public class SocketSwitch
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+                logger.error("An Exception error occurred: " + e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) 
+                {
+                    logger.error(element.toString());
+                }
             }
         });
 
@@ -94,7 +99,11 @@ public class SocketSwitch
         }
         catch (InterruptedException e)
         {
-            e.printStackTrace();
+            logger.error("An InterruptedException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
     }
     
@@ -127,20 +136,22 @@ public class SocketSwitch
                         logger.info("New client connected(Non Buffered)");
                         new SocketServerThread(socket, plugin, sr).start();
                     }
-                    catch (Exception e)
+                    catch (IOException e)
                     {
                         if (running)
                         {
                             logger.error("Error accepting client connection");
-                            e.printStackTrace();
                         }
                     }
                 }
             }
-            catch (Exception e)
+            catch (IOException e)
             {
-                logger.error("Socket Server socket error");
-                e.printStackTrace();
+                logger.error("An IOException error occurred: " + e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) 
+                {
+                    logger.error(element.toString());
+                }
             }
             finally
             {
@@ -151,9 +162,13 @@ public class SocketSwitch
                         serverSocket.close();
                     }
                 }
-                catch (Exception e)
+                catch (IOException e)
                 {
-                    e.printStackTrace();
+                    logger.error("An IOException error occurred: " + e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) 
+                    {
+                        logger.error(element.toString());
+                    }
                 }
             }
         });
@@ -165,6 +180,7 @@ public class SocketSwitch
     {
 		if(config.getInt("Socket.Buffered_Server_Port",0)==0)
 		{
+            logger.info("Socket.Buffered_Server_Port"+config.getInt("Socket.Buffered_Server_Port"));
 			logger.info("Buffered Server Socket is canceled for config value not given");
 			return;
 		}
@@ -189,20 +205,22 @@ public class SocketSwitch
                         // logger.info("New client connected(Buffered)");
                         new BufferedSocketServerThread(socket2, plugin, logger, sr).start();
                     }
-                    catch (Exception e)
+                    catch (IOException e)
                     {
                         if (bufferedrunning)
                         {
-                            logger.error("Error accepting client connection");
-                            e.printStackTrace();
+                            logger.error("An IOException error occurred: " + e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace()) 
+                            {
+                                logger.error(element.toString());
+                            }
                         }
                     }
                 }
             }
-            catch (Exception e)
+            catch (IOException e)
             {
                 logger.error("Socket Server socket error");
-                e.printStackTrace();
             }
             finally
             {
@@ -213,9 +231,13 @@ public class SocketSwitch
                         bufferedserverSocket.close();
                     }
                 }
-                catch (Exception e)
+                catch (IOException e)
                 {
-                    e.printStackTrace();
+                    logger.error("An IOException error occurred: " + e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) 
+                    {
+                        logger.error(element.toString());
+                    }
                 }
             }
         });
@@ -233,9 +255,13 @@ public class SocketSwitch
                 bufferedserverSocket.close(); // これによりaccept()が解除される
             }
         }
-        catch (Exception e)
+        catch (IOException e)
         {
-            e.printStackTrace();
+            logger.error("An IOException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
         try
         {
@@ -248,9 +274,13 @@ public class SocketSwitch
                 }
             }
         }
-        catch (Exception e)
+        catch (InterruptedException e)
         {
-            e.printStackTrace();
+            logger.error("An InterruptedException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
     }
     
@@ -264,9 +294,13 @@ public class SocketSwitch
                 serverSocket.close(); // これによりaccept()が解除される
             }
         }
-        catch (Exception e)
+        catch (IOException e)
         {
-            e.printStackTrace();
+            logger.error("An IOException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
         try
         {
@@ -279,9 +313,13 @@ public class SocketSwitch
                 }
             }
         }
-        catch (Exception e)
+        catch (InterruptedException e)
         {
-            e.printStackTrace();
+            logger.error("An InterruptedException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
     }
 }

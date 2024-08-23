@@ -39,12 +39,6 @@ public class FMCCommand implements TabExecutor
     	{
     		BaseComponent[] component =
     			    new ComponentBuilder(ChatColor.YELLOW+"FMC COMMANDS LIST").bold(true).underlined(true)
-    			    	.append(ChatColor.AQUA+"\n/fmc potion <effect type>")
-    			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc potion " ))
-    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("半径10マスのエンティティにエフェクト付与します！(クリックしてコピー)")))
-    			        .append(ChatColor.AQUA+"\n\n/fmc fly")
-    			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc fly"))
-    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("空、飛べるよ！(クリックしてコピー)")))
     			        .append(ChatColor.AQUA+"\n\n/fmc reload")
     			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc reload"))
     			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロードします！(クリックしてコピー)")))
@@ -53,10 +47,7 @@ public class FMCCommand implements TabExecutor
     			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("第一引数を返します！(クリックしてコピー)")))
     			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc fv "))
     			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("プロキシコマンドをフォワードします！(クリックしてコピー)")))
-    			        .append(ChatColor.AQUA+"\n\n/fmc medic")
-    			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc medic"))
-    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ライフが回復します！(クリックしてコピー)")))
-    			        .append(ChatColor.AQUA+"\n\n/fmcb　mcvc")
+    			        .append(ChatColor.AQUA+"\n\n/fmcb mcvc")
                         .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmcp mcvc"))
                         .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("MCVCモードの切り替えを行います！(クリックしてコピー)")))
     			        .create();

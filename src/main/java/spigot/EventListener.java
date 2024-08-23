@@ -4,6 +4,7 @@ import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 import com.google.inject.Inject;
 
@@ -17,6 +18,12 @@ public final class EventListener implements Listener
 		this.plugin = plugin;
 	}
 	
+	@EventHandler
+	public void onPlayerJoin(PlayerJoinEvent e)
+	{
+		e.setJoinMessage(null);
+	}
+
 	// MCVCをONにすると、ベッドで寝れなくなるため、必要なメソッド
 	@EventHandler
     public void onPlayerBedEnter(PlayerBedEnterEvent e)

@@ -9,7 +9,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 
 public class BroadCast
 {
@@ -35,6 +34,8 @@ public class BroadCast
     	console.sendMessage(component);
 	}
 	
+	// 該当プレイヤー以外のプレイヤーに対し、送る。
+	//if(player.getUsername().equals(joinPlayer.getUsername())) break;
 	private void sendServerMessageManager(Component component, String excepServer, Boolean only)
     {
 		if(Objects.isNull(excepServer) || Objects.isNull(component)) return;
@@ -45,29 +46,26 @@ public class BroadCast
     		// プレイヤーが最後にいたサーバーを取得
 	        player.getCurrentServer().ifPresent(currentServer ->
 	        {
-	            RegisteredServer server = currentServer.getServer();
-	            serverName = server.getServerInfo().getName();
+	            RegisteredServer registeredServer = currentServer.getServer();
+	            serverName = registeredServer.getServerInfo().getName();
+				if(Objects.nonNull(serverName))
+				{
+					// そのサーバーのみに送る。
+					if(only)
+					{
+						// excepserverと一致したサーバーにいるプレイヤーに
+						if(excepServer.equalsIgnoreCase(serverName))
+						{
+							player.sendMessage(component);
+						}
+					}
+					else if(!(serverName.equalsIgnoreCase(excepServer)))
+					{
+						// excepserver以外のサーバーに通知
+						player.sendMessage(component);
+					}
+				}
 	        });
-	        
-	        if(Objects.isNull(serverName)) continue;
-	        
-	        // そのサーバーのみに送る。
-        	if(only)
-        	{
-        		// excepserverと一致したサーバーにいるプレイヤーに
-        		if(excepServer.equalsIgnoreCase(serverName))
-        		{
-        			player.sendMessage(component);
-	        		continue;
-        		}
-        	}
-        	
-    		if(!(serverName.equalsIgnoreCase(excepServer)))
-        	{
-        		// excepserver以外のサーバーに通知
-        		player.sendMessage(component);
-        		continue;
-        	}
         }
     	
     	// コンソールにも出力
@@ -85,7 +83,7 @@ public class BroadCast
 	}
 	
     // 特定のプレイヤーもしくは特定のプレイヤーを除外したすべてのプレイヤーへ送る
-    private void sendPlayerMessageManager(TextComponent component, String specificPlayer, boolean isReverse)
+    private void sendPlayerMessageManager(Component component, String specificPlayer, boolean isReverse)
     {
     	boolean checkPlayer;
     	for (Player player : server.getAllPlayers())
@@ -107,12 +105,12 @@ public class BroadCast
         }
     }
     
-    public void sendExceptPlayerMessage(TextComponent component, String specificPlayer)
+    public void sendExceptPlayerMessage(Component component, String specificPlayer)
     {
     	sendPlayerMessageManager(component, specificPlayer, true);
     }
     
-    public void sendSpecificPlayerMessage(TextComponent component, String specificPlayer)
+    public void sendSpecificPlayerMessage(Component component, String specificPlayer)
     {
     	sendPlayerMessageManager(component, specificPlayer, false);
     }

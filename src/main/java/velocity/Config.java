@@ -162,6 +162,7 @@ public class Config
      * @param path 階層的なキー (例: "MySQL.Database")
      * @return 階層的なキーに対応する値
      */
+    @SuppressWarnings("unchecked")
     public Object getNestedValue(String path)
     {
         if (Objects.isNull(config))	return null;
@@ -177,7 +178,14 @@ public class Config
 
             if (i == keys.length - 1)	return value;
 
-            currentMap = getStringObjectMap(value);
+            if (value instanceof Map) 
+            {
+                currentMap = (Map<String, Object>) value;
+            }
+            else
+            {
+                return null; // キーがマップではない場合
+            }
         }
         return null;
     }

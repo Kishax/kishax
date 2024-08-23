@@ -1,10 +1,12 @@
 package spigot;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Objects;
+import java.util.logging.Level;
 
 import com.google.inject.Inject;
 
@@ -54,8 +56,13 @@ public class SocketSwitch
 	    {
 	    	writer.write(sendmsg + "\n");
 	    	writer.flush();
-	    } catch (Exception e) {
-	        e.printStackTrace();
+	    } catch (Exception e) 
+        {
+	        plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
 	    }
 	}
 
@@ -71,7 +78,11 @@ public class SocketSwitch
         }
         catch (InterruptedException e)
         {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "An InterruptedException error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
         }
     }
     
@@ -84,13 +95,12 @@ public class SocketSwitch
 			return;
 		}
 		plugin.getLogger().info("Server Socket is Available");
-        socketThread = new Thread(() ->
-        {
+        socketThread = new Thread(() -> {
             try
             {
                 serverSocket = new ServerSocket(plugin.getConfig().getInt("Socket.Server_Port"));
-                plugin.getLogger().info("Socket Server is listening on port " + plugin.getConfig().getInt("Socket.Server_Port"));
-
+                plugin.getLogger().log(Level.INFO, "Socket Server is listening on port {0}", plugin.getConfig().getInt("Socket.Server_Port"));
+                
                 while (running)
                 {
                     try
@@ -101,26 +111,32 @@ public class SocketSwitch
                             socket.close();
                             break;
                         }
-                        plugin.getLogger().info("New client connected");
+                        plugin.getLogger().info("New client connected"); 
                         new SocketServerThread(socket, plugin).start();
                     }
-                    catch (Exception e)
+                    catch (IOException e)
                     {
-                        if (running) 
+                        if (running)
                         {
-                            plugin.getLogger().severe("Error accepting client connection");
-                            e.printStackTrace();
+                            plugin.getLogger().log(Level.SEVERE, "An InterruptedException error occurred: {0}", e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace())
+                            {
+                                plugin.getLogger().severe(element.toString());
+                            }
                         }
                     }
                 }
             }
-            catch (Exception e)
+            catch (IOException e)
             {
-                plugin.getLogger().severe("Socket Server socket error");
-                e.printStackTrace();
-            } 
-           finally
-           {
+                plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) 
+                {
+                    plugin.getLogger().severe(element.toString());
+                }
+            }
+            finally
+            {
                 try
                 {
                     if (serverSocket != null && !serverSocket.isClosed())
@@ -128,12 +144,16 @@ public class SocketSwitch
                         serverSocket.close();
                     }
                 }
-                catch (Exception e)
+                catch (IOException e)
                 {
-                    e.printStackTrace();
+                    plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) 
+                    {
+                        plugin.getLogger().severe(element.toString());
+                    }
                 }
             }
-        });
+                });
 
         socketThread.start();
     }
@@ -148,9 +168,13 @@ public class SocketSwitch
                 serverSocket.close(); // これによりaccept()が解除される
             }
         }
-        catch (Exception e)
+        catch (IOException e)
         {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
         }
         try
         {
@@ -163,9 +187,13 @@ public class SocketSwitch
                 }
             }
         }
-        catch (Exception e)
+        catch (InterruptedException e)
         {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
         }
     }
 }

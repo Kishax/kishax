@@ -627,17 +627,17 @@ public class EventListener
 					bc.sendExceptServerMessage(component, serverInfo.getName());
 				}
 				
-				
-				/*if(serverInfo.getName().equals("Latest"))
+				// Latestサーバーの参加メッセージ
+				if(serverInfo.getName().equals("Latest"))
 				{
-					TextComponent component = Component.text()
-		    			    	.append(Component.text("BLUE MAP").decorate(TextDecoration.BOLD).color(NamedTextColor.BLUE))
-		    			    	.append(Component.text("\nhttps://keypforev.ddns.net/bluemap/").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED)
-	    			    			.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/bluemap/"))
+					component = Component.text()
+		    			    	.append(Component.text("DynMap").decorate(TextDecoration.BOLD).color(NamedTextColor.GOLD))
+		    			    	.append(Component.text("\nhttps://keypforev.ddns.net/dynmap/").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED)
+	    			    			.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/dynmap/"))
 	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)地図を見る"))))
 		    			    	.build();
 					player.sendMessage(component);
-				}*/
+				}
 				
 				// Amabassadorプラグインと競合している可能性あり
 				// Main.getInjector().getInstance(velocity.PlayerUtil.class).updatePlayers();
@@ -652,10 +652,6 @@ public class EventListener
 	                logger.error(element.toString());
 	            }
 	        }
-			/*finally
-			{
-				db.close_resorce(resultsets,conn,ps);
-			}*/
 		}).schedule();
 	}
 	
@@ -663,7 +659,8 @@ public class EventListener
     public void onPlayerDisconnect(DisconnectEvent e)
     {
     	Player player = e.getPlayer();
-    	Runnable task = () -> {
+    	Runnable task = () -> 
+		{
             // プレイヤーがReconnectしなかった場合に実行する処理
     		server.getScheduler().buildTask(plugin, () ->
         	{

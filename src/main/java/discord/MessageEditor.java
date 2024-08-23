@@ -236,6 +236,7 @@ public class MessageEditor implements MessageEditorInterface
 							{
 								addMessage = String.format("""
 									
+								
 									%s%s%sが%sサーバーから退出しました。
 								
 									:alarm_clock: プレイ時間: %s
@@ -359,6 +360,8 @@ public class MessageEditor implements MessageEditorInterface
 								{
 									//logger.info("chatMessageId: "+ chatMessageId);
 									addMessage = String.format("""
+
+									
 										<%s%s> %s
 									""",FaceEmoji, playerName, chatMessage);
 									discord.editBotEmbed(chatMessageId, addMessage, true);
