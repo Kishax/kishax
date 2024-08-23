@@ -83,12 +83,8 @@ Sockets are enable us to communicate between Velocity and Spigot Servers.<br>
 ## Spigot Command list
 ### `/fmc fv <cmd>`
 Forwarding Velocity's command in Spigot
-### `/fmc fly`
-Flying in survival mode
 ### `/fmc reload`
 Reloading config
-### `/fmc potion <potion-effect-type>`
-Adding potion effect within a radius of 5 squares
 ### `/fmc test <arg-1>`
 Only returning arg-1 player writes
 
