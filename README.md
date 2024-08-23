@@ -3,7 +3,7 @@
 This is able to use in both Velocity and Spigot.<br>
 But this is created for myself for my server.<br>
 So this plugin is maybe good for plugin developers.<br>
-[FMC-Fabric-Mod](https://github.com/bella2391/FMC-Plugin/tree/fabric) and [FMC-Forge-Mod](https://github.com/bella2391/FMC-Plugin/tree/forge) with similar functionality to spigot are currently under development.<br>
+[FMC-Fabric-Mod](https://github.com/bella2391/FMC-Plugin/tree/fabric) and [FMC-Forge-Mod](https://github.com/bella2391/FMC-Plugin/tree/forge) with similar functionality to spigot are currently under development. This is all needed by connecting to Velocity even if host server is fabric or forge server.<br>
 Freely to edit!<br>
 
 ## Linkage to Discord
