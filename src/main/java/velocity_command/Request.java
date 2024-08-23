@@ -64,10 +64,10 @@ public class Request
 
 	public void execute(@NotNull CommandSource source,String[] args)
 	{
-		if (source instanceof Player)
+		if (source instanceof Player player)
 		{
             // プレイヤーがコマンドを実行した場合の処理
-			Player player = (Player) source;
+			player = (Player) source;
         
             if(args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty())
             {
@@ -78,15 +78,15 @@ public class Request
             // プレイヤーの現在のサーバーを取得
 	        player.getCurrentServer().ifPresent(serverConnection ->
 	        {
-	            RegisteredServer server = serverConnection.getServer();
-	            currentServerName = server.getServerInfo().getName();
+	            RegisteredServer registeredServer = serverConnection.getServer();
+	            currentServerName = registeredServer.getServerInfo().getName();
 	        });
             
             String targetServerName = args[1];
             boolean containsServer = false;
-            for (RegisteredServer server : this.server.getAllServers())
+            for (RegisteredServer registeredServer : this.server.getAllServers())
             {
-                if (server.getServerInfo().getName().equalsIgnoreCase(targetServerName))
+                if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName))
                 {
                     containsServer = true;
                     break;
@@ -111,7 +111,7 @@ public class Request
             	String sql = "SELECT * FROM minecraft WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
-    			ResultSet minecrafts = ps.executeQuery();
+    			minecrafts = ps.executeQuery();
     			if(minecrafts.next())
     			{
     				if(Objects.nonNull(minecrafts.getTimestamp("sst")) && Objects.nonNull(minecrafts.getTimestamp("req")))
@@ -155,7 +155,7 @@ public class Request
 		        String req_type = "";
 		        sql = "SELECT * from mine_sktoken WHERE id=1;";
 		        ps = conn.prepareStatement(sql);
-		        ResultSet reqstatus = ps.executeQuery();
+		        reqstatus = ps.executeQuery();
 		        if(reqstatus.next())
 		        {
 		        	int i = 0;
@@ -209,7 +209,11 @@ public class Request
             }
             catch (SQLException | ClassNotFoundException e)
             {
-            	e.printStackTrace();
+            	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) 
+				{
+					logger.error(element.toString());
+				}
             }
             finally
             {
@@ -219,8 +223,6 @@ public class Request
 		else
 		{
 			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
-			return;
 		}
-        return;
 	}
 }

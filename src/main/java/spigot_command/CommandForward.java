@@ -25,9 +25,9 @@ public class CommandForward
 			allcmd += " " + arg;
 		}
 		
-		if (sender instanceof Player)
+		if (sender instanceof Player player)
 		{
-			Player player = (Player) sender;
+			player = (Player) sender;
 			// コマンドを打ったプレイヤー名をallcmdに乗せる
 			allcmd = player.getName() + allcmd; 
 		}

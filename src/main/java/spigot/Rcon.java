@@ -125,59 +125,50 @@ public class Rcon
 		}
     }
 	
-	private void monitorRcon(String RCON_HOST, int RCON_PORT, String RCON_PASS)
+	private void monitorRcon(String RCON_HOST, int RCON_PORT, String RCON_PASS) 
 	{
-	    try
-	    {
-	        while (!Thread.currentThread().isInterrupted())
-	        {
-				ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-				scheduler.schedule(() -> 
-				{
-					if (!isRconActive && checkRconRunning(RCON_HOST, RCON_PORT))
-	            	{
-						isRconActive = true;
-						
-						plugin.getServer().getScheduler().runTask(plugin, () ->
-						{
-							// RCONが有効になった後の処理をメインスレッドで実行
-							if (isRconActive)
-							{ // メインスレッドでチェック
-								plugin.getLogger().info("Running onRconActivated method.");
-								onRconActivated(RCON_PORT, RCON_PASS);
-								isRconActive = false; // フラグをリセット
-							}
-						});
-						
-						break;
-					}
-				}, 5, TimeUnit.SECONDS);
-	            
-	
-		        // 一定の待ち時間（例えば5秒）を設ける
-		        try
-		        {
-		            Thread.sleep(5000);
-		        }
-		        catch (InterruptedException e)
-		        {
-		            // スレッドが中断された場合は終了
-		            Thread.currentThread().interrupt();
-		        }
-	        }
-	    }
-		finally
+		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+		Runnable monitorTask = () -> 
 		{
-		    // スレッド終了時の処理
-		    plugin.getLogger().info("RCON monitor thread stopping.");
-		}
+			if (!isRconActive && checkRconRunning(RCON_HOST, RCON_PORT))
+			{
+				isRconActive = true;
+				
+				plugin.getServer().getScheduler().runTask(plugin, () ->
+				{
+					// RCONが有効になった後の処理をメインスレッドで実行
+					if (isRconActive)
+					{ // メインスレッドでチェック
+						plugin.getLogger().info("Running onRconActivated method.");
+						onRconActivated(RCON_PORT, RCON_PASS);
+						isRconActive = false; // フラグをリセット
+					}
+				});
+				
+				// RCONが有効になったのでタスクを終了
+				scheduler.shutdown();
+			}
+		};
+
+		// 一定間隔（例えば5秒）でタスクをスケジュールする
+		scheduler.scheduleWithFixedDelay(monitorTask, 0, 5, TimeUnit.SECONDS);
+
+		// スレッド終了時の処理を追加するために、スケジューラを監視する
+		scheduler.schedule(() -> 
+		{
+			if (scheduler.isShutdown()) 
+			{
+				plugin.getLogger().info("RCON monitor thread stopping.");
+			}
+		}, 5, TimeUnit.SECONDS);
 	}
-	  
+
 	private boolean checkRconRunning(String host, int port)
 	{
 	    try (Socket socket = new Socket(host, port))
 	    {
-	        return true; // RCONが動作中
+	        return socket.isConnected(); // RCONが動作中
 	    }
 	    catch (IOException e)
 	    {

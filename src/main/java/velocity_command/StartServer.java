@@ -73,15 +73,15 @@ public class StartServer
 			// プレイヤーの現在のサーバーを取得
 	        player.getCurrentServer().ifPresent(serverConnection ->
 	        {
-	            RegisteredServer server = serverConnection.getServer();
-	            currentServerName = server.getServerInfo().getName();
+	            RegisteredServer registeredServer = serverConnection.getServer();
+	            currentServerName = registeredServer.getServerInfo().getName();
 	        });
 			
 			String targetServerName = args[1];
 			boolean containsServer = false;
-			for (RegisteredServer server : server.getAllServers())
+			for (RegisteredServer registeredServer : server.getAllServers())
 			{
-				if(server.getServerInfo().getName().equalsIgnoreCase(targetServerName))
+				if(registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName))
 				{
 					containsServer = true;
 					break;
@@ -90,7 +90,6 @@ public class StartServer
 			if(!containsServer)
 			{
 		        player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
-		        return;
 			}
 			else
 			{
@@ -100,12 +99,12 @@ public class StartServer
 					String sql = "SELECT * FROM minecraft WHERE uuid=?;";
 	    			ps = conn.prepareStatement(sql);
 	    			ps.setString(1,player.getUniqueId().toString());
-	    			ResultSet minecrafts = ps.executeQuery();
+	    			minecrafts = ps.executeQuery();
 	    			
 					sql = "SELECT * FROM mine_status WHERE name=?;";
 					ps = conn.prepareStatement(sql);
 					ps.setString(1,args[1]);
-					ResultSet mine_status = ps.executeQuery();
+					mine_status = ps.executeQuery();
 					if(minecrafts.next())
 					{
 						//初参加のプレイヤーのsst,req,stカラムはnull値を返すので
@@ -209,7 +208,11 @@ public class StartServer
 		        }
 				catch (IOException | SQLException | ClassNotFoundException e)
 				{
-		            e.printStackTrace();
+		            logger.error("An IOException | SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+					for (StackTraceElement element : e.getStackTrace()) 
+					{
+						logger.error(element.toString());
+					}
 		        }
 				finally
 				{
@@ -220,8 +223,6 @@ public class StartServer
 		else
 		{
 			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
-			return;
 		}
-		return;
 	}
 }

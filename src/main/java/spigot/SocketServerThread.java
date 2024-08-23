@@ -1,9 +1,10 @@
 package spigot;
 
 import java.io.DataInputStream;
-
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
+import java.util.logging.Level;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
@@ -11,8 +12,8 @@ import com.google.common.io.ByteStreams;
 
 public class SocketServerThread extends Thread 
 {
-    private Socket socket;
-    public common.Main plugin;
+    private final Socket socket;
+    public final common.Main plugin;
     
     public SocketServerThread(Socket socket, common.Main plugin) 
     {
@@ -20,12 +21,13 @@ public class SocketServerThread extends Thread
         this.plugin = plugin;
     }
 
+    @Override
     public void run() 
     {
         try
         (	
-        	 DataInputStream in = new DataInputStream(socket.getInputStream());
-             DataOutputStream out = new DataOutputStream(socket.getOutputStream())
+        	DataInputStream in = new DataInputStream(socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream())
         )
         {
             // クライアントからのデータを受信
@@ -37,7 +39,7 @@ public class SocketServerThread extends Thread
             ByteArrayDataInput dataIn = ByteStreams.newDataInput(data);
             String receivedMessage = dataIn.readUTF();
             //System.out.println("Received: " + receivedMessage);
-            this.plugin.getLogger().info("Received: " + receivedMessage);
+            this.plugin.getLogger().log(Level.INFO, "Received: {0}", receivedMessage);
 
             // レスポンスの準備
             ByteArrayDataOutput dataOut = ByteStreams.newDataOutput();
@@ -51,7 +53,11 @@ public class SocketServerThread extends Thread
         } 
         catch (Exception e) 
         {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
         } 
         finally 
         {
@@ -62,9 +68,13 @@ public class SocketServerThread extends Thread
                     socket.close();
                 }
             } 
-            catch (Exception e) 
+            catch (IOException e) 
             {
-                e.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) 
+                {
+                    plugin.getLogger().severe(element.toString());
+                }
             }
         }
     }

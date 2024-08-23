@@ -50,10 +50,10 @@ public class SetServer
 	
 	public void execute(@NotNull CommandSource source,String[] args)
 	{
-		if (source instanceof Player)
+		if (source instanceof Player player)
 		{
             // プレイヤーがコマンドを実行した場合の処理
-			Player player = (Player) source;
+			player = (Player) source;
         
             if(args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty())
             {
@@ -63,9 +63,9 @@ public class SetServer
             
             String targetServerName = args[1];
             boolean containsServer = false;
-            for (RegisteredServer server : server.getAllServers())
+            for (RegisteredServer registeredServer : server.getAllServers())
             {
-            	if(server.getServerInfo().getName().equalsIgnoreCase(targetServerName))
+            	if(registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName))
             	{
             		containsServer = true;
             		break;
@@ -171,11 +171,11 @@ public class SetServer
         						//メモリの確認
         						int sum_memory = 0;
         						//現在オンラインのサーバーのメモリ合計を取得
-        						for (RegisteredServer server : server.getAllServers())
+        						for (RegisteredServer registeredServer : server.getAllServers())
         						{
         							if(mine_status.getBoolean("online"))
         							{
-        								sum_memory = sum_memory + config.getInt("Servers."+server.getServerInfo().getName()+".Memory",0);
+        								sum_memory = sum_memory + config.getInt("Servers."+registeredServer.getServerInfo().getName()+".Memory",0);
         							}
         						}
         						// 起動・起動リクエストしたいサーバーのメモリも足す
@@ -310,7 +310,6 @@ public class SetServer
         				// MySQLサーバーにサーバーが登録されてなかった場合
         				logger.info("このサーバーは、データベースに登録されていません。");
         				player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
-        				return;
         			}
     			}
     			else
@@ -322,7 +321,11 @@ public class SetServer
             }
             catch (SQLException | ClassNotFoundException e)
             {
-            	e.printStackTrace();
+            	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) 
+				{
+					logger.error(element.toString());
+				}
             }
             finally
             {
@@ -332,8 +335,6 @@ public class SetServer
 		else
 		{
 			source.sendMessage(Component.text(NamedTextColor.RED+"このコマンドはプレイヤーのみが実行できます。"));
-			return;
 		}
-        return;
 	}
 }

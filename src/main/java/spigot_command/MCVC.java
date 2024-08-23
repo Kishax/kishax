@@ -34,7 +34,7 @@ public class MCVC
 		else
 		{
 			sender.sendMessage("MCVCモードがONになりました。");
-			plugin.getConfig().set("MCVC.Mode", true);;
+			plugin.getConfig().set("MCVC.Mode", true);
 			plugin.reloadConfig();
 		}
 	}

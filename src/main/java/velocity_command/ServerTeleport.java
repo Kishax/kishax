@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
@@ -24,17 +25,18 @@ import velocity.Main;
 
 public class ServerTeleport
 {
-    private final ProxyServer server;
-    private final DatabaseInterface db;
-    
     public Connection conn = null;
     public ResultSet minecrafts = null;
     public ResultSet[] resultsets = {minecrafts};
     public PreparedStatement ps = null;
-    
+    private final Logger logger;
+    private final ProxyServer server;
+    private final DatabaseInterface db;
+
     @Inject
-    public ServerTeleport(Main plugin,ProxyServer server, Config config, DatabaseInterface db)
+    public ServerTeleport(Main plugin, Logger logger, ProxyServer server, Config config, DatabaseInterface db)
 	{
+        this.logger = logger;
 		this.server = server;
 		this.db = db;
 	}
@@ -57,9 +59,9 @@ public class ServerTeleport
 
         String targetServerName = args[1];
         boolean containsServer = false;
-        for (RegisteredServer server : server.getAllServers())
+        for (RegisteredServer registeredServer : server.getAllServers())
         {
-            if (server.getServerInfo().getName().equalsIgnoreCase(targetServerName))
+            if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName))
             {
                 containsServer = true;
                 break;
@@ -100,13 +102,17 @@ public class ServerTeleport
         }
         catch (SQLException | ClassNotFoundException e)
         {
-            e.printStackTrace();
+            logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                logger.error(element.toString());
+            }
         }
         finally
         {
             db.close_resorce(resultsets, conn, ps);
         }
 
-        server.getServer(targetServerName).ifPresent(server -> player.createConnectionRequest(server).fireAndForget());
+        server.getServer(targetServerName).ifPresent(registeredServer -> player.createConnectionRequest(registeredServer).fireAndForget());
     }
 }
