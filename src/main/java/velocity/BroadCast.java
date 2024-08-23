@@ -15,7 +15,7 @@ public class BroadCast
 	private final ProxyServer server;
 	private final ConsoleCommandSource console;
 	private String serverName = null;
-
+	
 	@Inject
 	public BroadCast(ProxyServer server, ConsoleCommandSource console)
 	{
