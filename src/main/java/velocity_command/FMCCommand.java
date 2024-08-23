@@ -359,7 +359,7 @@ public class FMCCommand implements SimpleCommand
             case 5 ->
             {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
-
+                
                 switch (args[0].toLowerCase())
                 {
                     case "conv" ->
