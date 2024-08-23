@@ -1,12 +1,14 @@
 package spigot;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
+import org.bukkit.command.PluginCommand;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import spigot_command.FMCCommand;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 
 public class Main
 {
@@ -34,7 +36,12 @@ public class Main
 		
     	plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(EventListener.class), plugin);
         
-    	plugin.getCommand("fmc").setExecutor(getInjector().getInstance(FMCCommand.class));
+		FMCCommand commandFMC = getInjector().getInstance(FMCCommand.class);
+		PluginCommand fmcCmd = plugin.getCommand("fmc");
+		if(fmcCmd != null)
+		{
+			fmcCmd.setExecutor(commandFMC);
+		}
         
     	if(plugin.getConfig().getBoolean("MCVC.Mode",false))
 		{

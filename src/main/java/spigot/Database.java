@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
+import java.util.logging.Level;
 
 import com.google.inject.Inject;
 
@@ -22,13 +23,18 @@ public class Database
     
 	public Connection getConnection() throws SQLException, ClassNotFoundException
 	{
+		String host = plugin.getConfig().getString("MySQL.Host", "");
+		int port = plugin.getConfig().getInt("MySQL.Port", 0);
+		String database = plugin.getConfig().getString("MySQL.Database", "");
+		String user = plugin.getConfig().getString("MySQL.User", "");
+		String password = plugin.getConfig().getString("MySQL.Password", "");
 		if
 		(
-			plugin.getConfig().getString("MySQL.Host", "").isEmpty() || 
-			plugin.getConfig().getInt("MySQL.Port", 0) == 0 || 
-			plugin.getConfig().getString("MySQL.Database", "").isEmpty() || 
-			plugin.getConfig().getString("MySQL.User", "").isEmpty() || 
-			plugin.getConfig().getString("MySQL.Password", "").isEmpty()
+			(host != null && host.isEmpty()) || 
+			port == 0 || 
+			(database != null && database.isEmpty()) || 
+			(user != null && user.isEmpty()) || 
+			(password != null && password.isEmpty())
 		)
 		{
 			return null;
@@ -40,14 +46,7 @@ public class Database
             if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
             
             Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection
-            		(
-            			"jdbc:mysql://" + plugin.getConfig().getString("MySQL.Host") + ":" + 
-            			plugin.getConfig().getInt("MySQL.Port") + "/" + 
-            			plugin.getConfig().getString("MySQL.Database"),
-            			plugin.getConfig().getString("MySQL.User"),
-            			plugin.getConfig().getString("MySQL.Password")
-            		);
+            conn = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database, user, password);
             return conn;
         }
     }
@@ -66,7 +65,11 @@ public class Database
 	                }
 			    	catch (SQLException e)
 			    	{
-	                    e.printStackTrace();
+	                    plugin.getLogger().log(Level.SEVERE, "A SQLException error occurred: {0}", e.getMessage());
+						for (StackTraceElement element : e.getStackTrace()) 
+						{
+							plugin.getLogger().severe(element.toString());
+						}
 	                }
 			    }
 			}
@@ -80,7 +83,11 @@ public class Database
             }
 			catch (SQLException e)
 			{
-                e.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, "A SQLException error occurred: {0}", e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) 
+				{
+					plugin.getLogger().severe(element.toString());
+				}
             }
 		}
 		
@@ -92,7 +99,11 @@ public class Database
             }
 			catch (SQLException e)
 			{
-                e.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, "A SQLException error occurred: {0}", e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) 
+				{
+					plugin.getLogger().severe(element.toString());
+				}
             }
 		}
 	}

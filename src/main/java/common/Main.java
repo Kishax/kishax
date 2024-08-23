@@ -1,17 +1,18 @@
 package common;
 
 import java.util.Objects;
+import java.util.logging.Level;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin
 {
-    private static Main instance;
+    private static Main plugin;
 	
     @Override
     public void onEnable()
     {
-        instance = this;
+        plugin = this;
 
         try
         {
@@ -30,7 +31,11 @@ public class Main extends JavaPlugin
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
         }
     }
 
@@ -54,7 +59,11 @@ public class Main extends JavaPlugin
         }
     	catch (Exception e)
         {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) 
+            {
+                plugin.getLogger().severe(element.toString());
+            }
         }
     }
     
@@ -70,6 +79,6 @@ public class Main extends JavaPlugin
 
     public static Main getInstance()
     {
-        return instance;
+        return plugin;
     }
 }

@@ -8,6 +8,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import com.google.inject.Inject;
 
@@ -36,7 +40,11 @@ public class Rcon
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) 
+			{
+				plugin.getLogger().severe(element.toString());
+			}
             return;
         }
 
@@ -68,14 +76,15 @@ public class Rcon
         }
 	}
 	
-	private void onRconActivated(String RCON_HOST, int RCON_PORT, String RCON_PASS)
+	private void onRconActivated(int RCON_PORT, String RCON_PASS)
 	{
         // RCONが有効になった後の処理
         plugin.getLogger().info("RCON is active. Performing specific actions...");
         // ここにRCONが有効になった後の特定の処理を記述
         plugin.getLogger().info("RCON is active.");
         // RCONが有効な場合の処理
-        if(!plugin.getConfig().getString("MCVC.EXE_Path","").isEmpty())
+		String mcvcExePath = plugin.getConfig().getString("MCVC.EXE_Path","");
+        if(mcvcExePath != null && !mcvcExePath.isEmpty())
 		{
 			// EXEファイルのパスを指定
 	        String exeFilePath = plugin.getConfig().getString("MCVC.EXE_Path");
@@ -103,7 +112,11 @@ public class Rcon
 			}
 	        catch (IOException e)
 	        {
-				e.printStackTrace();
+				plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) 
+				{
+					plugin.getLogger().severe(element.toString());
+				}
 			}
 		}
 		else
@@ -118,22 +131,28 @@ public class Rcon
 	    {
 	        while (!Thread.currentThread().isInterrupted())
 	        {
-	            if (!isRconActive && checkRconRunning(RCON_HOST, RCON_PORT))
-	            {
-	                isRconActive = true;
-	                
-	                plugin.getServer().getScheduler().runTask(plugin, () ->
-	                {
-	                	// RCONが有効になった後の処理をメインスレッドで実行
-		            	if (isRconActive)
-		            	{ // メインスレッドでチェック
-		            		plugin.getLogger().info("Running onRconActivated method.");
-		            		onRconActivated(RCON_HOST, RCON_PORT, RCON_PASS);
-		                    isRconActive = false; // フラグをリセット
-		                }
-	                });
-	                break;
-	            }
+				ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+				scheduler.schedule(() -> 
+				{
+					if (!isRconActive && checkRconRunning(RCON_HOST, RCON_PORT))
+	            	{
+						isRconActive = true;
+						
+						plugin.getServer().getScheduler().runTask(plugin, () ->
+						{
+							// RCONが有効になった後の処理をメインスレッドで実行
+							if (isRconActive)
+							{ // メインスレッドでチェック
+								plugin.getLogger().info("Running onRconActivated method.");
+								onRconActivated(RCON_PORT, RCON_PASS);
+								isRconActive = false; // フラグをリセット
+							}
+						});
+						
+						break;
+					}
+				}, 5, TimeUnit.SECONDS);
+	            
 	
 		        // 一定の待ち時間（例えば5秒）を設ける
 		        try
