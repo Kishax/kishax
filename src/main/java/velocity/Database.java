@@ -35,14 +35,18 @@ public class Database implements DatabaseInterface
     @Override
 	public Connection getConnection() throws SQLException, ClassNotFoundException
 	{
-		// Map<String, Object> mysqlConfig = (Map<String, Object>) config.getConfig().get("MySQL");
+		String host = config.getString("MySQL.Host", "");
+		int port = config.getInt("MySQL.Port", 0);
+		String database = config.getString("MySQL.Database", "");
+		String user = config.getString("MySQL.User", "");
+		String password = config.getString("MySQL.Password", "");
 		if
 		(
-			config.getString("MySQL.Host","").isEmpty() || 
-			config.getInt("MySQL.Port",0)==0 || 
-			config.getString("MySQL.Database","").isEmpty() || 
-			config.getString("MySQL.User","").isEmpty() || 
-			config.getString("MySQL.Password","").isEmpty()
+			(host != null && host.isEmpty()) || 
+			port == 0 || 
+			(database != null && database.isEmpty()) || 
+			(user != null && user.isEmpty()) || 
+			(password != null && password.isEmpty())
 		)
 		{
 			return null;

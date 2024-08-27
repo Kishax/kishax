@@ -1,5 +1,9 @@
 package velocity;
 
+import java.nio.file.Path;
+
+import org.slf4j.Logger;
+
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -12,13 +16,10 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import discord.Discord;
 import net.luckperms.api.LuckPermsProvider;
+import velocity.Module;
 import velocity_command.CEnd;
 import velocity_command.FMCCommand;
 import velocity_command.Hub;
-
-import java.nio.file.Path;
-
-import org.slf4j.Logger;
 
 public class Main
 {
@@ -47,7 +48,7 @@ public class Main
     	logger.info("Detected Velocity platform.");
     	
         // Guice インジェクターを作成
-        injector = Guice.createInjector(new VelocityModule(this, server, logger, dataDirectory, LuckPermsProvider.get()));
+        injector = Guice.createInjector(new Module(this, server, logger, dataDirectory, LuckPermsProvider.get()));
         
         // 依存性が解決された@Injectを使用するクラスのインスタンスを取得
     	
