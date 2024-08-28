@@ -1,3 +1,5 @@
 {
-    "java.jdt.ls.java.home":"C:/Program Files/Java/jdk-22"
+    //"java.jdt.ls.java.home": "C:/Program Files/Java/jdk-22",
+    "jdk.jdkhome": "c:\\Program Files\\Java\\jdk-22",
+    "java.compile.nullAnalysis.mode": "automatic"
 }
