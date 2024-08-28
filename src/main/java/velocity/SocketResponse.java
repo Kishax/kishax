@@ -29,8 +29,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity_command.CommandForwarder;
 
-public class SocketResponse
-{
+public class SocketResponse {
+
 	private Connection conn = null;
 	private PreparedStatement ps = null;
 	private final ProxyServer server;
@@ -45,14 +45,12 @@ public class SocketResponse
 	private String mineName = null;
 	
 	@Inject
-	public SocketResponse
-	(
+	public SocketResponse (
 		Main plugin, ProxyServer server, Logger logger,
 		Config config, Luckperms lp, BroadCast bc, 
 		Database db, ConsoleCommandSource console, PlayerUtil pu, 
 		MessageEditorInterface discordME
-	)
-	{
+	) {
 		this.server = server;
         this.logger = logger;
         this.config = config;
@@ -64,14 +62,11 @@ public class SocketResponse
         this.discordME = discordME;
 	}
 	
-	public void resaction(String res)
-    {
+	public void resaction(String res) {
     	if (Objects.isNull(res)) return;
     	//if (res.contains("サーバー->"))	return;
-    	if(res.contains("PHP"))
-    	{
-    		if (res.contains("uuid"))
-    		{
+    	if (res.contains("PHP")) {
+    		if (res.contains("uuid")) {
     			// PHPの方でlpテーブルへの追加は完了済み
     			lp.triggerNetworkSync();
     			String pattern = "PHP->uuid->new->(.*?)->";
@@ -81,20 +76,17 @@ public class SocketResponse
                 Matcher matcher = compiledPattern.matcher(res);
 
                 // パターンにマッチする部分を抽出
-                if (matcher.find())
-                {
+                if (matcher.find()) {
                 	mineName = matcher.group(1);
                 	
                 	Optional<Player> playerOptional = pu.getPlayerByName(mineName);
 
-                	if (playerOptional.isPresent())
-                	{
+                	if (playerOptional.isPresent()) {
                 	    Player player = playerOptional.get();
                 	    
                 	    TextComponent component;
                     	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
-                    	if(!DiscordInviteUrl.isEmpty())
-                    	{
+                    	if (!DiscordInviteUrl.isEmpty()) {
                     		component = Component.text()
                     				.append(Component.text("\nUUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
             	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
@@ -106,9 +98,7 @@ public class SocketResponse
             			    		.append(Component.text("\nここでは、個性豊かな色々なメンバーと交流ができます！\nなお、マイクラとDiscord間のチャットは同期しているので、誰かが反応してくれるはずです...！").color(NamedTextColor.AQUA))
             			    		.build();
                     		//bc.sendSpecificPlayerMessage(component, mineName);
-                    	}
-                    	else
-                    	{
+                    	} else {
                     		component = Component.text()
                     				.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
             	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
@@ -123,9 +113,7 @@ public class SocketResponse
                 	discordME.AddEmbedSomeMessage("AddMember", mineName);
                 }
     		}
-    	}
-    	else if(res.contains("起動"))
-    	{
+    	} else if(res.contains("起動")) {
     		// /stpで用いるセッションタイム(現在時刻)(sst)をデータベースに
 			LocalDateTime now = LocalDateTime.now();
 	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -137,8 +125,7 @@ public class SocketResponse
             Matcher matcher = compiledPattern.matcher(res);
 
             // パターンにマッチする部分を抽出
-            if (matcher.find())
-            {
+            if (matcher.find()) {
                 String extracted = matcher.group(1);
                 TextComponent component = Component.text()
                 		.append(Component.text(res).color(NamedTextColor.AQUA))
@@ -153,12 +140,9 @@ public class SocketResponse
                                 .hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
     			    	.build();
                 
-                for (Player player : server.getAllPlayers())
-                {
-        			if(player.hasPermission("group.new-fmc-user"))
-        			{
-        				try
-        				{
+                for (Player player : server.getAllPlayers()) {
+        			if (player.hasPermission("group.new-fmc-user")) {
+        				try {
         					conn = db.getConnection();
         					String sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
         					ps = conn.prepareStatement(sql);
@@ -167,50 +151,38 @@ public class SocketResponse
         					ps.executeUpdate();
         					player.sendMessage(component);
         					console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
-        				}
-        				catch (SQLException | ClassNotFoundException e)
-        				{
+        				} catch (SQLException | ClassNotFoundException e) {
         					logger.error("A SocketResponse error: ",e);
         				}
-        			}
-        			else
-        			{
+        			} else {
         				player.sendMessage(Component.text(res).color(NamedTextColor.AQUA));
         				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
         			}
                 }
             }
-    	}
-    	else if(res.contains("fv"))
-    	{
+    	} else if(res.contains("fv")) {
     		if (res.contains("\\n")) res = res.replace("\\n", "");
     		
     		String pattern = "(\\S+) fv (\\S+) (.+)";
             java.util.regex.Pattern r = java.util.regex.Pattern.compile(pattern);
             java.util.regex.Matcher m = r.matcher(res);
             
-            if (m.find())
-            {
+            if (m.find()) {
             	String execplayerName = m.group(1);
                 String playerName = m.group(2);
                 String command = m.group(3);
         		
                 Main.getInjector().getInstance(CommandForwarder.class).forwardCommand(execplayerName, command, playerName);
             }
-    	}
-    	else if(res.contains("プレイヤー不在"))
-    	{
+    	} else if(res.contains("プレイヤー不在")) {
     		bc.broadCastMessage(Component.text(res).color(NamedTextColor.RED));
-    	}
-    	else
-    	{	
+    	} else {	
     		// Discordからのメッセージ処理
     		sendMixUrl(res);
     	}
     }
     
-    public void sendMixUrl(String string)
-    {
+    public void sendMixUrl(String string) {
     	// 正規表現パターンを定義（URLを見つけるための正規表現）
         String urlRegex = "https?://\\S+";
         Pattern pattern = Pattern.compile(urlRegex);
@@ -223,8 +195,7 @@ public class SocketResponse
         int lastMatchEnd = 0;
         
         Boolean isUrl = false;
-        while (matcher.find())
-        {
+        while (matcher.find()) {
         	// URLが含まれていたら
         	isUrl = true;
         	
@@ -237,8 +208,7 @@ public class SocketResponse
         }
         
     	// URLが含まれてなかったら
-        if(!isUrl)
-        {
+        if (!isUrl) {
         	//if (string.contains("\\n")) string = string.replace("\\n", "\n");
         	bc.broadCastMessage(Component.text(string).color(NamedTextColor.AQUA));
         	return;
@@ -258,11 +228,9 @@ public class SocketResponse
         
 		TextComponent additionalComponent;
 		String getUrl;
-        for (int i = 0; i < textPartsSize; i++)
-        {
+        for (int i = 0; i < textPartsSize; i++) {
         	Boolean isText = false;
-        	if(Objects.nonNull(textParts) && textPartsSize != 0)
-        	{
+        	if (Objects.nonNull(textParts) && textPartsSize != 0) {
         		String text = textParts.get(i);
         		
         		//if (text.contains("\\n")) text = text.replace("\\n", "\n");
@@ -271,9 +239,7 @@ public class SocketResponse
         				.color(NamedTextColor.AQUA)
         				.build();
         		component = component.append(additionalComponent);
-        	}
-        	else
-        	{
+        	} else {
         		isText = true;
         	}
         	
@@ -283,19 +249,13 @@ public class SocketResponse
         	//　ゆえ、最後の番号だけ考えなければ、
         	// 上で文字列にURLが含まれているかどうかを確認しているので、ぶっちゃけ以下のif文はいらないかも
         	//if(Objects.nonNull(urls) && urlsSize != 0)
-        	if (i < urlsSize)
-        	{
-        		if (isText)
-        		{
+        	if (i < urlsSize) {
+        		if (isText) {
         			// textがなかったら、先頭の改行は無くす(=URLのみ)
         			getUrl = urls.get(i);
-        		}
-        		else if (i != textPartsSize - 1)
-            	{
+        		} else if (i != textPartsSize - 1) {
             		getUrl = "\n"+urls.get(i)+"\n";
-            	}
-            	else
-            	{
+            	} else {
             		getUrl = "\n"+urls.get(i);
             	}
             	
@@ -313,8 +273,7 @@ public class SocketResponse
         bc.broadCastMessage(component);
     }
     
-    public void sendresponse(String res, ByteArrayDataOutput dataOut)
-    {
+    public void sendresponse(String res, ByteArrayDataOutput dataOut) {
 		//
 	}
 }

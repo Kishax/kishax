@@ -21,8 +21,7 @@ import velocity_command.CEnd;
 import velocity_command.FMCCommand;
 import velocity_command.Hub;
 
-public class Main
-{
+public class Main {
 	public static boolean isVelocity = true;
 	private static Injector injector = null;
 	
@@ -32,8 +31,7 @@ public class Main
 	// Guice注入後、取得するインスタンス(フィールド)郡
 	
     @Inject
-    public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory)
-    {
+    public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory) {
         this.server = serverinstance;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
@@ -43,8 +41,7 @@ public class Main
     }
 
     @Subscribe
-    public void onProxyInitialization(ProxyInitializeEvent e)
-    {
+    public void onProxyInitialization(ProxyInitializeEvent e) {
     	logger.info("Detected Velocity platform.");
     	
         // Guice インジェクターを作成
@@ -77,14 +74,12 @@ public class Main
 	    logger.info("プラグインが有効になりました。");
     }
     
-    public static Injector getInjector()
-    {
+    public static Injector getInjector() {
         return injector;
     }
     
     @Subscribe
-    public void onProxyShutdown(ProxyShutdownEvent e)
-    {
+    public void onProxyShutdown(ProxyShutdownEvent e) {
     	getInjector().getInstance(SocketSwitch.class).stopSocketClient();
 		logger.info( "Client Socket Stopping..." );
 		getInjector().getInstance(SocketSwitch.class).stopSocketServer();

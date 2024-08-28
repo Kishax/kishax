@@ -14,20 +14,18 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Main;
 
-public class CEnd implements SimpleCommand
-{
+public class CEnd implements SimpleCommand {
+	
 	private final Main plugin;
 	private final ProxyServer server;
 	private final Logger logger;
 	private final MessageEditorInterface discordME;
 	
 	@Inject
-    public CEnd
-    (
+    public CEnd (
     	Main plugin, ProxyServer server, Logger logger, 
     	MessageEditorInterface discordME
-    )
-	{
+    ) {
 		this.plugin = plugin;
 		this.server = server;
 		this.logger = logger;
@@ -35,11 +33,9 @@ public class CEnd implements SimpleCommand
 	}
 
 	@Override
-	public void execute(Invocation invocation)
-	{
+	public void execute(Invocation invocation) {
 		CommandSource source = invocation.source();
-		if(!source.hasPermission("fmc.proxy.cend"))
-		{
+		if (!source.hasPermission("fmc.proxy.cend")) {
 			source.sendMessage(Component.text("必要な権限がありません。").color(NamedTextColor.RED));
 			return;
 		}
@@ -52,10 +48,8 @@ public class CEnd implements SimpleCommand
 	    // 両方の非同期処理が完了した後にシャットダウンを実行
 	    CompletableFuture<Void> allTasks = CompletableFuture.allOf(addEmbedFuture);
 
-	    allTasks.thenRun(() -> 
-	    {
-	        server.getScheduler().buildTask(plugin, () -> 
-	        {
+	    allTasks.thenRun(() -> {
+	        server.getScheduler().buildTask(plugin, () -> {
 	        	//discord.logoutDiscordBot();
 	            //server.shutdown();
 	        	logger.info("discordME.AddEmbedSomeMessageメソッドが終了しました。");

@@ -1,7 +1,6 @@
 package velocity;
 
 import java.sql.Connection;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,8 +18,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-public class PlayerDisconnect
-{
+public class PlayerDisconnect {
+	
 	public final Main plugin;
 	private final ProxyServer server;
 	private final Logger logger;
@@ -34,13 +33,11 @@ public class PlayerDisconnect
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public PlayerDisconnect
-	(
+	public PlayerDisconnect (
 		Main plugin, Logger logger, ProxyServer server,
 		DatabaseInterface db, BroadCast bc, ConsoleCommandSource console,
 		RomaToKanji conv, MessageEditorInterface discordME
-	)
-	{
+	) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
@@ -49,22 +46,16 @@ public class PlayerDisconnect
 		this.discordME = discordME;
 	}
 	
-	public void menteDisconnect(List<String> UUIDs)
-	{
-		for(Player player : server.getAllPlayers())
-		{
+	public void menteDisconnect(List<String> UUIDs) {
+		for (Player player : server.getAllPlayers()) {
 			//if(!player.hasPermission("group.super-admin"))
-			if(!UUIDs.contains(player.getUniqueId().toString()))
-			{
-				playerDisconnect
-				(
+			if (!UUIDs.contains(player.getUniqueId().toString())) {
+				playerDisconnect (
 					false,
 					player,
 					Component.text("現在メンテナンス中です。").color(NamedTextColor.BLUE)
 				);
-			}
-			else
-			{
+			} else {
 				player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効になりました。\nスーパーアドミン以外を退出させました。").color(NamedTextColor.GREEN));
 			}
 		}
@@ -72,14 +63,12 @@ public class PlayerDisconnect
 		console.sendMessage(Component.text("メンテナンスモードが有効になりました。\nスーパーアドミン以外を退出させました。").color(NamedTextColor.GREEN));
 	}
 	
-	public void playerDisconnect(Boolean bool, Player player, TextComponent component)
-	{
+	public void playerDisconnect(Boolean bool, Player player, TextComponent component) {
 		player.disconnect(component);
 		
-		if(!(bool))	return;
+		if (!(bool))	return;
 		
-		try
-		{
+		try {
 			conn = db.getConnection();
 			String sql="UPDATE minecraft SET ban=? WHERE uuid=?;";
 			ps = conn.prepareStatement(sql);
@@ -88,18 +77,13 @@ public class PlayerDisconnect
 			ps.executeUpdate();
 			
 			discordME.AddEmbedSomeMessage("Invader", player);
-		}
-		catch (SQLException | ClassNotFoundException e)
-		{
+		} catch (SQLException | ClassNotFoundException e) {
 			// スタックトレースをログに出力
             logger.error("An onChat error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) 
-            {
+            for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-		}
-		finally
-		{
+		} finally {
 			// 途中だから閉じたらresultsets全体は閉じてはいけない
 			db.close_resorce(null, conn, ps);
 		}

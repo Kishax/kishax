@@ -19,8 +19,8 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.DatabaseInterface;
 
-public class Retry
-{
+public class Retry {
+
 	private final Logger logger;
 	private final DatabaseInterface db;
 	
@@ -28,23 +28,19 @@ public class Retry
 	private PreparedStatement ps = null;
 
 	@Inject
-	public Retry(Logger logger, DatabaseInterface db)
-	{
+	public Retry(Logger logger, DatabaseInterface db) {
 		this.logger = logger;
 		this.db = db;
 	}
 	
-	public void execute(@NotNull CommandSource source, String[] args)
-	{
-		if (!(source instanceof Player))
-		{
+	public void execute(@NotNull CommandSource source, String[] args) {
+		if (!(source instanceof Player)) {
 			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));	
 			return;
 		}
 		
 		Player player = (Player) source;
-		try
-		{
+		try {
 			conn = db.getConnection();
 			
 			// 6桁の乱数を生成
@@ -69,17 +65,12 @@ public class Retry
 			// BaseComponent[]に変換
 						
 			player.sendMessage(component);
-		}
-		catch (SQLException | ClassNotFoundException e)
-		{
+		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-			for (StackTraceElement element : e.getStackTrace()) 
-			{
+			for (StackTraceElement element : e.getStackTrace()) {
 				logger.error(element.toString());
 			}
-		}
-		finally
-		{
+		} finally {
 			db.close_resorce(null, conn, ps);
 		}
 	}

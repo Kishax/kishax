@@ -21,10 +21,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
 import velocity.DatabaseInterface;
-import velocity.Main;
 
-public class ServerTeleport
-{
+public class ServerTeleport {
+
     public Connection conn = null;
     public ResultSet minecrafts = null;
     public ResultSet[] resultsets = {minecrafts};
@@ -34,82 +33,65 @@ public class ServerTeleport
     private final DatabaseInterface db;
 
     @Inject
-    public ServerTeleport(Main plugin, Logger logger, ProxyServer server, Config config, DatabaseInterface db)
-	{
+    public ServerTeleport(Logger logger, ProxyServer server, Config config, DatabaseInterface db) {
         this.logger = logger;
 		this.server = server;
 		this.db = db;
 	}
     
-    public void execute(@NotNull CommandSource source,String[] args)
-    {
-        if (!(source instanceof Player))
-        {
+    public void execute(@NotNull CommandSource source,String[] args) {
+        if (!(source instanceof Player)) {
             source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
             return;
         }
 
         Player player = (Player) source;
 
-        if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty())
-        {
+        if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
             player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
             return;
         }
 
         String targetServerName = args[1];
         boolean containsServer = false;
-        for (RegisteredServer registeredServer : server.getAllServers())
-        {
-            if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName))
-            {
+        for (RegisteredServer registeredServer : server.getAllServers()) {
+            if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName)) {
                 containsServer = true;
                 break;
             }
         }
 
-        if (!containsServer)
-        {
+        if (!containsServer) {
             player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
             return;
         }
 
-        try
-        {
+        try {
             conn = db.getConnection();
             String sql = "SELECT * FROM minecraft WHERE uuid=?;";
             ps = conn.prepareStatement(sql);
             ps.setString(1, player.getUniqueId().toString());
             minecrafts = ps.executeQuery();
-            if (minecrafts.next())
-            {
+            if (minecrafts.next()) {
                 long nowTimestamp = Instant.now().getEpochSecond();
                 Timestamp sstTimeGet = minecrafts.getTimestamp("sst");
                 long sstTimestamp = sstTimeGet.getTime() / 1000L;
                 long ssSa = nowTimestamp - sstTimestamp;
                 long ssSaMinute = ssSa / 60;
-                if (ssSaMinute > 3)
-                {
+                if (ssSaMinute > 3) {
                     player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
                     return;
                 }
-            }
-            else
-            {
+            } else {
                 player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
                 return;
             }
-        }
-        catch (SQLException | ClassNotFoundException e)
-        {
+        } catch (SQLException | ClassNotFoundException e) {
             logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) 
-            {
+            for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-        }
-        finally
-        {
+        } finally {
             db.close_resorce(resultsets, conn, ps);
         }
 

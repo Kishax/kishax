@@ -18,8 +18,7 @@ import discord.MessageEditor;
 import discord.MessageEditorInterface;
 import net.luckperms.api.LuckPerms;
 
-public class Module extends AbstractModule
-{
+public class Module extends AbstractModule {
 	private final Main plugin;
     private final ProxyServer server;
     private final Logger logger;
@@ -27,8 +26,7 @@ public class Module extends AbstractModule
     private final LuckPerms lpapi;
     private final Config config;
     
-    public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory, LuckPerms lpapi)
-    {
+    public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory, LuckPerms lpapi) {
     	this.plugin = plugin;
         this.server = server;
         this.logger = logger;
@@ -39,19 +37,15 @@ public class Module extends AbstractModule
         // Configをロードする前に、Guiceによってインスタンスが開始されてしまうために、Config not given状態になる。
     	// ゆえ、それよりも前にconfigを手動でインスタンス開始する。
         this.config = new Config(server, logger, dataDirectory);
-    	try
-        {
+    	try {
             config.loadConfig(); // 一度だけロードする
-        }
-        catch (IOException e1)
-        {
+        } catch (IOException e1) {
             logger.error("Error loading config", e1);
         }
     }
 
     @Override
-    protected void configure()
-    {
+    protected void configure() {
     	// 以下、Guiceが、クラス同士の依存性を自動判別するため、bindを書く順番はインジェクションの依存関係に関係しない。
     	bind(Main.class).toInstance(plugin);
         bind(ProxyServer.class).toInstance(server);

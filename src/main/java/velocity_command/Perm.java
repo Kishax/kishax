@@ -25,8 +25,8 @@ import velocity.Luckperms;
 import velocity.Main;
 
 
-public class Perm
-{
+public class Perm {
+
 	private final Config config;
 	private final Logger logger;
 	private final Luckperms lp;
@@ -41,31 +41,26 @@ public class Perm
 	public static List<String> permD = null;
 	
 	@Inject
-	public Perm
-	(
+	public Perm (
 		Main plugin, ProxyServer server, Config config, 
 		Logger logger, Luckperms lp, DatabaseInterface db
-	)
-	{
+	) {
 		this.config = config;
 		this.logger = logger;
 		this.lp = lp;
 		this.db = db;
 	}
 	
-	public void execute(@NotNull CommandSource source,String[] args)
-	{
+	public void execute(@NotNull CommandSource source,String[] args) {
 		permS = config.getList("Permission.Short_Name");
 		permD = config.getList("Permission.Detail_Name");
 		
-		if(!(permS.size() == permD.size()))
-		{
+		if (!(permS.size() == permD.size())) {
 			source.sendMessage(Component.text("コンフィグのDetail_NameとShort_Nameの要素の数を同じにしてください。").color(NamedTextColor.RED));
 			return;
 		}
 
-        try
-        {
+        try {
         	conn = db.getConnection();
         	
         	String sql = "SELECT * FROM minecraft ORDER BY id DESC;";
@@ -77,18 +72,13 @@ public class Perm
 	        
 			String permD1;
 			
-	        switch(args.length)
-	        {
-	        	case 0,1->
-				{
+	        switch (args.length) {
+	        	case 0,1-> {
 	        		source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 				}
-	        	case 2->
-				{
-        			switch(args[1].toLowerCase())
-	        		{
-	        			case "list"->
-						{
+	        	case 2-> {
+        			switch(args[1].toLowerCase()) {
+	        			case "list"-> {
 	        				TextComponent component = Component.text()
 	        					.append(Component.text("FMC Specific Permission List")
 		    			    	.color(NamedTextColor.GOLD)
@@ -96,10 +86,8 @@ public class Perm
 	        					.build();
 	        				
 	        				// アドミンリスト表示処理
-	        				while (minecrafts.next())
-	        	            {
-	        					for (int i = 0; i < permD.size(); i++)
-	        					{
+	        				while (minecrafts.next()) {
+	        					for (int i = 0; i < permD.size(); i++) {
 	        						// permSのindex値をもって、permDからDetail_Nameを取得(1:1対応)
 		                			//permD1 = permD.get(permS.indexOf(args[2]));
 		                			
@@ -109,8 +97,7 @@ public class Perm
 		        					ps.setString(2, permD.get(i));
 		        					isperm = ps.executeQuery();
 		        					
-	        		        		if(isperm.next())
-	        		        		{
+	        		        		if (isperm.next()) {
 	        		        			TextComponent additionalComponent;
 	        		        			additionalComponent = Component.text()
 	        		        						.append(Component.text("\n"+minecrafts.getString("name"))
@@ -124,8 +111,7 @@ public class Perm
 	        					}
 	        	            }
 	        				
-	        				if(!(ispermindb))
-	        				{
+	        				if (!(ispermindb)) {
 	        					TextComponent additionalComponent;
 	        					additionalComponent = Component.text()
 	        							.append(Component.text("\nコンフィグで設定されているすべての権限が見つかりませんでした。"))
@@ -136,120 +122,99 @@ public class Perm
 	        				
 	        				source.sendMessage(component);
 						}
-	        			default->
-						{
+	        			default-> {
 	        				source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 						}
 	        		}
 				}
-	        	case 3->
-				{
+	        	case 3-> {
 	        		// 以下はパーミッションが所持していることが確認されている上で、permというコマンドを使っているので、確認の必要なし
 	        		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
-	        		if(!(args1.contains(args[1].toLowerCase())))
-        			{
+	        		if (!(args1.contains(args[1].toLowerCase()))) {
         				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
 	        		
-	        		if(!(permS.contains(args[2].toLowerCase())))
-        			{
+	        		if (!(permS.contains(args[2].toLowerCase()))) {
 	        			source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
 	        		
 	        		source.sendMessage(Component.text("対象のプレイヤー名を入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
 				}
-	        	case 4->
-				{
-        			if(!(args1.contains(args[1].toLowerCase())))
-        			{
+	        	case 4-> {
+        			if (!(args1.contains(args[1].toLowerCase()))) {
         				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
-        			if(!(permS.contains(args[2].toLowerCase())))
-        			{
+        			if (!(permS.contains(args[2].toLowerCase()))) {
         				source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
         			// permSのindex値をもって、permDからDetail_Nameを取得(1:1対応)
         			permD1 = permD.get(permS.indexOf(args[2]));
-        			while (minecrafts.next())
-    	            {
+        			while (minecrafts.next()) {
         				sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
     					ps = conn.prepareStatement(sql);
     					ps.setString(1, minecrafts.getString("uuid"));
     					ps.setString(2, permD1);
     					isperm = ps.executeQuery();
     					
-    	            	if(minecrafts.getString("name").equalsIgnoreCase(args[3]))
-    		        	{
+    	            	if (minecrafts.getString("name").equalsIgnoreCase(args[3])) {
     		        		containsPlayer = true;
-    		        		if(isperm.next())
-    		        		{
+    		        		if(isperm.next()) {
     		        			ispermindb = true;
     		        		}
+
     		        		break;
     		        	}
     	            }
         			
-        			if(!containsPlayer)
-    		        {
+        			if (!containsPlayer) {
     		        	source.sendMessage(Component.text("サーバーに参加したことのあるプレイヤーを指定してください。").color(NamedTextColor.RED));
     		        	break;
     		        }
     		        
-    				switch(args[1].toLowerCase())
-	        		{
-        				case "add"->
-						{
-        					if(ispermindb)
-        					{
+    				switch (args[1].toLowerCase()) {
+        				case "add"-> {
+        					if (ispermindb) {
         						source.sendMessage(Component.text(args[3]+"はすでにpermission: "+permD1+"を持っているため、追加できません。").color(NamedTextColor.RED));
 		    		        	break;
         					}
+
         					SetAdmin(permD1,args[3],true,source);
         					break;
         				}	
-        				case "remove"->
-						{
-        					if(!(ispermindb))
-        					{
+        				case "remove"-> {
+        					if (!(ispermindb)) {
         						source.sendMessage(Component.text(args[3]+"はpermission: "+permD1+"を持っていないため、除去できません。").color(NamedTextColor.RED));
 		    		        	break;
         					}
+
         					SetAdmin(permD1,args[3],false,source);
         					break;
 						}
 	        		}
 				}
-	        	default->
-				{
+	        	default-> {
 	        		source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 				}
 	        }
-        }
-        catch (SQLException | ClassNotFoundException e)
-        {
+        } catch (SQLException | ClassNotFoundException e) {
         	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) 
-            {
+            for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-        }
-        finally
-        {
+        } finally {
         	db.close_resorce(resultsets, conn, ps);
         }
 	}
 	
-	public void SetAdmin(String permission,String name,Boolean bool,CommandSource source)
-	{
+	public void SetAdmin(String permission,String name,Boolean bool,CommandSource source) {
 		// 上のAdminメソッドの途中なので、connは閉じない。(finallyを省く)
-		try
-		{
+		try {
 			conn = db.getConnection();
 			
 			String sql = "SELECT * FROM minecraft WHERE name=? ORDER BY id DESC LIMIT 1;";
@@ -257,11 +222,9 @@ public class Perm
 			ps.setString(1, name);
 			database_uuid = ps.executeQuery();
 			
-			if(database_uuid.next())
-			{
+			if (database_uuid.next()) {
 				// lp処理
-				if(bool)
-				{
+				if (bool) {
 					sql = "INSERT INTO lp_user_permissions "
 							+ "(uuid,permission,value,server,world,expiry,contexts) VALUES (?,?,?,?,?,?,?);";
 					ps = conn.prepareStatement(sql);
@@ -274,9 +237,7 @@ public class Perm
 					ps.setString(7,"{}");
 					ps.executeUpdate();
 					source.sendMessage(Component.text(name+"にpermission: "+permission+"を追加しました。").color(NamedTextColor.GREEN));
-				}
-				else
-				{
+				} else {
 					sql = "DELETE FROM lp_user_permissions WHERE uuid=?;";
 					ps = conn.prepareStatement(sql);
 					ps.setString(1,database_uuid.getString("uuid"));
@@ -287,12 +248,9 @@ public class Perm
 				lp.triggerNetworkSync();
 				source.sendMessage(Component.text("権限を更新しました。").color(NamedTextColor.GREEN));
 			}
-		}
-		catch (SQLException | ClassNotFoundException e)
-        {
+		} catch (SQLException | ClassNotFoundException e) {
         	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) 
-            {
+            for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
         }

@@ -27,8 +27,8 @@ import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.DatabaseInterface;
 
-public class SetServer
-{
+public class SetServer {
+
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -40,46 +40,39 @@ public class SetServer
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public SetServer(ProxyServer server, Logger logger, Config config, DatabaseInterface db)
-	{
+	public SetServer(ProxyServer server, Logger logger, Config config, DatabaseInterface db) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
 	}
 	
-	public void execute(@NotNull CommandSource source,String[] args)
-	{
-		if (source instanceof Player player)
-		{
+	public void execute(@NotNull CommandSource source,String[] args) {
+		if (source instanceof Player player) {
             // プレイヤーがコマンドを実行した場合の処理
 			player = (Player) source;
         
-            if(args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty())
-            {
+            if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
             	player.sendMessage(Component.text(NamedTextColor.RED+"サーバー名を入力してください。"));
             	return;
             }
             
             String targetServerName = args[1];
             boolean containsServer = false;
-            for (RegisteredServer registeredServer : server.getAllServers())
-            {
-            	if(registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName))
-            	{
+            for (RegisteredServer registeredServer : server.getAllServers()) {
+            	if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName)) {
             		containsServer = true;
             		break;
             	}
             }
-            if(!containsServer)
-            {
+
+            if (!containsServer) {
             	player.sendMessage(Component.text(NamedTextColor.RED+"サーバー名が違います。"));
             	logger.info(NamedTextColor.RED+"サーバー名が違います。");
             	return;
             }
 
-            try
-            {
+            try {
             	conn = db.getConnection();
     			String sql = "SELECT * FROM minecraft WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
@@ -91,15 +84,11 @@ public class SetServer
     			ps.setString(1,args[1]);
     			mine_status = ps.executeQuery();
     			
-    			if(minecrafts.next())
-    			{
-    				if(mine_status.next())
-        			{
-        				if(mine_status.getBoolean("online"))
-        				{
+    			if (minecrafts.next()) {
+    				if (mine_status.next()) {
+        				if (mine_status.getBoolean("online")) {
         					// オンライン
-        					if(minecrafts.getBoolean("confirm"))
-        					{
+        					if (minecrafts.getBoolean("confirm")) {
         						// fmcアカウントを持っている /stpが使用可能
         						// /stpで用いるセッションタイム(現在時刻)(sst)をデータベースに
         						LocalDateTime now = LocalDateTime.now();
@@ -127,9 +116,7 @@ public class SetServer
         			    			    	.build();
         						
         						player.sendMessage(component);
-        					}
-        					else
-        					{
+        					} else {
         						// fmcアカウントを持ってない
         						// 6桁の乱数を生成
         				        Random rnd = new Random();
@@ -162,30 +149,25 @@ public class SetServer
         			    			    	.build();
         						player.sendMessage(component);
         					}
-        				}
-        				else
-        				{
+        				} else {
         					// オフライン
-        					if(minecrafts.getBoolean("confirm"))
-        					{
+        					if (minecrafts.getBoolean("confirm")) {
         						//メモリの確認
         						int sum_memory = 0;
         						//現在オンラインのサーバーのメモリ合計を取得
-        						for (RegisteredServer registeredServer : server.getAllServers())
-        						{
-        							if(mine_status.getBoolean("online"))
-        							{
+        						for (RegisteredServer registeredServer : server.getAllServers()) {
+        							if (mine_status.getBoolean("online")) {
         								sum_memory = sum_memory + config.getInt("Servers."+registeredServer.getServerInfo().getName()+".Memory",0);
         							}
         						}
+
         						// 起動・起動リクエストしたいサーバーのメモリも足す
         						sum_memory = sum_memory + config.getInt("Servers."+args[1]+".Memory",0);
         						
         						// Proxyのメモリも足す
         						sum_memory = sum_memory + config.getInt("Servers.Proxy.Memory",0);
         								
-    							if(!(sum_memory<=config.getInt("Servers.Memory_Limit",0)))
-    							{
+    							if (!(sum_memory<=config.getInt("Servers.Memory_Limit",0))) {
     								TextComponent component = Component.text()
             			    			    	.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
             			    			    	.append(Component.text("オフライン").color(NamedTextColor.BLUE))
@@ -210,8 +192,7 @@ public class SetServer
     							issubadmin = ps.executeQuery();
     							
         						// fmcアカウントを持っている
-        						if(issuperadmin.next() || issubadmin.next())
-        						{
+        						if (issuperadmin.next() || issubadmin.next()) {
         							// adminである /startが使用可能
         							// /startで用いるセッションタイム(現在時刻)(sst)をデータベースに
             						LocalDateTime now = LocalDateTime.now();
@@ -238,9 +219,7 @@ public class SetServer
 		        	                            .build();
             						
             						player.sendMessage(component);
-        						}
-        						else
-        						{
+        						} else {
         							// adminでない /reqが使用可能
         							// /reqで用いるセッションタイム(現在時刻)(sst)をデータベースに
             						LocalDateTime now = LocalDateTime.now();
@@ -267,9 +246,7 @@ public class SetServer
             			    			    	.build();
             						player.sendMessage(component);
         						}
-        					}
-        					else
-        					{
+        					} else {
         						// fmcアカウントを持ってない
         						// 6桁の乱数を生成
         				        Random rnd = new Random();
@@ -304,36 +281,25 @@ public class SetServer
         						player.sendMessage(component);
         					}
         				}
-        			}
-        			else
-        			{
+        			} else {
         				// MySQLサーバーにサーバーが登録されてなかった場合
         				logger.info("このサーバーは、データベースに登録されていません。");
         				player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
         			}
-    			}
-    			else
-    			{
+    			} else {
     				// MySQLサーバーにプレイヤー情報が登録されてなかった場合
     				logger.info(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。");
     				player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
     			}
-            }
-            catch (SQLException | ClassNotFoundException e)
-            {
+            } catch (SQLException | ClassNotFoundException e) {
             	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-				for (StackTraceElement element : e.getStackTrace()) 
-				{
+				for (StackTraceElement element : e.getStackTrace()) {
 					logger.error(element.toString());
 				}
-            }
-            finally
-            {
+            } finally {
             	db.close_resorce(resultsets, conn, ps);
             }
-        }
-		else
-		{
+        } else {
 			source.sendMessage(Component.text(NamedTextColor.RED+"このコマンドはプレイヤーのみが実行できます。"));
 		}
 	}

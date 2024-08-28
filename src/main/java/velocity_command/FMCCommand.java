@@ -25,8 +25,8 @@ import velocity.Main;
 import velocity.PlayerUtil;
 import velocity.RomajiConversion;
 
-public class FMCCommand implements SimpleCommand
-{
+public class FMCCommand implements SimpleCommand {
+
     private final ProxyServer server;
     private final Config config;
     private final PlayerUtil pu;
@@ -35,23 +35,19 @@ public class FMCCommand implements SimpleCommand
     public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
-    public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerUtil pu)
-    {
+    public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerUtil pu) {
         this.server = server;
         this.config = config;
         this.pu = pu;
     }
 
     @Override
-    public void execute(Invocation invocation)
-    {
+    public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
         String[] args = invocation.arguments();
 
-        if (args.length == 0 || !subcommands.contains(args[0].toLowerCase()))
-        {
-            if (source.hasPermission("fmc.proxy.commandslist"))
-            {
+        if (args.length == 0 || !subcommands.contains(args[0].toLowerCase())) {
+            if (source.hasPermission("fmc.proxy.commandslist")) {
                 TextComponent component = Component.text()
                         .append(Component.text("FMC COMMANDS LIST").color(NamedTextColor.YELLOW).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
                         .append(Component.text("\n/hub").color(NamedTextColor.AQUA))
@@ -99,18 +95,16 @@ public class FMCCommand implements SimpleCommand
                                 .hoverEvent(HoverEvent.showText(Component.text("DiscordのプレイヤーごとのEmbedを編集して、プロキシサーバーをシャットダウン"))))
                         .build();
                 source.sendMessage(component);
-            }
-            else
-            {
+            } else {
                 source.sendMessage(Component.text("You do not have permission for fmc commands.").color(NamedTextColor.RED));
             }
+
             return;
         }
 
         String subCommand = args[0];
 
-        switch (subCommand.toLowerCase())
-        {
+        switch (subCommand.toLowerCase()) {
             case "debug" -> Main.getInjector().getInstance(Debug.class).execute(source, args);
 
             case "start" -> Main.getInjector().getInstance(StartServer.class).execute(source, args);
@@ -148,108 +142,88 @@ public class FMCCommand implements SimpleCommand
     }
 
     @Override
-    public List<String> suggest(Invocation invocation)
-    {
+    public List<String> suggest(Invocation invocation) {
         CommandSource source = invocation.source();
         String[] args = invocation.arguments();
         List<String> ret = new ArrayList<>();
 
-        switch (args.length)
-        {
-        	case 0, 1 ->
-            {
-                for (String subcmd : subcommands)
-                {
+        switch (args.length) {
+        	case 0, 1 -> {
+                for (String subcmd : subcommands) {
                     if (!source.hasPermission("fmc.proxy." + subcmd)) continue;
                     ret.add(subcmd);
                 }
+
                 return ret;
             }
-            case 2 ->
-            {
+            case 2 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
 
-                switch (args[0].toLowerCase())
-                {
-                    case "something" -> 
-                    {
-                        for (String any : bools)
-                        {
+                switch (args[0].toLowerCase()) {
+                    case "something" -> {
+                        for (String any : bools) {
                             ret.add(any);
                         }
+
                         return ret;
                     }
 
-                    case "start", "ss", "req", "stp" -> 
-                    {
-                        for (RegisteredServer registerServer : server.getAllServers())
-                        {
+                    case "start", "ss", "req", "stp" -> {
+                        for (RegisteredServer registerServer : server.getAllServers()) {
                             ret.add(registerServer.getServerInfo().getName());
                         }
+
                         return ret;
                     }
-                    case "perm" -> 
-                    {
-                        for (String args1 : Perm.args1)
-                        {
+                    case "perm" -> {
+                        for (String args1 : Perm.args1) {
                             ret.add(args1);
                         }
+
                         return ret;
                     }
-                    case "maintenance" -> 
-                    {
-                        for (String args1 : Maintenance.args1)
-                        {
+                    case "maintenance" -> {
+                        for (String args1 : Maintenance.args1) {
                             ret.add(args1);
                         }
+
                         return ret;
                     }
-                    case "chat" -> 
-                    {
-                        for (String args1 : SwitchChatType.args1)
-                        {
+                    case "chat" -> {
+                        for (String args1 : SwitchChatType.args1) {
                             ret.add(args1);
                         }
+
                         return ret;
                     }
-                    case "conv" ->
-                    {
-                        for (String arg1 : SwitchRomajiConvType.args1)
-                        {
-                            if(source.hasPermission("fmc.proxy.conv."+arg1)) 
-                            {
+                    case "conv" -> {
+                        for (String arg1 : SwitchRomajiConvType.args1) {
+                            if(source.hasPermission("fmc.proxy.conv."+arg1)) {
                                 ret.add(arg1);
                             }
                         }
-                        for(String arg1_1 : SwitchRomajiConvType.args1_1)
-                        {
-                            if(source.hasPermission("fmc.proxy.conv.*"))
-                            {
+
+                        for(String arg1_1 : SwitchRomajiConvType.args1_1) {
+                            if(source.hasPermission("fmc.proxy.conv.*")) {
                                 ret.add(arg1_1);
                             }
                         }
+
                         return ret;
                     }
-                    default -> 
-                    {
+                    default -> {
                         return Collections.emptyList();
                     }
                 }
             }
-            case 3 ->
-            {
+            case 3 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
                 
-                switch (args[0].toLowerCase())
-                {
-                    case "conv" ->
-                    {
-                        switch(args[1].toLowerCase())
-                        {
-                            case "add", "remove" ->
-                            {
-                                for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) 
-                                {
+                switch (args[0].toLowerCase()) {
+                    case "conv" -> {
+                        switch(args[1].toLowerCase()) {
+                            case "add", "remove" -> {
+                                for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) {
                                     ret.add(entry.getKey());
                                 }
 
@@ -257,15 +231,11 @@ public class FMCCommand implements SimpleCommand
                             }
                         }
                     }
-                	case "perm"->
-                    {
-                		switch (args[1].toLowerCase())
-                        {
-                            case "add", "remove" -> 
-                            {
+                	case "perm"-> {
+                		switch (args[1].toLowerCase()) {
+                            case "add", "remove" -> {
                                 List<String> permS = config.getList("Permission.Short_Name");
-                                for (String permS1 : permS)
-                                {
+                                for (String permS1 : permS) {
                                     ret.add(permS1);
                                 }
                                 
@@ -274,38 +244,28 @@ public class FMCCommand implements SimpleCommand
                         }
                     }
 
-                	case "maintenance"->
-                    {
-                		switch (args[1].toLowerCase())
-                        {
-                            case "switch" -> 
-                            {
-                                for(String args2 : Maintenance.args2)
-                                {
+                	case "maintenance"-> {
+                		switch (args[1].toLowerCase()) {
+                            case "switch" -> {
+                                for(String args2 : Maintenance.args2) {
                                     ret.add(args2);
                                 }
+
                                 return ret;
                             }
                         }
                     }
                 }
             }
-            case 4 ->
-            {
+            case 4 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
 
-                switch (args[0].toLowerCase())
-                {
-                    case "conv" ->
-                    {
-                        switch (args[1].toLowerCase())
-                        {
-                            case "add"->
-                            {
-                                for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) 
-                                {
-                                    if(entry.getKey().equalsIgnoreCase(args[2]))
-                                    {
+                switch (args[0].toLowerCase()) {
+                    case "conv" -> {
+                        switch (args[1].toLowerCase()) {
+                            case "add"-> {
+                                for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) {
+                                    if(entry.getKey().equalsIgnoreCase(args[2])) {
                                         ret.add(entry.getValue());
                                     }
                                 }
@@ -314,40 +274,31 @@ public class FMCCommand implements SimpleCommand
                             }
                         }
                     }
-                	case "perm"->
-                    {
-                		switch (args[1].toLowerCase())
-                        {
-                            case "add", "remove"->
-                            {
+                	case "perm"-> {
+                		switch (args[1].toLowerCase()) {
+                            case "add", "remove"-> {
                             	pu.loadPlayers(); // プレイヤーリストをロード
                                 List<String> permS = config.getList("Permission.Short_Name");
                                 
-                                if (permS.contains(args[2].toLowerCase()))
-                                {
-                                    for (String player : pu.getPlayerList())
-                                    {
+                                if (permS.contains(args[2].toLowerCase())) {
+                                    for (String player : pu.getPlayerList()) {
                                         ret.add(player);
                                     }
                                 }
+
                                 return ret;
                             }
                         }
                     }
-                	case "maintenance"->
-                    {
-                		switch (args[1].toLowerCase())
-                        {
-                            case "switch"->
-                            {
-                            	switch (args[2].toLowerCase())
-                            	{
-                            		case "discord"->
-                                    {
-                            			for(String args3 : Maintenance.args3)
-                                    	{
+                	case "maintenance"-> {
+                		switch (args[1].toLowerCase()) {
+                            case "switch"-> {
+                            	switch (args[2].toLowerCase()) {
+                            		case "discord"-> {
+                            			for(String args3 : Maintenance.args3) {
                                     		ret.add(args3);
                                     	}
+
                                     	return ret;
                                     }
                             	}
@@ -356,22 +307,15 @@ public class FMCCommand implements SimpleCommand
                     }
                 }
             }
-            case 5 ->
-            {
+            case 5 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
                 
-                switch (args[0].toLowerCase())
-                {
-                    case "conv" ->
-                    {
-                        switch (args[1].toLowerCase())
-                        {
-                            case "add"->
-                            {
-                                if(source.hasPermission("fmc.proxy.conv.*"))
-                                {
-                                    for(String bool : bools)
-                                    {
+                switch (args[0].toLowerCase()) {
+                    case "conv" -> {
+                        switch (args[1].toLowerCase()) {
+                            case "add"-> {
+                                if(source.hasPermission("fmc.proxy.conv.*")) {
+                                    for(String bool : bools) {
                                         ret.add(bool);
                                     }
                                     

@@ -8,17 +8,14 @@ import com.velocitypowered.api.command.CommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-public class Cancel
-{
+public class Cancel {
 	
 	@Inject
-	public Cancel()
-	{
+	public Cancel() {
 		//
 	}
 	
-    public void execute(@NotNull CommandSource source,String[] args)
-    {
+    public void execute(@NotNull CommandSource source,String[] args) {
         source.sendMessage(Component.text("キャンセルしました。").color(NamedTextColor.WHITE));
     }
 }

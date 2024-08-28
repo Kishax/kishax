@@ -27,8 +27,8 @@ import velocity.BroadCast;
 import velocity.Config;
 import velocity.DatabaseInterface;
 
-public class StartServer
-{
+public class StartServer {
+
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -44,13 +44,11 @@ public class StartServer
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public StartServer
-	(
+	public StartServer (
 		ProxyServer server, Logger logger, Config config,
 		DatabaseInterface db, ConsoleCommandSource console, MessageEditorInterface discordME,
 		BroadCast bc
-	)
-	{
+	) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
@@ -60,41 +58,32 @@ public class StartServer
 		this.discordME = discordME;
 	}
 	
-	public void execute(@NotNull CommandSource source,String[] args)
-	{
-		if (source instanceof Player player)
-		{
-			if(args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty())
-			{
+	public void execute(@NotNull CommandSource source,String[] args) {
+		if (source instanceof Player player) {
+			if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
 				player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
 				return;
 			}
 			
 			// プレイヤーの現在のサーバーを取得
-	        player.getCurrentServer().ifPresent(serverConnection ->
-	        {
+	        player.getCurrentServer().ifPresent(serverConnection -> {
 	            RegisteredServer registeredServer = serverConnection.getServer();
 	            currentServerName = registeredServer.getServerInfo().getName();
 	        });
 			
 			String targetServerName = args[1];
 			boolean containsServer = false;
-			for (RegisteredServer registeredServer : server.getAllServers())
-			{
-				if(registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName))
-				{
+			for (RegisteredServer registeredServer : server.getAllServers()) {
+				if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName)) {
 					containsServer = true;
 					break;
 				}
 			}
-			if(!containsServer)
-			{
+
+			if (!containsServer) {
 		        player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
-			}
-			else
-			{
-				try
-				{
+			} else {
+				try {
 					conn = db.getConnection();
 					String sql = "SELECT * FROM minecraft WHERE uuid=?;";
 	    			ps = conn.prepareStatement(sql);
@@ -105,11 +94,9 @@ public class StartServer
 					ps = conn.prepareStatement(sql);
 					ps.setString(1,args[1]);
 					mine_status = ps.executeQuery();
-					if(minecrafts.next())
-					{
+					if (minecrafts.next()) {
 						//初参加のプレイヤーのsst,req,stカラムはnull値を返すので
-						if(Objects.nonNull(minecrafts.getTimestamp("sst")) && Objects.nonNull(minecrafts.getTimestamp("st")))
-						{
+						if (Objects.nonNull(minecrafts.getTimestamp("sst")) && Objects.nonNull(minecrafts.getTimestamp("st"))) {
 							long now_timestamp = Instant.now().getEpochSecond();
 							
 							// /ssで発行したセッションタイムをみる
@@ -118,8 +105,7 @@ public class StartServer
 							
 							long ss_sa = now_timestamp-sst_timestamp;
 							long ss_sa_minute = ss_sa/60;
-							if(ss_sa_minute>=config.getInt("Interval.Session",3))
-							{
+							if (ss_sa_minute>=config.getInt("Interval.Session",3)) {
 								player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
 								return;
 							}
@@ -131,24 +117,18 @@ public class StartServer
 					        long sa = now_timestamp-st_timestamp;
 					        long sa_minute = sa/60;
 					        
-					        if(sa_minute<=config.getInt("Interval.Start_Server",0))
-					        {
+					        if (sa_minute<=config.getInt("Interval.Start_Server",0)) {
 					        	player.sendMessage(Component.text("サーバーの起動間隔は"+config.getInt("Interval.Start_Server",0)+"分以上は空けてください。").color(NamedTextColor.RED));
 					        	return;
 					        }
 						}
 	    		        
-						if(mine_status.next())
-						{
-							if(mine_status.getBoolean("online"))
-							{
+						if (mine_status.next()) {
+							if (mine_status.getBoolean("online")) {
 								player.sendMessage(Component.text(args[1]+"サーバーは起動中です。").color(NamedTextColor.RED));
 								logger.info(NamedTextColor.RED+args[1]+"サーバーは起動中です。");
-							}
-							else
-							{
-								if(config.getString("Servers."+args[1]+".Bat_Path","").isEmpty())
-								{
+							} else {
+								if (config.getString("Servers."+args[1]+".Bat_Path","").isEmpty()) {
 									player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
 									return;
 								}
@@ -197,31 +177,22 @@ public class StartServer
 		            			ps.executeUpdate();
 							}
 						}
-					}
-					else
-					{
+					} else {
 						// MySQLサーバーにプレイヤー情報が登録されてなかった場合
 	    				logger.info(NamedTextColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
 	    				player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
 					}
 					
-		        }
-				catch (IOException | SQLException | ClassNotFoundException e)
-				{
+		        } catch (IOException | SQLException | ClassNotFoundException e) {
 		            logger.error("An IOException | SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-					for (StackTraceElement element : e.getStackTrace()) 
-					{
+					for (StackTraceElement element : e.getStackTrace()) {
 						logger.error(element.toString());
 					}
-		        }
-				finally
-				{
+		        } finally {
 					db.close_resorce(resultsets, conn, ps);
 				}
 			}
-		}
-		else
-		{
+		} else {
 			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
 		}
 	}

@@ -17,8 +17,8 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-public class RomaToKanji
-{
+public class RomaToKanji {
+
     private static final Map<String, String> ROMA_TO_KANA_MAP = new LinkedHashMap<>();
     private final Logger logger;
 	
@@ -257,29 +257,25 @@ public class RomaToKanji
     }
 
 	@Inject
-	public RomaToKanji(Logger logger)
-	{
+	public RomaToKanji(Logger logger) {
 		this.logger = logger;
 	}
 
-    public String ConvRomaToKana(String word)
-    {
+    public String ConvRomaToKana(String word) {
     	// Map.Entryをリストに変換して逆順にソート
         List<Map.Entry<String, String>> entries = new ArrayList<>(ROMA_TO_KANA_MAP.entrySet());
         //Collections.reverse(entries);
 
         // 逆順で変換を適用
-        for (Map.Entry<String, String> entry : entries)
-        {
+        for (Map.Entry<String, String> entry : entries) {
             word = word.replace(entry.getKey(), entry.getValue());
         }
+
         return word;
     }
 
-    public String ConvRomaToKanji(String kana)
-    {
-        try
-        {
+    public String ConvRomaToKanji(String kana) {
+        try {
             String urlStr = "http://www.google.com/transliterate?langpair=ja-Hira%7Cja&text=" + URLEncoder.encode(kana, StandardCharsets.UTF_8);
 
             // URI オブジェクトを作成
@@ -299,20 +295,17 @@ public class RomaToKanji
             // JSONレスポンスから漢字を解析する
             String kanji = parseKanjiFromJson(responseBody);
             return kanji;
-        }
-        catch (IOException | InterruptedException | URISyntaxException e)
-        {
+        } catch (IOException | InterruptedException | URISyntaxException e) {
             logger.error("An IOException | InterruptedException | URISyntaxException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) 
-            {
+            for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
+
             return "";
         }
     }
 
-    private String parseKanjiFromJson(String json)
-    {
+    private String parseKanjiFromJson(String json) {
         StringBuilder kanji = new StringBuilder();
         try {
             org.json.JSONArray array = new org.json.JSONArray(json);
@@ -329,7 +322,7 @@ public class RomaToKanji
         	// URLを含むとエラーが出るが無視
             //e.printStackTrace();
         }
+
         return kanji.toString();
     }
 }
-

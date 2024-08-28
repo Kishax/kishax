@@ -9,16 +9,15 @@ import java.util.Objects;
 import org.slf4j.Logger;
 
 public class BufferedSocketServerThread extends Thread {
-    public Main plugin;
+    
     public Logger logger;
     public SocketResponse sr;
     private final Socket socket;
     
-    public BufferedSocketServerThread (Socket socket, Main plugin, Logger logger, SocketResponse sr) {
-        this.socket = socket;
-        this.plugin = plugin;
+    public BufferedSocketServerThread (Logger logger, SocketResponse sr, Socket socket) {
         this.logger = logger;
         this.sr = sr;
+        this.socket = socket;
     }
 
     @Override
