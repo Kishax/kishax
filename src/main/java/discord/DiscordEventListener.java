@@ -31,8 +31,8 @@ import velocity.Database;
 import velocity.PlayerUtil;
 import velocity_command.Request;
 
-public class DiscordEventListener extends ListenerAdapter
-{
+public class DiscordEventListener extends ListenerAdapter {
+
 	public static String PlayerChatMessageId = null;
 	
 	private final Logger logger;
@@ -50,12 +50,10 @@ public class DiscordEventListener extends ListenerAdapter
 	private ProcessBuilder processBuilder = null;
 
 	@Inject
-	public DiscordEventListener
-	(
+	public DiscordEventListener (
 		Logger logger, Config config, Database db, 
 		BroadCast bc, PlayerUtil pu, MessageEditorInterface discordME
-	)
-	{
+	) {
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
@@ -66,34 +64,29 @@ public class DiscordEventListener extends ListenerAdapter
 	
 	@SuppressWarnings("null")
 	@Override
-	public void onButtonInteraction(ButtonInteractionEvent e) 
-	{
+	public void onButtonInteraction(ButtonInteractionEvent e) {
         // ボタンIDを取得
         String buttonId = e.getComponentId();
         String buttonMessage = e.getMessage().getContentRaw();
         
-        if(Objects.isNull(buttonMessage) || Objects.isNull(buttonId)) return;
+        if (Objects.isNull(buttonMessage) || Objects.isNull(buttonId)) return;
         
         // ボタンを押したユーザーを取得
         User user = e.getUser();
         
-        switch(buttonId)
-        {
-        	case "reqOK" -> 
-			{
+        switch (buttonId) {
+        	case "reqOK" -> {
 				replyMessage = user.getAsMention() + "startが押されました。";
 				// プレイヤー名・サーバー名、取得
 				pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
 				compiledPattern = Pattern.compile(pattern);
 				matcher = compiledPattern.matcher(buttonMessage);
-				if (matcher.find())
-				{
+				if (matcher.find()) {
 					reqPlayerName = matcher.group(1);
 					reqServerName = matcher.group(2);
 					reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
 					
-					try
-					{
+					try {
 						conn = db.getConnection();
 						sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
 						ps = conn.prepareStatement(sql);
@@ -103,12 +96,9 @@ public class DiscordEventListener extends ListenerAdapter
 						ps.setString(4, reqServerName);
 						ps.setString(5, "ok");
 						ps.executeUpdate();
-					}
-					catch (SQLException | ClassNotFoundException e1)
-					{
+					} catch (SQLException | ClassNotFoundException e1) {
 						logger.error("A SQLException error occurred: " + e1.getMessage());
-						for (StackTraceElement element : e1.getStackTrace())
-						{
+						for (StackTraceElement element : e1.getStackTrace()) {
 							logger.error(element.toString());
 						}
 					}
@@ -117,14 +107,10 @@ public class DiscordEventListener extends ListenerAdapter
 					// バッチファイルのパスを指定
 					batchFilePath = config.getString("Servers."+reqServerName+".Bat_Path");
 					processBuilder = new ProcessBuilder(batchFilePath);
-					try
-					{
+					try {
 						processBuilder.start();
-					}
-					catch (IOException e1)
-					{
-						for (StackTraceElement element : e1.getStackTrace())
-						{
+					} catch (IOException e1) {
+						for (StackTraceElement element : e1.getStackTrace()) {
 							logger.error(element.toString());
 						}
 					}
@@ -138,9 +124,7 @@ public class DiscordEventListener extends ListenerAdapter
 					// フラグから削除
 					String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
 					Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
-				}
-				else
-				{
+				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
 				
@@ -150,21 +134,18 @@ public class DiscordEventListener extends ListenerAdapter
 				e.getMessage().editMessageComponents().queue();
             }
         		
-        	case "reqCancel" -> 
-			{
+        	case "reqCancel" -> {
 				replyMessage = user.getAsMention() + "stopが押されました。";
 				// プレイヤー名・サーバー名、取得
 				pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
 				compiledPattern = Pattern.compile(pattern);
 				matcher = compiledPattern.matcher(buttonMessage);
-				if (matcher.find())
-				{
+				if (matcher.find()) {
 					reqPlayerName = matcher.group(1);
 					reqServerName = matcher.group(2);
 					reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
 					
-					try
-					{
+					try {
 						conn = db.getConnection();
 						sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
 						ps = conn.prepareStatement(sql);
@@ -175,11 +156,9 @@ public class DiscordEventListener extends ListenerAdapter
 						ps.setString(5, "cancel");
 						ps.executeUpdate();
 					}
-					catch (SQLException | ClassNotFoundException e1)
-					{
+					catch (SQLException | ClassNotFoundException e1) {
 						logger.error("A SQLException error occurred: " + e1.getMessage());
-						for (StackTraceElement element : e1.getStackTrace())
-						{
+						for (StackTraceElement element : e1.getStackTrace()) {
 							logger.error(element.toString());
 						}
 					}
@@ -193,9 +172,7 @@ public class DiscordEventListener extends ListenerAdapter
 					// フラグから削除
 					String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
 					Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
-				}
-				else
-				{
+				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
 				
@@ -209,16 +186,13 @@ public class DiscordEventListener extends ListenerAdapter
 
 	@SuppressWarnings("null")
 	@Override
-    public void onMessageReceived(MessageReceivedEvent e) 
-    {
+    public void onMessageReceived(MessageReceivedEvent e) {
         // DMやBot、Webhookのメッセージには反応しないようにする// e.isFromType(ChannelType.PRIVATE)
-        if
-        (
+        if (
         	e.getAuthor().isBot() || 
         	e.getMessage().isWebhookMessage() || 
         	!e.getChannel().getId().equals(Long.toString(config.getLong("Discord.ChatChannelId")))
-        )
-		{
+        ) {
 			return;
 		}
         
@@ -240,8 +214,7 @@ public class DiscordEventListener extends ListenerAdapter
         
         List <Attachment> attachments = e.getMessage().getAttachments();
         int attachmentsSize = attachments.size();
-        if(attachmentsSize > 0)
-        {
+        if (attachmentsSize > 0) {
         	TextComponent component = Component.text()
         			.append(Component.text(userName+" -> Discordで画像か動画を上げています！").color(NamedTextColor.AQUA))
         			.build();
@@ -249,8 +222,7 @@ public class DiscordEventListener extends ListenerAdapter
         	TextComponent additionalComponent;
         	int i=0;
         	// 添付ファイルを処理したい場合は、以下のようにできます
-            for (Attachment attachment : attachments)
-            {
+            for (Attachment attachment : attachments) {
             	additionalComponent = Component.text()
             			.append(Component.text("\n"+attachment.getUrl())
         						.color(NamedTextColor.GRAY)
@@ -268,8 +240,7 @@ public class DiscordEventListener extends ListenerAdapter
         }
     }
 	
-	public void sendMixUrl(String string)
-    {
+	public void sendMixUrl(String string) {
     	// 正規表現パターンを定義（URLを見つけるための正規表現）
         String urlRegex = "https?://\\S+";
         Pattern patternUrl = Pattern.compile(urlRegex);
@@ -282,8 +253,7 @@ public class DiscordEventListener extends ListenerAdapter
         int lastMatchEnd = 0;
         
         Boolean isUrl = false;
-        while (matcher.find())
-        {
+        while (matcher.find()) {
         	// URLが含まれていたら
         	isUrl = true;
         	
@@ -296,16 +266,14 @@ public class DiscordEventListener extends ListenerAdapter
         }
         
     	// URLが含まれてなかったら
-        if(!isUrl)
-        {
+        if (!isUrl) {
         	//if (string.contains("\\n")) string = string.replace("\\n", "\n");
         	bc.broadCastMessage(Component.text(string).color(NamedTextColor.AQUA));
         	return;
         }
         
         // 最後のURLの後のテキスト部分を追加
-        if (lastMatchEnd < string.length()) 
-        {
+        if (lastMatchEnd < string.length()) {
             textParts.add(string.substring(lastMatchEnd));
         }
         
@@ -316,11 +284,9 @@ public class DiscordEventListener extends ListenerAdapter
         int textPartsSize = textParts.size();
         int urlsSize = urls.size();
         
-        for (int i = 0; i < textPartsSize; i++)
-        {
+        for (int i = 0; i < textPartsSize; i++) {
         	Boolean isText = false;
-        	if(Objects.nonNull(textParts) && textPartsSize != 0)
-        	{
+        	if (Objects.nonNull(textParts) && textPartsSize != 0) {
         		String text;
         		text = textParts.get(i);
         		
@@ -331,9 +297,7 @@ public class DiscordEventListener extends ListenerAdapter
         				.color(NamedTextColor.AQUA)
         				.build();
         		component = component.append(additionalComponent);
-        	}
-        	else
-        	{
+        	} else {
         		isText = true;
         	}
         	
@@ -343,20 +307,14 @@ public class DiscordEventListener extends ListenerAdapter
         	//　ゆえ、最後の番号だけ考えなければ、
         	// 上で文字列にURLが含まれているかどうかを確認しているので、ぶっちゃけ以下のif文はいらないかも
         	//if(Objects.nonNull(urls) && urlsSize != 0)
-        	if (i < urlsSize)
-        	{
+        	if (i < urlsSize) {
         		String getUrl;
-        		if (isText)
-        		{
+        		if (isText) {
         			// textがなかったら、先頭の改行は無くす(=URLのみ)
         			getUrl = urls.get(i);
-        		}
-        		else if (i != textPartsSize - 1)
-            	{
+        		} else if (i != textPartsSize - 1) {
             		getUrl = "\n"+urls.get(i)+"\n";
-            	}
-            	else
-            	{
+            	} else {
             		getUrl = "\n"+urls.get(i);
             	}
             	

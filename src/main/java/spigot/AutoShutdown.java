@@ -7,25 +7,22 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import com.google.inject.Inject;
 
-public class AutoShutdown
-{
+public class AutoShutdown {
+
 	private final common.Main plugin;
 	private final SocketSwitch ssw;
 	private final ServerHomeDir shd;
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown(common.Main plugin, SocketSwitch ssw, ServerHomeDir shd)
-	{
+	public AutoShutdown (common.Main plugin, SocketSwitch ssw, ServerHomeDir shd) {
 		this.plugin = plugin;
 		this.ssw = ssw;
 		this.shd = shd;
 	}
 	
-	public void startCheckForPlayers() 
-	{
-		if(!plugin.getConfig().getBoolean("AutoStop.Mode", false))
-		{	
+	public void startCheckForPlayers() {
+		if (!plugin.getConfig().getBoolean("AutoStop.Mode", false)) {	
 			plugin.getServer().getConsoleSender().sendMessage(ChatColor.GREEN+"Auto-Stopはキャンセルされました。");
 			return;
 		}
@@ -34,13 +31,10 @@ public class AutoShutdown
 		
 		long NO_PLAYER_THRESHOLD = plugin.getConfig().getInt("AutoStop.Interval",3) * 60 * 20;
 		
-		task = new BukkitRunnable()
-	    {
+		task = new BukkitRunnable() {
 	        @Override
-	        public void run() 
-	        {
-	            if (plugin.getServer().getOnlinePlayers().isEmpty()) 
-	            {
+	        public void run() {
+	            if (plugin.getServer().getOnlinePlayers().isEmpty()) {
 	            	String serverName = shd.getServerName();
 	            	ssw.startSocketClient("プレイヤー不在のため、"+serverName+"サーバーを停止させます。");
 	            	
@@ -49,20 +43,17 @@ public class AutoShutdown
 	            }
 	        }
 	    };
+
 	    task.runTaskTimer(plugin, NO_PLAYER_THRESHOLD, NO_PLAYER_THRESHOLD);
 	}
 
-    private void countdownAndShutdown(int seconds) 
-    {
-        new BukkitRunnable() 
-        {
+    private void countdownAndShutdown(int seconds) {
+        new BukkitRunnable() {
             int countdown = seconds;
 
             @Override
-            public void run() 
-            {
-                if (countdown <= 0) 
-                {
+            public void run() {
+                if (countdown <= 0) {
                     plugin.getServer().broadcastMessage("サーバーを停止します。");
                     plugin.getServer().shutdown();
                     cancel();
@@ -75,10 +66,8 @@ public class AutoShutdown
         }.runTaskTimer(plugin, 0, 20);
     }
     
-    public void stopCheckForPlayers()
-    {
-    	if (Objects.nonNull(task) && !task.isCancelled())
-    	{
+    public void stopCheckForPlayers() {
+    	if (Objects.nonNull(task) && !task.isCancelled()) {
             task.cancel();
         }
     }

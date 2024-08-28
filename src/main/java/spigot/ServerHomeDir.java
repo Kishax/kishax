@@ -5,23 +5,20 @@ import java.util.Objects;
 
 import com.google.inject.Inject;
 
-public class ServerHomeDir
-{
+public class ServerHomeDir {
+
 	private final File dataFolder;
 	
 	@Inject
-	public ServerHomeDir(common.Main plugin)
-	{
+	public ServerHomeDir(common.Main plugin) {
 		this.dataFolder = plugin.getDataFolder();
 	}
 	
-	public String getServerName()
-	{
+	public String getServerName() {
 		return getParentDir(dataFolder);
 	}
 	
-	private String getParentDir(File dataFolder)
-	{
+	private String getParentDir(File dataFolder) {
 		// サーバーのホームディレクトリを取得
         File serverHomeDirectory = dataFolder.getParentFile();
         
@@ -34,12 +31,11 @@ public class ServerHomeDir
         // "plugins"ディレクトリの親ディレクトリを取得
         File parentDir = file.getParentFile();
         
-        // 親ディレクトリが存在するか確認
-        if (Objects.nonNull(parentDir))
-        {
-            // 親ディレクトリの名前を取得
+        // 親ディレクトリが存在するか確認し、名前を取得
+        if (Objects.nonNull(parentDir)) {
         	return parentDir.getName();
         }
+		
         return null;
 	}
 }

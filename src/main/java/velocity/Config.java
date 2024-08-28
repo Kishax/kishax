@@ -19,8 +19,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
-public class Config
-{
+public class Config {
     private Config instance = null;
     private Map<String, Object> config = null;
     private final ProxyServer server;
@@ -28,58 +27,46 @@ public class Config
     private final Path dataDirectory;
     
     @Inject
-    public Config(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory)
-    {
+    public Config(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
     	this.server = server;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
         instance = this;
     }
 
-    public Map<String, Object> getConfig()
-    {
-    	if (Objects.isNull(config))
-    	{
+    public Map<String, Object> getConfig() {
+    	if (Objects.isNull(config)) {
             // Configのインスタンスが初期化されていない場合は、設定を読み込む
-            if (Objects.nonNull(instance))
-            {
-                try
-                {
+            if (Objects.nonNull(instance)) {
+                try {
 					instance.loadConfig();
-				}
-                catch (IOException e)
-                {
+				} catch (IOException e) {
                 	logger.error("Error loading config",e);
 				}
-            }
-            else
-            {
+            } else {
             	logger.error("Config instance is not initialized.");
             }
         }
+
         return config;
     }
     
-    public synchronized void loadConfig() throws IOException
-    {
+    public synchronized void loadConfig() throws IOException {
         Path configPath = dataDirectory.resolve("velocity-config.yml");
         
         // ディレクトリの作成
-        if (Files.notExists(dataDirectory))
-        {
+        if (Files.notExists(dataDirectory)) {
             Files.createDirectories(dataDirectory);
         }
         
         // ファイルの作成
-        if (!Files.exists(configPath))
-        {
-            try (InputStream in = getClass().getResourceAsStream("/velocity-config.yml"))
-            {
-            	if (Objects.isNull(in))
-            	{
+        if (!Files.exists(configPath)) {
+            try (InputStream in = getClass().getResourceAsStream("/velocity-config.yml")) {
+            	if (Objects.isNull(in)) {
             		logger.error("Default configuration file not found in resources.");
                     return;
             	}
+
                 Files.copy(in, configPath);
                 
                 // 読み込みと新規内容の追加
@@ -88,8 +75,7 @@ public class Config
                 addContents += "\n\n    Proxy:\n        Memory: ";
                 
                 // 例: サーバー名を追加する部分
-                for (RegisteredServer registeredServer : server.getAllServers())
-                {
+                for (RegisteredServer registeredServer : server.getAllServers()) {
                 	addContents += "\n    "+registeredServer.getServerInfo().getName()+":";
                 	addContents += "\n        Memory: ";
                 	addContents += "\n        Bat_Path: \"\"";
@@ -102,56 +88,42 @@ public class Config
 
         // Yamlでの読み込み
         Yaml yaml = new Yaml();
-        try (InputStream inputStream = Files.newInputStream(configPath))
-        {
+        try (InputStream inputStream = Files.newInputStream(configPath)) {
             config = yaml.load(inputStream);
-            if(Objects.isNull(config))
-            {
+            if (Objects.isNull(config)) {
             	logger.error("Failed to load YAML configuration, config is null.");
-            }
-            else
-            {
+            } else {
             	logger.info("YAML configuration loaded successfully.");
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
         	logger.error("Error reading YAML configuration file.", e);
         }
     }
 
-    public void saveConfig() throws IOException
-    {
+    public void saveConfig() throws IOException {
         Path configPath = dataDirectory.resolve("velocity-config.yml");
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(options);
-        try (FileWriter writer = new FileWriter(configPath.toFile()))
-        {
+        try (FileWriter writer = new FileWriter(configPath.toFile())) {
             yaml.dump(config, writer);
         }
     }
     
     @SuppressWarnings("unchecked")
-    public List<String> getStringList(String key)
-    {
-    	if (Objects.isNull(config))
-    	{
+    public List<String> getStringList(String key) {
+    	if (Objects.isNull(config)) {
             logger.error("Config has not been initialized.");
             return Collections.emptyList();
         }
+
         Object value = config.get(key);
-        if (value instanceof List)
-        {
+        if (value instanceof List) {
             return (List<String>) value;
-        }
-        else if (Objects.isNull(value))
-        {
+        } else if (Objects.isNull(value)) {
             logger.error("The key '" + key + "' does not exist in the configuration.");
             return Collections.emptyList();
-        }
-        else
-        {
+        } else {
             logger.error("The value for the key '" + key + "' is not a list.");
             return Collections.emptyList();
         }
@@ -163,30 +135,26 @@ public class Config
      * @return 階層的なキーに対応する値
      */
     @SuppressWarnings("unchecked")
-    public Object getNestedValue(String path)
-    {
+    public Object getNestedValue(String path) {
         if (Objects.isNull(config))	return null;
 
         String[] keys = path.split("\\.");
         Map<String, Object> currentMap = config;
 
-        for (int i = 0; i < keys.length; i++)
-        {
+        for (int i = 0; i < keys.length; i++) {
             Object value = currentMap.get(keys[i]);
 
             if (Objects.isNull(value))	return null;
 
             if (i == keys.length - 1)	return value;
 
-            if (value instanceof Map) 
-            {
+            if (value instanceof Map) {
                 currentMap = (Map<String, Object>) value;
-            }
-            else
-            {
+            } else {
                 return null; // キーがマップではない場合
             }
         }
+
         return null;
     }
 
@@ -196,93 +164,78 @@ public class Config
      * @return 階層的なキーに対応する文字列値
      */
     // 階層的なキーを指定して文字列を取得する
-    public String getString(String path, String defaultValue)
-    {
+    public String getString(String path, String defaultValue) {
         Object value = getNestedValue(path);
         return value instanceof String ? (String) value : defaultValue;
     }
 
-    public String getString(String path)
-    {
+    public String getString(String path) {
         return getString(path, null);
     }
 
     // 階層的なキーを指定してブール値を取得する
-    public boolean getBoolean(String path, boolean defaultValue)
-    {
+    public boolean getBoolean(String path, boolean defaultValue) {
         Object value = getNestedValue(path);
         return value instanceof Boolean ? (Boolean) value : defaultValue;
     }
 
-    public boolean getBoolean(String path)
-    {
+    public boolean getBoolean(String path) {
         return getBoolean(path, false);
     }
     
     // 階層的なキーを指定して整数を取得する
-    public int getInt(String path, int defaultValue)
-    {
+    public int getInt(String path, int defaultValue) {
         Object value = getNestedValue(path);
-        if (value instanceof Number number)
-        {
+        if (value instanceof Number number) {
             return number.intValue();
         }
+
         return defaultValue;
     }
 
-    public int getInt(String path)
-    {
+    public int getInt(String path) {
         return getInt(path, 0);
     }
     
     // 階層的なキーを指定してlong型の整数を取得する
-    public long getLong(String path, long defaultValue)
-    {
+    public long getLong(String path, long defaultValue) {
         Object value = getNestedValue(path);
-        if (value instanceof Number number)
-        {
+        if (value instanceof Number number) {
             return number.longValue();
         }
+
         return defaultValue;
     }
 
-    public long getLong(String path)
-    {
+    public long getLong(String path) {
         return getLong(path, 0L);
     }
     
     // 階層的なキーを指定してリストを取得する
     @SuppressWarnings("unchecked")
-    public List<String> getList(String path, List<String> defaultValue)
-    {
+    public List<String> getList(String path, List<String> defaultValue) {
         Object value = getNestedValue(path);
         return value instanceof List ? (List<String>) value : defaultValue;
     }
 
-    public List<String> getList(String path)
-    {
+    public List<String> getList(String path) {
         return getList(path, Collections.emptyList());
     }
 
-    public Map<String, Object> getStringObjectMap(String key)
-    {
+    public Map<String, Object> getStringObjectMap(String key) {
         Object mapObject = getConfig().get(key);
-        if(mapObject instanceof Map<?, ?> tempMap)
-        {
+        if (mapObject instanceof Map<?, ?> tempMap) {
             tempMap = (Map<?, ?>) mapObject;
             // Mapのキーと値が正しい型であるかを確認
             boolean isStringObjectMap = true;
-            for (Map.Entry<?, ?> entry : tempMap.entrySet()) 
-            {
-                if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof Object)) 
-                {
+            for (Map.Entry<?, ?> entry : tempMap.entrySet()) {
+                if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof Object)) {
                     isStringObjectMap = false;
                     break;
                 }
             }
 
-            if(isStringObjectMap)
-            {
+            if (isStringObjectMap) {
                 @SuppressWarnings("unchecked") // checked by above, So this annotation doen not need
                 Map<String, Object> mapConfig = (Map<String, Object>) mapObject;
                 return mapConfig;
@@ -292,24 +245,19 @@ public class Config
         return null;
     }
 
-    public Map<String, Object> getStringObjectMap(Object mapObject)
-    {
-        if(mapObject instanceof Map<?, ?> tempMap)
-        {
+    public Map<String, Object> getStringObjectMap(Object mapObject) {
+        if (mapObject instanceof Map<?, ?> tempMap) {
             tempMap = (Map<?, ?>) mapObject;
             // Mapのキーと値が正しい型であるかを確認
             boolean isStringObjectMap = true;
-            for (Map.Entry<?, ?> entry : tempMap.entrySet()) 
-            {
-                if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof Object)) 
-                {
+            for (Map.Entry<?, ?> entry : tempMap.entrySet()) {
+                if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof Object)) {
                     isStringObjectMap = false;
                     break;
                 }
             }
 
-            if(isStringObjectMap)
-            {
+            if (isStringObjectMap) {
                 @SuppressWarnings("unchecked") // checked by above, So this annotation doen not need
                 Map<String, Object> mapConfig = (Map<String, Object>) mapObject;
                 return mapConfig;
@@ -319,17 +267,14 @@ public class Config
         return null;
     }
 
-    public Map<String, Object> getStringObjectMap2(String key)
-    {
+    public Map<String, Object> getStringObjectMap2(String key) {
         Object mapObject = getConfig().get(key);
-        if(mapObject instanceof Map<?, ?> tempMap)
-        {
+        if (mapObject instanceof Map<?, ?> tempMap) {
             tempMap = (Map<?, ?>) mapObject;
             boolean isStringObjectMap = tempMap.keySet().stream().allMatch(k -> k instanceof String) &&
                                 tempMap.values().stream().allMatch(v -> v instanceof Object);
             
-            if(isStringObjectMap)
-            {
+            if (isStringObjectMap) {
                 @SuppressWarnings("unchecked") // checked by above, So this annotation doen not need
                 Map<String, Object> mapConfig = (Map<String, Object>) mapObject;
                 return mapConfig;

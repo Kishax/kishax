@@ -8,15 +8,13 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 
-public class BufferedSocketServerThread extends Thread
-{
+public class BufferedSocketServerThread extends Thread {
     public Main plugin;
     public Logger logger;
     public SocketResponse sr;
     private final Socket socket;
     
-    public BufferedSocketServerThread(Socket socket, Main plugin, Logger logger, SocketResponse sr)
-    {
+    public BufferedSocketServerThread (Socket socket, Main plugin, Logger logger, SocketResponse sr) {
         this.socket = socket;
         this.plugin = plugin;
         this.logger = logger;
@@ -24,43 +22,30 @@ public class BufferedSocketServerThread extends Thread
     }
 
     @Override
-    public void run()
-    {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));)
-        {
+    public void run() {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));) {
         	StringBuilder receivedMessageBuilder = new StringBuilder();
             String line;
-            while (Objects.nonNull(line = reader.readLine()))
-            {
+            while (Objects.nonNull(line = reader.readLine())) {
                 receivedMessageBuilder.append(line).append("\n");
             }
             
             String receivedMessage = receivedMessageBuilder.toString();
             
             sr.resaction(receivedMessage);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             logger.error("An Exception error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) 
-            {
+            for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-        }
-        finally
-        {
-            try
-            {
-                if (socket != null && !socket.isClosed())
-                {
+        } finally {
+            try {
+                if (socket != null && !socket.isClosed()) {
                 	socket.close();
                 }
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 logger.error("An IOException error occurred: " + e.getMessage());
-                for (StackTraceElement element : e.getStackTrace()) 
-                {
+                for (StackTraceElement element : e.getStackTrace()) {
                     logger.error(element.toString());
                 }
             }

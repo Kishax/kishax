@@ -11,21 +11,19 @@ import com.google.inject.Injector;
 import spigot.Module;
 import spigot_command.FMCCommand;
 
-public class Main
-{
+public class Main {
+
 	private static Injector injector = null;
 	
 	public Connection conn = null;
 	public PreparedStatement ps = null;
 	public final common.Main plugin;
 	
-	public Main(common.Main plugin)
-	{
+	public Main(common.Main plugin) {
 		this.plugin = plugin;
 	}
 	
-	public void onEnable()
-    {
+	public void onEnable() {
 		// Guice インジェクターを作成
         injector = Guice.createInjector(new Module(plugin, this));
         
@@ -39,13 +37,11 @@ public class Main
         
 		FMCCommand commandFMC = getInjector().getInstance(FMCCommand.class);
 		PluginCommand fmcCmd = plugin.getCommand("fmc");
-		if(fmcCmd != null)
-		{
+		if (fmcCmd != null) {
 			fmcCmd.setExecutor(commandFMC);
 		}
         
-    	if(plugin.getConfig().getBoolean("MCVC.Mode",false))
-		{
+    	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
 		}
     	
@@ -54,15 +50,12 @@ public class Main
     	plugin.getLogger().info("プラグインが有効になりました。");
     }
     
-	public static Injector getInjector()
-    {
+	public static Injector getInjector() {
         return injector;
     }
 	
-    public void onDisable()
-    {
-    	if(plugin.getConfig().getBoolean("MCVC.Mode",false))
-		{
+    public void onDisable() {
+    	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).stopMCVC();
 		}
         

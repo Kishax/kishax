@@ -19,8 +19,8 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-public class DoServerOnline
-{
+public class DoServerOnline {
+
     private Connection conn = null;
     private PreparedStatement ps = null;
     public ResultSet mine_status = null;
@@ -34,8 +34,7 @@ public class DoServerOnline
     private final Map<String, Integer> serverDBInfo = new HashMap<>();
     
     @Inject
-    public DoServerOnline(Main plugin, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console)
-    {
+    public DoServerOnline (Main plugin, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console) {
     	this.plugin = plugin;
     	this.logger = logger;
     	this.db = db;
@@ -43,8 +42,7 @@ public class DoServerOnline
     	this.console = console;
     }
 	
-	public void UpdateDatabase()
-	{
+	public void UpdateDatabase() {
 		// Configから、サーバー名とポートを取得してMySQLに反映
 		// テーブルにないものは追加、Configになくて、テーブルにあるものは削除
 		//　VelocityネットワークにつながらないMODサーバーなどの例外があるため、そういうのはconfig.ymlに記述
@@ -52,17 +50,12 @@ public class DoServerOnline
 		// 同じサーバー名がテーブルにあって、ポート番号が違っていたら、ポート番号を更新する。
 		// まず、サーバー名とポートを取得する。
 		// 以下非同期処理
-		server.getScheduler().buildTask(plugin, () ->
-        {
-        	try
-        	{
+		server.getScheduler().buildTask(plugin, () -> {
+        	try {
         		conn = db.getConnection();
-        		if(Objects.nonNull(conn))
-    			{
+        		if (Objects.nonNull(conn)) {
         			logger.info("MySQL Server is connected!");
-    			}
-        		else
-    			{
+    			} else {
         			logger.info("MySQL Server is canceled for config value not given");
         			return;
     			}
@@ -73,8 +66,7 @@ public class DoServerOnline
 				ps.setString(2, "Proxy");
 				ps.executeUpdate();
 				
-        		for (RegisteredServer registeredServer : server.getAllServers())
-                {
+        		for (RegisteredServer registeredServer : server.getAllServers()) {
 					ServerInfo serverInfo = registeredServer.getServerInfo();
 					String serverConfigName = serverInfo.getName();
                 	int serverConfigPort = serverInfo.getAddress().getPort();
@@ -87,8 +79,7 @@ public class DoServerOnline
 				ps.setBoolean(2, true);
 				mine_status = ps.executeQuery();
 				
-				while(mine_status.next())
-				{
+				while (mine_status.next()) {
 					String serverDBName = mine_status.getString("name");
 					int serverDBPort = mine_status.getInt("port");
 					serverDBInfo.put(serverDBName,serverDBPort);
@@ -96,26 +87,21 @@ public class DoServerOnline
 				
 				// サーバー情報の追加、削除、更新を行う
 			    // DBの情報を回して、Configの情報と比較
-				for (Map.Entry<String, Integer> dbEntry : serverDBInfo.entrySet())
-				{
+				for (Map.Entry<String, Integer> dbEntry : serverDBInfo.entrySet()) {
 			        String serverDBName = dbEntry.getKey();
 			        int serverDBPort = dbEntry.getValue();
 
 			        // Configに存在しないサーバーは削除
-			        if (!serverConfigInfo.containsKey(serverDBName))
-			        {
+			        if (!serverConfigInfo.containsKey(serverDBName)) {
 			            insql = "DELETE FROM mine_status WHERE name = ?;";
 			            ps = conn.prepareStatement(insql);
 			            ps.setString(1, serverDBName);
 			            ps.executeUpdate();
 			            console.sendMessage(Component.text(serverDBName+"サーバーはConfigに記載されていないため、データベースから削除しました。").color(NamedTextColor.GREEN));
-			        }
-			        else
-			        {
+			        } else {
 			            // Configに存在するサーバーがポート番号が異なる場合、ポート番号を更新
 			            int serverConfigPort = serverConfigInfo.get(serverDBName);
-			            if (serverDBPort != serverConfigPort)
-			            {
+			            if (serverDBPort != serverConfigPort) {
 			                insql = "UPDATE mine_status SET port=? WHERE name=?;";
 			                ps = conn.prepareStatement(insql);
 		                    ps.setInt(1, serverConfigPort);
@@ -129,39 +115,34 @@ public class DoServerOnline
 				
 				boolean secondCheck = false;
 				// Configに存在するがDBに存在しないサーバーを追加
-			    for (Map.Entry<String, Integer> configEntry : serverConfigInfo.entrySet())
-			    {
+			    for (Map.Entry<String, Integer> configEntry : serverConfigInfo.entrySet()) {
 			        String serverConfigName = configEntry.getKey();
 			        int serverConfigPort = configEntry.getValue();
 			        
 			        // DBに存在しないサーバーを追加
-			        if (!serverDBInfo.containsKey(serverConfigName))
-			        {
+			        if (!serverDBInfo.containsKey(serverConfigName)) {
 			        	// 2回目以降、ここを通る場合はserverDBInfoを更新する。
-			        	if(secondCheck)
-			        	{
+			        	if (secondCheck) {
 			        		// serverDBInfo初期化
 			        		serverDBInfo.clear();
 			        		insql = "SELECT * FROM mine_status;";
 							ps = conn.prepareStatement(insql);
 							mine_status = ps.executeQuery();
-							while(mine_status.next())
-							{
+							while (mine_status.next()) {
 								String serverDBName = mine_status.getString("name");
 								int serverDBPort = mine_status.getInt("port");
 								serverDBInfo.put(serverDBName,serverDBPort);
 							}
 			        	}
+
 			        	secondCheck = true;
 			            // ポートの重複をチェック
-			            if (serverDBInfo.containsValue(serverConfigPort))
-			            {
+			            if (serverDBInfo.containsValue(serverConfigPort)) {
 			                throw new SQLException("ポート番号が重複しています: " + serverConfigPort);
 			            }
 			            
 			            // サーバー名の重複をチェック
-			            if (serverDBInfo.containsKey(serverConfigName))
-			            {
+			            if (serverDBInfo.containsKey(serverConfigName)) {
 			            	throw new SQLException("サーバー名が重複しています: " + serverConfigName);
 			            }
 			            
@@ -174,17 +155,12 @@ public class DoServerOnline
 		                console.sendMessage(Component.text(serverConfigName+"サーバー(ポート:"+serverConfigPort+")をデータベースに追加しました。").color(NamedTextColor.GREEN));
 			        }
 			    }
-        	}
-        	catch (ClassNotFoundException | SQLException e1)
-    		{
+        	} catch (ClassNotFoundException | SQLException e1) {
     			logger.error("A ClassNotFoundException | SQLException error occurred: " + e1.getMessage());
-				for (StackTraceElement element : e1.getStackTrace()) 
-				{
+				for (StackTraceElement element : e1.getStackTrace()) {
 					logger.error(element.toString());
 				}
-    		}
-    		finally
-    		{
+    		} finally {
     			db.close_resorce(resultsets,conn,ps);
     		}
         	

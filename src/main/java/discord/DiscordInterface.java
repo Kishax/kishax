@@ -6,8 +6,7 @@ import java.util.function.Consumer;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
-public interface DiscordInterface
-{
+public interface DiscordInterface {
 	void loginDiscordBotAsync();
 	CompletableFuture<Void> logoutDiscordBot();
 	void sendRequestButtonWithMessage(String buttonMessage);

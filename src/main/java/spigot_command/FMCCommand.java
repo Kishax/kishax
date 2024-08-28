@@ -20,23 +20,20 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import spigot.Main;
 
-public class FMCCommand implements TabExecutor
-{
+public class FMCCommand implements TabExecutor {
+
 	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","test","fv","mcvc"));
 	
 	@Inject
-	public FMCCommand()
-	{
+	public FMCCommand() {
 		//
 	}
 	
 	@Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
-	{
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
 		if(sender == null) return true;
 
-    	if (args.length == 0 || !subcommands.contains(args[0].toLowerCase()))
-    	{
+    	if (args.length == 0 || !subcommands.contains(args[0].toLowerCase())) {
     		BaseComponent[] component =
     			    new ComponentBuilder(ChatColor.YELLOW+"FMC COMMANDS LIST").bold(true).underlined(true)
     			        .append(ChatColor.AQUA+"\n\n/fmc reload")
@@ -55,35 +52,29 @@ public class FMCCommand implements TabExecutor
     		return true;
     	}
 
-    	if (!sender.hasPermission("fmc." + args[0]))
-    	{
+    	if (!sender.hasPermission("fmc." + args[0])) {
     		sender.sendMessage("access-denied");
     		return true;
     	}
     	
 
-		switch (args[0].toLowerCase())
-		{
-			case "fv" -> 
-			{
+		switch (args[0].toLowerCase()) {
+			case "fv" -> {
 				Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
 				return true;
 			}
 				
-			case "reload" -> 
-			{
+			case "reload" -> {
 				Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);
 				return true;
 			}
 				
-			case "test" -> 
-			{
+			case "test" -> {
 				Main.getInjector().getInstance(Test.class).execute(sender, cmd, label, args);
 				return true;
 			}
 				
-			case "mcvc" -> 
-			{
+			case "mcvc" -> {
 				Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
 				return true; 
 			}
@@ -94,39 +85,31 @@ public class FMCCommand implements TabExecutor
 
     @SuppressWarnings("deprecation")
 	@Override
-	public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args)
-    {
+	public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
     	List<String> ret = new ArrayList<>();
 
-    	switch (args.length)
-    	{
-	    	case 1 -> 
-			{
-				for (String subcmd : subcommands)
-				{
+    	switch (args.length) {
+	    	case 1 -> {
+				for (String subcmd : subcommands) {
 					if (!sender.hasPermission("fmc." + subcmd)) continue;
-					
 					ret.add(subcmd);
 				}
+
 				return StringUtil.copyPartialMatches(args[0].toLowerCase(), ret, new ArrayList<>());
 			}
 	    	
-	    	case 2 -> 
-			{
+	    	case 2 -> {
 				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
-				switch (args[0].toLowerCase())
-				{
-					case "potion" -> 
-					{
-						for (PotionEffectType potion : PotionEffectType.values())
-						{
+				switch (args[0].toLowerCase()) {
+					case "potion" -> {
+						for (PotionEffectType potion : PotionEffectType.values()) {
 							if (!sender.hasPermission("fmc.potion." + potion.getName().toLowerCase())) continue;
 							ret.add(potion.getName());
 						}
+
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
-					case "test" -> 
-					{
+					case "test" -> {
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
 				}

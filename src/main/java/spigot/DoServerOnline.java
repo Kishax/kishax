@@ -8,8 +8,7 @@ import java.util.logging.Level;
 
 import com.google.inject.Inject;
 
-public class DoServerOnline
-{
+public class DoServerOnline {
 	public Connection conn = null;
 	public PreparedStatement ps = null;
 	
@@ -19,29 +18,24 @@ public class DoServerOnline
 	private final Database db;
 	
 	@Inject
-	public DoServerOnline
-	(
+	public DoServerOnline (
 		common.Main plugin, SocketSwitch ssw, ServerHomeDir shd,
 		Database db
-	)
-	{
+	) {
 		this.plugin = plugin;
 		this.ssw = ssw;
 		this.shd = shd;
 		this.db = db;
 	}
 	
-	public void UpdateDatabase()
-	{
-		try
-		{
+	public void UpdateDatabase() {
+		try {
         	// "plugins"ディレクトリの親ディレクトリを取得
             String serverName = shd.getServerName();
             
 			conn = db.getConnection();
 			
-			if(Objects.nonNull(conn) && Objects.nonNull(serverName))
-			{
+			if(Objects.nonNull(conn) && Objects.nonNull(serverName)) {
 				// サーバーをオンラインに
 				ssw.startSocketClient(serverName+"サーバーが起動しました。");
 				plugin.getLogger().info(String.format("""
@@ -54,19 +48,13 @@ public class DoServerOnline
 				ps.executeUpdate();
 				
 				plugin.getLogger().info("MySQL Server is connected!");
-			}
-			else plugin.getLogger().info("MySQL Server is canceled for config value not given");
-		}
-		catch (SQLException | ClassNotFoundException e)
-		{
+			} else plugin.getLogger().info("MySQL Server is canceled for config value not given");
+		} catch (SQLException | ClassNotFoundException e) {
 			plugin.getLogger().log(Level.SEVERE, "A sendWebhookMessage error occurred: {0}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) 
-            {
+            for (StackTraceElement element : e.getStackTrace()) {
                 plugin.getLogger().severe(element.toString());
             }
-		}
-        finally
-        {
+		} finally {
         	db.close_resorce(null, conn, ps);
         }
 	}

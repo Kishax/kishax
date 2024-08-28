@@ -8,31 +8,25 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 import com.google.inject.Inject;
 
-public final class EventListener implements Listener
-{
+public final class EventListener implements Listener {
     public common.Main plugin;
     
     @Inject
-	public EventListener(common.Main plugin)
-	{
+	public EventListener(common.Main plugin) {
 		this.plugin = plugin;
 	}
 	
 	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent e)
-	{
+	public void onPlayerJoin(PlayerJoinEvent e) {
 		e.setJoinMessage(null);
 	}
 
 	// MCVCをONにすると、ベッドで寝れなくなるため、必要なメソッド
 	@EventHandler
-    public void onPlayerBedEnter(PlayerBedEnterEvent e)
-	{
-		if(Rcon.isMCVC)
-		{
+    public void onPlayerBedEnter(PlayerBedEnterEvent e) {
+		if (Rcon.isMCVC) {
 			// プレイヤーがベッドに入ったかどうかを確認
-	        if (e.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK)
-	        {
+	        if (e.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK) {
 	            World world = e.getPlayer().getWorld();
 	            // 時間を朝に設定 (1000 ticks = 朝6時)
 	            world.setTime(1000);

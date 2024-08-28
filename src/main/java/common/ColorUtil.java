@@ -1,7 +1,7 @@
 package common;
 
-public enum ColorUtil
-{
+public enum ColorUtil {
+
 	RED(255, 0, 0), 
     BLUE(0, 0, 255), 
     GREEN(0, 255, 0),
@@ -22,18 +22,16 @@ public enum ColorUtil
      */
 	private final int rgb;
 	
-	ColorUtil(int r, int g, int b)
-	{
+	ColorUtil(int r, int g, int b) {
 		// 各成分が0から255の範囲であることを確認
-        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
-        {
+        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
             throw new IllegalArgumentException("Color components must be between 0 and 255.");
         }
+        
         this.rgb = (r << 16) | (g << 8) | b;
     }
 	
-    public int getRGB()
-    {
+    public int getRGB() {
     	return this.rgb;
     }
 }
