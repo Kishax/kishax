@@ -61,3 +61,9 @@ Conv:
     Mode: false
     Host: "localhost"
     EXE_Path: ""
+
+Terraria:
+    Token: ""
+    Host: ""
+    Port:
+    Bat_Path: ""

@@ -1,6 +1,10 @@
 package discord;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -16,9 +20,11 @@ import com.google.inject.Inject;
 
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -41,6 +47,8 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final BroadCast bc;
 	private final PlayerUtil pu;
 	private final MessageEditorInterface discordME;
+	private final String teraToken, teraHost, terabatchFilePath;
+	private final int teraPort;
 	private Connection conn = null;
 	private PreparedStatement ps = null;
 	private String pattern = null, sql = null, replyMessage = null, 
@@ -60,8 +68,141 @@ public class DiscordEventListener extends ListenerAdapter {
 		this.bc = bc;
 		this.pu = pu;
 		this.discordME = discordME;
+		this.teraToken = config.getString("Terraria.Token", "");
+		this.teraHost = config.getString("Terraria.Host", "");
+		this.teraPort = config.getInt("Terraria.Port", 0);
+		this.terabatchFilePath = config.getString("Terraria.Bat_Path", "");
 	}
 	
+	@SuppressWarnings("null")
+	@Override
+    public void onSlashCommandInteraction(SlashCommandInteractionEvent e) {
+		User user = e.getUser();
+		String slashCmd = e.getName();
+		boolean tera = !teraHost.isEmpty() && !teraToken.isEmpty() && teraPort != 0 && !terabatchFilePath.isEmpty();
+		switch (slashCmd) {
+			case "tera-start" -> {
+				String userMention = user.getAsMention();
+				ReplyCallbackAction messageAction;
+
+				if (!tera) {
+					messageAction = e.reply("コンフィグの設定が不十分なため、コマンドを実行できません。").setEphemeral(true);
+					messageAction.queue();
+					return;
+				}
+
+				if (isTera()) {
+					messageAction = e.reply("Terrariaサーバーは既にオンラインです！").setEphemeral(true);
+					messageAction.queue();
+				} else {
+					try {
+						ProcessBuilder teraprocessBuilder = new ProcessBuilder(terabatchFilePath);
+						teraprocessBuilder.start();
+						messageAction = e.reply(userMention + "Terrariaサーバーがまもなく起動します。").setEphemeral(false);
+						messageAction.queue();
+					} catch (IOException e1) {
+						messageAction = e.reply(userMention + "内部エラーが発生しました。\nサーバーが起動できません。").setEphemeral(false);
+						messageAction.queue();
+						logger.error("An IOException error occurred: " + e1.getMessage());
+						for (StackTraceElement element : e1.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
+				}
+			}
+			case "tera-stop" -> {
+				String userMention = user.getAsMention();
+				ReplyCallbackAction messageAction;
+				if (!tera) {
+					messageAction = e.reply("コンフィグの設定が不十分なため、コマンドを実行できません。").setEphemeral(true);
+					messageAction.queue();
+					return;
+				}
+
+				if (isTera()) {
+					try {
+						String urlString = "http://" + teraHost + ":" + teraPort + "/v2/server/off?token=" + teraToken + "&confirm=true&nosave=false";
+
+						URI uri = new URI(urlString);
+						URL url = uri.toURL();
+						
+						HttpURLConnection con = (HttpURLConnection) url.openConnection();
+						con.setRequestMethod("GET");
+						con.setRequestProperty("Content-Type", "application/json; utf-8");
+
+						int code = con.getResponseCode();
+						switch (code) {
+							case 200 -> {
+								messageAction = e.reply(userMention + "Terrariaサーバーが正常に停止しました。").setEphemeral(false);
+								messageAction.queue();
+							}
+							default -> {
+								messageAction = e.reply(userMention + "内部エラーが発生しました。\nサーバーが正常に停止できなかった可能性があります。").setEphemeral(false);
+								messageAction.queue();
+							}
+						}
+						
+					} catch (IOException | URISyntaxException e2) {
+						logger.error("An IOException | URISyntaxException error occurred: " + e2.getMessage());
+						for (StackTraceElement element : e2.getStackTrace()) {
+							logger.error(element.toString());
+						}
+
+						messageAction = e.reply(userMention + "内部エラーが発生しました。\nサーバーが正常に停止できなかった可能性があります。").setEphemeral(false);
+						messageAction.queue();
+					}
+				} else {
+					messageAction = e.reply("Terrariaサーバーは現在オフラインです！").setEphemeral(true);
+					messageAction.queue();
+				}
+
+			}
+			case "tera-status" -> {
+				ReplyCallbackAction messageAction;
+				if (!tera) {
+					messageAction = e.reply("コンフィグの設定が不十分なため、コマンドを実行できません。").setEphemeral(true);
+					messageAction.queue();
+					return;
+				}
+				
+				if (isTera()) {
+					messageAction = e.reply("Terrariaサーバーは現在オンラインです。").setEphemeral(true);
+				} else {
+					messageAction = e.reply("Terrariaサーバーは現在オフラインです。").setEphemeral(true);
+				}
+
+				messageAction.queue();
+			}
+			default -> throw new AssertionError();
+		}
+
+    }
+
+	private boolean isTera() {
+        try {
+            String urlString = "http://" + teraHost + ":" + teraPort + "/status?token=" + teraToken;
+
+            URI uri = new URI(urlString);
+            URL url = uri.toURL();
+            
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            con.setRequestProperty("Content-Type", "application/json; utf-8");
+
+            int code = con.getResponseCode();
+            switch (code) {
+                case 200 -> {
+                    return true;
+                }
+                default -> {
+                    return false;
+                }
+            }
+        } catch (IOException | URISyntaxException e) {
+            return false;
+		}
+    }
+
 	@SuppressWarnings("null")
 	@Override
 	public void onButtonInteraction(ButtonInteractionEvent e) {
@@ -110,6 +251,7 @@ public class DiscordEventListener extends ListenerAdapter {
 					try {
 						processBuilder.start();
 					} catch (IOException e1) {
+						logger.error("An IOException error occurred: " + e1.getMessage());
 						for (StackTraceElement element : e1.getStackTrace()) {
 							logger.error(element.toString());
 						}
