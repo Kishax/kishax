@@ -64,6 +64,7 @@ Conv:
 
 Terraria:
     Token: ""
+    ChannelId: 
     Host: ""
     Port:
     Bat_Path: ""
