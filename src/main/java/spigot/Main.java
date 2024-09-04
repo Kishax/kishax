@@ -21,7 +21,7 @@ public class Main {
 	
 	public Main(common.Main plugin) {
 		this.plugin = plugin;
-	}
+	} 
 	
 	public void onEnable() {
 		// Guice インジェクターを作成
