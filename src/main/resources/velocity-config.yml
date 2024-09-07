@@ -67,4 +67,4 @@ Terraria:
     ChannelId: 
     Host: ""
     Port:
-    Bat_Path: ""
+    Exec_Path: ""

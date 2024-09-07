@@ -128,7 +128,7 @@ public class StartServer {
 								player.sendMessage(Component.text(args[1]+"サーバーは起動中です。").color(NamedTextColor.RED));
 								logger.info(NamedTextColor.RED+args[1]+"サーバーは起動中です。");
 							} else {
-								if (config.getString("Servers."+args[1]+".Bat_Path","").isEmpty()) {
+								if (config.getString("Servers."+args[1]+".Exec_Path","").isEmpty()) {
 									player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
 									return;
 								}
@@ -146,8 +146,8 @@ public class StartServer {
 								ps.executeUpdate();
 								
 					            // バッチファイルのパスを指定
-					            String batchFilePath = config.getString("Servers."+args[1]+".Bat_Path");
-					            ProcessBuilder processBuilder = new ProcessBuilder(batchFilePath);
+					            String execFilePath = config.getString("Servers."+args[1]+".Exec_Path");
+					            ProcessBuilder processBuilder = new ProcessBuilder(execFilePath);
 					            processBuilder.start();
 					            
 					            discordME.AddEmbedSomeMessage("Start", player, args[1]);

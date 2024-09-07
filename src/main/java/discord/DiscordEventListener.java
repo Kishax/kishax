@@ -48,13 +48,13 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final BroadCast bc;
 	private final PlayerUtil pu;
 	private final MessageEditorInterface discordME;
-	private final String teraToken, teraHost, terabatchFilePath;
+	private final String teraToken, teraHost, teraExecFilePath;
 	private final int teraPort;
 	private final Long teraChannelId;
 	private Connection conn = null;
 	private PreparedStatement ps = null;
 	private String pattern = null, sql = null, replyMessage = null, 
-        		reqServerName = null, reqPlayerName = null, batchFilePath = null, reqPlayerUUID = null;
+        		reqServerName = null, reqPlayerName = null, execFilePath = null, reqPlayerUUID = null;
 	private Pattern compiledPattern = null;
 	private Matcher matcher = null;
 	private ProcessBuilder processBuilder = null;
@@ -73,7 +73,7 @@ public class DiscordEventListener extends ListenerAdapter {
 		this.teraToken = config.getString("Terraria.Token", "");
 		this.teraHost = config.getString("Terraria.Host", "");
 		this.teraPort = config.getInt("Terraria.Port", 0);
-		this.terabatchFilePath = config.getString("Terraria.Bat_Path", "");
+		this.teraExecFilePath = config.getString("Terraria.Exec_Path", "");
 		this.teraChannelId = config.getLong("Terraria.ChannelId", 0);
 	}
 	
@@ -88,7 +88,7 @@ public class DiscordEventListener extends ListenerAdapter {
 		boolean tera = !teraHost.isEmpty() && 
 					!teraToken.isEmpty() && 
 					teraPort != 0 && 
-					!terabatchFilePath.isEmpty() && 
+					!teraExecFilePath.isEmpty() && 
 					teraChannelId != 0;
 
 		String channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId);
@@ -117,7 +117,7 @@ public class DiscordEventListener extends ListenerAdapter {
 					messageAction.queue();
 				} else {
 					try {
-						ProcessBuilder teraprocessBuilder = new ProcessBuilder(terabatchFilePath);
+						ProcessBuilder teraprocessBuilder = new ProcessBuilder(teraExecFilePath);
 						teraprocessBuilder.start();
 						messageAction = e.reply(userMention + " Terrariaサーバーを起動させました。\nまもなく起動します。").setEphemeral(false);
 						messageAction.queue();
@@ -279,10 +279,8 @@ public class DiscordEventListener extends ListenerAdapter {
 						}
 					}
 					
-					// サーバー起動メソッド開始
-					// バッチファイルのパスを指定
-					batchFilePath = config.getString("Servers."+reqServerName+".Bat_Path");
-					processBuilder = new ProcessBuilder(batchFilePath);
+					execFilePath = config.getString("Servers."+reqServerName+".Exec_Path");
+					processBuilder = new ProcessBuilder(execFilePath);
 					try {
 						processBuilder.start();
 					} catch (IOException e1) {

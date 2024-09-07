@@ -78,7 +78,7 @@ public class Config {
                 for (RegisteredServer registeredServer : server.getAllServers()) {
                 	addContents += "\n    "+registeredServer.getServerInfo().getName()+":";
                 	addContents += "\n        Memory: ";
-                	addContents += "\n        Bat_Path: \"\"";
+                	addContents += "\n        Exec_Path: \"\"";
                 }
                 
                 // 新しい内容を追加してファイルに書き込み
