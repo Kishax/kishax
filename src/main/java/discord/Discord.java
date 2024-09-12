@@ -27,7 +27,9 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import net.kyori.adventure.text.Component;
@@ -85,26 +87,17 @@ public class Discord implements DiscordInterface {
                 // Botが完全に起動するのを待つ
 				jda.awaitReady();
 
-                jda.upsertCommand(Commands.slash("tera-start", "Start Terraria Server"))
-                    .queue(
-                        success -> System.out.println("Command 'tera-start' registered successfully"),
-                        error -> System.err.println("Failed to register command 'tera-start': " + error.getMessage())
-                    );
-                
-                jda.upsertCommand(Commands.slash("tera-stop", "Stop Terraria Server"))
-                    .queue(
-                        success -> System.out.println("Command 'tera-stop' registered successfully"),
-                        error -> System.err.println("Failed to register command 'tera-stop': " + error.getMessage())
-                    );
-                
-                jda.upsertCommand(Commands.slash("tera-status", "Check whether Terraria Server is online or not"))
-                    .queue(
-                        success -> System.out.println("Command 'tera-status' registered successfully"),
-                        error -> System.err.println("Failed to register command 'tera-status': " + error.getMessage())
-                    ); 
+                jda.updateCommands()
+					.addCommands(
+						Commands.slash("fmc", "FMCCommands")
+							.addSubcommands(
+								new SubcommandData("tera", "Terraria server control")
+									.addOption(OptionType.STRING, "tera_type", "Action to perform (start, stop, status)", true)
+							)
+					).queue();
 
 				// ステータスメッセージを設定
-	            jda.getPresence().setActivity(Activity.playing("FMCサーバー"));
+	            jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
 	            
                 // コマンド登録
 
