@@ -79,218 +79,234 @@ public class SetServer {
     			ps.setString(1,player.getUniqueId().toString());
     			minecrafts = ps.executeQuery();
     			
-    			sql = "SELECT * FROM mine_status WHERE name=?;";
-    			ps = conn.prepareStatement(sql);
-    			ps.setString(1,args[1]);
+				// 何回もテーブルをスキャンして、処理するのを防ぐため、
+				// 一度だけ、mine_stautsテーブルをスキャンして、それを回す
+    			sql = "SELECT * FROM mine_status;";
+				ps = conn.prepareStatement(sql);
     			mine_status = ps.executeQuery();
-    			
-    			if (minecrafts.next()) {
-    				if (mine_status.next()) {
-        				if (mine_status.getBoolean("online")) {
-        					// オンライン
-        					if (minecrafts.getBoolean("confirm")) {
-        						// fmcアカウントを持っている /stpが使用可能
-        						// /stpで用いるセッションタイム(現在時刻)(sst)をデータベースに
-        						LocalDateTime now = LocalDateTime.now();
-        				        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        				        String formattedDateTime = now.format(formatter);
-        				        
-        						sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
-        						ps = conn.prepareStatement(sql);
-        						ps.setString(1,formattedDateTime);
-        		    			ps.setString(2,player.getUniqueId().toString());
-        		    			ps.executeUpdate();
-        		    			
-        		    			TextComponent component = Component.text()
-        		    						.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
-        			    			    	.append(Component.text("オンライン").color(NamedTextColor.AQUA))
-        			    			    	.append(Component.text("です。\nサーバーに入りますか？\n").color(NamedTextColor.WHITE))
-        			    			    	.append(Component.text("YES")
-        			    			    			.color(NamedTextColor.GOLD)
-        			    			    			.clickEvent(ClickEvent.runCommand("/fmcp stp "+args[1]))
-        			                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+args[1]+"サーバーに入ります。"))))
-        			    			    	.append(Component.text(" or ").color(NamedTextColor.GOLD))
-        			    			    	.append(Component.text("NO").color(NamedTextColor.GOLD)
-        			    			    			.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
-        			                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
-        			    			    	.build();
-        						
-        						player.sendMessage(component);
-        					} else {
-        						// fmcアカウントを持ってない
-        						// 6桁の乱数を生成
-        				        Random rnd = new Random();
-        				        int ranum = 100000 + rnd.nextInt(900000);
-        				        String ranumstr = Integer.toString(ranum);
-        				        
-        				        
-        				        sql = "UPDATE minecraft SET secret2=? WHERE uuid=?;";
-        				        ps = conn.prepareStatement(sql);
-        				        ps.setInt(1,ranum);
-        		    			ps.setString(2,player.getUniqueId().toString());
-        		    			
-        		    			TextComponent component = Component.text()
-        			    			    	.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
-        			    			    	.append(Component.text("オンライン").color(NamedTextColor.AQUA))
-        			    			    	.append(Component.text("です。\nサーバーに参加するには、FMCアカウントとあなたのMinecraftでのUUIDをリンクさせる必要があります。以下、").color(NamedTextColor.WHITE))
-        			    			    	.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-        			    			    	.append(Component.text("より、手続きを進めてください。").color(NamedTextColor.WHITE))
-        			    			    	.append(Component.text("\nUUID認証\n\n").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-        			    			    	.append(Component.text("https://keypforev.ddns.net/minecraft/uuid_check2.php").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
-        			    			    		.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/minecraft/uuid_check2.php?n="+minecrafts.getInt("id")))
-        			    			    	.append(Component.text("\n\n認証コードは ").color(NamedTextColor.WHITE))
-        			    			    	.append(Component.text(ranumstr).color(NamedTextColor.BLUE)
-        			    			    		.clickEvent(ClickEvent.copyToClipboard(ranumstr))
-        			    			    		.hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
-        			    			    	.append(Component.text(" です。").color(NamedTextColor.WHITE)
-        			    			    	.append(Component.text("\n\n認証コードの再生成").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-	        			    			    	.clickEvent(ClickEvent.runCommand("/fmcp retry"))
-	        	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)認証コードを再生成します。"))))
-        			    			    	.build();
-        						player.sendMessage(component);
-        					}
-        				} else {
-        					// オフライン
-        					if (minecrafts.getBoolean("confirm")) {
-        						//メモリの確認
-        						int sum_memory = 0;
-        						//現在オンラインのサーバーのメモリ合計を取得
-        						for (RegisteredServer registeredServer : server.getAllServers()) {
-        							if (mine_status.getBoolean("online")) {
-        								sum_memory = sum_memory + config.getInt("Servers."+registeredServer.getServerInfo().getName()+".Memory",0);
-        							}
-        						}
+				
+				boolean isTable = false; // targetServerNameがtableにあるかどうかのフラグ
+				int sum_memory = 0; //メモリの確認
 
-        						// 起動・起動リクエストしたいサーバーのメモリも足す
-        						sum_memory = sum_memory + config.getInt("Servers."+args[1]+".Memory",0);
-        						
-        						// Proxyのメモリも足す
-        						sum_memory = sum_memory + config.getInt("Servers.Proxy.Memory",0);
-        								
-    							if (!(sum_memory<=config.getInt("Servers.Memory_Limit",0))) {
-    								TextComponent component = Component.text()
-            			    			    	.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
-            			    			    	.append(Component.text("オフライン").color(NamedTextColor.BLUE))
-            			    			    	.append(Component.text("です。").color(NamedTextColor.WHITE))
-            			    			    	.append(Component.text("\nメモリ超過のため、サーバーを起動できません。("+sum_memory+"GB/"+config.getInt("Servers.Memory_Limit",0)+"GB)").color(NamedTextColor.RED))
-            			    			    	.build();
-            						
-            						player.sendMessage(component);
-    								return;
-    							}
-    							
-    							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-    							ps = conn.prepareStatement(sql);
-    							ps.setString(1, player.getUniqueId().toString());
-    							ps.setString(2, "group.super-admin");
-    							issuperadmin = ps.executeQuery();
-    							
-    							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-    							ps = conn.prepareStatement(sql);
-    							ps.setString(1, player.getUniqueId().toString());
-    							ps.setString(2, "group.sub-admin");
-    							issubadmin = ps.executeQuery();
-    							
-        						// fmcアカウントを持っている
-        						if (issuperadmin.next() || issubadmin.next()) {
-        							// adminである /startが使用可能
-        							// /startで用いるセッションタイム(現在時刻)(sst)をデータベースに
-            						LocalDateTime now = LocalDateTime.now();
-            				        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            				        String formattedDateTime = now.format(formatter);
-            				        
-            						sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
-            						ps = conn.prepareStatement(sql);
-            						ps.setString(1,formattedDateTime);
-            		    			ps.setString(2,player.getUniqueId().toString());
-            		    			ps.executeUpdate();
-            		    			
-            		    			TextComponent component = Component.text()
-            			    			    	.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
-            			    			    	.append(Component.text("オフライン").color(NamedTextColor.BLUE))
-            			    			    	.append(Component.text("です。\nサーバーを起動しますか？").color(NamedTextColor.WHITE))
-            			    			    	.append(Component.text("\nYES").color(NamedTextColor.GOLD)
-	            			    			    	.clickEvent(ClickEvent.runCommand("/fmcp start "+args[1]))
-		        	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+args[1]+"サーバーを起動します。"))))
-            			    			    	.append(Component.text(" or ").color(NamedTextColor.GOLD))
-            			    			    	.append(Component.text("NO").color(NamedTextColor.GOLD)
-	            			    			    	.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
-		        	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
-		        	                            .build();
-            						
-            						player.sendMessage(component);
-        						} else {
-        							// adminでない /reqが使用可能
-        							// /reqで用いるセッションタイム(現在時刻)(sst)をデータベースに
-            						LocalDateTime now = LocalDateTime.now();
-            				        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            				        String formattedDateTime = now.format(formatter);
-            				        
-            						sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
-            						ps = conn.prepareStatement(sql);
-            						ps.setString(1,formattedDateTime);
-            		    			ps.setString(2,player.getUniqueId().toString());
-            		    			ps.executeUpdate();
-            		    			
-            		    			TextComponent component = Component.text()
-            			    			    	.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
-            			    			    	.append(Component.text("オフライン").color(NamedTextColor.BLUE))
-            			    			    	.append(Component.text("です。\n管理者に、サーバー起動のリクエストを送信できます。\n結果は3分以内に返ってきます。\n送信しますか？").color(NamedTextColor.WHITE))
-            			    			    	.append(Component.text("\nYES").color(NamedTextColor.GOLD)
-            			    			    		.clickEvent(ClickEvent.runCommand("/fmcp req "+args[1]))
-            			    			    		.hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+args[1]+"サーバー起動リクエストを送信する。"))))
-            			    			    	.append(Component.text(" or ").color(NamedTextColor.GOLD))
-            			    			    	.append(Component.text("NO").color(NamedTextColor.GOLD)
-            			    			    		.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
-            			    			    		.hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
-            			    			    	.build();
-            						player.sendMessage(component);
-        						}
-        					} else {
-        						// fmcアカウントを持ってない
-        						// 6桁の乱数を生成
-        				        Random rnd = new Random();
-        				        int ranum = 100000 + rnd.nextInt(900000);
-        				        String ranumstr = Integer.toString(ranum);
-        				        
-        				        sql = "UPDATE minecraft SET secret2=? WHERE uuid=?;";
-        				        ps = conn.prepareStatement(sql);
-        				        ps.setInt(1,ranum);
-        		    			ps.setString(2,player.getUniqueId().toString());
-        		    			ps.executeUpdate();
-        		    			
-        		    			TextComponent component = Component.text()
-    			    			    	.append(Component.text(args[1]+"サーバーは現在").color(NamedTextColor.WHITE))
-    			    			    	.append(Component.text("オフライン").color(NamedTextColor.BLUE))
-    			    			    	.append(Component.text("です。\nサーバーを起動して、参加するには、FMCアカウントとあなたのMinecraftでのUUIDをリンクさせる必要があります。以下、").color(NamedTextColor.WHITE))
-    			    			    	.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-    			    			    	.append(Component.text("より、手続きを進めてください。").color(NamedTextColor.WHITE))
-    			    			    	.append(Component.text("\nUUID認証\n\n").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-    			    			    	.append(Component.text("https://keypforev.ddns.net/minecraft/uuid_check2.php").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
-    			    			    		.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/minecraft/uuid_check2.php?n="+minecrafts.getInt("id")))
-    			    			    	.append(Component.text("\n\n認証コードは ").color(NamedTextColor.WHITE))
-    			    			    	.append(Component.text(ranumstr).color(NamedTextColor.BLUE)
-    			    			    		.clickEvent(ClickEvent.copyToClipboard(ranumstr))
-    			    			    		.hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
-    			    			    	.append(Component.text(" です。").color(NamedTextColor.WHITE)
-    			    			    	.append(Component.text("\n\n認証コードの再生成").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-        			    			    	.clickEvent(ClickEvent.runCommand("/fmcp retry"))
-        	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)認証コードを再生成します。"))))
-    			    			    	.build();
-        						
-        						player.sendMessage(component);
-        					}
-        				}
-        			} else {
-        				// MySQLサーバーにサーバーが登録されてなかった場合
-        				logger.info("このサーバーは、データベースに登録されていません。");
-        				player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
-        			}
-    			} else {
-    				// MySQLサーバーにプレイヤー情報が登録されてなかった場合
-    				logger.info(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。");
-    				player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
-    			}
+				if (!minecrafts.next()) {
+					// MySQLサーバーにプレイヤー情報が登録されてなかった場合
+					logger.info(player.getUsername()+" のプレイヤー情報がデータベースに登録されていません。");
+					player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
+					return;
+				}
+
+				while (mine_status.next()) {
+					if (!targetServerName.equalsIgnoreCase(mine_status.getString("name"))) {
+						if (mine_status.getBoolean("online")) {
+							sum_memory = sum_memory + config.getInt("Servers."+mine_status.getString("name")+".Memory", 0);
+						}
+
+						continue;
+					}
+
+					isTable = true;
+					if (mine_status.getBoolean("online")) {
+						// オンライン
+						if (minecrafts.getBoolean("confirm")) {
+							// fmcアカウントを持っている /stpが使用可能
+							// /stpで用いるセッションタイム(現在時刻)(sst)をデータベースに
+							LocalDateTime now = LocalDateTime.now();
+							DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+							String formattedDateTime = now.format(formatter);
+							
+							sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
+							ps = conn.prepareStatement(sql);
+							ps.setString(1,formattedDateTime);
+							ps.setString(2,player.getUniqueId().toString());
+							ps.executeUpdate();
+							
+							TextComponent component = Component.text()
+										.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))
+										.append(Component.text("オンライン").color(NamedTextColor.AQUA))
+										.append(Component.text("です。\nサーバーに入りますか？\n").color(NamedTextColor.WHITE))
+										.append(Component.text("YES")
+												.color(NamedTextColor.GOLD)
+												.clickEvent(ClickEvent.runCommand("/fmcp stp "+targetServerName))
+												.hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+targetServerName+"サーバーに入ります。"))))
+										.append(Component.text(" or ").color(NamedTextColor.GOLD))
+										.append(Component.text("NO").color(NamedTextColor.GOLD)
+												.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
+												.hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
+										.build();
+							
+							player.sendMessage(component);
+						} else {
+							// fmcアカウントを持ってない
+							// 6桁の乱数を生成
+							Random rnd = new Random();
+							int ranum = 100000 + rnd.nextInt(900000);
+							String ranumstr = Integer.toString(ranum);
+							
+							
+							sql = "UPDATE minecraft SET secret2=? WHERE uuid=?;";
+							ps = conn.prepareStatement(sql);
+							ps.setInt(1,ranum);
+							ps.setString(2,player.getUniqueId().toString());
+							
+							TextComponent component = Component.text()
+										.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))
+										.append(Component.text("オンライン").color(NamedTextColor.AQUA))
+										.append(Component.text("です。\nサーバーに参加するには、FMCアカウントとあなたのMinecraftでのUUIDをリンクさせる必要があります。以下、").color(NamedTextColor.WHITE))
+										.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+										.append(Component.text("より、手続きを進めてください。").color(NamedTextColor.WHITE))
+										.append(Component.text("\nUUID認証\n\n").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+										.append(Component.text("https://keypforev.ddns.net/minecraft/uuid_check2.php").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
+											.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/minecraft/uuid_check2.php?n="+minecrafts.getInt("id")))
+										.append(Component.text("\n\n認証コードは ").color(NamedTextColor.WHITE))
+										.append(Component.text(ranumstr).color(NamedTextColor.BLUE)
+											.clickEvent(ClickEvent.copyToClipboard(ranumstr))
+											.hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
+										.append(Component.text(" です。").color(NamedTextColor.WHITE)
+										.append(Component.text("\n\n認証コードの再生成").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+											.clickEvent(ClickEvent.runCommand("/fmcp retry"))
+											.hoverEvent(HoverEvent.showText(Component.text("(クリックして)認証コードを再生成します。"))))
+										.build();
+							player.sendMessage(component);
+						}
+
+						break;
+					} else {
+						// オフライン
+						if (minecrafts.getBoolean("confirm")) {
+							// 上のwhile文で進んだカーソルの次から最後までの行まで回す
+							while (mine_status.next()) {
+								// ここ、for文でmine_statusテーブルを回す必要あるかも
+								if (mine_status.getBoolean("online")) {
+									sum_memory = sum_memory + config.getInt("Servers."+targetServerName+".Memory",0);
+								}
+							}
+
+							// 最後に、起動/起動リクエストしたいサーバーのメモリも足す
+							sum_memory = sum_memory + config.getInt("Servers."+targetServerName+".Memory",0);
+							
+							if (!(sum_memory<=config.getInt("Servers.Memory_Limit",0))) {
+								TextComponent component = Component.text()
+											.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))
+											.append(Component.text("オフライン").color(NamedTextColor.BLUE))
+											.append(Component.text("です。").color(NamedTextColor.WHITE))
+											.append(Component.text("\nメモリ超過のため、サーバーを起動できません。("+sum_memory+"GB/"+config.getInt("Servers.Memory_Limit",0)+"GB)").color(NamedTextColor.RED))
+											.build();
+								
+								player.sendMessage(component);
+								return;
+							}
+							
+							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
+							ps = conn.prepareStatement(sql);
+							ps.setString(1, player.getUniqueId().toString());
+							ps.setString(2, "group.super-admin");
+							issuperadmin = ps.executeQuery();
+							
+							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
+							ps = conn.prepareStatement(sql);
+							ps.setString(1, player.getUniqueId().toString());
+							ps.setString(2, "group.sub-admin");
+							issubadmin = ps.executeQuery();
+							
+							// fmcアカウントを持っている
+							if (issuperadmin.next() || issubadmin.next()) {
+								// adminである /startが使用可能
+								// /startで用いるセッションタイム(現在時刻)(sst)をデータベースに
+								LocalDateTime now = LocalDateTime.now();
+								DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+								String formattedDateTime = now.format(formatter);
+								
+								sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
+								ps = conn.prepareStatement(sql);
+								ps.setString(1,formattedDateTime);
+								ps.setString(2,player.getUniqueId().toString());
+								ps.executeUpdate();
+								
+								TextComponent component = Component.text()
+											.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))
+											.append(Component.text("オフライン").color(NamedTextColor.BLUE))
+											.append(Component.text("です。\nサーバーを起動しますか？").color(NamedTextColor.WHITE))
+											.append(Component.text("\nYES").color(NamedTextColor.GOLD)
+												.clickEvent(ClickEvent.runCommand("/fmcp start "+targetServerName))
+												.hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+targetServerName+"サーバーを起動します。"))))
+											.append(Component.text(" or ").color(NamedTextColor.GOLD))
+											.append(Component.text("NO").color(NamedTextColor.GOLD)
+												.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
+												.hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
+											.build();
+								
+								player.sendMessage(component);
+							} else {
+								// adminでない /reqが使用可能
+								// /reqで用いるセッションタイム(現在時刻)(sst)をデータベースに
+								LocalDateTime now = LocalDateTime.now();
+								DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+								String formattedDateTime = now.format(formatter);
+								
+								sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
+								ps = conn.prepareStatement(sql);
+								ps.setString(1,formattedDateTime);
+								ps.setString(2,player.getUniqueId().toString());
+								ps.executeUpdate();
+								
+								TextComponent component = Component.text()
+											.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))
+											.append(Component.text("オフライン").color(NamedTextColor.BLUE))
+											.append(Component.text("です。\n管理者に、サーバー起動のリクエストを送信できます。\n結果は3分以内に返ってきます。\n送信しますか？").color(NamedTextColor.WHITE))
+											.append(Component.text("\nYES").color(NamedTextColor.GOLD)
+												.clickEvent(ClickEvent.runCommand("/fmcp req "+targetServerName))
+												.hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+targetServerName+"サーバー起動リクエストを送信する。"))))
+											.append(Component.text(" or ").color(NamedTextColor.GOLD))
+											.append(Component.text("NO").color(NamedTextColor.GOLD)
+												.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
+												.hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
+											.build();
+								player.sendMessage(component);
+							}
+						} else {
+							// fmcアカウントを持ってない
+							// 6桁の乱数を生成
+							Random rnd = new Random();
+							int ranum = 100000 + rnd.nextInt(900000);
+							String ranumstr = Integer.toString(ranum);
+							
+							sql = "UPDATE minecraft SET secret2=? WHERE uuid=?;";
+							ps = conn.prepareStatement(sql);
+							ps.setInt(1,ranum);
+							ps.setString(2,player.getUniqueId().toString());
+							ps.executeUpdate();
+							
+							TextComponent component = Component.text()
+									.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))
+									.append(Component.text("オフライン").color(NamedTextColor.BLUE))
+									.append(Component.text("です。\nサーバーを起動して、参加するには、FMCアカウントとあなたのMinecraftでのUUIDをリンクさせる必要があります。以下、").color(NamedTextColor.WHITE))
+									.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+									.append(Component.text("より、手続きを進めてください。").color(NamedTextColor.WHITE))
+									.append(Component.text("\nUUID認証\n\n").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+									.append(Component.text("https://keypforev.ddns.net/minecraft/uuid_check2.php").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
+										.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/minecraft/uuid_check2.php?n="+minecrafts.getInt("id")))
+									.append(Component.text("\n\n認証コードは ").color(NamedTextColor.WHITE))
+									.append(Component.text(ranumstr).color(NamedTextColor.BLUE)
+										.clickEvent(ClickEvent.copyToClipboard(ranumstr))
+										.hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
+									.append(Component.text(" です。").color(NamedTextColor.WHITE)
+									.append(Component.text("\n\n認証コードの再生成").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+										.clickEvent(ClickEvent.runCommand("/fmcp retry"))
+										.hoverEvent(HoverEvent.showText(Component.text("(クリックして)認証コードを再生成します。"))))
+									.build();
+							
+							player.sendMessage(component);
+						}
+					}
+
+					break; // テーブルでサーバーが見つかったら、while-loopを抜ける
+				}
+
+				if(!isTable) {
+					// MySQLサーバーにサーバーが登録されてなかった場合
+					logger.info("このサーバーは、データベースに登録されていません。");
+					player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
+				}
             } catch (SQLException | ClassNotFoundException e) {
             	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
 				for (StackTraceElement element : e.getStackTrace()) {
