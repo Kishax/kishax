@@ -96,7 +96,7 @@ public class DiscordEventListener extends ListenerAdapter {
 		if (e.getName().equals("fmc")) {
 			switch (e.getSubcommandName()) {
 				case "tera" -> {
-					String teraType = e.getOption("tera_type").getAsString();
+					String teraType = e.getOption("action").getAsString();
 					ReplyCallbackAction messageAction;
 
 					if (!require) {
