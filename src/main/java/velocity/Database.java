@@ -56,7 +56,8 @@ public class Database implements DatabaseInterface {
             conn = DriverManager.getConnection (
             			"jdbc:mysql://" + config.getString("MySQL.Host") + ":" + 
             			config.getInt("MySQL.Port") + "/" + 
-            			config.getString("MySQL.Database"), 
+            			config.getString("MySQL.Database") +
+						"?autoReconnect=true&useSSL=false", 
             			config.getString("MySQL.User"), 
             			config.getString("MySQL.Password")
             		);
