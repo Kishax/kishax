@@ -48,14 +48,14 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final BroadCast bc;
 	private final PlayerUtil pu;
 	private final MessageEditorInterface discordME;
-	private final String teraToken, teraHost, teraExecFilePath;
-	private final int teraPort;
+	private final String teraToken, teraExecFilePath;
 	private final Long teraChannelId;
 	private final boolean require;
 	private Connection conn = null;
 	private PreparedStatement ps = null;
 	private String pattern = null, sql = null, replyMessage = null, 
-        		reqServerName = null, reqPlayerName = null, execFilePath = null, reqPlayerUUID = null;
+        		reqServerName = null, reqPlayerName = null, 
+				execFilePath = null, reqPlayerUUID = null, restAPIUrl = null;
 	private Pattern compiledPattern = null;
 	private Matcher matcher = null;
 	private ProcessBuilder processBuilder = null;
@@ -72,13 +72,11 @@ public class DiscordEventListener extends ListenerAdapter {
 		this.pu = pu;
 		this.discordME = discordME;
 		this.teraToken = config.getString("Terraria.Token", "");
-		this.teraHost = config.getString("Terraria.Host", "");
-		this.teraPort = config.getInt("Terraria.Port", 0);
 		this.teraExecFilePath = config.getString("Terraria.Exec_Path", "");
 		this.teraChannelId = config.getLong("Terraria.ChannelId", 0);
-		this.require = !teraHost.isEmpty() && 
+		this.restAPIUrl = config.getString("Terraria.RestApiUrl");
+		this.require = !restAPIUrl.isEmpty() && 
 					!teraToken.isEmpty() && 
-					teraPort != 0 && 
 					!teraExecFilePath.isEmpty() && 
 					teraChannelId != 0;
 	}
@@ -136,7 +134,7 @@ public class DiscordEventListener extends ListenerAdapter {
 						case "stop" -> {
 							if (isTera()) {
 								try {
-									String urlString = "http://" + teraHost + ":" + teraPort + "/v2/server/off?token=" + teraToken + "&confirm=true&nosave=false";
+									String urlString = restAPIUrl + "/v2/server/off?token=" + teraToken + "&confirm=true&nosave=false";
 			
 									URI uri = new URI(urlString);
 									URL url = uri.toURL();
@@ -189,7 +187,7 @@ public class DiscordEventListener extends ListenerAdapter {
 
 	private boolean isTera() {
         try {
-            String urlString = "http://" + teraHost + ":" + teraPort + "/status?token=" + teraToken;
+            String urlString = restAPIUrl + "/status?token=" + teraToken;
 
             URI uri = new URI(urlString);
             URL url = uri.toURL();

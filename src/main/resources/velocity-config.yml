@@ -65,8 +65,7 @@ Conv:
     EXE_Path: ""
 
 Terraria:
+    RestApiUrl: "http://localhost:7878"
     Token: ""
     ChannelId: 
-    Host: ""
-    Port:
     Exec_Path: ""
