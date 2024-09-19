@@ -1,5 +1,12 @@
 {
     //"java.jdt.ls.java.home": "C:/Program Files/Java/jdk-22",
     "jdk.jdkhome": "c:\\Program Files\\Java\\jdk-22",
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.jdt.ls.java.home": "/usr/lib/jvm/jdk-23-oracle-x64",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-22",
+            "path": "/usr/lib/jvm/jdk-23-oracle-x64"
+        }
+    ],
 }
