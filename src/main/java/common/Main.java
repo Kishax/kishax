@@ -19,8 +19,7 @@ public class Main extends JavaPlugin {
             } else {
                 new spigot.Main(this).onEnable();
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 plugin.getLogger().severe(element.toString());

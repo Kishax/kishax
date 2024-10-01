@@ -77,6 +77,14 @@ public class Config {
                 // 例: サーバー名を追加する部分
                 for (RegisteredServer registeredServer : server.getAllServers()) {
                 	addContents += "\n    "+registeredServer.getServerInfo().getName()+":";
+                    addContents += "\n        Modded:";
+                    addContents += "\n          Mode: false";
+                    addContents += "\n          ListUrl: \"\"";
+                    addContents += "\n          LoaderType: \"\"";
+                    addContents += "\n          LoaderUrl: \"\"";
+                    addContents += "\n        Distributed:";
+                    addContents += "\n          Mode: false";
+                    addContents += "\n          Url: \"\"";
                 	addContents += "\n        Memory: ";
                 	addContents += "\n        Exec_Path: \"\"";
                 }

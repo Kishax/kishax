@@ -18,9 +18,12 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import net.dv8tion.jda.api.entities.AudioChannel;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -81,6 +84,72 @@ public class DiscordEventListener extends ListenerAdapter {
 					teraChannelId != 0;
 	}
 	
+	@SuppressWarnings("null")
+	@Override
+    public void onGuildVoiceJoin(GuildVoiceJoinEvent e) {
+        Member member = e.getMember();
+		AudioChannel channel = e.getChannelJoined();
+        String message = "(discord) " + member.getEffectiveName() + " がボイスチャットチャンネル " + channel.getName() + " に参加しました。";
+
+        TextComponent component = Component.text(message).color(NamedTextColor.GREEN);
+        bc.broadCastMessage(component);
+    }
+
+	@SuppressWarnings("null")
+	@Override
+    public void onMessageReceived(MessageReceivedEvent e) {
+        // DMやBot、Webhookのメッセージには反応しないようにする// e.isFromType(ChannelType.PRIVATE)
+        if (
+        	e.getAuthor().isBot() || 
+        	e.getMessage().isWebhookMessage() || 
+        	!e.getChannel().getId().equals(Long.toString(config.getLong("Discord.ChatChannelId")))
+        ) {
+			return;
+		}
+        
+        // メッセージ内容を取得
+        String message = e.getMessage().getContentRaw();
+        String userName = e.getMember().getEffectiveName();
+        
+        // メッセージが空でないことを確認
+        if (!message.isEmpty()) {
+        	message = "(discord) " + userName + " -> " + message;
+        	sendMixUrl(message);
+        }
+        
+        DiscordEventListener.PlayerChatMessageId = null;
+        
+        // チャンネルIDやユーザーIDも取得可能
+        //String channelId = e.getChannel().getId();
+        
+        List <Attachment> attachments = e.getMessage().getAttachments();
+        int attachmentsSize = attachments.size();
+        if (attachmentsSize > 0) {
+        	TextComponent component = Component.text()
+        			.append(Component.text("(discord) " + userName+" -> Discordで画像か動画を上げています！").color(NamedTextColor.AQUA))
+        			.build();
+        			
+        	TextComponent additionalComponent;
+        	int i=0;
+        	// 添付ファイルを処理したい場合は、以下のようにできます
+            for (Attachment attachment : attachments) {
+            	additionalComponent = Component.text()
+            			.append(Component.text("\n"+attachment.getUrl())
+        						.color(NamedTextColor.GRAY)
+        						.decorate(TextDecoration.UNDERLINED))
+        						.clickEvent(ClickEvent.openUrl(attachment.getUrl()))
+        						.hoverEvent(HoverEvent.showText(Component.text("添付ファイル"+(i+1))))
+                                .build();
+            	
+                // ここで各添付ファイルに対する処理を実装できます
+            	component = component.append(additionalComponent);
+                i++;
+            }
+            
+            bc.broadCastMessage(component);
+        }
+    }
+
 	@SuppressWarnings("null")
 	@Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent e) {
@@ -331,62 +400,6 @@ public class DiscordEventListener extends ListenerAdapter {
         }
     }
 
-	@SuppressWarnings("null")
-	@Override
-    public void onMessageReceived(MessageReceivedEvent e) {
-        // DMやBot、Webhookのメッセージには反応しないようにする// e.isFromType(ChannelType.PRIVATE)
-        if (
-        	e.getAuthor().isBot() || 
-        	e.getMessage().isWebhookMessage() || 
-        	!e.getChannel().getId().equals(Long.toString(config.getLong("Discord.ChatChannelId")))
-        ) {
-			return;
-		}
-        
-        // メッセージ内容を取得
-        String message = e.getMessage().getContentRaw();
-        String userName = e.getAuthor().getName();
-        
-        // メッセージが空でないことを確認
-        if (!message.isEmpty())
-        {
-        	message = userName + " -> " + message;
-        	sendMixUrl(message);
-        }
-        
-        DiscordEventListener.PlayerChatMessageId = null;
-        
-        // チャンネルIDやユーザーIDも取得可能
-        //String channelId = e.getChannel().getId();
-        
-        List <Attachment> attachments = e.getMessage().getAttachments();
-        int attachmentsSize = attachments.size();
-        if (attachmentsSize > 0) {
-        	TextComponent component = Component.text()
-        			.append(Component.text(userName+" -> Discordで画像か動画を上げています！").color(NamedTextColor.AQUA))
-        			.build();
-        			
-        	TextComponent additionalComponent;
-        	int i=0;
-        	// 添付ファイルを処理したい場合は、以下のようにできます
-            for (Attachment attachment : attachments) {
-            	additionalComponent = Component.text()
-            			.append(Component.text("\n"+attachment.getUrl())
-        						.color(NamedTextColor.GRAY)
-        						.decorate(TextDecoration.UNDERLINED))
-        						.clickEvent(ClickEvent.openUrl(attachment.getUrl()))
-        						.hoverEvent(HoverEvent.showText(Component.text("添付ファイル"+(i+1))))
-                                .build();
-            	
-                // ここで各添付ファイルに対する処理を実装できます
-            	component = component.append(additionalComponent);
-                i++;
-            }
-            
-            bc.broadCastMessage(component);
-        }
-    }
-	
 	public void sendMixUrl(String string) {
     	// 正規表現パターンを定義（URLを見つけるための正規表現）
         String urlRegex = "https?://\\S+";

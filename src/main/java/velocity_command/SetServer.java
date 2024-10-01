@@ -19,6 +19,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -105,6 +106,51 @@ public class SetServer {
 					}
 
 					isTable = true;
+
+					// サーバーが配布ワールドを含むかどうか
+					if (config.getBoolean("Servers."+targetServerName+".Distributed.Mode", false)) {
+						String distributedUrl = config.getString("Servers."+targetServerName+".Distributed.Url", "None");
+						TextComponent component = Component.text()
+									.append(Component.text(targetServerName+"サーバーは、配布ワールドを含みます。").color(NamedTextColor.GOLD).decorate(TextDecoration.UNDERLINED))
+									.append(Component.text("\n\n配布元: ").color(NamedTextColor.WHITE))
+									.append(Component.text(distributedUrl).color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
+										.clickEvent(ClickEvent.openUrl(distributedUrl))
+									.append(Component.text("\n"))
+									.build();
+							
+						player.sendMessage(component);
+					}
+
+					// サーバーがモッドサーバーかどうか
+					if (config.getBoolean("Servers."+targetServerName+".Modded.Mode", false)) {
+						String moddedUrl = config.getString("Servers."+targetServerName+".Modded.ListUrl", "None");
+						String loaderType = config.getString("Servers."+targetServerName+".Modded.LoaderType", "None");
+						String loaderUrl = config.getString("Servers."+targetServerName+".Modded.LoaderUrl", "None");
+						ComponentBuilder<TextComponent, ?> builder = Component.text()
+							.append(Component.text(targetServerName+"サーバーは、MODサーバーです。").color(NamedTextColor.GOLD).decorate(TextDecoration.UNDERLINED));
+						
+						if (loaderUrl == null || loaderUrl.isEmpty()) {
+							builder
+								.append(Component.text("\n\nMODローダー: ").color(NamedTextColor.WHITE))
+								.append(Component.text(loaderType).color(NamedTextColor.WHITE).decorate(TextDecoration.UNDERLINED))
+								.append(Component.text("\n\nMOD一覧: ").color(NamedTextColor.WHITE))
+								.append(Component.text(moddedUrl).color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED)
+									.clickEvent(ClickEvent.openUrl(moddedUrl)))
+								.append(Component.text("\n"));
+						} else {
+							builder
+								.append(Component.text("\n\nMODローダー: ").color(NamedTextColor.WHITE))
+								.append(Component.text(loaderType).color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED)
+									.clickEvent(ClickEvent.openUrl(loaderUrl)))
+								.append(Component.text("\n\nMOD一覧: ").color(NamedTextColor.WHITE))
+								.append(Component.text(moddedUrl).color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED)
+									.clickEvent(ClickEvent.openUrl(moddedUrl)))
+								.append(Component.text("\n"));
+						}
+
+						player.sendMessage(builder.build());
+					}
+
 					if (mine_status.getBoolean("online")) {
 						// オンライン
 						if (minecrafts.getBoolean("confirm")) {
