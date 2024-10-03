@@ -20,6 +20,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import discord.DiscordInterface;
+import discord.EmojiManager;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -43,13 +44,14 @@ public class Request {
 	private final BroadCast bc;
 	private final DiscordInterface discord;
 	private final MessageEditorInterface discordME;
+	private final EmojiManager emoji;
 	private String currentServerName = null;
 	
 	@Inject
 	public Request (
 		ProxyServer server, Logger logger, 
 		Config config, DatabaseInterface db, BroadCast bc,
-		DiscordInterface discord, MessageEditorInterface discordME
+		DiscordInterface discord, MessageEditorInterface discordME, EmojiManager emoji
 	) {
 		this.server = server;
 		this.logger = logger;
@@ -58,13 +60,14 @@ public class Request {
 		this.bc = bc;
 		this.discord = discord;
 		this.discordME = discordME;
+		this.emoji = emoji;
 	}
 
 	public void execute(@NotNull CommandSource source,String[] args) {
 		if (source instanceof Player player) {
-            // プレイヤーがコマンドを実行した場合の処理
-			player = (Player) source;
-        
+			// プレイヤーがコマンドを実行した場合の処理
+			String playerName = player.getUsername();
+
             if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
             	player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
             	return;
@@ -165,35 +168,60 @@ public class Request {
 				
 				// 全サーバーにプレイヤーがサーバーを起動したことを通知
 				TextComponent notifyComponent = Component.text()
-						.append(Component.text(player.getUsername()+"が"+args[1]+"サーバーの起動リクエストを送信しました。").color(NamedTextColor.AQUA))
+						.append(Component.text(playerName+"が"+args[1]+"サーバーの起動リクエストを送信しました。").color(NamedTextColor.AQUA))
 						.build();
-				bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
+				bc.sendExceptPlayerMessage(notifyComponent, playerName);
 				
             	// discord:アドミンチャンネルへボタン送信
-				discord.sendRequestButtonWithMessage(player.getUsername()+"が"+args[1]+"サーバーの起動リクエストを送信しました。\n起動しますか？");
+				emoji.createOrgetEmojiId(playerName).thenApply(success -> {
+					if (success != null && !success.isEmpty()) {
+						String playerEmoji = emoji.getEmojiString(playerName, success);
+						discord.sendRequestButtonWithMessage(playerEmoji+playerName+"が"+args[1]+"サーバーの起動リクエストを送信しました。\n起動しますか？\n(管理者のみ実行可能です。)");
 				
-            	player.sendMessage(Component.text("送信されました。").color(NamedTextColor.GREEN));
+						player.sendMessage(Component.text("送信されました。").color(NamedTextColor.GREEN));
+						
+						// discordへリクエスト通知&ボタン送信
+						discordME.AddEmbedSomeMessage("Request", player, args[1]);
             	
-            	// discordへリクエスト通知&ボタン送信
-            	discordME.AddEmbedSomeMessage("Request", player, args[1]);
-            	
-            	// add log
-            	sql = "INSERT INTO mine_log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);";
-    			ps = conn.prepareStatement(sql);
-    			ps.setString(1, player.getUsername());
-    			ps.setString(2, player.getUniqueId().toString());
-    			ps.setString(3, currentServerName);
-    			ps.setBoolean(4, true);
-    			ps.setString(5, args[1]);
-    			ps.executeUpdate();
+						// add log
+						try {
+							String asyncSql = "INSERT INTO mine_log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);";
+							ps = conn.prepareStatement(asyncSql);
+							ps.setString(1, playerName);
+							ps.setString(2, player.getUniqueId().toString());
+							ps.setString(3, currentServerName);
+							ps.setBoolean(4, true);
+							ps.setString(5, args[1]);
+							ps.executeUpdate();
+						} catch (SQLException e) {
+							logger.error("A SQLException error occurred: " + e.getMessage());
+							for (StackTraceElement element : e.getStackTrace()) {
+								logger.error(element.toString());
+							}
+						}
+						
+						return true;
+					} else {
+						return false;
+					}
+				}).thenAccept(result -> {
+					if (result) {
+						logger.info(playerName+"が"+args[1]+"サーバーの起動リクエストを送信しました。");
+					} else {
+						logger.error("Start Error: Emoji is null or empty.");
+					}
+				}).exceptionally(ex -> {
+					logger.error("Start Error: " + ex.getMessage());
+					return null;
+				});
             } catch (SQLException | ClassNotFoundException e) {
             	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
 				for (StackTraceElement element : e.getStackTrace()) {
 					logger.error(element.toString());
 				}
-            } finally {
+            } /*finally {
             	db.close_resorce(resultsets, conn, ps);
-            }
+            }*/
         } else {
 			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
 		}

@@ -146,12 +146,12 @@ public class Discord implements DiscordInterface {
             		String buttonMessage2 = message.getContentRaw();
                 	
             		// プレイヤー名・サーバー名、取得
-                	String pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
+                	String pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？(.*?)";
                     Pattern compiledPattern = Pattern.compile(pattern);
                     Matcher matcher = compiledPattern.matcher(buttonMessage2);
                     if (matcher.find()) {
-                    	String reqPlayerName = matcher.group(1);
-                    	String reqServerName = matcher.group(2);
+                    	String reqPlayerName = matcher.group(2);
+                    	String reqServerName = matcher.group(3);
                     	String reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
                     			
                     	try {
@@ -177,7 +177,7 @@ public class Discord implements DiscordInterface {
                         // マイクラサーバーへ通知
                         bc.broadCastMessage(Component.text("管理者がリクエストに応答しませんでした。").color(NamedTextColor.BLUE));
                         
-                        message.reply("誰も応答しませんでした。").queue();
+                        message.reply("管理者が応答しませんでした。").queue();
                         message.editMessageComponents().queue(); // ボタンを削除
                         
                         // フラグから削除

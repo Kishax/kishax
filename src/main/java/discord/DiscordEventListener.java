@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.entities.AudioChannel;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -290,17 +291,25 @@ public class DiscordEventListener extends ListenerAdapter {
         
         // ボタンを押したユーザーを取得
         User user = e.getUser();
-        
+        Member member = e.getMember();
+		List<Role> roles = member.getRoles();
+
         switch (buttonId) {
         	case "reqOK" -> {
-				replyMessage = user.getAsMention() + "startが押されました。";
+				if (!roles.contains(e.getGuild().getRoleById(config.getLong("Discord.AdCraRoleId")))) {
+					replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
+					e.reply(replyMessage).setEphemeral(true).queue();
+					return;
+				}
+
+				replyMessage = user.getAsMention() + " startが押されました。";
 				// プレイヤー名・サーバー名、取得
-				pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
+				pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？(.*?)";
 				compiledPattern = Pattern.compile(pattern);
 				matcher = compiledPattern.matcher(buttonMessage);
 				if (matcher.find()) {
-					reqPlayerName = matcher.group(1);
-					reqServerName = matcher.group(2);
+					reqPlayerName = matcher.group(2);
+					reqServerName = matcher.group(3);
 					reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
 					
 					try {
@@ -351,14 +360,20 @@ public class DiscordEventListener extends ListenerAdapter {
             }
         		
         	case "reqCancel" -> {
-				replyMessage = user.getAsMention() + "stopが押されました。";
+				if (!roles.contains(e.getGuild().getRoleById(config.getLong("Discord.AdCraRoleId")))) {
+					replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
+					e.reply(replyMessage).setEphemeral(true).queue();
+					return;
+				}
+
+				replyMessage = user.getAsMention() + " stopが押されました。";
 				// プレイヤー名・サーバー名、取得
-				pattern = "(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
+				pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
 				compiledPattern = Pattern.compile(pattern);
 				matcher = compiledPattern.matcher(buttonMessage);
 				if (matcher.find()) {
-					reqPlayerName = matcher.group(1);
-					reqServerName = matcher.group(2);
+					reqPlayerName = matcher.group(2);
+					reqServerName = matcher.group(3);
 					reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
 					
 					try {

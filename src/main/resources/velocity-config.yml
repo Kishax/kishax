@@ -20,6 +20,7 @@ Discord:
     ChannelId: 
     ChatChannelId: 
     AdminChannelId: 
+    AdCraRoleId: 
     ChatType: false
     Webhook_URL: ""
     InviteUrl: ""
