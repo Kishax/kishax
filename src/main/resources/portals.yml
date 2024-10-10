@@ -1,0 +1,8 @@
+# portals.yml
+portals:
+  - name: "Nether Portal"
+    corner1: [100, 64, 100]
+    corner2: [110, 70, 110]
+  - name: "End Portal"
+    corner1: [200, 64, 200]
+    corner2: [210, 70, 210]

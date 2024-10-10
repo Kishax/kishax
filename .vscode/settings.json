@@ -9,11 +9,18 @@
             "path": "/usr/lib/jvm/jdk-22-oracle-x64"
         }
     ],*/
-    "java.jdt.ls.java.home": "/usr/lib/jvm/jdk-17.0.12-oracle-x64/bin/java",
-    "java.configuration.runtimes": [
+    //"java.jdt.ls.java.home": "/usr/lib/jvm/jdk-17.0.12-oracle-x64/bin/java",
+    /*"java.configuration.runtimes": [
         {
             "name": "JavaSE-17",
             "path": "/usr/lib/jvm/jdk-17.0.12-oracle-x64/bin/java"
+        }
+    ],*/
+    "java.jdt.ls.java.home": "C:\\Program Files\\Java\\jdk-17\\bin\\java",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-17",
+            "path": "C:\\Program Files\\Java\\jdk-17\\bin\\java"
         }
     ],
 }

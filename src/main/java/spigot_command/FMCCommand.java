@@ -22,7 +22,7 @@ import spigot.Main;
 
 public class FMCCommand implements TabExecutor {
 
-	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","test","fv","mcvc"));
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","test","fv","mcvc","portal"));
 	
 	@Inject
 	public FMCCommand() {
@@ -47,6 +47,9 @@ public class FMCCommand implements TabExecutor {
     			        .append(ChatColor.AQUA+"\n\n/fmcb mcvc")
                         .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmcp mcvc"))
                         .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("MCVCモードの切り替えを行います！(クリックしてコピー)")))
+						.append(ChatColor.AQUA+"\n\n/fmcb portal")
+                        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmcp portals"))
+                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルに関して！(クリックしてコピー)")))
     			        .create();
     		sender.spigot().sendMessage(component);
     		return true;
@@ -77,6 +80,11 @@ public class FMCCommand implements TabExecutor {
 			case "mcvc" -> {
 				Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
 				return true; 
+			}
+
+			case "portal" -> {
+				Main.getInjector().getInstance(PortalsWand.class).execute(sender, cmd, label, args);
+				return true;
 			}
 		}
 
@@ -109,7 +117,13 @@ public class FMCCommand implements TabExecutor {
 
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
+
 					case "test" -> {
+						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
+					}
+
+					case "portal" -> {
+						ret.add("wand");
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
 				}

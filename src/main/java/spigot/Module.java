@@ -22,5 +22,6 @@ public class Module extends AbstractModule {
 		bind(ServerHomeDir.class);
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);
+		bind(PortalsConfig.class);
     }
 }

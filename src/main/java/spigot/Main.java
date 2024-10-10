@@ -33,8 +33,11 @@ public class Main {
 		
 	    plugin.saveDefaultConfig();
 		
+		getInjector().getInstance(PortalsConfig.class).createPortalsConfig();
+
     	plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(EventListener.class), plugin);
-        
+        plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(WandListener.class), plugin);
+
 		FMCCommand commandFMC = getInjector().getInstance(FMCCommand.class);
 		PluginCommand fmcCmd = plugin.getCommand("fmc");
 		if (fmcCmd != null) {
