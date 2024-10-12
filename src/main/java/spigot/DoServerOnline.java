@@ -55,7 +55,7 @@ public class DoServerOnline {
                 plugin.getLogger().severe(element.toString());
             }
 		} finally {
-        	db.close_resorce(null, conn, ps);
+        	db.close_resource(null, conn, ps);
         }
 	}
 }

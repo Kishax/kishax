@@ -340,7 +340,7 @@ public class EventListener {
 				
 				String sql = "SELECT online FROM status WHERE name=?;";
 				ps = conn.prepareStatement(sql);
-				ps.setString(1, "Maintenance");
+				ps.setString(1, "maintenance");
 				ismente = ps.executeQuery();
 				
 				if (ismente.next()) {
@@ -551,10 +551,9 @@ public class EventListener {
 					bc.sendExceptServerMessage(component, serverInfo.getName());
 				}
 				
-				// Latestサーバーの参加メッセージ
-				if (serverInfo.getName().equals("Latest")) {
+				if (serverInfo.getName().equals("latest")) {
 					component = Component.text()
-		    			    	.append(Component.text("DynMap").decorate(TextDecoration.BOLD).color(NamedTextColor.GOLD))
+		    			    	.append(Component.text("dynmap").decorate(TextDecoration.BOLD).color(NamedTextColor.GOLD))
 		    			    	.append(Component.text("\nhttps://keypforev.ddns.net/dynmap/").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED)
 	    			    			.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/dynmap/"))
 	                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)地図を見る"))))

@@ -18,8 +18,6 @@ public class Database implements DatabaseInterface {
 	private final Config config;
 	private final Logger logger;
     private Connection conn = null;
-    public ResultSet mine_status = null;
-	public ResultSet[] resultsets = {mine_status};
     
     @Inject
     public Database (

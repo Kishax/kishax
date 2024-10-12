@@ -54,7 +54,7 @@ public class Maintenance {
 			connLp = db.getConnection("fmc_lp");
 			String sql = "SELECT online FROM status WHERE name=?;";
 			ps = conn.prepareStatement(sql);
-			ps.setString(1, "Maintenance");
+			ps.setString(1, "maintenance");
 			ismente = ps.executeQuery();
 			
 			sql = "SELECT uuid FROM lp_user_permissions WHERE permission=?;";
@@ -68,7 +68,7 @@ public class Maintenance {
 			}
 			
 			switch (args.length) {
-	        	case 0, 1 -> source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
+	        	case 0, 1 -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
 	        	case 2 -> {
 					switch(args[1].toLowerCase()) {
 						case "status" -> {
@@ -83,7 +83,7 @@ public class Maintenance {
 							source.sendMessage(component);
 						}
 							
-						default -> source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
+						default -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
 					}
                 }
 	            	
@@ -91,31 +91,31 @@ public class Maintenance {
 					// 以下はパーミッションが所持していることが確認されている上で、permというコマンドを使っているので、確認の必要なし
 					//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
 					if(!(args1.contains(args[1].toLowerCase()))) {
-						source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+						source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 						break;
 					}
 					
 					if(!(args2.contains(args[2].toLowerCase()))) {
-						source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+						source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 						break;
 					}
 					
-					source.sendMessage(Component.text("discord通知をtrueにするかfalseにするかを決定してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+					source.sendMessage(Component.text("discord通知をtrueにするかfalseにするかを決定してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 				}
         			
 	        	case 4 -> {
 					if (!(args1.contains(args[1].toLowerCase()))) {
-						source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+						source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 						break;
 					}
 					
 					if (!(args2.contains(args[2].toLowerCase()))) {
-						source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+						source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 						break;
 					}
 					
 					if (!(args3.contains(args[3].toLowerCase()))) {
-						source.sendMessage(Component.text("第4引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+						source.sendMessage(Component.text("第4引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 						break;
 					}
 					
@@ -131,7 +131,7 @@ public class Maintenance {
 									sql = "UPDATE status SET online=? WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 									ps.setBoolean(1, false);
-									ps.setString(2, "Maintenance");
+									ps.setString(2, "maintenance");
 									ps.executeUpdate();
 									source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
 								} else {
@@ -142,7 +142,7 @@ public class Maintenance {
 									sql = "UPDATE status SET online=? WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 									ps.setBoolean(1, true);
-									ps.setString(2, "Maintenance");
+									ps.setString(2, "maintenance");
 									ps.executeUpdate();
 									pd.menteDisconnect(superadminUUIDs);
 								}
@@ -157,7 +157,7 @@ public class Maintenance {
 									sql = "UPDATE status SET online=? WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 									ps.setBoolean(1, false);
-									ps.setString(2, "Maintenance");
+									ps.setString(2, "maintenance");
 									ps.executeUpdate();
 									source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
 								} else {
@@ -165,7 +165,7 @@ public class Maintenance {
 									sql = "UPDATE status SET online=? WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 									ps.setBoolean(1, true);
-									ps.setString(2, "Maintenance");
+									ps.setString(2, "maintenance");
 									ps.executeUpdate();
 									
 									pd.menteDisconnect(superadminUUIDs);
@@ -174,7 +174,7 @@ public class Maintenance {
 						}
 					}
 				}
-                default -> source.sendMessage(Component.text("usage: /fmcp　maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
+                default -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
 	        }
 		} catch (ClassNotFoundException | SQLException e) {
             logger.error("A ClassNotFoundException | SQLException error occurred: " + e.getMessage());

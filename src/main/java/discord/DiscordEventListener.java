@@ -302,7 +302,7 @@ public class DiscordEventListener extends ListenerAdapter {
 					return;
 				}
 
-				replyMessage = user.getAsMention() + " startが押されました。";
+				replyMessage = user.getAsMention() + " リクエストを受諾しました。";
 				// プレイヤー名・サーバー名、取得
 				pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？(.*?)";
 				compiledPattern = Pattern.compile(pattern);
@@ -366,7 +366,7 @@ public class DiscordEventListener extends ListenerAdapter {
 					return;
 				}
 
-				replyMessage = user.getAsMention() + " stopが押されました。";
+				replyMessage = user.getAsMention() + " リクエストを拒否しました。";
 				// プレイヤー名・サーバー名、取得
 				pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
 				compiledPattern = Pattern.compile(pattern);
