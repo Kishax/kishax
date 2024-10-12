@@ -5,13 +5,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.google.inject.Inject;
 
-public class PortalsConfig {
+public final class PortalsConfig {
     private final common.Main plugin;
     private File portalsFile;
     private YamlConfiguration portalsConfig;
@@ -50,7 +51,10 @@ public class PortalsConfig {
             portalsConfig.save(portalsFile);
             reloadPortalsConfig();
         } catch (IOException e) {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) {
+					plugin.getLogger().severe(element.toString());
+				}
         }
     }
 
@@ -60,7 +64,7 @@ public class PortalsConfig {
         this.portalsConfig = YamlConfiguration.loadConfiguration(portalsFile);
     
         // portalsConfigの内容をログに出力
-        plugin.getLogger().info("portals.yml contents: " + portalsConfig.saveToString());
+        plugin.getLogger().log(Level.INFO, "portals.yml contents: {0}", portalsConfig.saveToString());
         
         this.portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
     }

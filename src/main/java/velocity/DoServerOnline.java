@@ -60,7 +60,7 @@ public class DoServerOnline {
         			return;
     			}
         		
-				String insql = "UPDATE mine_status SET online=? WHERE name=?;";
+				String insql = "UPDATE status SET online=? WHERE name=?;";
 				ps = conn.prepareStatement(insql);
 				ps.setBoolean(1, true);
 				ps.setString(2, "Proxy");
@@ -73,7 +73,7 @@ public class DoServerOnline {
                 	serverConfigInfo.put(serverConfigName, serverConfigPort);
                 }
 				
-				insql = "SELECT * FROM mine_status WHERE exception!=? AND exception2!=?;";
+				insql = "SELECT * FROM status WHERE exception!=? AND exception2!=?;";
 				ps = conn.prepareStatement(insql);
 				ps.setBoolean(1, true);
 				ps.setBoolean(2, true);
@@ -93,7 +93,7 @@ public class DoServerOnline {
 
 			        // Configに存在しないサーバーは削除
 			        if (!serverConfigInfo.containsKey(serverDBName)) {
-			            insql = "DELETE FROM mine_status WHERE name = ?;";
+			            insql = "DELETE FROM status WHERE name = ?;";
 			            ps = conn.prepareStatement(insql);
 			            ps.setString(1, serverDBName);
 			            ps.executeUpdate();
@@ -102,7 +102,7 @@ public class DoServerOnline {
 			            // Configに存在するサーバーがポート番号が異なる場合、ポート番号を更新
 			            int serverConfigPort = serverConfigInfo.get(serverDBName);
 			            if (serverDBPort != serverConfigPort) {
-			                insql = "UPDATE mine_status SET port=? WHERE name=?;";
+			                insql = "UPDATE status SET port=? WHERE name=?;";
 			                ps = conn.prepareStatement(insql);
 		                    ps.setInt(1, serverConfigPort);
 		                    ps.setString(2, serverDBName);
@@ -125,7 +125,7 @@ public class DoServerOnline {
 			        	if (secondCheck) {
 			        		// serverDBInfo初期化
 			        		serverDBInfo.clear();
-			        		insql = "SELECT * FROM mine_status;";
+			        		insql = "SELECT * FROM status;";
 							ps = conn.prepareStatement(insql);
 							mine_status = ps.executeQuery();
 							while (mine_status.next()) {
@@ -146,7 +146,7 @@ public class DoServerOnline {
 			            	throw new SQLException("サーバー名が重複しています: " + serverConfigName);
 			            }
 			            
-			            insql = "INSERT INTO mine_status (name,port) VALUES (?,?);";
+			            insql = "INSERT INTO status (name,port) VALUES (?,?);";
 			            ps = conn.prepareStatement(insql);
 		                ps.setString(1, serverConfigName);
 		                ps.setInt(2, serverConfigPort);

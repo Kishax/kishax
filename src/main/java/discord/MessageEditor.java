@@ -376,7 +376,7 @@ public class MessageEditor implements MessageEditorInterface {
 							if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 								// 絵文字IDをアップデートしておく
 								if(Objects.nonNull(conn)) {
-									ps = conn.prepareStatement("UPDATE minecraft SET emid=? WHERE uuid=?;");
+									ps = conn.prepareStatement("UPDATE members SET emid=? WHERE uuid=?;");
 									ps.setString(1, FaceEmojiId);
 									ps.setString(2, uuid);
 									ps.executeUpdate();
@@ -389,7 +389,7 @@ public class MessageEditor implements MessageEditorInterface {
 								//logger.info("Emoji ID is null");
 								if(Objects.nonNull(conn)) {
 									// 絵文字IDをアップデートしておく
-									ps = conn.prepareStatement("UPDATE minecraft SET emid=? WHERE uuid=?;");
+									ps = conn.prepareStatement("UPDATE members SET emid=? WHERE uuid=?;");
 									ps.setString(1, null);
 									ps.setString(2, uuid);
 									ps.executeUpdate();
@@ -422,7 +422,7 @@ public class MessageEditor implements MessageEditorInterface {
 							conn = db.getConnection();
 							if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 								//logger.info("Emoji ID retrieved: " + emojiId);
-								ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server, emid) VALUES (?,?,?,?);");
+								ps = conn.prepareStatement("INSERT INTO members (name,uuid,server, emid) VALUES (?,?,?,?);");
 								ps.setString(1, playerName);
 								ps.setString(2, uuid);
 								ps.setString(3, serverInfo.getName());

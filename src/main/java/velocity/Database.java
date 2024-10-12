@@ -31,10 +31,15 @@ public class Database implements DatabaseInterface {
     }
 
     @Override
-	public Connection getConnection() throws SQLException, ClassNotFoundException {
+	public Connection getConnection(String customDatabase) throws SQLException, ClassNotFoundException {
 		String host = config.getString("MySQL.Host", "");
 		int port = config.getInt("MySQL.Port", 0);
-		String database = config.getString("MySQL.Database", "");
+		String database;
+		if (customDatabase != null && !customDatabase.isEmpty()) {
+			database = customDatabase;
+		} else {
+			database = config.getString("MySQL.Database", "");
+		}
 		String user = config.getString("MySQL.User", "");
 		String password = config.getString("MySQL.Password", "");
 		if (
@@ -66,8 +71,13 @@ public class Database implements DatabaseInterface {
         }
     }
 	
+	@Override
+	public Connection getConnection() throws SQLException, ClassNotFoundException {
+		return getConnection(null);
+	}
+
     @Override
-	public void close_resorce(ResultSet[] resultsets,Connection conn, PreparedStatement ps) {
+	public void close_resorce(ResultSet[] resultsets, Connection[] conns, PreparedStatement ps) {
 		if (Objects.nonNull(resultsets)) {
 			for (ResultSet resultSet : resultsets) {
 			    if (Objects.nonNull(resultSet)) {
@@ -83,7 +93,22 @@ public class Database implements DatabaseInterface {
 			}
 		}
 		
-		if (Objects.nonNull(conn)) {
+		if (Objects.nonNull(conns)) {
+			for (Connection simpleconn : conns) {
+			    if (Objects.nonNull(simpleconn)) {
+					try {
+						simpleconn.close();
+					} catch (SQLException e) {
+						logger.error("A SQLException error occurred: " + e.getMessage());
+						for (StackTraceElement element : e.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
+				}
+			}
+		}
+		
+		if (Objects.nonNull(ps)) {
 			try {
                 ps.close();
             } catch (SQLException e) {
@@ -93,16 +118,11 @@ public class Database implements DatabaseInterface {
 				}
             }
 		}
-		
-		if (Objects.nonNull(ps)) {
-			try {
-                conn.close();
-            } catch (SQLException e) {
-                logger.error("A SQLException error occurred: " + e.getMessage());
-				for (StackTraceElement element : e.getStackTrace()) {
-					logger.error(element.toString());
-				}
-            }
-		}
+	}
+
+	@Override
+	public void close_resorce(ResultSet[] resultsets, Connection conn, PreparedStatement ps) {
+		Connection[] conns = {conn};
+		close_resorce(resultsets, conns, ps);
 	}
 }

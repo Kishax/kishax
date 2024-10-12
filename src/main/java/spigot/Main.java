@@ -8,7 +8,6 @@ import org.bukkit.command.PluginCommand;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import spigot.Module;
 import spigot_command.FMCCommand;
 
 public class Main {
@@ -25,7 +24,7 @@ public class Main {
 	
 	public void onEnable() {
 		// Guice インジェクターを作成
-        injector = Guice.createInjector(new Module(plugin, this));
+        injector = Guice.createInjector(new spigot.Module(plugin, this));
         
 		plugin.getLogger().info("Detected Spigot platform.");
 		

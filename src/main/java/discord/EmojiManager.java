@@ -149,7 +149,7 @@ public class EmojiManager {
         Guild guild = jda.getGuilds().get(0); // 最初のギルドを取得（適切なギルドを選択する必要があります）
         try {
             conn = db.getConnection();
-            String sql = "SELECT * FROM minecraft;";
+            String sql = "SELECT * FROM members;";
             ps = conn.prepareStatement(sql);
             minecrafts = ps.executeQuery();
 
@@ -173,7 +173,7 @@ public class EmojiManager {
                     // もし、emojiIdがminecrafts.getString("emid")と違ったら更新する
                     // データベース保存処理
                     if(Objects.nonNull(emojiId) && !emojiId.equals(dbEmojiId)) {
-                    	sql = "UPDATE minecraft SET emid=? WHERE uuid=?;";
+                    	sql = "UPDATE members SET emid=? WHERE uuid=?;";
                     	ps = conn.prepareStatement(sql);
                     	ps.setString(1, emojiId);
                     	ps.setString(2, uuid);
@@ -211,7 +211,7 @@ public class EmojiManager {
                         
                         // データベース更新処理
                         if (Objects.nonNull(emojiId)) {
-                        	sql = "UPDATE minecraft SET emid=? WHERE uuid=?;";
+                        	sql = "UPDATE members SET emid=? WHERE uuid=?;";
                         	ps = conn.prepareStatement(sql);
                         	ps.setString(1, emojiId);
                         	ps.setString(2, uuid);

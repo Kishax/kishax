@@ -56,7 +56,7 @@ public class PlayerUtil {
 			
 			if(Objects.isNull(conn))	return;
 			
-			String sql = "SELECT * FROM minecraft;";
+			String sql = "SELECT * FROM members;";
 			ps = conn.prepareStatement(sql);
 			playerlist = ps.executeQuery();
 			
@@ -78,7 +78,7 @@ public class PlayerUtil {
 	public void updatePlayers() {
 		try {
 			conn = db.getConnection();
-			String sql = "SELECT * FROM minecraft;";
+			String sql = "SELECT * FROM members;";
 			ps = conn.prepareStatement(sql);
 			playerlist = ps.executeQuery();
 			
@@ -126,7 +126,7 @@ public class PlayerUtil {
 	public String getPlayerUUIDByNameFromDB(String playerName) {
 		try {
 			conn = db.getConnection();
-			String sql = "SELECT uuid FROM minecraft WHERE name=? ORDER BY id DESC LIMIT 1;";
+			String sql = "SELECT uuid FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
 			ps = conn.prepareStatement(sql);
 			ps.setString(1, playerName);
 			dbuuid = ps.executeQuery();
@@ -148,7 +148,7 @@ public class PlayerUtil {
 	public String getPlayerNameByUUIDFromDB(UUID playerUUID) {
 		try {
 			conn = db.getConnection();
-			String sql = "SELECT name FROM minecraft WHERE uuid=? ORDER BY id DESC LIMIT 1;";
+			String sql = "SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;";
 			ps = conn.prepareStatement(sql);
 			ps.setString(1, playerUUID.toString());
 			dbname = ps.executeQuery();
@@ -172,7 +172,7 @@ public class PlayerUtil {
         	conn = db.getConnection();
     		
     		// calc playtime
-    		String sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
+    		String sql = "SELECT * FROM log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
     		ps = conn.prepareStatement(sql);
     		ps.setString(1, player.getUniqueId().toString());
     		ps.setBoolean(2, true);

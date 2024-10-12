@@ -32,7 +32,8 @@ public class Perm {
 	private final Luckperms lp;
 	private final DatabaseInterface db;
 	
-	public Connection conn = null;
+	public Connection conn = null, connLp = null;
+	public Connection[] conns = {conn, connLp};
 	public ResultSet minecrafts = null, database_uuid = null, isperm = null;
 	public ResultSet[] resultsets = {minecrafts,database_uuid,isperm};
 	public PreparedStatement ps = null;
@@ -62,8 +63,8 @@ public class Perm {
 
         try {
         	conn = db.getConnection();
-        	
-        	String sql = "SELECT * FROM minecraft ORDER BY id DESC;";
+        	connLp = db.getConnection("fmc_lp");
+        	String sql = "SELECT * FROM members ORDER BY id DESC;";
 			ps = conn.prepareStatement(sql);
 			minecrafts = ps.executeQuery();
 			
@@ -74,7 +75,7 @@ public class Perm {
 			
 	        switch (args.length) {
 	        	case 0,1-> {
-	        		source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
+	        		source.sendMessage(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 				}
 	        	case 2-> {
         			switch(args[1].toLowerCase()) {
@@ -92,7 +93,7 @@ public class Perm {
 		                			//permD1 = permD.get(permS.indexOf(args[2]));
 		                			
 	        						sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-		        					ps = conn.prepareStatement(sql);
+		        					ps = connLp.prepareStatement(sql);
 		        					ps.setString(1, minecrafts.getString("uuid"));
 		        					ps.setString(2, permD.get(i));
 		        					isperm = ps.executeQuery();
@@ -157,7 +158,7 @@ public class Perm {
         			permD1 = permD.get(permS.indexOf(args[2]));
         			while (minecrafts.next()) {
         				sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-    					ps = conn.prepareStatement(sql);
+    					ps = connLp.prepareStatement(sql);
     					ps.setString(1, minecrafts.getString("uuid"));
     					ps.setString(2, permD1);
     					isperm = ps.executeQuery();
@@ -208,7 +209,7 @@ public class Perm {
                 logger.error(element.toString());
             }
         } finally {
-        	db.close_resorce(resultsets, conn, ps);
+        	db.close_resorce(resultsets, conns, ps);
         }
 	}
 	
@@ -216,8 +217,8 @@ public class Perm {
 		// 上のAdminメソッドの途中なので、connは閉じない。(finallyを省く)
 		try {
 			conn = db.getConnection();
-			
-			String sql = "SELECT * FROM minecraft WHERE name=? ORDER BY id DESC LIMIT 1;";
+			connLp = db.getConnection("fmc_lp");
+			String sql = "SELECT * FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
 			ps = conn.prepareStatement(sql);
 			ps.setString(1, name);
 			database_uuid = ps.executeQuery();
@@ -227,7 +228,7 @@ public class Perm {
 				if (bool) {
 					sql = "INSERT INTO lp_user_permissions "
 							+ "(uuid,permission,value,server,world,expiry,contexts) VALUES (?,?,?,?,?,?,?);";
-					ps = conn.prepareStatement(sql);
+					ps = connLp.prepareStatement(sql);
 					ps.setString(1,database_uuid.getString("uuid"));
 					ps.setString(2,permission);
 					ps.setBoolean(3,true);
@@ -239,7 +240,7 @@ public class Perm {
 					source.sendMessage(Component.text(name+"にpermission: "+permission+"を追加しました。").color(NamedTextColor.GREEN));
 				} else {
 					sql = "DELETE FROM lp_user_permissions WHERE uuid=?;";
-					ps = conn.prepareStatement(sql);
+					ps = connLp.prepareStatement(sql);
 					ps.setString(1,database_uuid.getString("uuid"));
 					ps.executeUpdate();
 					source.sendMessage(Component.text(name+"からpermission: "+permission+"を除去しました。").color(NamedTextColor.GREEN));

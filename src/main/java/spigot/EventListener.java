@@ -28,47 +28,49 @@ public final class EventListener implements Listener {
 		this.psConfig = psConfig;
 		// new Location(Bukkit.getWorld("world"), 100, 64, 100);
 	}
-	
+
 	@EventHandler
     public void onPlayerMove(PlayerMoveEvent e) {
-        Player player = e.getPlayer();
-        Location loc = player.getLocation();
+        if (plugin.getConfig().getBoolean("Portals.Menu", false)) {
+            Player player = e.getPlayer();
+            Location loc = player.getLocation();
 
-		// plugin.getLogger().log(Level.INFO, "Player location: {0}", loc);
+            // plugin.getLogger().log(Level.INFO, "Player location: {0}", loc);
 
-        FileConfiguration portalsConfig = psConfig.getPortalsConfig();
-		List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
-		
-        if (portals != null) {
-            for (Map<?, ?> portal : portals) {
-                String name = (String) portal.get("name");
-                List<?> corner1List = (List<?>) portal.get("corner1");
-                List<?> corner2List = (List<?>) portal.get("corner2");
+            FileConfiguration portalsConfig = psConfig.getPortalsConfig();
+            List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
+            
+            if (portals != null) {
+                for (Map<?, ?> portal : portals) {
+                    String name = (String) portal.get("name");
+                    List<?> corner1List = (List<?>) portal.get("corner1");
+                    List<?> corner2List = (List<?>) portal.get("corner2");
 
-                if (corner1List != null && corner2List != null) {
-                    Location corner1 = new Location(player.getWorld(),
-                            ((Number) corner1List.get(0)).doubleValue(),
-                            ((Number) corner1List.get(1)).doubleValue(),
-                            ((Number) corner1List.get(2)).doubleValue());
-                    Location corner2 = new Location(player.getWorld(),
-                            ((Number) corner2List.get(0)).doubleValue(),
-                            ((Number) corner2List.get(1)).doubleValue(),
-                            ((Number) corner2List.get(2)).doubleValue());
-					
-					// plugin.getLogger().log(Level.INFO, "Portal {0} \n - corner1: {1}\n - corner2: {2}", new Object[]{name, corner1, corner2});
+                    if (corner1List != null && corner2List != null) {
+                        Location corner1 = new Location(player.getWorld(),
+                                ((Number) corner1List.get(0)).doubleValue(),
+                                ((Number) corner1List.get(1)).doubleValue(),
+                                ((Number) corner1List.get(2)).doubleValue());
+                        Location corner2 = new Location(player.getWorld(),
+                                ((Number) corner2List.get(0)).doubleValue(),
+                                ((Number) corner2List.get(1)).doubleValue(),
+                                ((Number) corner2List.get(2)).doubleValue());
+                        
+                        // plugin.getLogger().log(Level.INFO, "Portal {0} \n - corner1: {1}\n - corner2: {2}", new Object[]{name, corner1, corner2});
 
-                    if (isWithinBounds(loc, corner1, corner2)) {
-						plugin.getLogger().log(Level.INFO, "Player {0} entered the {1}!", new Object[]{player.getName(), name});
-                        player.sendMessage(ChatColor.AQUA + "You have entered the " + name + "!");
-						// 詳しく && 何回もポータルに入らないようにするため、インベントリを開く処理を追加
-						// インベントリを開いたら、ポータルから出るまでインベントリを開かない
+                        if (isWithinBounds(loc, corner1, corner2)) {
+                            plugin.getLogger().log(Level.INFO, "Player {0} entered the {1}!", new Object[]{player.getName(), name});
+                            player.sendMessage(ChatColor.AQUA + "You have entered the " + name + "!");
+                            // 詳しく && 何回もポータルに入らないようにするため、インベントリを開く処理を追加
+                            // インベントリを開いたら、ポータルから出るまでインベントリを開かない
 
 
 
-						// ここでインベントリを開く処理を追加
-                        player.openInventory(plugin.getServer().createInventory(null, 27, "Custom Inventory"));
-						
-                        break; // 一つのポータルに触れたらループを抜ける
+                            // ここでインベントリを開く処理を追加
+                            player.openInventory(plugin.getServer().createInventory(null, 27, "Custom Inventory"));
+                            
+                            break; // 一つのポータルに触れたらループを抜ける
+                        }
                     }
                 }
             }

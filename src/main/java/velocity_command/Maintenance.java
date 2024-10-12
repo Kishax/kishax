@@ -23,7 +23,8 @@ import velocity.PlayerDisconnect;
 public class Maintenance {
 
 	public static boolean isMente;
-	public Connection conn = null;
+	public Connection conn = null, connLp = null;
+	public Connection[] conns = {conn, connLp};
 	public ResultSet ismente = null, issuperadmin = null;
 	public ResultSet[] resultsets = {ismente, issuperadmin};
 	public PreparedStatement ps = null;
@@ -47,16 +48,17 @@ public class Maintenance {
 		this.discordME = discordME;
 	}
 
-	public void execute(@NotNull CommandSource source,String[] args) {
+	public void execute(@NotNull CommandSource source, String[] args) {
 		try {
 			conn = db.getConnection();
-			String sql = "SELECT online FROM mine_status WHERE name=?;";
+			connLp = db.getConnection("fmc_lp");
+			String sql = "SELECT online FROM status WHERE name=?;";
 			ps = conn.prepareStatement(sql);
 			ps.setString(1, "Maintenance");
 			ismente = ps.executeQuery();
 			
 			sql = "SELECT uuid FROM lp_user_permissions WHERE permission=?;";
-			ps = conn.prepareStatement(sql);
+			ps = connLp.prepareStatement(sql);
 			ps.setString(1, "group.super-admin");
 			issuperadmin = ps.executeQuery();
 			
@@ -126,7 +128,7 @@ public class Maintenance {
 									discordME.AddEmbedSomeMessage("MenteOff");
 									
 									// メンテナンスモードが有効の場合
-									sql = "UPDATE mine_status SET online=? WHERE name=?;";
+									sql = "UPDATE status SET online=? WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 									ps.setBoolean(1, false);
 									ps.setString(2, "Maintenance");
@@ -137,7 +139,7 @@ public class Maintenance {
 									discordME.AddEmbedSomeMessage("MenteOn");
 									
 									// メンテナンスモードが無効の場合
-									sql = "UPDATE mine_status SET online=? WHERE name=?;";
+									sql = "UPDATE status SET online=? WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 									ps.setBoolean(1, true);
 									ps.setString(2, "Maintenance");
@@ -152,7 +154,7 @@ public class Maintenance {
 							if (ismente.next()) {
 								if (ismente.getBoolean("online")) {
 									// メンテナンスモードが有効の場合
-									sql = "UPDATE mine_status SET online=? WHERE name=?;";
+									sql = "UPDATE status SET online=? WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 									ps.setBoolean(1, false);
 									ps.setString(2, "Maintenance");
@@ -160,7 +162,7 @@ public class Maintenance {
 									source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
 								} else {
 									// メンテナンスモードが無効の場合
-									sql = "UPDATE mine_status SET online=? WHERE name=?;";
+									sql = "UPDATE status SET online=? WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 									ps.setBoolean(1, true);
 									ps.setString(2, "Maintenance");
@@ -181,7 +183,7 @@ public class Maintenance {
                 logger.error(element.toString());
             }
         } finally {
-			db.close_resorce(resultsets,conn,ps);
+			db.close_resorce(resultsets, conns, ps);
 		}
 	}
 }

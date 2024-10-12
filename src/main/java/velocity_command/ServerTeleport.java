@@ -68,7 +68,7 @@ public class ServerTeleport {
 
         try {
             conn = db.getConnection();
-            String sql = "SELECT * FROM minecraft WHERE uuid=?;";
+            String sql = "SELECT * FROM members WHERE uuid=?;";
             ps = conn.prepareStatement(sql);
             ps.setString(1, player.getUniqueId().toString());
             minecrafts = ps.executeQuery();

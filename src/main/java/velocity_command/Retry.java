@@ -48,7 +48,7 @@ public class Retry {
 			int ranum = 100000 + rnd.nextInt(900000);
 			String ranumstr = Integer.toString(ranum);
 			
-			String sql = "UPDATE minecraft SET secret2=? WHERE uuid=?;";
+			String sql = "UPDATE members SET secret2=? WHERE uuid=?;";
 			ps = conn.prepareStatement(sql);
 			ps.setInt(1, ranum);
 			ps.setString(2, player.getUniqueId().toString());

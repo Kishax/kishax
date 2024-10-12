@@ -100,7 +100,7 @@ public class Request {
             
             try {
             	conn = db.getConnection();
-            	String sql = "SELECT * FROM minecraft WHERE uuid=?;";
+            	String sql = "SELECT * FROM members WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
     			minecrafts = ps.executeQuery();
@@ -138,28 +138,8 @@ public class Request {
     				return;
     			}
     			
-		        String req_type = "";
-		        sql = "SELECT * from mine_sktoken WHERE id=1;";
-		        ps = conn.prepareStatement(sql);
-		        reqstatus = ps.executeQuery();
-		        if (reqstatus.next()) {
-		        	int i = 0;
-		        	while (i<=2) {
-		        		if (!reqstatus.getBoolean("req"+i)) {
-		        			req_type = "req"+i; break;
-		        		}
-
-		        		i++;
-		        	}
-		        }
-		        
-		        if (req_type.isEmpty()) {
-		        	player.sendMessage(Component.text("リクエストが集中しています！\nしばらくしてやり直してください。").color(NamedTextColor.BLUE));
-		        	return;
-		        }
-		        
 		        // /reqを実行したので、セッションタイムをreqに入れる
-				sql = "UPDATE minecraft SET req=CURRENT_TIMESTAMP WHERE uuid=?;";
+				sql = "UPDATE members SET req=CURRENT_TIMESTAMP WHERE uuid=?;";
 				ps = conn.prepareStatement(sql);
 				ps.setString(1,player.getUniqueId().toString());
 				ps.executeUpdate();
@@ -185,7 +165,7 @@ public class Request {
             	
 						// add log
 						try {
-							String asyncSql = "INSERT INTO mine_log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);";
+							String asyncSql = "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);";
 							ps = conn.prepareStatement(asyncSql);
 							ps.setString(1, playerName);
 							ps.setString(2, player.getUniqueId().toString());
