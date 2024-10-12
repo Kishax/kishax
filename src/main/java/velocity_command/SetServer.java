@@ -36,7 +36,7 @@ public class SetServer {
 	private final DatabaseInterface db;
 	
 	public Connection conn = null, connLp = null;
-	public Connection[] conns = {conn,connLp};
+	public Connection[] conns = {conn, connLp};
 	public ResultSet minecrafts = null, mine_status = null, issuperadmin = null, issubadmin = null;
 	public ResultSet[] resultsets = {minecrafts,mine_status,issuperadmin,issubadmin};
 	public PreparedStatement ps = null;
@@ -76,8 +76,7 @@ public class SetServer {
 
             try {
             	conn = db.getConnection();
-				connLp = db.getConnection("fmc_lp");
-    			String sql = "SELECT * FROM members WHERE uuid=?;";
+    			String sql = "SELECT * FROM minecraft WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
     			minecrafts = ps.executeQuery();
