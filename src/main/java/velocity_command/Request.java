@@ -200,7 +200,7 @@ public class Request {
 					logger.error(element.toString());
 				}
             } /*finally {
-            	db.close_resorce(resultsets, conn, ps);
+            	db.close_resource(resultsets, conn, ps);
             }*/
         } else {
 			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));

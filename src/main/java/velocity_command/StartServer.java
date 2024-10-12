@@ -189,7 +189,7 @@ public class StartServer {
 						logger.error(element.toString());
 					}
 		        } finally {
-					db.close_resorce(resultsets, conn, ps);
+					db.close_resource(resultsets, conn, ps);
 				}
 			}
 		} else {

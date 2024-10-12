@@ -92,7 +92,7 @@ public class ServerTeleport {
                 logger.error(element.toString());
             }
         } finally {
-            db.close_resorce(resultsets, conn, ps);
+            db.close_resource(resultsets, conn, ps);
         }
 
         server.getServer(targetServerName).ifPresent(registeredServer -> player.createConnectionRequest(registeredServer).fireAndForget());

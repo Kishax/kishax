@@ -183,7 +183,7 @@ public class Maintenance {
                 logger.error(element.toString());
             }
         } finally {
-			db.close_resorce(resultsets, conns, ps);
+			db.close_resource(resultsets, conns, ps);
 		}
 	}
 }

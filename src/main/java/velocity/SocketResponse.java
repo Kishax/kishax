@@ -113,7 +113,7 @@ public class SocketResponse {
                 	discordME.AddEmbedSomeMessage("AddMember", mineName);
                 }
     		}
-    	} else if(res.contains("起動")) {
+    	} else if (res.contains("起動")) {
     		// /stpで用いるセッションタイム(現在時刻)(sst)をデータベースに
 			LocalDateTime now = LocalDateTime.now();
 	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -160,7 +160,7 @@ public class SocketResponse {
         			}
                 }
             }
-    	} else if(res.contains("fv")) {
+    	} else if (res.contains("fv")) {
     		if (res.contains("\\n")) res = res.replace("\\n", "");
     		
     		String pattern = "(\\S+) fv (\\S+) (.+)";

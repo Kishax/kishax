@@ -124,7 +124,7 @@ public class Perm {
 	        				source.sendMessage(component);
 						}
 	        			default-> {
-	        				source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
+	        				source.sendMessage(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 						}
 	        		}
 				}
@@ -132,25 +132,25 @@ public class Perm {
 	        		// 以下はパーミッションが所持していることが確認されている上で、permというコマンドを使っているので、確認の必要なし
 	        		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
 	        		if (!(args1.contains(args[1].toLowerCase()))) {
-        				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+        				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
 	        		
 	        		if (!(permS.contains(args[2].toLowerCase()))) {
-	        			source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+	        			source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
 	        		
-	        		source.sendMessage(Component.text("対象のプレイヤー名を入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+	        		source.sendMessage(Component.text("対象のプレイヤー名を入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
 				}
 	        	case 4-> {
         			if (!(args1.contains(args[1].toLowerCase()))) {
-        				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+        				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
         			if (!(permS.contains(args[2].toLowerCase()))) {
-        				source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+        				source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
         			}
         			
@@ -187,7 +187,7 @@ public class Perm {
 
         					SetAdmin(permD1,args[3],true,source);
         					break;
-        				}	
+        				}
         				case "remove"-> {
         					if (!(ispermindb)) {
         						source.sendMessage(Component.text(args[3]+"はpermission: "+permD1+"を持っていないため、除去できません。").color(NamedTextColor.RED));
@@ -200,7 +200,7 @@ public class Perm {
 	        		}
 				}
 	        	default-> {
-	        		source.sendMessage(Component.text("usage: /fmcp　perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
+	        		source.sendMessage(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 				}
 	        }
         } catch (SQLException | ClassNotFoundException e) {
@@ -209,7 +209,7 @@ public class Perm {
                 logger.error(element.toString());
             }
         } finally {
-        	db.close_resorce(resultsets, conns, ps);
+        	db.close_resource(resultsets, conns, ps);
         }
 	}
 	

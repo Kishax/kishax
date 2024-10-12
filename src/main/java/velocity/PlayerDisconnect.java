@@ -85,7 +85,7 @@ public class PlayerDisconnect {
             }
 		} finally {
 			// 途中だから閉じたらresultsets全体は閉じてはいけない
-			db.close_resorce(null, conn, ps);
+			db.close_resource(null, conn, ps);
 		}
 	}
 }

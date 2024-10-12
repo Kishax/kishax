@@ -71,7 +71,7 @@ public class Retry {
 				logger.error(element.toString());
 			}
 		} finally {
-			db.close_resorce(null, conn, ps);
+			db.close_resource(null, conn, ps);
 		}
 	}
 }

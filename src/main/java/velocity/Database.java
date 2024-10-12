@@ -34,41 +34,56 @@ public class Database implements DatabaseInterface {
 	public Connection getConnection(String customDatabase) throws SQLException, ClassNotFoundException {
 		String host = config.getString("MySQL.Host", "");
 		int port = config.getInt("MySQL.Port", 0);
-		String database;
-		if (customDatabase != null && !customDatabase.isEmpty()) {
-			database = customDatabase;
-		} else {
-			database = config.getString("MySQL.Database", "");
-		}
 		String user = config.getString("MySQL.User", "");
 		String password = config.getString("MySQL.Password", "");
-		if (
-			(host != null && host.isEmpty()) || 
-			port == 0 || 
-			(database != null && database.isEmpty()) || 
-			(user != null && user.isEmpty()) || 
-			(password != null && password.isEmpty())
-		) {
-			return null;
-		}
-		
-        if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
-        
-        synchronized (Database.class) {
-            if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
-            
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection (
-            			"jdbc:mysql://" + host + ":" + 
-            			port + "/" + 
-            			database +
-						"?autoReconnect=true&useSSL=false", 
-            			user, 
-            			password
-            		);
+		if (customDatabase != null && !customDatabase.isEmpty()) {
+			//logger.info("customDatabase: " + customDatabase);
+			if ((host != null && host.isEmpty()) || 
+				port == 0 || 
+				(user != null && user.isEmpty()) || 
+				(password != null && password.isEmpty())) {
+				return null;
+			}
+			
+			synchronized (Database.class) {
+				//if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
+				
+				Class.forName("com.mysql.cj.jdbc.Driver");
+				return DriverManager.getConnection (
+							"jdbc:mysql://" + host + ":" + 
+							port + "/" + 
+							customDatabase +
+							"?autoReconnect=true&useSSL=false", 
+							user, 
+							password
+				);
+			}
+		} else {
+			String database = config.getString("MySQL.Database", "");
+			if ((host != null && host.isEmpty()) || 
+				port == 0 || 
+				(database != null && database.isEmpty()) || 
+				(user != null && user.isEmpty()) || 
+				(password != null && password.isEmpty())) {
+				return null;
+			}
+			
+			synchronized (Database.class) {
+				if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
+				
+				Class.forName("com.mysql.cj.jdbc.Driver");
+				conn = DriverManager.getConnection (
+							"jdbc:mysql://" + host + ":" + 
+							port + "/" + 
+							database +
+							"?autoReconnect=true&useSSL=false", 
+							user, 
+							password
+						);
 
-            return conn;
-        }
+				return conn;
+			}
+		}
     }
 	
 	@Override
@@ -77,7 +92,7 @@ public class Database implements DatabaseInterface {
 	}
 
     @Override
-	public void close_resorce(ResultSet[] resultsets, Connection[] conns, PreparedStatement ps) {
+	public void close_resource(ResultSet[] resultsets, Connection[] conns, PreparedStatement ps) {
 		if (Objects.nonNull(resultsets)) {
 			for (ResultSet resultSet : resultsets) {
 			    if (Objects.nonNull(resultSet)) {
@@ -121,8 +136,8 @@ public class Database implements DatabaseInterface {
 	}
 
 	@Override
-	public void close_resorce(ResultSet[] resultsets, Connection conn, PreparedStatement ps) {
+	public void close_resource(ResultSet[] resultsets, Connection conn, PreparedStatement ps) {
 		Connection[] conns = {conn};
-		close_resorce(resultsets, conns, ps);
+		close_resource(resultsets, conns, ps);
 	}
 }

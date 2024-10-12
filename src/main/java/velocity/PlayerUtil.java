@@ -71,7 +71,7 @@ public class PlayerUtil {
                 logger.error(element.toString());
             }
 		} finally {
-			db.close_resorce(resultsets, conn, ps);
+			db.close_resource(resultsets, conn, ps);
 		}
  	}
 	
@@ -94,7 +94,7 @@ public class PlayerUtil {
                 logger.error(element.toString());
             }
 		} finally {
-			db.close_resorce(resultsets, conn, ps);
+			db.close_resource(resultsets, conn, ps);
 		}
  	}
 	

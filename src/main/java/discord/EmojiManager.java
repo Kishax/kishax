@@ -231,7 +231,7 @@ public class EmojiManager {
                 logger.error(element.toString());
             }
         } finally {
-            db.close_resorce(resultsset, conn, ps);
+            db.close_resource(resultsset, conn, ps);
         }
     }
     

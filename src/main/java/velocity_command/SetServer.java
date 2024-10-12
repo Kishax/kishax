@@ -52,7 +52,6 @@ public class SetServer {
 	public void execute(@NotNull CommandSource source,String[] args) {
 		if (source instanceof Player player) {
             // プレイヤーがコマンドを実行した場合の処理
-			player = (Player) source;
         
             if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
             	player.sendMessage(Component.text(NamedTextColor.RED+"サーバー名を入力してください。"));
@@ -76,13 +75,14 @@ public class SetServer {
 
             try {
             	conn = db.getConnection();
-    			String sql = "SELECT * FROM minecraft WHERE uuid=?;";
+				connLp = db.getConnection("fmc_lp");
+    			String sql = "SELECT * FROM members WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
     			minecrafts = ps.executeQuery();
     			
 				// 何回もテーブルをスキャンして、処理するのを防ぐため、
-				// 一度だけ、mine_stautsテーブルをスキャンして、それを回す
+				// 一度だけ、statusテーブルをスキャンして、それを回す
     			sql = "SELECT * FROM status;";
 				ps = conn.prepareStatement(sql);
     			mine_status = ps.executeQuery();
@@ -201,8 +201,8 @@ public class SetServer {
 										.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
 										.append(Component.text("より、手続きを進めてください。").color(NamedTextColor.WHITE))
 										.append(Component.text("\nUUID認証\n\n").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-										.append(Component.text("https://keypforev.ddns.net/minecraft/uuid_check2.php").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
-											.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/minecraft/uuid_check2.php?n="+minecrafts.getInt("id")))
+										.append(Component.text("https://keypforev.ddns.net/minecraft/uuid_check.php").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
+											.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/minecraft/uuid_check.php?n="+minecrafts.getInt("id")))
 										.append(Component.text("\n\n認証コードは ").color(NamedTextColor.WHITE))
 										.append(Component.text(ranumstr).color(NamedTextColor.BLUE)
 											.clickEvent(ClickEvent.copyToClipboard(ranumstr))
@@ -329,8 +329,8 @@ public class SetServer {
 									.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
 									.append(Component.text("より、手続きを進めてください。").color(NamedTextColor.WHITE))
 									.append(Component.text("\nUUID認証\n\n").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-									.append(Component.text("https://keypforev.ddns.net/minecraft/uuid_check2.php").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
-										.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/minecraft/uuid_check2.php?n="+minecrafts.getInt("id")))
+									.append(Component.text("https://keypforev.ddns.net/minecraft/uuid_check.php").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
+										.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/minecraft/uuid_check.php?n="+minecrafts.getInt("id")))
 									.append(Component.text("\n\n認証コードは ").color(NamedTextColor.WHITE))
 									.append(Component.text(ranumstr).color(NamedTextColor.BLUE)
 										.clickEvent(ClickEvent.copyToClipboard(ranumstr))
@@ -359,7 +359,7 @@ public class SetServer {
 					logger.error(element.toString());
 				}
             } finally {
-            	db.close_resorce(resultsets, conns, ps);
+            	db.close_resource(resultsets, conns, ps);
             }
         } else {
 			source.sendMessage(Component.text(NamedTextColor.RED+"このコマンドはプレイヤーのみが実行できます。"));
