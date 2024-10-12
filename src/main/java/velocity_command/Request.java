@@ -159,7 +159,7 @@ public class Request {
 		        }
 		        
 		        // /reqを実行したので、セッションタイムをreqに入れる
-				sql = "UPDATE minecraft SET req=CURRENT_TIMESTAMP WHERE uuid=?;";
+				sql = "UPDATE members SET req=CURRENT_TIMESTAMP WHERE uuid=?;";
 				ps = conn.prepareStatement(sql);
 				ps.setString(1,player.getUniqueId().toString());
 				ps.executeUpdate();
@@ -185,7 +185,7 @@ public class Request {
             	
 						// add log
 						try {
-							String asyncSql = "INSERT INTO mine_log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);";
+							String asyncSql = "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);";
 							ps = conn.prepareStatement(asyncSql);
 							ps.setString(1, playerName);
 							ps.setString(2, player.getUniqueId().toString());

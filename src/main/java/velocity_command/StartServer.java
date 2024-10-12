@@ -85,12 +85,12 @@ public class StartServer {
 			} else {
 				try {
 					conn = db.getConnection();
-					String sql = "SELECT * FROM minecraft WHERE uuid=?;";
+					String sql = "SELECT * FROM members WHERE uuid=?;";
 	    			ps = conn.prepareStatement(sql);
 	    			ps.setString(1,player.getUniqueId().toString());
 	    			minecrafts = ps.executeQuery();
 	    			
-					sql = "SELECT * FROM mine_status WHERE name=?;";
+					sql = "SELECT * FROM status WHERE name=?;";
 					ps = conn.prepareStatement(sql);
 					ps.setString(1,args[1]);
 					mine_status = ps.executeQuery();
@@ -140,7 +140,7 @@ public class StartServer {
 								bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
 								
 								// stにセッションタイムを入れる
-								sql = "UPDATE minecraft SET st=CURRENT_TIMESTAMP WHERE uuid=?;";
+								sql = "UPDATE members SET st=CURRENT_TIMESTAMP WHERE uuid=?;";
 								ps = conn.prepareStatement(sql);
 								ps.setString(1,player.getUniqueId().toString());
 								ps.executeUpdate();
@@ -167,7 +167,7 @@ public class StartServer {
 				            	ps.executeUpdate();
 				            	
 				            	// add log
-				            	sql = "INSERT INTO mine_log (name,uuid,server,sss,status) VALUES (?,?,?,?,?);";
+				            	sql = "INSERT INTO log (name,uuid,server,sss,status) VALUES (?,?,?,?,?);";
 		            			ps = conn.prepareStatement(sql);
 		            			ps.setString(1, player.getUsername());
 		            			ps.setString(2, player.getUniqueId().toString());

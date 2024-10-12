@@ -41,7 +41,7 @@ public class DoServerOnline {
 				plugin.getLogger().info(String.format("""
 					%sサーバーが起動しました。""", serverName));
 				
-				String sql = "UPDATE mine_status SET online=? WHERE name=?;";
+				String sql = "UPDATE status SET online=? WHERE name=?;";
 				ps = conn.prepareStatement(sql);
 				ps.setBoolean(1,true);
 				ps.setString(2, serverName);

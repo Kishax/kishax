@@ -35,7 +35,8 @@ public class SetServer {
 	private final Logger logger;
 	private final DatabaseInterface db;
 	
-	public Connection conn = null;
+	public Connection conn = null, connLp = null;
+	public Connection[] conns = {conn,connLp};
 	public ResultSet minecrafts = null, mine_status = null, issuperadmin = null, issubadmin = null;
 	public ResultSet[] resultsets = {minecrafts,mine_status,issuperadmin,issubadmin};
 	public PreparedStatement ps = null;
@@ -75,6 +76,7 @@ public class SetServer {
 
             try {
             	conn = db.getConnection();
+				connLp = db.getConnection("fmc_lp");
     			String sql = "SELECT * FROM minecraft WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
@@ -160,7 +162,7 @@ public class SetServer {
 							DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 							String formattedDateTime = now.format(formatter);
 							
-							sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
+							sql = "UPDATE members SET sst=? WHERE uuid=?;";
 							ps = conn.prepareStatement(sql);
 							ps.setString(1,formattedDateTime);
 							ps.setString(2,player.getUniqueId().toString());
@@ -188,8 +190,7 @@ public class SetServer {
 							int ranum = 100000 + rnd.nextInt(900000);
 							String ranumstr = Integer.toString(ranum);
 							
-							
-							sql = "UPDATE minecraft SET secret2=? WHERE uuid=?;";
+							sql = "UPDATE members SET secret2=? WHERE uuid=?;";
 							ps = conn.prepareStatement(sql);
 							ps.setInt(1,ranum);
 							ps.setString(2,player.getUniqueId().toString());
@@ -243,13 +244,13 @@ public class SetServer {
 							}
 							
 							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-							ps = conn.prepareStatement(sql);
+							ps = connLp.prepareStatement(sql);
 							ps.setString(1, player.getUniqueId().toString());
 							ps.setString(2, "group.super-admin");
 							issuperadmin = ps.executeQuery();
 							
 							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-							ps = conn.prepareStatement(sql);
+							ps = connLp.prepareStatement(sql);
 							ps.setString(1, player.getUniqueId().toString());
 							ps.setString(2, "group.sub-admin");
 							issubadmin = ps.executeQuery();
@@ -262,7 +263,7 @@ public class SetServer {
 								DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 								String formattedDateTime = now.format(formatter);
 								
-								sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
+								sql = "UPDATE members SET sst=? WHERE uuid=?;";
 								ps = conn.prepareStatement(sql);
 								ps.setString(1,formattedDateTime);
 								ps.setString(2,player.getUniqueId().toString());
@@ -289,7 +290,7 @@ public class SetServer {
 								DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 								String formattedDateTime = now.format(formatter);
 								
-								sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
+								sql = "UPDATE members SET sst=? WHERE uuid=?;";
 								ps = conn.prepareStatement(sql);
 								ps.setString(1,formattedDateTime);
 								ps.setString(2,player.getUniqueId().toString());
@@ -316,7 +317,7 @@ public class SetServer {
 							int ranum = 100000 + rnd.nextInt(900000);
 							String ranumstr = Integer.toString(ranum);
 							
-							sql = "UPDATE minecraft SET secret2=? WHERE uuid=?;";
+							sql = "UPDATE members SET secret2=? WHERE uuid=?;";
 							ps = conn.prepareStatement(sql);
 							ps.setInt(1,ranum);
 							ps.setString(2,player.getUniqueId().toString());
@@ -359,7 +360,7 @@ public class SetServer {
 					logger.error(element.toString());
 				}
             } finally {
-            	db.close_resorce(resultsets, conn, ps);
+            	db.close_resorce(resultsets, conns, ps);
             }
         } else {
 			source.sendMessage(Component.text(NamedTextColor.RED+"このコマンドはプレイヤーのみが実行できます。"));

@@ -1,4 +1,8 @@
 # FMC Configuration File
+Portals:
+    Mode: false # Disable /fmc portal wand or wand click
+    Menu: true # Enable /fmc portal menu
+
 MySQL:
     Host: ""
     Database: ""

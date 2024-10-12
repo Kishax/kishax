@@ -338,7 +338,7 @@ public class EventListener {
 					);
 				}
 				
-				String sql = "SELECT online FROM mine_status WHERE name=?;";
+				String sql = "SELECT online FROM status WHERE name=?;";
 				ps = conn.prepareStatement(sql);
 				ps.setString(1, "Maintenance");
 				ismente = ps.executeQuery();
@@ -359,12 +359,12 @@ public class EventListener {
 					}
 				}
 				
-				sql = "SELECT * FROM minecraft WHERE uuid=? ORDER BY id DESC LIMIT 1;";
+				sql = "SELECT * FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;";
 	            ps = conn.prepareStatement(sql);
 	            ps.setString(1, player.getUniqueId().toString());
 	            yuyu = ps.executeQuery();
 	            
-	            sql = "SELECT * FROM minecraft WHERE name=? ORDER BY id DESC LIMIT 1;";
+	            sql = "SELECT * FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
 	            ps = conn.prepareStatement(sql);
 	            ps.setString(1, player.getUsername());
 	            yu = ps.executeQuery();
@@ -372,7 +372,7 @@ public class EventListener {
 				//一番最初に登録された名前と一致したら
 	            if (yuyu.next()) {
 					// 結果セットに少なくとも1行が存在するかどうかをチェック 
-	            	sql = "UPDATE minecraft SET server=? WHERE uuid=?;";
+	            	sql = "UPDATE members SET server=? WHERE uuid=?;";
 	            	ps = conn.prepareStatement(sql);
 	            	ps.setString(1, config.getString("Servers.Hub"));
 	            	ps.setString(2, player.getUniqueId().toString());
@@ -399,7 +399,7 @@ public class EventListener {
 						}
 						
 	            		// 2時間経ってたら
-        				sql = "SELECT * FROM mine_log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
+        				sql = "SELECT * FROM log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
         				ps = conn.prepareStatement(sql);
         				ps.setString(1, player.getUniqueId().toString());
         				ps.setBoolean(2, true);
@@ -421,7 +421,7 @@ public class EventListener {
         				
 	            		if (player.getUsername().equals(yuyu.getString("name"))) {
 	            			//　add log
-	            			sql = "INSERT INTO mine_log (name,uuid,server,`join`) VALUES (?,?,?,?);";
+	            			sql = "INSERT INTO log (name,uuid,server,`join`) VALUES (?,?,?,?);";
 	            			ps = conn.prepareStatement(sql);
 	            			ps.setString(1, player.getUsername());
 	            			ps.setString(2, player.getUniqueId().toString());
@@ -453,19 +453,19 @@ public class EventListener {
 	            			player.sendMessage(Component.text("MCIDの変更が検出されたため、データベースを更新しました。").color(NamedTextColor.GREEN));
 	            			
 	            			// 過去の名前を解放するため、過去の名前のレコードがほかにもあったらそれをinvalid_loginへ移動
-	            			sql="SELECT COUNT(*) FROM minecraft WHERE name=?;";
+	            			sql="SELECT COUNT(*) FROM members WHERE name=?;";
 	            			ps = conn.prepareStatement(sql);
 	            			ps.setString(1, yuyu.getString("name"));
 	            			rs = ps.executeQuery();
 	            			if (rs.next()) {
 	            				int count = rs.getInt(1);
 	            				if (count>=1) {
-	            					sql="INSERT INTO minevalid_login SELECT * FROM minecraft WHERE name=?;";
+	            					sql="INSERT INTO invalid_login SELECT * FROM members WHERE name=?;";
 	            					ps = conn.prepareStatement(sql);
 	            					ps.setString(1, yuyu.getString("name"));
 	            					ps.executeUpdate();
 	            					
-	            					sql="DELETE from minecraft WHERE name=?;";
+	            					sql="DELETE from members WHERE name=?;";
 									ps = conn.prepareStatement(sql);
 	            					ps.setString(1, yuyu.getString("name"));
 	            					ps.executeUpdate();
@@ -495,7 +495,7 @@ public class EventListener {
 	            	// データベースに同一の名前がないか確認
 	            	String current_name = pu.getPlayerNameFromUUID(player.getUniqueId());
 	    			if (Objects.isNull(current_name) || !(current_name.equals(player.getUsername())) || yu.next()) {
-	    				sql="INSERT INTO minecraft (name,uuid,server,ban) VALUES (?,?,?,?);";
+	    				sql="INSERT INTO members (name,uuid,server,ban) VALUES (?,?,?,?);";
 	        			ps = conn.prepareStatement(sql);
 	        			ps.setString(1, player.getUsername());
 	        			ps.setString(2, player.getUniqueId().toString());
@@ -593,7 +593,7 @@ public class EventListener {
     	            try {
     	            	conn = db.getConnection();
                 		// add log
-                		String sql = "INSERT INTO mine_log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
+                		String sql = "INSERT INTO log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
                 		ps = conn.prepareStatement(sql);
                 		ps.setString(1, player.getUsername());
                 		ps.setString(2, player.getUniqueId().toString());

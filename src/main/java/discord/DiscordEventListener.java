@@ -314,7 +314,7 @@ public class DiscordEventListener extends ListenerAdapter {
 					
 					try {
 						conn = db.getConnection();
-						sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+						sql = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
 						ps = conn.prepareStatement(sql);
 						ps.setString(1, reqPlayerName);
 						ps.setString(2, reqPlayerUUID);
@@ -378,7 +378,7 @@ public class DiscordEventListener extends ListenerAdapter {
 					
 					try {
 						conn = db.getConnection();
-						sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+						sql = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
 						ps = conn.prepareStatement(sql);
 						ps.setString(1, reqPlayerName);
 						ps.setString(2, reqPlayerUUID);

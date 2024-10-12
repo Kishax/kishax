@@ -7,6 +7,8 @@ import java.sql.SQLException;
 
 public interface DatabaseInterface {
     // メソッドの宣言
-	Connection getConnection() throws SQLException, ClassNotFoundException;
+	Connection getConnection(String customDatabase) throws SQLException, ClassNotFoundException;
+    Connection getConnection() throws SQLException, ClassNotFoundException;
+    void close_resorce(ResultSet[] resultsets, Connection[] conns, PreparedStatement ps);
     void close_resorce(ResultSet[] resultsets, Connection conn, PreparedStatement ps);
 }

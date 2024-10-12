@@ -156,7 +156,7 @@ public class Discord implements DiscordInterface {
                     			
                     	try {
                         	conn = db.getConnection();
-                        	String sql = "INSERT INTO mine_log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+                        	String sql = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
                         	ps = conn.prepareStatement(sql);
                         	ps.setString(1, reqPlayerName);
                         	ps.setString(2, reqPlayerUUID);

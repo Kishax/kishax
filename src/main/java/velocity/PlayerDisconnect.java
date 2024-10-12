@@ -70,7 +70,7 @@ public class PlayerDisconnect {
 		
 		try {
 			conn = db.getConnection();
-			String sql="UPDATE minecraft SET ban=? WHERE uuid=?;";
+			String sql="UPDATE members SET ban=? WHERE uuid=?;";
 			ps = conn.prepareStatement(sql);
 			ps.setBoolean(1, true);
 			ps.setString(2, player.getUniqueId().toString());

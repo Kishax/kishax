@@ -144,7 +144,7 @@ public class SocketResponse {
         			if (player.hasPermission("group.new-fmc-user")) {
         				try {
         					conn = db.getConnection();
-        					String sql = "UPDATE minecraft SET sst=? WHERE uuid=?;";
+        					String sql = "UPDATE members SET sst=? WHERE uuid=?;";
         					ps = conn.prepareStatement(sql);
         					ps.setString(1,formattedDateTime);
         					ps.setString(2,player.getUniqueId().toString());

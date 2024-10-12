@@ -20,7 +20,7 @@ public class Luckperms {
 	
 	public void triggerNetworkSync() {
         MessagingService messagingService = lpapi.getMessagingService().orElse(null);
-
+		
         if (messagingService != null) {
             messagingService.pushUpdate();
             logger.info("LuckPerms network sync triggered.");

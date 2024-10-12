@@ -16,7 +16,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import discord.Discord;
 import net.luckperms.api.LuckPermsProvider;
-import velocity.Module;
 import velocity_command.CEnd;
 import velocity_command.FMCCommand;
 import velocity_command.Hub;
@@ -45,7 +44,7 @@ public class Main {
     	logger.info("Detected Velocity platform.");
         
         // Guice インジェクターを作成
-        injector = Guice.createInjector(new Module(this, server, logger, dataDirectory, LuckPermsProvider.get()));
+        injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory, LuckPermsProvider.get()));
         
         // 依存性が解決された@Injectを使用するクラスのインスタンスを取得
     	
