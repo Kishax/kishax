@@ -5,7 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -405,18 +406,23 @@ public class EventListener {
         				ps.setBoolean(2, true);
         				logs = ps.executeQuery();
         				
+						// タイムゾーンをAsia/Tokyoに設定
         				long beforejoin_sa_minute = 0;
         				if (logs.next()) {
-    	    				long now_timestamp = Instant.now().getEpochSecond();
-    	    				
-        					// TIMESTAMP型のカラムを取得
-        	                Timestamp beforejoin_timeget = logs.getTimestamp("time");
+    	    				// Asia/Tokyoのタイムゾーンで現在の時刻を取得
+							ZonedDateTime nowTokyo = ZonedDateTime.now(ZoneId.of("Asia/Tokyo"));
+							long now_timestamp = nowTokyo.toEpochSecond();
+    
+							// TIMESTAMP型のカラムを取得
+							Timestamp beforejoin_timeget = logs.getTimestamp("time");
 
-        	                // Unixタイムスタンプに変換
+							// Unixタイムスタンプに変換
         	                long beforejoin_timestamp = beforejoin_timeget.getTime() / 1000L;
-        	                
-    	    				long beforejoin_sa = now_timestamp-beforejoin_timestamp;
-    	    				beforejoin_sa_minute = beforejoin_sa/60;
+							long beforejoin_sa = now_timestamp - beforejoin_timestamp;
+							if (beforejoin_sa < 0) {
+								logger.error("beforejoin_sa is less than 0.");
+							}
+							beforejoin_sa_minute = Math.max(beforejoin_sa / 60, 0); // マイナス値を防ぐためにMath.maxを使用
         				}
         				
 	            		if (player.getUsername().equals(yuyu.getString("name"))) {

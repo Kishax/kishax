@@ -21,10 +21,10 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
-import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 import velocity.Config;
 import velocity.Database;
@@ -73,7 +73,7 @@ public class EmojiManager {
         
         // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
         @SuppressWarnings("null")
-        Optional<Emote> existingEmote = guild.getEmotes().stream()
+        Optional<RichCustomEmoji> existingEmote = guild.getEmojis().stream()
             .filter(emote -> emote.getName().equals(emojiName))
             .findFirst();
         
@@ -105,7 +105,7 @@ public class EmojiManager {
                 Icon icon = Icon.from(imageBytes);
             
                 // Create the emote with the specified name and icon
-                AuditableRestAction<Emote> action = guild.createEmote(emojiName, icon);
+                AuditableRestAction<RichCustomEmoji> action = guild.createEmoji(emojiName, icon);
                 action.queue(
                     success -> {
                         logger.info(emojiName + "を絵文字に追加しました。");
@@ -161,7 +161,7 @@ public class EmojiManager {
                 String dbEmojiId = minecrafts.getString("emid");
                 
                 // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
-                Optional<Emote> existingEmote = guild.getEmotes().stream()
+                Optional<RichCustomEmoji> existingEmote = guild.getEmojis().stream()
                     .filter(emote -> emote.getName().equals(mineName))
                     .findFirst();
 
@@ -200,7 +200,7 @@ public class EmojiManager {
                         Icon icon = Icon.from(imageBytes);
 
                         // Create the emote with the specified name and icon
-                        AuditableRestAction<Emote> action = guild.createEmote(mineName, icon);
+                        AuditableRestAction<RichCustomEmoji> action = guild.createEmoji(mineName, icon);
                         action.queue(
                         	success -> {
                                 logger.info(mineName + "を絵文字に追加しました。");

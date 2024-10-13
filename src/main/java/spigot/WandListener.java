@@ -70,7 +70,8 @@ public class WandListener implements Listener {
 
                         portalsConfig.set("portals", portals);
                         psConfig.savePortalsConfig();
-
+                        psConfig.reloadPortalsConfig(); // コンフィグをリロード
+                        
                         player.sendMessage(ChatColor.GREEN + "2番目のコーナーを選択しました。\n"+ChatColor.AQUA+"("+clickedBlock.getX()+", "+clickedBlock.getY()+", "+clickedBlock.getZ()+")"+ChatColor.GREEN+"\nポータルが作成されました。");
                         firstCorner.remove(player);
                     }

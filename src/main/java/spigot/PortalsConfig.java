@@ -59,7 +59,7 @@ public final class PortalsConfig {
     }
 
     public void reloadPortalsConfig() {
-        this.portalsFile = new File(plugin.getDataFolder(), "portals.yml");
+        //this.portalsFile = new File(plugin.getDataFolder(), "portals.yml");
     
         this.portalsConfig = YamlConfiguration.loadConfiguration(portalsFile);
     

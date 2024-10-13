@@ -11,8 +11,6 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.security.auth.login.LoginException;
-
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -25,14 +23,15 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
+import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
@@ -102,7 +101,7 @@ public class Discord implements DiscordInterface {
 	            
 				isDiscord = true;
 				logger.info("Discord-Botがログインしました。");
-			} catch (LoginException | InterruptedException e) {
+            } catch (InterruptedException e) {
 				// スタックトレースをログに出力
 	            logger.error("An discord-bot-login error occurred: " + e.getMessage());
 	            for (StackTraceElement element : e.getStackTrace()) {
@@ -135,7 +134,7 @@ public class Discord implements DiscordInterface {
         Button button2 = Button.danger("reqCancel", "NO");
         
         // メッセージにボタンを添えて送信
-        MessageAction action = channel.sendMessage(buttonMessage)
+        MessageCreateAction action = channel.sendMessage(buttonMessage)
                 .setActionRow(button1, button2);
 
         action.queue(message -> {
@@ -245,7 +244,7 @@ public class Discord implements DiscordInterface {
 
             // 現在のEmbedに新しい説明を追加
             MessageEmbed newEmbed = addDescriptionToEmbed(currentEmbed, additionalDescription);
-            MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
+            MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
 
             messageAction.queue(
                 success -> future.complete(null),
@@ -327,7 +326,7 @@ public class Discord implements DiscordInterface {
         
         if (Objects.isNull(channel)) return;
         
-        MessageAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
+        MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
         messageAction.queue(
             success -> {
                 //
@@ -370,7 +369,7 @@ public class Discord implements DiscordInterface {
         
     	if (Objects.nonNull(embed)) {
     		// 埋め込みメッセージを送信
-            MessageAction messageAction = channel.sendMessageEmbeds(embed);
+            MessageCreateAction messageAction = channel.sendMessageEmbeds(embed);
             messageAction.queue(response -> {
                 // メッセージIDとチャンネルIDを取得
                 String messageId = response.getId();
@@ -385,7 +384,7 @@ public class Discord implements DiscordInterface {
     	
     	if (Objects.nonNull(content) && !content.isEmpty()) {
     		// テキストメッセージを送信
-    		MessageAction messageAction = channel.sendMessage(content);
+            MessageCreateAction messageAction = channel.sendMessage(content);
             messageAction.queue(response -> {
                 // メッセージIDとチャンネルIDを取得
                 String messageId = response.getId();
@@ -461,7 +460,7 @@ public class Discord implements DiscordInterface {
         
     	if (Objects.nonNull(embed)) {
     		// 埋め込みメッセージを送信
-            MessageAction messageAction = channel.sendMessageEmbeds(embed);
+            MessageCreateAction messageAction = channel.sendMessageEmbeds(embed);
             messageAction.queue(
                 response -> {
                     //
@@ -471,7 +470,7 @@ public class Discord implements DiscordInterface {
     	
     	if (Objects.nonNull(content) && !content.isEmpty()) {
     		// テキストメッセージを送信
-    		MessageAction messageAction = channel.sendMessage(content);
+            MessageCreateAction messageAction = channel.sendMessage(content);
             messageAction.queue(
                 response -> {
                     //

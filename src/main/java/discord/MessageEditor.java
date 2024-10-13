@@ -79,7 +79,7 @@ public class MessageEditor implements MessageEditorInterface {
 				// データベースからuuidを取ってくる
 				uuid = pu.getPlayerUUIDByNameFromDB(alternativePlayerName);
 				playerName = alternativePlayerName;
-			} else if(Objects.nonNull(playerUUID)) {
+			} else if (Objects.nonNull(playerUUID)) {
 				// プレイヤー変数がnullかつalternativePlayerNameがnullかつplayerUUIDが与えられていた時
 				// データベースからnameを取ってくる
 				uuid = playerUUID.toString();
@@ -165,7 +165,7 @@ public class MessageEditor implements MessageEditorInterface {
 							CompletableFuture<Void> editFuture = CompletableFuture.completedFuture(null);
 							
 							// Velocityサーバー停止のフラグが立っていたら
-							if(!Main.isVelocity) {
+							if (!Main.isVelocity) {
 								// poweroffの絵文字を取りに行く
 								String EndEmojiName = config.getString("Discord.EndEmojiName","");
 								editFuture = emoji.createOrgetEmojiId(EndEmojiName).thenAccept(EndEmojiId -> {
@@ -375,7 +375,7 @@ public class MessageEditor implements MessageEditorInterface {
 							conn = db.getConnection();
 							if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 								// 絵文字IDをアップデートしておく
-								if(Objects.nonNull(conn)) {
+								if (Objects.nonNull(conn)) {
 									ps = conn.prepareStatement("UPDATE members SET emid=? WHERE uuid=?;");
 									ps.setString(1, FaceEmojiId);
 									ps.setString(2, uuid);
@@ -387,7 +387,7 @@ public class MessageEditor implements MessageEditorInterface {
 										"サーバーに参加しました。";
 							} else {
 								//logger.info("Emoji ID is null");
-								if(Objects.nonNull(conn)) {
+								if (Objects.nonNull(conn)) {
 									// 絵文字IDをアップデートしておく
 									ps = conn.prepareStatement("UPDATE members SET emid=? WHERE uuid=?;");
 									ps.setString(1, null);

@@ -18,13 +18,13 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import net.dv8tion.jda.api.entities.AudioChannel;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
-import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -87,7 +87,7 @@ public class DiscordEventListener extends ListenerAdapter {
 	
 	@SuppressWarnings("null")
 	@Override
-    public void onGuildVoiceJoin(GuildVoiceJoinEvent e) {
+	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
         Member member = e.getMember();
 		AudioChannel channel = e.getChannelJoined();
         String message = "(discord) " + member.getEffectiveName() + " がボイスチャットチャンネル " + channel.getName() + " に参加しました。";

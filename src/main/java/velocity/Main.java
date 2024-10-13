@@ -1,6 +1,7 @@
 package velocity;
 
 import java.nio.file.Path;
+import java.util.TimeZone;
 
 import org.slf4j.Logger;
 
@@ -28,7 +29,6 @@ public class Main {
 	private final Logger logger;
 	private final Path dataDirectory;
 	// Guice注入後、取得するインスタンス(フィールド)郡
-	
     @Inject
     public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory) {
         this.server = serverinstance;
@@ -38,11 +38,11 @@ public class Main {
         // Guiceに依存性を自動で解決させ、インスタンスを生成してもらう。
         // Guice インジェクターの作成は onProxyInitialization メソッドで行う
     }
-    // ieeeeee
+
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent e) {
     	logger.info("Detected Velocity platform.");
-        
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
         // Guice インジェクターを作成
         injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory, LuckPermsProvider.get()));
         
