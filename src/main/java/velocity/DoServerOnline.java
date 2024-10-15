@@ -26,16 +26,19 @@ public class DoServerOnline {
     public ResultSet mine_status = null;
 	public ResultSet[] resultsets = {mine_status};
     private final Main plugin;
+	private final Config config;
     private final Logger logger;
     private final ProxyServer server;
     private final ConsoleCommandSource console;
     private final Database db;
     private final Map<String, Integer> serverConfigInfo = new HashMap<>();
     private final Map<String, Integer> serverDBInfo = new HashMap<>();
+	private final Map<String, String> serverDBTypeInfo = new HashMap<>();
     
     @Inject
-    public DoServerOnline (Main plugin, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console) {
+    public DoServerOnline (Main plugin, Config config, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console) {
     	this.plugin = plugin;
+		this.config = config;
     	this.logger = logger;
     	this.db = db;
     	this.server = server;
@@ -72,6 +75,7 @@ public class DoServerOnline {
                 	int serverConfigPort = serverInfo.getAddress().getPort();
                 	serverConfigInfo.put(serverConfigName, serverConfigPort);
                 }
+
 				
 				insql = "SELECT * FROM status WHERE exception!=? AND exception2!=?;";
 				ps = conn.prepareStatement(insql);
@@ -82,6 +86,7 @@ public class DoServerOnline {
 				while (mine_status.next()) {
 					String serverDBName = mine_status.getString("name");
 					int serverDBPort = mine_status.getInt("port");
+					serverDBTypeInfo.put(serverDBName, mine_status.getString("type"));
 					serverDBInfo.put(serverDBName,serverDBPort);
 				}
 				
@@ -111,6 +116,26 @@ public class DoServerOnline {
 		                    console.sendMessage(Component.text(serverDBName+"サーバー(ポート:"+serverDBPort+")のポートを "+serverConfigPort+" に更新しました。").color(NamedTextColor.GREEN));
 			            }
 			        }
+
+					String serverConfigType = config.getString("Servers." + serverDBName + ".Type", "");
+						// サーバータイプがconfigとdatabaseで異なる場合、databaseの情報をconfigに合わせる
+						if (serverDBTypeInfo.containsKey(serverDBName)) {
+							String serverDBType = serverDBTypeInfo.get(serverDBName);
+							if (!serverConfigType.equalsIgnoreCase(serverDBType)) {
+								String insql2 = "UPDATE status SET type=? WHERE name=?;";
+								try (PreparedStatement ps2 = conn.prepareStatement(insql2)) {
+									ps2.setString(1, serverConfigType.toLowerCase());
+									ps2.setString(2, serverDBName);
+									ps2.executeUpdate();
+									console.sendMessage(Component.text(serverDBName+"サーバーのタイプを"+serverConfigType+"に更新しました。").color(NamedTextColor.GREEN));	
+								} catch (SQLException e) {
+									logger.error("An error occurred while updating the server type: " + e.getMessage());
+									for (StackTraceElement element : e.getStackTrace()) {
+										logger.error(element.toString());
+									}
+								}
+							}
+						}
 			    }
 				
 				boolean secondCheck = false;
@@ -131,6 +156,7 @@ public class DoServerOnline {
 							while (mine_status.next()) {
 								String serverDBName = mine_status.getString("name");
 								int serverDBPort = mine_status.getInt("port");
+								serverDBTypeInfo.put(serverDBName, mine_status.getString("type"));
 								serverDBInfo.put(serverDBName,serverDBPort);
 							}
 			        	}
@@ -145,12 +171,38 @@ public class DoServerOnline {
 			            if (serverDBInfo.containsKey(serverConfigName)) {
 			            	throw new SQLException("サーバー名が重複しています: " + serverConfigName);
 			            }
-			            
-			            insql = "INSERT INTO status (name,port) VALUES (?,?);";
-			            ps = conn.prepareStatement(insql);
-		                ps.setString(1, serverConfigName);
-		                ps.setInt(2, serverConfigPort);
-		                ps.executeUpdate();
+						
+			            insql = "INSERT INTO status (name,port,live,mod,distributed) VALUES (?,?,?,?,?);";
+                        ps = conn.prepareStatement(insql);
+                        ps.setString(1, serverConfigName);
+                        ps.setInt(2, serverConfigPort);
+
+                        // サーバーのタイプを取得して設定
+                        String serverConfigType = config.getString("Servers." + serverConfigName + ".Type", "");
+						// サーバータイプがconfigとdatabaseで異なる場合、databaseの情報をconfigに合わせる
+						if (serverDBTypeInfo.containsKey(serverConfigName)) {
+							String serverDBType = serverDBTypeInfo.get(serverConfigName);
+							if (!serverConfigType.equalsIgnoreCase(serverDBType)) {
+								String insql2 = "UPDATE status SET type=? WHERE name=?;";
+								try (PreparedStatement ps2 = conn.prepareStatement(insql2)) {
+									ps2.setString(1, serverConfigType.toLowerCase());
+									ps2.setString(2, serverConfigName);
+									ps2.executeUpdate();
+									console.sendMessage(Component.text(serverConfigName+"サーバーのタイプを"+serverConfigType+"に更新しました。").color(NamedTextColor.GREEN));	
+								} catch (SQLException e) {
+									logger.error("An error occurred while updating the server type: " + e.getMessage());
+									for (StackTraceElement element : e.getStackTrace()) {
+										logger.error(element.toString());
+									}
+								}
+							}
+						} else if ((!serverConfigType.isEmpty()) && (serverConfigType.equalsIgnoreCase("live") || serverConfigType.equalsIgnoreCase("mod") || serverConfigType.equalsIgnoreCase("distributed"))) {
+							ps.setString(3, serverConfigType.toLowerCase());
+						}
+
+                        //ps.setBoolean(3, serverConfigType.equalsIgnoreCase("live"));
+
+                        ps.executeUpdate();
 		                
 		                console.sendMessage(Component.text(serverConfigName+"サーバー(ポート:"+serverConfigPort+")をデータベースに追加しました。").color(NamedTextColor.GREEN));
 			        }

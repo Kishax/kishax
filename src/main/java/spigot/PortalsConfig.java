@@ -52,9 +52,9 @@ public final class PortalsConfig {
             reloadPortalsConfig();
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
-				for (StackTraceElement element : e.getStackTrace()) {
-					plugin.getLogger().severe(element.toString());
-				}
+            for (StackTraceElement element : e.getStackTrace()) {
+                plugin.getLogger().severe(element.toString());
+            }
         }
     }
 
@@ -62,9 +62,8 @@ public final class PortalsConfig {
         //this.portalsFile = new File(plugin.getDataFolder(), "portals.yml");
     
         this.portalsConfig = YamlConfiguration.loadConfiguration(portalsFile);
-    
         // portalsConfigの内容をログに出力
-        plugin.getLogger().log(Level.INFO, "portals.yml contents: {0}", portalsConfig.saveToString());
+        //plugin.getLogger().log(Level.INFO, "portals.yml contents: {0}", portalsConfig.saveToString());
         
         this.portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
     }

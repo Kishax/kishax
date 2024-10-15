@@ -8,6 +8,7 @@ import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.StringUtil;
 
@@ -83,8 +84,41 @@ public class FMCCommand implements TabExecutor {
 			}
 
 			case "portal" -> {
-				Main.getInjector().getInstance(PortalsWand.class).execute(sender, cmd, label, args);
-				return true;
+				if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
+					if (args.length > 2 && args[2].equalsIgnoreCase("server")) {
+						if (args.length > 3) {
+							switch (args[3].toLowerCase()) {
+								case "life" -> {
+									Main.getInjector().getInstance(PortalsMenu.class).openLifeServerInventory((Player) sender);
+									return true;
+								}
+								case "distribution" -> {
+									Main.getInjector().getInstance(PortalsMenu.class).openDistributionServerInventory((Player) sender);
+									return true;
+								}
+								case "mod" -> {
+									Main.getInjector().getInstance(PortalsMenu.class).openModServerInventory((Player) sender);
+									return true;
+								}
+								default -> {
+									sender.sendMessage("Unknown server type. Usage: /fmc portal menu server <life | distribution | mod>");
+									return false;
+								}
+							}
+						} else {
+							// /fmc portal menu serverと打った場合
+							//sender.sendMessage("Usage: /fmc portal menu server <life|distribution|mod>");
+							Main.getInjector().getInstance(PortalsMenu.class).OpenServerTypeInventory((Player) sender);
+							return false;
+						}
+					} else {
+						sender.sendMessage("Usage: /fmc portal menu server");
+						return false;
+					}
+				} else {
+					sender.sendMessage("Usage: /fmc portal menu");
+					return false;
+				}
 			}
 		}
 
@@ -123,11 +157,58 @@ public class FMCCommand implements TabExecutor {
 					}
 
 					case "portal" -> {
-						ret.add("wand");
+						List<String> portalCmds = new ArrayList<>(Arrays.asList("menu","wand"));
+						for (String portalcmd : portalCmds) {
+							if (!sender.hasPermission("fmc.portal." + portalcmd)) continue;
+							ret.add(portalcmd);
+						}
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
 				}
             }
+
+			case 3 -> {
+				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
+				switch (args[0].toLowerCase()) {
+					case "portal" -> {
+						switch (args[1].toLowerCase()) {
+							case "menu" -> {
+								List<String> portalMenuCmds = new ArrayList<>(Arrays.asList("server"));
+								for (String portalMenuCmd : portalMenuCmds) {
+									if (!sender.hasPermission("fmc.portal.menu.*")) {
+										if (!sender.hasPermission("fmc.portal.menu." + portalMenuCmd)) continue;
+									}
+									
+									ret.add(portalMenuCmd);
+								}
+								return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
+							}
+						}
+					}
+				}
+			}
+
+			case 4 -> {
+				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
+				switch (args[0].toLowerCase()) {
+					case "portal" -> {
+						switch (args[1].toLowerCase()) {
+							case "menu" -> {
+								switch (args[2].toLowerCase()) {
+									case "server" -> {
+										List<String> portalMenuServerCmds = new ArrayList<>(Arrays.asList("life","distribution","mod"));
+										for (String portalMenuServerCmd : portalMenuServerCmds) {
+											if (!sender.hasPermission("fmc.portal.menu.server." + portalMenuServerCmd)) continue;
+											ret.add(portalMenuServerCmd);
+										}
+										return StringUtil.copyPartialMatches(args[3].toLowerCase(), ret, new ArrayList<>());
+									}
+								}
+							}
+						}
+					}
+				}
+			}
     	}
 
     	return Collections.emptyList();

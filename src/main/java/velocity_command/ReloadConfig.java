@@ -33,6 +33,6 @@ public class ReloadConfig {
 			}
 		}
 		
-        source.sendMessage(Component.text("Plugin configuration reloaded."));
+        source.sendMessage(Component.text("コンフィグをリロードしました。"));
     }
 }

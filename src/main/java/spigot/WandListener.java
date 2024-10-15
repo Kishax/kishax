@@ -22,6 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import com.google.inject.Inject;
 
 public class WandListener implements Listener {
+    public static boolean isMakePortal = false;
     private final common.Main plugin;
     private final Map<Player, Location> firstCorner = new HashMap<>();
     private final PortalsConfig psConfig;
@@ -34,7 +35,7 @@ public class WandListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (plugin.getConfig().getBoolean("Portals.Mode", false)) {
+        if (plugin.getConfig().getBoolean("Portals.Wand", false)) {
             Player player = event.getPlayer();
             ItemStack item = event.getItem();
 
@@ -70,8 +71,9 @@ public class WandListener implements Listener {
 
                         portalsConfig.set("portals", portals);
                         psConfig.savePortalsConfig();
-                        psConfig.reloadPortalsConfig(); // コンフィグをリロード
-                        
+                        psConfig.reloadPortalsConfig(); // 追加: 設定を再読み込み
+                        isMakePortal = true;
+
                         player.sendMessage(ChatColor.GREEN + "2番目のコーナーを選択しました。\n"+ChatColor.AQUA+"("+clickedBlock.getX()+", "+clickedBlock.getY()+", "+clickedBlock.getZ()+")"+ChatColor.GREEN+"\nポータルが作成されました。");
                         firstCorner.remove(player);
                     }

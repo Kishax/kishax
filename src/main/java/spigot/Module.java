@@ -3,6 +3,8 @@ package spigot;
 
 import com.google.inject.AbstractModule;
 
+import spigot_command.PortalsMenu;
+
 public class Module extends AbstractModule {
 	
 	private final common.Main plugin;
@@ -23,5 +25,6 @@ public class Module extends AbstractModule {
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);
 		bind(PortalsConfig.class);
+		bind(PortalsMenu.class);
     }
 }
