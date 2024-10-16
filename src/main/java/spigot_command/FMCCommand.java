@@ -25,12 +25,10 @@ import spigot.Main;
 import spigot.PortalsConfig;
 
 public class FMCCommand implements TabExecutor {
-	private final common.Main plugin;
 	private final PortalsConfig psConfig;
 	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal"));
 	@Inject
-	public FMCCommand(common.Main plugin, PortalsConfig psConfig) {
-		this.plugin = plugin;
+	public FMCCommand(PortalsConfig psConfig) {
 		this.psConfig = psConfig;
 	}
 	

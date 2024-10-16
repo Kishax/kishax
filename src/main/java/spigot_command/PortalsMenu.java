@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -65,8 +66,8 @@ public class PortalsMenu {
         player.openInventory(inv);
     }
 
-    public void openEachServerInventory(Player player, String serverType, int page) {
-        Inventory inv = Bukkit.createInventory(null, 54, "サーバーリスト");
+    public void openInventory(Player player, String serverType, int page) {
+        Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
 
         // 前のインベントリに戻るブロックを配置
         ItemStack backItem = new ItemStack(Material.ARROW);
@@ -78,9 +79,11 @@ public class PortalsMenu {
         inv.setItem(0, backItem);
 
         Map<String, Map<String, String>> serverStatusMap = serverStatusCache.getStatusMap();
-        List<Map<String, String>> serverStatusList = serverStatusMap.values().stream().toList();
+        List<Map<String, String>> serverStatusList = serverStatusMap.values().stream()
+            .filter(map -> serverType.equals(map.get("type")))
+            .collect(Collectors.toList());
         int totalItems = serverStatusList.size();
-        int totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length;
+        int totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length + 1;
 
         int startIndex = (page - 1) * SLOT_POSITIONS.length;
         int endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
@@ -99,24 +102,40 @@ public class PortalsMenu {
         }
 
         // ページ戻るブロックを配置
-        ItemStack prevPageItem = new ItemStack(Material.ARROW);
-        ItemMeta prevPageMeta = prevPageItem.getItemMeta();
-        if (prevPageMeta != null) {
-            prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
-            prevPageItem.setItemMeta(prevPageMeta);
+        if (page > 1) {
+            ItemStack prevPageItem = new ItemStack(Material.ARROW);
+            ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+            if (prevPageMeta != null) {
+                prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+                prevPageItem.setItemMeta(prevPageMeta);
+            }
+            inv.setItem(45, prevPageItem);
         }
-        inv.setItem(45, prevPageItem);
 
         // ページ進むブロックを配置
-        ItemStack nextPageItem = new ItemStack(Material.ARROW);
-        ItemMeta nextPageMeta = nextPageItem.getItemMeta();
-        if (nextPageMeta != null) {
-            nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
-            nextPageItem.setItemMeta(nextPageMeta);
+        if (page < totalPages) {
+            ItemStack nextPageItem = new ItemStack(Material.ARROW);
+            ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+            if (nextPageMeta != null) {
+                nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                nextPageItem.setItemMeta(nextPageMeta);
+            }
+            inv.setItem(53, nextPageItem);
         }
-        inv.setItem(53, nextPageItem);
 
         // プレイヤーにインベントリを開かせる
         player.openInventory(inv);
-    }  
+    }
+
+    public void openEachServerInventory(Player player, String serverType) {
+        Map<String, Map<String, String>> serverStatusMap = serverStatusCache.getStatusMap();
+        List<Map<String, String>> serverStatusList = serverStatusMap.values().stream()
+            .filter(map -> serverType.equals(map.get("type")))
+            .collect(Collectors.toList());
+        int totalItems = serverStatusList.size();
+        int totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length + 1;
+
+        // 初期ページを1に設定してopenInventoryを呼び出す
+        openInventory(player, serverType, 1);
+    }
 }
