@@ -11,7 +11,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public final class PortalsConfig {
     private final common.Main plugin;
     private File portalsFile;

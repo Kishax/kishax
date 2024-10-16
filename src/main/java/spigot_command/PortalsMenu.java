@@ -69,7 +69,7 @@ public class PortalsMenu {
             case "life" -> {
 
             }
-            case "distribution" -> {
+            case "distributed" -> {
 
             }
             case "mod" -> {

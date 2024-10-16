@@ -27,4 +27,6 @@ public class PortalsWand {
             player.sendMessage("カスタム名の木の斧を受け取りました。1番目のコーナーを右クリックで選択してください。");
         }
 	}
+
+    
 }

@@ -24,7 +24,12 @@ public class PortalsDelete {
         List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
 
         if (portals != null) {
-            portals.removeIf(portal -> portalName.equals(portal.get("name")));
+            portals.removeIf(portal -> 
+                portalName.equals(portal.get("uuid")) ||
+                portalName.equals(portal.get("name")) ||
+                portalName.equals(portal.get("corner1")) ||
+                portalName.equals(portal.get("corner2"))
+            );
             portalsConfig.set("portals", portals);
             psConfig.savePortalsConfig();
             psConfig.reloadPortalsConfig();

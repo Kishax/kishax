@@ -80,6 +80,11 @@ public class FMCCommand implements TabExecutor {
 
 			case "portal" -> {
 				try {
+					if (args.length > 1 && args[1].equalsIgnoreCase("wand")) {
+						Main.getInjector().getInstance(PortalsWand.class).execute(sender, cmd, label, args);
+						return true;
+					}
+
 					if (args.length > 1 && args[1].equalsIgnoreCase("delete")) {
 						if (args.length > 2) {
 							String portalName = args[2];
@@ -91,12 +96,26 @@ public class FMCCommand implements TabExecutor {
 						}
 					}
 
+					if (args.length > 1 && args[1].equalsIgnoreCase("rename")) {
+						if (args.length > 2) {
+							if (args.length > 3) {
+								String portalUUID = args[2];
+								String portalName = args[3];
+								Main.getInjector().getInstance(PortalsRename.class).execute(sender,portalUUID,portalName);
+								return true;
+							}
+						} else {
+							sender.sendMessage("Usage: /fmc portal rename <portalUUID> <newName>");
+							return true;
+						}
+					}
+
 					if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
 						if (args.length > 2 && args[2].equalsIgnoreCase("server")) {
 							if (args.length > 3) {
 								String menuType = args[3].toLowerCase();
 								switch (menuType) {
-									case "life","distribution","mod" -> {
+									case "life","distributed","mod" -> {
 										Main.getInjector().getInstance(PortalsMenu.class).openEachServerInventory((Player) sender, menuType);
 										return true;
 									}
@@ -157,7 +176,7 @@ public class FMCCommand implements TabExecutor {
 					}
 
 					case "portal" -> {
-						List<String> portalCmds = new ArrayList<>(Arrays.asList("menu","wand","delete"));
+						List<String> portalCmds = new ArrayList<>(Arrays.asList("menu","wand","delete","rename"));
 						for (String portalcmd : portalCmds) {
 							if (!sender.hasPermission("fmc.portal." + portalcmd)) continue;
 							ret.add(portalcmd);
@@ -183,7 +202,7 @@ public class FMCCommand implements TabExecutor {
 								}
 								return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
 							}
-							case "delete" -> {
+							case "delete","rename" -> {
 								// portals.ymlからポータル名を読み取る
                                 FileConfiguration portalsConfig = psConfig.getPortalsConfig();
                                 List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
@@ -210,7 +229,7 @@ public class FMCCommand implements TabExecutor {
 							case "menu" -> {
 								switch (args[2].toLowerCase()) {
 									case "server" -> {
-										List<String> portalMenuServerCmds = new ArrayList<>(Arrays.asList("life","distribution","mod"));
+										List<String> portalMenuServerCmds = new ArrayList<>(Arrays.asList("life","distibuted","mod"));
 										for (String portalMenuServerCmd : portalMenuServerCmds) {
 											if (!sender.hasPermission("fmc.portal.menu.server." + portalMenuServerCmd)) continue;
 											ret.add(portalMenuServerCmd);

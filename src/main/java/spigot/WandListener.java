@@ -73,6 +73,7 @@ public class WandListener implements Listener {
                         Map<String, Object> newPortal = new HashMap<>();
                         String portalUUID = UUID.randomUUID().toString();
                         newPortal.put("name", portalUUID);
+                        newPortal.put("uuid", portalUUID);
                         newPortal.put("corner1", Arrays.asList(corner1.getX(), corner1.getY(), corner1.getZ()));
                         newPortal.put("corner2", Arrays.asList(corner2.getX(), corner2.getY(), corner2.getZ()));
                         portals.add(newPortal);
@@ -85,12 +86,17 @@ public class WandListener implements Listener {
 
                         player.sendMessage(ChatColor.GREEN + "2番目のコーナーを選択しました。\nポータルUUID: "+portalUUID+"\n"+ChatColor.AQUA+"("+clickedBlock.getX()+", "+clickedBlock.getY()+", "+clickedBlock.getZ()+")"+ChatColor.GREEN+"\nポータルが保存されました。");
                         // クリック可能なメッセージを送信
-                        BaseComponent[] component = new ComponentBuilder(ChatColor.YELLOW+"FMC COMMANDS LIST").bold(true).underlined(true)
+                        BaseComponent[] component = new ComponentBuilder()
                                 .append(ChatColor.WHITE + "もし、取り消す場合は、")
                                 .append(ChatColor.GOLD + "ココ")
+                                    .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmc portal delete " + portalUUID))
+                                    .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルを削除")))
                                 .append(ChatColor.WHITE + "をクリックしてね")
-                                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc portal delete " + portalUUID))
-                                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロードします！(クリックしてコピー)")))
+                                .append("\n" + ChatColor.WHITE + "ポータルの名前を変えるには、")
+                                .append(ChatColor.GOLD + "ココ")
+                                    .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc portal rename " + portalUUID + " "))
+                                    .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルの名前を変更")))
+                                .append(ChatColor.WHITE + "をクリックしてね")
                                 .create();
                         player.spigot().sendMessage(component);
                         firstCorner.remove(player);

@@ -23,6 +23,9 @@ import org.bukkit.event.player.PlayerPortalEvent;
 
 import com.google.inject.Inject;
 
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
 import spigot_command.PortalsMenu;
 
 public final class EventListener implements Listener {
@@ -42,10 +45,11 @@ public final class EventListener implements Listener {
     //player.performCommand("");
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        String title = event.getView().getTitle();
-        switch (title) {
-            case "life servers", "mod servers", "distributed servers" -> {
-                event.setCancelled(true);
+        if (event.getWhoClicked() instanceof Player player) {
+            String title = event.getView().getTitle();
+            switch (title) {
+                case "life servers", "mod servers", "distributed servers" -> {
+                    event.setCancelled(true);
                     int slot = event.getRawSlot();
 
                     switch (slot) {
@@ -54,10 +58,8 @@ public final class EventListener implements Listener {
                         }
                     }
                 }
-            }
-            case "server type" -> {
-                event.setCancelled(true);
-                if (event.getWhoClicked() instanceof Player player) {
+                case "server type" -> {
+                    event.setCancelled(true);
                     int slot = event.getRawSlot();
 
                     switch (slot) {
@@ -123,9 +125,19 @@ public final class EventListener implements Listener {
                             if (!playersInPortal.contains(player)) {
                                 playersInPortal.add(player);
                                 plugin.getLogger().log(Level.INFO, "Player {0} entered the {1}!", new Object[]{player.getName(), name});
-                                player.sendMessage(ChatColor.AQUA + "You have entered the " + name + "!");
-                                // コマンドを実行
-                                player.performCommand("fmc portal menu server" + name);
+                                BaseComponent[] component = new ComponentBuilder()
+                                    .append(ChatColor.WHITE + "ゲート: ")
+                                    .append(ChatColor.AQUA + name)
+                                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("クリックしてコピー").create()))
+                                        .event(new net.md_5.bungee.api.chat.ClickEvent(net.md_5.bungee.api.chat.ClickEvent.Action.COPY_TO_CLIPBOARD, name))
+                                    .append(ChatColor.WHITE + " に入りました！")
+                                    .create();
+                                player.spigot().sendMessage(component);
+                                switch (name) {
+                                    case "life","distributed","mod" -> {
+                                        player.performCommand("fmc portal menu server " + name);
+                                    }
+                                }
                             }
                             
                             break; // 一つのポータルに触れたらループを抜ける
