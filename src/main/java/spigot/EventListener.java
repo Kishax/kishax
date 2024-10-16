@@ -39,28 +39,37 @@ public final class EventListener implements Listener {
 		// new Location(Bukkit.getWorld("world"), 100, 64, 100);
 	}
 
+    //player.performCommand("");
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getView().getTitle().equals("Server Type Inventory")) {
-            event.setCancelled(true); // インベントリ内のアイテムを動かせないようにする
-            if (event.getWhoClicked() instanceof Player player) {
-                int slot = event.getRawSlot();
+        String title = event.getView().getTitle();
+        switch (title) {
+            case "life servers", "mod servers", "distributed servers" -> {
+                event.setCancelled(true);
+                    int slot = event.getRawSlot();
 
-                switch (slot) {
-                    case 11 -> {
-                        player.performCommand("say Life Server");
-                        pm.openLifeServerInventory(player);
+                    switch (slot) {
+                        case 0 -> {
+                            pm.OpenServerTypeInventory(player);
+                        }
                     }
-                    case 13 -> {
-                        player.performCommand("say Distributed Server");
-                        pm.openDistributionServerInventory(player);
-                    }
-                    case 15 -> {
-                        player.performCommand("say Mod Server");
-                        pm.openModServerInventory(player);
-                    }
-                    default -> {
-                        // 何もしない
+                }
+            }
+            case "server type" -> {
+                event.setCancelled(true);
+                if (event.getWhoClicked() instanceof Player player) {
+                    int slot = event.getRawSlot();
+
+                    switch (slot) {
+                        case 11 -> {
+                            pm.openEachServerInventory(player, "life");
+                        }
+                        case 13 -> {
+                            pm.openEachServerInventory(player, "distributed");
+                        }
+                        case 15 -> {
+                            pm.openEachServerInventory(player, "mod");
+                        }
                     }
                 }
             }
@@ -116,7 +125,7 @@ public final class EventListener implements Listener {
                                 plugin.getLogger().log(Level.INFO, "Player {0} entered the {1}!", new Object[]{player.getName(), name});
                                 player.sendMessage(ChatColor.AQUA + "You have entered the " + name + "!");
                                 // コマンドを実行
-                                player.performCommand("fmc portal menu " + name);
+                                player.performCommand("fmc portal menu server" + name);
                             }
                             
                             break; // 一つのポータルに触れたらループを抜ける

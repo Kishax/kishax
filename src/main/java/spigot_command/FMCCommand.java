@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.StringUtil;
@@ -20,14 +22,14 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import spigot.Main;
+import spigot.PortalsConfig;
 
 public class FMCCommand implements TabExecutor {
-
-	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","test","fv","mcvc","portal"));
-	
+	private final PortalsConfig psConfig;
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal"));
 	@Inject
-	public FMCCommand() {
-		//
+	public FMCCommand(PortalsConfig psConfig) {
+		this.psConfig = psConfig;
 	}
 	
 	@Override
@@ -38,19 +40,17 @@ public class FMCCommand implements TabExecutor {
     		BaseComponent[] component =
     			    new ComponentBuilder(ChatColor.YELLOW+"FMC COMMANDS LIST").bold(true).underlined(true)
     			        .append(ChatColor.AQUA+"\n\n/fmc reload")
-    			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc reload"))
-    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロードします！(クリックしてコピー)")))
-    			        .append(ChatColor.AQUA+"\n\n/fmc test <arg-1>")
-    			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc test "))
-    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("第一引数を返します！(クリックしてコピー)")))
-    			        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc fv "))
-    			        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("プロキシコマンドをフォワードします！(クリックしてコピー)")))
-    			        .append(ChatColor.AQUA+"\n\n/fmcb mcvc")
-                        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmcp mcvc"))
-                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("MCVCモードの切り替えを行います！(クリックしてコピー)")))
-						.append(ChatColor.AQUA+"\n\n/fmcb portal")
-                        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmcp portals"))
-                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルに関して！(クリックしてコピー)")))
+							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc reload"))
+							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロードします！(クリックしてコピー)")))
+						.append(ChatColor.AQUA+"\n\n/fmc fv ")
+							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc fv "))
+							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("プロキシコマンドをフォワードします！(クリックしてコピー)")))
+    			        .append(ChatColor.AQUA+"\n\n/fmc mcvc")
+							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmc mcvc"))
+							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("MCVCモードの切り替えを行います！(クリックしてコピー)")))
+						.append(ChatColor.AQUA+"\n\n/fmc portal ")
+							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmc portal "))
+							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルに関して！(クリックしてコピー)")))
     			        .create();
     		sender.spigot().sendMessage(component);
     		return true;
@@ -73,51 +73,55 @@ public class FMCCommand implements TabExecutor {
 				return true;
 			}
 				
-			case "test" -> {
-				Main.getInjector().getInstance(Test.class).execute(sender, cmd, label, args);
-				return true;
-			}
-				
 			case "mcvc" -> {
 				Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
 				return true; 
 			}
 
 			case "portal" -> {
-				if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
-					if (args.length > 2 && args[2].equalsIgnoreCase("server")) {
-						if (args.length > 3) {
-							switch (args[3].toLowerCase()) {
-								case "life" -> {
-									Main.getInjector().getInstance(PortalsMenu.class).openLifeServerInventory((Player) sender);
-									return true;
+				try {
+					if (args.length > 1 && args[1].equalsIgnoreCase("delete")) {
+						if (args.length > 2) {
+							String portalName = args[2];
+							Main.getInjector().getInstance(PortalsDelete.class).execute(sender,portalName);
+							return true;
+						} else {
+							sender.sendMessage("Usage: /fmc portal delete <portalUUID>");
+							return true;
+						}
+					}
+
+					if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
+						if (args.length > 2 && args[2].equalsIgnoreCase("server")) {
+							if (args.length > 3) {
+								String menuType = args[3].toLowerCase();
+								switch (menuType) {
+									case "life","distribution","mod" -> {
+										Main.getInjector().getInstance(PortalsMenu.class).openEachServerInventory((Player) sender, menuType);
+										return true;
+									}
+									default -> {
+										sender.sendMessage("Unknown server type. Usage: /fmc portal menu server <life | distribution | mod>");
+										return true;
+									}
 								}
-								case "distribution" -> {
-									Main.getInjector().getInstance(PortalsMenu.class).openDistributionServerInventory((Player) sender);
-									return true;
-								}
-								case "mod" -> {
-									Main.getInjector().getInstance(PortalsMenu.class).openModServerInventory((Player) sender);
-									return true;
-								}
-								default -> {
-									sender.sendMessage("Unknown server type. Usage: /fmc portal menu server <life | distribution | mod>");
-									return false;
-								}
+							} else {
+								// /fmc portal menu serverと打った場合
+								//sender.sendMessage("Usage: /fmc portal menu server <life|distribution|mod>");
+								Main.getInjector().getInstance(PortalsMenu.class).OpenServerTypeInventory((Player) sender);
+								return true;
 							}
 						} else {
-							// /fmc portal menu serverと打った場合
-							//sender.sendMessage("Usage: /fmc portal menu server <life|distribution|mod>");
-							Main.getInjector().getInstance(PortalsMenu.class).OpenServerTypeInventory((Player) sender);
-							return false;
+							sender.sendMessage("Usage: /fmc portal menu server");
+							return true;
 						}
 					} else {
-						sender.sendMessage("Usage: /fmc portal menu server");
-						return false;
+						sender.sendMessage("Usage: /fmc portal menu");
+						return true;
 					}
-				} else {
-					sender.sendMessage("Usage: /fmc portal menu");
-					return false;
+				} catch (ClassCastException e) {
+					sender.sendMessage("You must be a player to use this command.");
+					return true;
 				}
 			}
 		}
@@ -152,12 +156,8 @@ public class FMCCommand implements TabExecutor {
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
 
-					case "test" -> {
-						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
-					}
-
 					case "portal" -> {
-						List<String> portalCmds = new ArrayList<>(Arrays.asList("menu","wand"));
+						List<String> portalCmds = new ArrayList<>(Arrays.asList("menu","wand","delete"));
 						for (String portalcmd : portalCmds) {
 							if (!sender.hasPermission("fmc.portal." + portalcmd)) continue;
 							ret.add(portalcmd);
@@ -182,6 +182,20 @@ public class FMCCommand implements TabExecutor {
 									ret.add(portalMenuCmd);
 								}
 								return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
+							}
+							case "delete" -> {
+								// portals.ymlからポータル名を読み取る
+                                FileConfiguration portalsConfig = psConfig.getPortalsConfig();
+                                List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
+                                if (portals != null) {
+                                    for (Map<?, ?> portal : portals) {
+                                        String portalName = (String) portal.get("name");
+                                        if (portalName != null && sender.hasPermission("fmc.portal.delete." + portalName)) {
+                                            ret.add(portalName);
+                                        }
+                                    }
+                                }
+                                return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
 							}
 						}
 					}

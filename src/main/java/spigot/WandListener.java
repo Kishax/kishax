@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -20,6 +21,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import com.google.inject.Inject;
+
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 
 public class WandListener implements Listener {
     public static boolean isMakePortal = false;
@@ -64,17 +71,28 @@ public class WandListener implements Listener {
                         }
 
                         Map<String, Object> newPortal = new HashMap<>();
-                        newPortal.put("name", "New Portal");
+                        String portalUUID = UUID.randomUUID().toString();
+                        newPortal.put("name", portalUUID);
                         newPortal.put("corner1", Arrays.asList(corner1.getX(), corner1.getY(), corner1.getZ()));
                         newPortal.put("corner2", Arrays.asList(corner2.getX(), corner2.getY(), corner2.getZ()));
                         portals.add(newPortal);
 
                         portalsConfig.set("portals", portals);
                         psConfig.savePortalsConfig();
+
                         psConfig.reloadPortalsConfig(); // 追加: 設定を再読み込み
                         isMakePortal = true;
 
-                        player.sendMessage(ChatColor.GREEN + "2番目のコーナーを選択しました。\n"+ChatColor.AQUA+"("+clickedBlock.getX()+", "+clickedBlock.getY()+", "+clickedBlock.getZ()+")"+ChatColor.GREEN+"\nポータルが作成されました。");
+                        player.sendMessage(ChatColor.GREEN + "2番目のコーナーを選択しました。\nポータルUUID: "+portalUUID+"\n"+ChatColor.AQUA+"("+clickedBlock.getX()+", "+clickedBlock.getY()+", "+clickedBlock.getZ()+")"+ChatColor.GREEN+"\nポータルが保存されました。");
+                        // クリック可能なメッセージを送信
+                        BaseComponent[] component = new ComponentBuilder(ChatColor.YELLOW+"FMC COMMANDS LIST").bold(true).underlined(true)
+                                .append(ChatColor.WHITE + "もし、取り消す場合は、")
+                                .append(ChatColor.GOLD + "ココ")
+                                .append(ChatColor.WHITE + "をクリックしてね")
+                                .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc portal delete " + portalUUID))
+                                .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロードします！(クリックしてコピー)")))
+                                .create();
+                        player.spigot().sendMessage(component);
                         firstCorner.remove(player);
                     }
                     event.setCancelled(true);

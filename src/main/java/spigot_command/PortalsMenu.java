@@ -26,9 +26,8 @@ public class PortalsMenu {
 	}
 
     public void OpenServerTypeInventory(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Server Type Inventory");
+        Inventory inv = Bukkit.createInventory(null, 27, "server type");
 
-        // スロット11に生活鯖のブロックを配置
         ItemStack lifeServerItem = new ItemStack(Material.GRASS_BLOCK);
         ItemMeta lifeMeta = lifeServerItem.getItemMeta();
         if (lifeMeta != null) {
@@ -37,7 +36,6 @@ public class PortalsMenu {
         }
         inv.setItem(11, lifeServerItem);
 
-        // スロット13に配布鯖のブロックを配置
         ItemStack distributionServerItem = new ItemStack(Material.CHEST);
         ItemMeta distributionMeta = distributionServerItem.getItemMeta();
         if (distributionMeta != null) {
@@ -46,7 +44,6 @@ public class PortalsMenu {
         }
         inv.setItem(13, distributionServerItem);
 
-        // スロット15にモッド鯖のブロックを配置
         ItemStack modServerItem = new ItemStack(Material.IRON_BLOCK);
         ItemMeta modMeta = modServerItem.getItemMeta();
         if (modMeta != null) {
@@ -58,21 +55,27 @@ public class PortalsMenu {
         player.openInventory(inv);
     }
 
-    public void openModServerInventory(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Mod Server Inventory");
-        // モッド鯖のインベントリのアイテムを設定
-        player.openInventory(inv);
-    }
+    public void openEachServerInventory(Player player, String serverType) {
+        Inventory inv = Bukkit.createInventory(null, 27, serverType + " servers");
+        ItemStack backServerItem = new ItemStack(Material.BLAZE_ROD);
+        ItemMeta backMeta = backServerItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.BLUE + "サーバーメニューへ戻る");
+            backServerItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backServerItem);
 
-    public void openLifeServerInventory(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Life Server Inventory");
-        // 生活鯖のインベントリのアイテムを設定
-        player.openInventory(inv);
-    }
+        switch (serverType) {
+            case "life" -> {
 
-    public void openDistributionServerInventory(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "Distribution Server Inventory");
-        // 配布鯖のインベントリのアイテムを設定
+            }
+            case "distribution" -> {
+
+            }
+            case "mod" -> {
+
+            }
+        }
         player.openInventory(inv);
     }
 }
