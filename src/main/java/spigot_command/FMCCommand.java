@@ -1,10 +1,12 @@
 package spigot_command;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -25,15 +27,17 @@ import spigot.Main;
 import spigot.PortalsConfig;
 
 public class FMCCommand implements TabExecutor {
+	private final common.Main plugin;
 	private final PortalsConfig psConfig;
 	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal"));
 	@Inject
-	public FMCCommand(PortalsConfig psConfig) {
+	public FMCCommand(common.Main plugin, PortalsConfig psConfig) {
+		this.plugin = plugin;
 		this.psConfig = psConfig;
 	}
 	
 	@Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
+	public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
 		if(sender == null) return true;
 
     	if (args.length == 0 || !subcommands.contains(args[0].toLowerCase())) {
@@ -116,7 +120,15 @@ public class FMCCommand implements TabExecutor {
 								String menuType = args[3].toLowerCase();
 								switch (menuType) {
 									case "life","distributed","mod" -> {
-										Main.getInjector().getInstance(PortalsMenu.class).openEachServerInventory((Player) sender, menuType);
+										try {
+											Main.getInjector().getInstance(PortalsMenu.class).openEachServerInventory((Player) sender, menuType);
+										} catch (SQLException e) {
+											sender.sendMessage("An error occurred while opening the server inventory.");
+											plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+											for (StackTraceElement element : e.getStackTrace()) {
+												plugin.getLogger().severe(element.toString());
+											}
+										}
 										return true;
 									}
 									default -> {

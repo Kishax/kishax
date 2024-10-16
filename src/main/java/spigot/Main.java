@@ -9,6 +9,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import spigot_command.FMCCommand;
+import spigot_command.ServerStatusCache;
 
 public class Main {
 
@@ -48,7 +49,7 @@ public class Main {
 		}
     	
     	getInjector().getInstance(DoServerOnline.class).UpdateDatabase();
-    	
+		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
     	plugin.getLogger().info("プラグインが有効になりました。");
     }
     

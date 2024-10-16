@@ -90,6 +90,11 @@ public class DiscordEventListener extends ListenerAdapter {
 	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
         Member member = e.getMember();
 		AudioChannel channel = e.getChannelJoined();
+		if (channel == null) {
+            // チャンネルがnullの場合の処理
+            logger.error("チャンネルがnullです。");
+            return;
+        }
         String message = "(discord) " + member.getEffectiveName() + " がボイスチャットチャンネル " + channel.getName() + " に参加しました。";
 
         TextComponent component = Component.text(message).color(NamedTextColor.GREEN);

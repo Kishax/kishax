@@ -1,5 +1,6 @@
 package spigot;
 
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +45,7 @@ public final class EventListener implements Listener {
 
     //player.performCommand("");
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
+    public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             String title = event.getView().getTitle();
             switch (title) {

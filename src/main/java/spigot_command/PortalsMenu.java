@@ -1,5 +1,11 @@
 package spigot_command;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Level;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -11,12 +17,15 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import com.google.inject.Inject;
 
-public class PortalsMenu {
+import spigot.Database;
 
+public class PortalsMenu {
 	private final common.Main plugin;
+    private final Database db;
 	@Inject
-	public PortalsMenu(common.Main plugin) {
+	public PortalsMenu(common.Main plugin, Database db) {
 		this.plugin = plugin;
+        this.db = db;
 	}
 
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -55,7 +64,7 @@ public class PortalsMenu {
         player.openInventory(inv);
     }
 
-    public void openEachServerInventory(Player player, String serverType) {
+    public void openEachServerInventory(Player player, String serverType) throws SQLException {
         Inventory inv = Bukkit.createInventory(null, 27, serverType + " servers");
         ItemStack backServerItem = new ItemStack(Material.BLAZE_ROD);
         ItemMeta backMeta = backServerItem.getItemMeta();
@@ -65,9 +74,31 @@ public class PortalsMenu {
         }
         inv.setItem(0, backServerItem);
 
+        try (Connection conn = db.getConnection();
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM status WHERE type=?;")) {
+            @SuppressWarnings("unused")
+            String sql = "SELECT * FROM status WHERE type=?;";
+            ps.setString(1, serverType);
+            ResultSet status = ps.executeQuery();
+            while (status.next()) {
+                String serverName = status.getString("name");
+                ItemStack serverItem = new ItemStack(Material.DIAMOND);
+                ItemMeta serverMeta = serverItem.getItemMeta();
+                if (serverMeta != null) {
+                    serverMeta.setDisplayName(ChatColor.GREEN + serverName);
+                    serverItem.setItemMeta(serverMeta);
+                }
+                inv.addItem(serverItem);
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                plugin.getLogger().severe(element.toString());
+            }
+        }
+
         switch (serverType) {
             case "life" -> {
-
             }
             case "distributed" -> {
 
@@ -77,5 +108,5 @@ public class PortalsMenu {
             }
         }
         player.openInventory(inv);
-    }
+    }       
 }
