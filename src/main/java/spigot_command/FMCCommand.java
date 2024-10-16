@@ -1,12 +1,10 @@
 package spigot_command;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -120,15 +118,7 @@ public class FMCCommand implements TabExecutor {
 								String menuType = args[3].toLowerCase();
 								switch (menuType) {
 									case "life","distributed","mod" -> {
-										try {
-											Main.getInjector().getInstance(PortalsMenu.class).openEachServerInventory((Player) sender, menuType);
-										} catch (SQLException e) {
-											sender.sendMessage("An error occurred while opening the server inventory.");
-											plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
-											for (StackTraceElement element : e.getStackTrace()) {
-												plugin.getLogger().severe(element.toString());
-											}
-										}
+										Main.getInjector().getInstance(PortalsMenu.class).openEachServerInventory((Player) sender, menuType);
 										return true;
 									}
 									default -> {

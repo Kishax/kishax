@@ -1,10 +1,9 @@
 package spigot_command;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Level;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -17,15 +16,17 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import com.google.inject.Inject;
 
-import spigot.Database;
-
 public class PortalsMenu {
 	private final common.Main plugin;
-    private final Database db;
+    private static final List<Material> ORE_BLOCKS = Arrays.asList(
+        Material.NETHERITE_BLOCK, Material.GOLD_BLOCK, Material.REDSTONE_BLOCK, Material.EMERALD_BLOCK
+    );
+    private static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
+    private final ServerStatusCache serverStatusCache;
 	@Inject
-	public PortalsMenu(common.Main plugin, Database db) {
+	public PortalsMenu(common.Main plugin, ServerStatusCache serverStatusCache) {  
 		this.plugin = plugin;
-        this.db = db;
+        this.serverStatusCache = serverStatusCache;
 	}
 
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -64,49 +65,58 @@ public class PortalsMenu {
         player.openInventory(inv);
     }
 
-    public void openEachServerInventory(Player player, String serverType) throws SQLException {
-        Inventory inv = Bukkit.createInventory(null, 27, serverType + " servers");
-        ItemStack backServerItem = new ItemStack(Material.BLAZE_ROD);
-        ItemMeta backMeta = backServerItem.getItemMeta();
+    public void openEachServerInventory(Player player, String serverType, int page) {
+        Inventory inv = Bukkit.createInventory(null, 54, "サーバーリスト");
+
+        // 前のインベントリに戻るブロックを配置
+        ItemStack backItem = new ItemStack(Material.ARROW);
+        ItemMeta backMeta = backItem.getItemMeta();
         if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.BLUE + "サーバーメニューへ戻る");
-            backServerItem.setItemMeta(backMeta);
+            backMeta.setDisplayName(ChatColor.RED + "前のページ");
+            backItem.setItemMeta(backMeta);
         }
-        inv.setItem(0, backServerItem);
+        inv.setItem(0, backItem);
 
-        try (Connection conn = db.getConnection();
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM status WHERE type=?;")) {
-            @SuppressWarnings("unused")
-            String sql = "SELECT * FROM status WHERE type=?;";
-            ps.setString(1, serverType);
-            ResultSet status = ps.executeQuery();
-            while (status.next()) {
-                String serverName = status.getString("name");
-                ItemStack serverItem = new ItemStack(Material.DIAMOND);
-                ItemMeta serverMeta = serverItem.getItemMeta();
-                if (serverMeta != null) {
-                    serverMeta.setDisplayName(ChatColor.GREEN + serverName);
-                    serverItem.setItemMeta(serverMeta);
-                }
-                inv.addItem(serverItem);
+        Map<String, Map<String, String>> serverStatusMap = serverStatusCache.getStatusMap();
+        List<Map<String, String>> serverStatusList = serverStatusMap.values().stream().toList();
+        int totalItems = serverStatusList.size();
+        int totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length;
+
+        int startIndex = (page - 1) * SLOT_POSITIONS.length;
+        int endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
+
+        for (int i = startIndex; i < endIndex; i++) {
+            Map<String, String> serverData = serverStatusList.get(i);
+            String serverName = serverData.get("name");
+            Material randomOre = ORE_BLOCKS.get(new Random().nextInt(ORE_BLOCKS.size()));
+            ItemStack serverItem = new ItemStack(randomOre);
+            ItemMeta serverMeta = serverItem.getItemMeta();
+            if (serverMeta != null) {
+                serverMeta.setDisplayName(ChatColor.GREEN + serverName);
+                serverItem.setItemMeta(serverMeta);
             }
-        } catch (ClassNotFoundException | SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
-            }
+            inv.setItem(SLOT_POSITIONS[i - startIndex], serverItem);
         }
 
-        switch (serverType) {
-            case "life" -> {
-            }
-            case "distributed" -> {
-
-            }
-            case "mod" -> {
-
-            }
+        // ページ戻るブロックを配置
+        ItemStack prevPageItem = new ItemStack(Material.ARROW);
+        ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+        if (prevPageMeta != null) {
+            prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+            prevPageItem.setItemMeta(prevPageMeta);
         }
+        inv.setItem(45, prevPageItem);
+
+        // ページ進むブロックを配置
+        ItemStack nextPageItem = new ItemStack(Material.ARROW);
+        ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+        if (nextPageMeta != null) {
+            nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+            nextPageItem.setItemMeta(nextPageMeta);
+        }
+        inv.setItem(53, nextPageItem);
+
+        // プレイヤーにインベントリを開かせる
         player.openInventory(inv);
-    }       
+    }  
 }
