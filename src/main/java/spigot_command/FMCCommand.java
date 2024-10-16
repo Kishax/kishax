@@ -26,10 +26,12 @@ import spigot.PortalsConfig;
 
 public class FMCCommand implements TabExecutor {
 	private final PortalsConfig psConfig;
+	private final PortalsMenu pm;
 	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal"));
 	@Inject
-	public FMCCommand(PortalsConfig psConfig) {
+	public FMCCommand(PortalsConfig psConfig, PortalsMenu pm) {
 		this.psConfig = psConfig;
+		this.pm = pm;
 	}
 	
 	@Override
@@ -110,32 +112,38 @@ public class FMCCommand implements TabExecutor {
 						}
 					}
 
-					if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
-						if (args.length > 2 && args[2].equalsIgnoreCase("server")) {
-							if (args.length > 3) {
-								String menuType = args[3].toLowerCase();
-								switch (menuType) {
-									case "life","distributed","mod" -> {
-										Main.getInjector().getInstance(PortalsMenu.class).openEachServerInventory((Player) sender, menuType);
-										return true;
+					if (sender instanceof Player player) {
+						if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
+							if (args.length > 2 && args[2].equalsIgnoreCase("server")) {
+								if (args.length > 3) {
+									String serverType = args[3].toLowerCase();
+									switch (serverType) {
+										case "life","distributed","mod" -> {
+											int page = pm.getPage(player, serverType);
+											pm.openServerEachInventory((Player) sender, serverType, page);
+											return true;
+										}
+										default -> {
+											sender.sendMessage("Unknown server type. Usage: /fmc portal menu server <life | distribution | mod>");
+											return true;
+										}
 									}
-									default -> {
-										sender.sendMessage("Unknown server type. Usage: /fmc portal menu server <life | distribution | mod>");
-										return true;
-									}
+								} else {
+									// /fmc portal menu serverと打った場合
+									//sender.sendMessage("Usage: /fmc portal menu server <life|distribution|mod>");
+									Main.getInjector().getInstance(PortalsMenu.class).OpenServerTypeInventory((Player) sender);
+									return true;
 								}
 							} else {
-								// /fmc portal menu serverと打った場合
-								//sender.sendMessage("Usage: /fmc portal menu server <life|distribution|mod>");
-								Main.getInjector().getInstance(PortalsMenu.class).OpenServerTypeInventory((Player) sender);
+								sender.sendMessage("Usage: /fmc portal menu server");
 								return true;
 							}
 						} else {
-							sender.sendMessage("Usage: /fmc portal menu server");
+							sender.sendMessage("Usage: /fmc portal menu");
 							return true;
 						}
 					} else {
-						sender.sendMessage("Usage: /fmc portal menu");
+						sender.sendMessage("You must be a player to use this command.");
 						return true;
 					}
 				} catch (ClassCastException e) {

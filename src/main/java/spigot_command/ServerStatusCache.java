@@ -21,7 +21,7 @@ public class ServerStatusCache {
     private static final long CACHE_REFRESH_INTERVAL = 60000;
     private final common.Main plugin;
     private final Database db;
-    private Map<String, Map<String, String>> statusMap = new HashMap<>();
+    private Map<String, Map<String, Map<String, String>>> statusMap = new HashMap<>();
 
     @Inject
     public ServerStatusCache(common.Main plugin, Database db) {
@@ -40,7 +40,7 @@ public class ServerStatusCache {
     }
     
     private void refreshCache() {
-        Map<String, Map<String, String>> newServerStatusMap = new HashMap<>();
+        Map<String, Map<String, Map<String, String>>> newServerStatusMap = new HashMap<>();
         try (Connection conn = db.getConnection();
             PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
             ResultSet rs = ps.executeQuery();
@@ -56,9 +56,10 @@ public class ServerStatusCache {
                 rowMap.put("exception2", String.valueOf(rs.getInt("exception2")));
                 rowMap.put("type", rs.getString("type"));
 
-                statusMap.put(rs.getString("name"), rowMap);
-                this.statusMap = newServerStatusMap;
+                String serverType = rs.getString("type");
+                newServerStatusMap.computeIfAbsent(serverType, k -> new HashMap<>()).put(rs.getString("name"), rowMap);
             }
+            this.statusMap = newServerStatusMap;
         } catch (SQLException | ClassNotFoundException e) {
             this.statusMap = null;
             plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
@@ -68,7 +69,7 @@ public class ServerStatusCache {
         }
     }
 
-    public Map<String, Map<String, String>> getStatusMap() {
+    public Map<String, Map<String, Map<String, String>>> getStatusMap() {
         return this.statusMap;
     }
 }

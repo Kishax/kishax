@@ -16,6 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -34,7 +35,8 @@ public final class EventListener implements Listener {
 	private final PortalsConfig psConfig;
     private final PortalsMenu pm;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
-    
+    private final Set<Player> playersOpeningNewInventory = new HashSet<>();
+
     @Inject
 	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm) {
 		this.plugin = plugin;
@@ -43,19 +45,67 @@ public final class EventListener implements Listener {
 		// new Location(Bukkit.getWorld("world"), 100, 64, 100);
 	}
 
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        Player player = (Player) event.getPlayer();
+        String title = event.getView().getTitle();
+
+        // インベントリのタイトルに基づいて処理を行う
+        if (title.endsWith(" servers")) {
+            if (playersOpeningNewInventory.contains(player)) {
+                // プレイヤーが新しいインベントリを開いている場合はリセットしない
+                playersOpeningNewInventory.remove(player);
+            } else {
+                // インベントリを閉じたときに、プレイヤーのページをリセット
+                String serverType = title.split(" ")[0];
+                pm.resetPage(player, serverType);
+            }
+        }
+    }
+    
     //player.performCommand("");
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
+            playersOpeningNewInventory.add(player);
             String title = event.getView().getTitle();
+            /*ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem != null && clickedItem.hasItemMeta()) {
+                ItemMeta itemMeta = clickedItem.getItemMeta();
+                String displayName;
+                if (itemMeta != null && itemMeta.hasDisplayName()) {
+                    displayName = itemMeta.getDisplayName();
+                } else {
+                    displayName = null;
+                }
+            }*/
+
             switch (title) {
                 case "life servers", "mod servers", "distributed servers" -> {
                     event.setCancelled(true);
+                    String serverType = title.split(" ")[0];
                     int slot = event.getRawSlot();
 
                     switch (slot) {
                         case 0 -> {
+                            pm.resetPage(player, serverType);
                             pm.OpenServerTypeInventory(player);
+                        }
+                        case 45 -> {
+                            // 戻るボタンがあれば
+                            int page = pm.getPage(player, serverType);
+                            if (page > 1) {
+                                pm.openServerEachInventory(player, serverType, page - 1);
+                            }
+                        }
+                        case 53 -> {
+                            // 進むボタンがあれば
+                            int page = pm.getPage(player, serverType);
+                            int totalServers = pm.getTotalServers(serverType); // 総サーバー数を取得
+                            int totalPages = (int) Math.ceil((double) totalServers / PortalsMenu.SLOT_POSITIONS.length); // 総ページ数を計算
+                            if (page < totalPages) {
+                                pm.openServerEachInventory(player, serverType, page + 1);
+                            }
                         }
                     }
                 }
@@ -65,13 +115,16 @@ public final class EventListener implements Listener {
 
                     switch (slot) {
                         case 11 -> {
-                            pm.openEachServerInventory(player, "life");
+                            int page = pm.getPage(player, "life");
+                            pm.openServerEachInventory(player, "life", page);
                         }
                         case 13 -> {
-                            pm.openEachServerInventory(player, "distributed");
+                            int page = pm.getPage(player, "distributed");
+                            pm.openServerEachInventory(player, "distributed", page);
                         }
                         case 15 -> {
-                            pm.openEachServerInventory(player, "mod");
+                            int page = pm.getPage(player, "mod");
+                            pm.openServerEachInventory(player, "mod", page);
                         }
                     }
                 }
