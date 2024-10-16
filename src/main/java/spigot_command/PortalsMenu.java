@@ -1,6 +1,7 @@
 package spigot_command;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -18,12 +19,14 @@ import org.bukkit.inventory.meta.ItemMeta;
 import com.google.inject.Inject;
 
 public class PortalsMenu {
+    public static Map<String, Map<Player, Integer>> playerOpenningInventoryMap;
 	private final common.Main plugin;
     private static final List<Material> ORE_BLOCKS = Arrays.asList(
         Material.NETHERITE_BLOCK, Material.GOLD_BLOCK, Material.REDSTONE_BLOCK, Material.EMERALD_BLOCK
     );
     private static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     private final ServerStatusCache serverStatusCache;
+    
 	@Inject
 	public PortalsMenu(common.Main plugin, ServerStatusCache serverStatusCache) {  
 		this.plugin = plugin;
@@ -66,27 +69,48 @@ public class PortalsMenu {
         player.openInventory(inv);
     }
 
-    public void openInventory(Player player, String serverType, int page) {
-        Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
-
-        // 前のインベントリに戻るブロックを配置
-        ItemStack backItem = new ItemStack(Material.ARROW);
-        ItemMeta backMeta = backItem.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.RED + "前のページ");
-            backItem.setItemMeta(backMeta);
+    public void openInventory(Player player, String serverType) {
+        // プレイヤーが現在どのページを見ているかによって、
+        // 次ページ、戻るページのボタンを表示するかどうか決め、
+        // ブロックに仕込むメソッドも変更しなくてはならない
+        final int[] page = {1};
+        List<Map<Player, Integer>> playerOpenningInventoryList = PortalsMenu.playerOpenningInventoryMap.values().stream()
+            .filter(map -> map.containsKey(player))
+            .toList();
+        if (playerOpenningInventoryList.isEmpty()) {
+            page[0] = 1;
+            Map<Player, Integer> playerMap = new HashMap<>();
+            playerMap.put(player, 1);
+            PortalsMenu.playerOpenningInventoryMap.put(serverType, playerMap);
+        } else {
+            playerOpenningInventoryList.forEach(map -> {
+                map.forEach((key, value) -> {
+                    value += 1;
+                    map.put(key, value);
+                    if (key.equals(player)) {
+                        page[0] = value;
+                    }
+                });
+            });
         }
-        inv.setItem(0, backItem);
+        
+        Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
 
         Map<String, Map<String, String>> serverStatusMap = serverStatusCache.getStatusMap();
         List<Map<String, String>> serverStatusList = serverStatusMap.values().stream()
             .filter(map -> serverType.equals(map.get("type")))
             .collect(Collectors.toList());
         int totalItems = serverStatusList.size();
-        int totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length + 1;
+        int totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length;
 
-        int startIndex = (page - 1) * SLOT_POSITIONS.length;
+        int startIndex = (page[0] - 1) * SLOT_POSITIONS.length;
         int endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
+
+        // デバッグ用のログ出力
+        /*plugin.getLogger().log(Level.INFO, "startIndex: {0}", startIndex);
+        plugin.getLogger().log(Level.INFO, "endIndex: {0}", endIndex);
+        plugin.getLogger().log(Level.INFO, "totalItems: {0}", totalItems);
+        plugin.getLogger().log(Level.INFO, "page: {0}", page);*/
 
         for (int i = startIndex; i < endIndex; i++) {
             Map<String, String> serverData = serverStatusList.get(i);
@@ -102,7 +126,7 @@ public class PortalsMenu {
         }
 
         // ページ戻るブロックを配置
-        if (page > 1) {
+        if (page[0] > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
             ItemMeta prevPageMeta = prevPageItem.getItemMeta();
             if (prevPageMeta != null) {
@@ -113,7 +137,7 @@ public class PortalsMenu {
         }
 
         // ページ進むブロックを配置
-        if (page < totalPages) {
+        if (page[0] < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
             ItemMeta nextPageMeta = nextPageItem.getItemMeta();
             if (nextPageMeta != null) {
@@ -128,14 +152,13 @@ public class PortalsMenu {
     }
 
     public void openEachServerInventory(Player player, String serverType) {
-        Map<String, Map<String, String>> serverStatusMap = serverStatusCache.getStatusMap();
+        /*Map<String, Map<String, String>> serverStatusMap = serverStatusCache.getStatusMap();
         List<Map<String, String>> serverStatusList = serverStatusMap.values().stream()
             .filter(map -> serverType.equals(map.get("type")))
             .collect(Collectors.toList());
         int totalItems = serverStatusList.size();
-        int totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length + 1;
+        int totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length;*/
 
-        // 初期ページを1に設定してopenInventoryを呼び出す
-        openInventory(player, serverType, 1);
+        openInventory(player, serverType);
     }
 }
