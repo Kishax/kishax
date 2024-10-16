@@ -5,10 +5,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -59,7 +61,27 @@ public class ServerStatusCache {
                 String serverType = rs.getString("type");
                 newServerStatusMap.computeIfAbsent(serverType, k -> new HashMap<>()).put(rs.getString("name"), rowMap);
             }
-            this.statusMap = newServerStatusMap;
+
+            // サーバーネームをアルファベット順にソート
+            Map<String, Map<String, Map<String, String>>> sortedServerStatusMap = new HashMap<>();
+            for (Map.Entry<String, Map<String, Map<String, String>>> entry : newServerStatusMap.entrySet()) {
+                String serverType = entry.getKey();
+                Map<String, Map<String, String>> servers = entry.getValue();
+
+                // サーバーネームをソート
+                Map<String, Map<String, String>> sortedServers = servers.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                    ));
+
+                sortedServerStatusMap.put(serverType, sortedServers);
+            }
+
+            this.statusMap = sortedServerStatusMap;
         } catch (SQLException | ClassNotFoundException e) {
             this.statusMap = null;
             plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());

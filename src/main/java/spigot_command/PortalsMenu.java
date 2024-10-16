@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
@@ -22,11 +21,15 @@ public class PortalsMenu {
     public static Map<String, Map<Player, Integer>> playerOpenningInventoryMap = new HashMap<>();
 	private final common.Main plugin;
     private static final List<Material> ORE_BLOCKS = Arrays.asList(
-        Material.NETHERITE_BLOCK, Material.GOLD_BLOCK, Material.REDSTONE_BLOCK, Material.EMERALD_BLOCK
+        Material.NETHERITE_BLOCK, Material.GOLD_BLOCK, Material.REDSTONE_BLOCK, 
+        Material.EMERALD_BLOCK, Material.DIAMOND_BLOCK, Material.IRON_BLOCK,
+        Material.COAL_BLOCK, Material.LAPIS_BLOCK, Material.QUARTZ_BLOCK,
+        Material.COPPER_BLOCK
     );
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     private final ServerStatusCache serverStatusCache;
-    
+    private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
+
 	@Inject
 	public PortalsMenu(common.Main plugin, ServerStatusCache serverStatusCache) {  
 		this.plugin = plugin;
@@ -92,27 +95,12 @@ public class PortalsMenu {
     }
     
     public int getPage(Player player, String serverType) {
-        final int[] page = {1};
-        List<Map<Player, Integer>> playerOpenningInventoryList = PortalsMenu.playerOpenningInventoryMap.values().stream()
-            .filter(map -> map.containsKey(player))
-            .toList();
-        if (playerOpenningInventoryList.isEmpty()) {
-            page[0] = 1;
-            Map<Player, Integer> playerMap = new HashMap<>();
-            playerMap.put(player, 1);
-            PortalsMenu.playerOpenningInventoryMap.put(serverType, playerMap);
-        } else {
-            playerOpenningInventoryList.forEach(map -> {
-                map.forEach((key, value) -> {
-                    value += 1;
-                    map.put(key, value);
-                    if (key.equals(player)) {
-                        page[0] = value;
-                    }
-                });
-            });
+        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
+        if (playerMap == null) {
+            playerMap = new HashMap<>();
+            playerOpenningInventoryMap.put(serverType, playerMap);
         }
-        return page[0];
+        return playerMap.getOrDefault(player, 1);
     }
 
     public void openServerEachInventory(Player player, String serverType, int page) {
@@ -130,8 +118,12 @@ public class PortalsMenu {
         for (int i = startIndex; i < endIndex; i++) {
             Map<String, String> serverData = serverDataList.get(i);
             String serverName = serverData.get("name");
-            Material randomOre = ORE_BLOCKS.get(new Random().nextInt(ORE_BLOCKS.size()));
-            ItemStack serverItem = new ItemStack(randomOre);
+            if (page == 1 && i == 0) {
+                currentOreIndex = 0; // ページが1の場合はインデックスをリセット
+            }
+            Material oreMaterial = ORE_BLOCKS.get(currentOreIndex);
+            currentOreIndex = (currentOreIndex + 1) % ORE_BLOCKS.size(); // インデックスを更新
+            ItemStack serverItem = new ItemStack(oreMaterial);
             ItemMeta serverMeta = serverItem.getItemMeta();
             if (serverMeta != null) {
                 serverMeta.setDisplayName(ChatColor.GREEN + serverName);
