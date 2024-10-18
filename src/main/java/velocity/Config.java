@@ -77,6 +77,7 @@ public class Config {
                 // 例: サーバー名を追加する部分
                 for (RegisteredServer registeredServer : server.getAllServers()) {
                 	addContents += "\n    "+registeredServer.getServerInfo().getName()+":";
+                    addContents += "\n        Platform: \"\"";
                     addContents += "\n        Type: \"\"";
                     addContents += "\n        Modded:";
                     addContents += "\n          Mode: false";

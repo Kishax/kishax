@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 import java.util.logging.Level;
 
 import com.google.inject.Inject;
@@ -14,21 +15,32 @@ public class SocketSwitch {
     public final common.Main plugin;
     private final SocketResponse sr;
     private final PortFinder pf;
+    private final ServerStatusCache serverStatusCache;
     private ServerSocket serverSocket;
     private Thread clientThread, socketThread;
     private volatile boolean running = true;
     
     @Inject
-	public SocketSwitch(common.Main plugin, SocketResponse sr, PortFinder pf) {
+	public SocketSwitch(common.Main plugin, SocketResponse sr, PortFinder pf, ServerStatusCache serverStatusCache) {
+        this.serverStatusCache = serverStatusCache;
 		this.plugin = plugin;
         this.sr = sr;
         this.pf = pf;
 	}
     
-    public void sendSpigotServer() {
-
+    public void sendSpigotServer(String sendmsg) {
+        Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
+        for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
+            for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
+                Map<String, String> serverInfo = entry.getValue();
+                if ("0".equals(serverInfo.get("")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
+                    int port = Integer.parseInt(serverInfo.get("port"));
+                    startSocketClient(port, sendmsg);
+                }
+            }
+        }
     }
-    
+
 	public void startSocketClient(int port, String sendmsg) {
 	    if (port == 0) {
 	        plugin.getLogger().info("Client Socket is canceled because socketport is 0");

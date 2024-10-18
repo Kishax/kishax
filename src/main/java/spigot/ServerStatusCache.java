@@ -62,6 +62,7 @@ public class ServerStatusCache {
                 rowMap.put("exception2", String.valueOf(rs.getInt("exception2")));
                 rowMap.put("type", rs.getString("type"));
                 rowMap.put("socketport", String.valueOf(rs.getInt("socketport")));
+                rowMap.put("platform", rs.getString("platform"));
                 String serverType = rs.getString("type");
                 newServerStatusMap.computeIfAbsent(serverType, k -> new HashMap<>()).put(rs.getString("name"), rowMap);
             }
@@ -84,7 +85,7 @@ public class ServerStatusCache {
 
                 sortedServerStatusMap.put(serverType, sortedServers);
             }
-
+            
             this.statusMap = sortedServerStatusMap;
             // 初回ループのみ
             if (isFirstRefreshing.compareAndSet(false, true)) {
