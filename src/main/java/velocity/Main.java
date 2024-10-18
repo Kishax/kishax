@@ -34,9 +34,6 @@ public class Main {
         this.server = serverinstance;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
-        
-        // Guiceに依存性を自動で解決させ、インスタンスを生成してもらう。
-        // Guice インジェクターの作成は onProxyInitialization メソッドで行う
     }
 
     @Subscribe
@@ -64,12 +61,9 @@ public class Main {
         commandManager.register("hub", getInjector().getInstance(Hub.class));
         commandManager.register("cend", getInjector().getInstance(CEnd.class));
         
-		// Client side
-        getInjector().getInstance(SocketSwitch.class).startSocketClient("Hello!\nStart Server!!");
 	    // Server side
         getInjector().getInstance(SocketSwitch.class).startSocketServer();
-        getInjector().getInstance(SocketSwitch.class).startBufferedSocketServer();
-	    
+        
 	    logger.info("プラグインが有効になりました。");
     }
     
@@ -82,7 +76,6 @@ public class Main {
     	getInjector().getInstance(SocketSwitch.class).stopSocketClient();
 		logger.info( "Client Socket Stopping..." );
 		getInjector().getInstance(SocketSwitch.class).stopSocketServer();
-		getInjector().getInstance(SocketSwitch.class).stopBufferedSocketServer();
     	logger.info("Socket Server stopping...");
     	logger.info("Buffered Socket Server stopping...");
 		logger.info( "プラグインが無効になりました。" );

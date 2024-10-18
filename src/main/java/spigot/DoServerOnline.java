@@ -28,7 +28,7 @@ public class DoServerOnline {
 		this.db = db;
 	}
 	
-	public void UpdateDatabase() {
+	public void UpdateDatabase(int socketport) {
 		try {
         	// "plugins"ディレクトリの親ディレクトリを取得
             String serverName = shd.getServerName();
@@ -41,10 +41,11 @@ public class DoServerOnline {
 				plugin.getLogger().info(String.format("""
 					%sサーバーが起動しました。""", serverName));
 				
-				String sql = "UPDATE status SET online=? WHERE name=?;";
+				String sql = "UPDATE status SET online=?,socketport=? WHERE name=?;";
 				ps = conn.prepareStatement(sql);
 				ps.setBoolean(1,true);
-				ps.setString(2, serverName);
+				ps.setInt(2, socketport);
+				ps.setString(3, serverName);
 				ps.executeUpdate();
 				
 				plugin.getLogger().info("MySQL Server is connected!");

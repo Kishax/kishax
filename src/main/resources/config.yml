@@ -12,7 +12,6 @@ MySQL:
     Password: ""
 
 Socket:
-    Client_Port: 
     Server_Port: 
 
 Discord:

@@ -1,12 +1,14 @@
 package spigot;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import static org.bukkit.Bukkit.getServer;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -22,6 +24,7 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.inventory.Inventory;
 
 import com.google.inject.Inject;
 
@@ -34,14 +37,16 @@ public final class EventListener implements Listener {
     private final common.Main plugin;
 	private final PortalsConfig psConfig;
     private final PortalsMenu pm;
+    private final ServerStatusCache serverStatusCache;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm) {
+	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm, ServerStatusCache serverStatusCache) {
 		this.plugin = plugin;
 		this.psConfig = psConfig;
         this.pm = pm;
+        this.serverStatusCache = serverStatusCache;
 		// new Location(Bukkit.getWorld("world"), 100, 64, 100);
 	}
 
@@ -68,7 +73,9 @@ public final class EventListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             playersOpeningNewInventory.add(player);
+            String playerName = player.getName();
             String title = event.getView().getTitle();
+            // プレイヤーフェイスブロックのインベントリを作るときに使う
             /*ItemStack clickedItem = event.getCurrentItem();
             if (clickedItem != null && clickedItem.hasItemMeta()) {
                 ItemMeta itemMeta = clickedItem.getItemMeta();
@@ -90,6 +97,23 @@ public final class EventListener implements Listener {
                         case 0 -> {
                             pm.resetPage(player, serverType);
                             pm.OpenServerTypeInventory(player);
+                        }
+                        case 11, 13, 15, 29, 31, 33 -> {
+                            Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
+                            Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
+                            plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
+                            if (serverStatusList != null) {
+                                plugin.getLogger().log(Level.INFO, "serverStatusList: {0}", serverStatusList);
+                                int page = pm.getPage(player, serverType);
+                                int slotIndex = Arrays.asList(Arrays.stream(PortalsMenu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
+                                int index = PortalsMenu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
+                                if (index < serverStatusList.size()) {
+                                    plugin.getLogger().info("YES");
+                                    String serverName = (String) serverStatusList.keySet().toArray()[index];
+                                    player.performCommand("fmc fv " + playerName + " fmcp ss " + serverName);
+                                    Inventory inv = Bukkit.createInventory(null, 54, serverType + "");
+                                }
+                            }
                         }
                         case 45 -> {
                             // 戻るボタンがあれば

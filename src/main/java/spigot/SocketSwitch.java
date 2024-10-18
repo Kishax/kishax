@@ -5,30 +5,33 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Objects;
 import java.util.logging.Level;
 
 import com.google.inject.Inject;
 
 public class SocketSwitch {
 
-    public String sendmsg;
-    
-    private Thread clientThread;
-    private Thread socketThread;
-    private volatile boolean running = true;
-    private ServerSocket serverSocket;
     public final common.Main plugin;
+    private final SocketResponse sr;
+    private final PortFinder pf;
+    private ServerSocket serverSocket;
+    private Thread clientThread, socketThread;
+    private volatile boolean running = true;
     
     @Inject
-	public SocketSwitch(common.Main plugin) {
+	public SocketSwitch(common.Main plugin, SocketResponse sr, PortFinder pf) {
 		this.plugin = plugin;
+        this.sr = sr;
+        this.pf = pf;
 	}
-	
-	//Client side
-	public void startSocketClient(String sendmsg) {
-	    if (plugin.getConfig().getInt("Socket.Client_Port") == 0) {
-	        plugin.getLogger().info("Client Socket is canceled for config value not given");
+    
+    public void sendSpigotServer() {
+
+    }
+    
+	public void startSocketClient(int port, String sendmsg) {
+	    if (port == 0) {
+	        plugin.getLogger().info("Client Socket is canceled because socketport is 0");
 	        return;
 	    }
 
@@ -74,32 +77,26 @@ public class SocketSwitch {
     
     //Server side
     public void startSocketServer() {
-		if (Objects.isNull(plugin.getConfig().getInt("Socket.Server_Port")) || plugin.getConfig().getInt("Socket.Server_Port") ==0) {
-			plugin.getLogger().info("Socket Server is canceled for config value not given");
-			return;
-		}
-
-		plugin.getLogger().info("Server Socket is Available");
+        plugin.getLogger().log(Level.INFO, "Server Socket is Available");
         socketThread = new Thread(() -> {
             try {
                 serverSocket = new ServerSocket(plugin.getConfig().getInt("Socket.Server_Port"));
                 plugin.getLogger().log(Level.INFO, "Socket Server is listening on port {0}", plugin.getConfig().getInt("Socket.Server_Port"));
-                
+
                 while (running) {
                     try {
-                        Socket socket = serverSocket.accept();
+                        Socket socket2 = serverSocket.accept();
                         if (!running) {
-                            socket.close();
+                            socket2.close();
                             break;
                         }
-
-                        plugin.getLogger().info("New client connected"); 
-                        new SocketServerThread(socket, plugin).start();
+                        // logger.info("New client connected()");
+                        new SocketServerThread(plugin, sr, socket2).start();
                     } catch (IOException e) {
                         if (running) {
-                            plugin.getLogger().log(Level.SEVERE, "An InterruptedException error occurred: {0}", e.getMessage());
+                            plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
                             for (StackTraceElement element : e.getStackTrace()) {
-                                plugin.getLogger().severe(element.toString());
+                                plugin.getLogger().log(Level.SEVERE, element.toString());
                             }
                         }
                     }
@@ -107,7 +104,7 @@ public class SocketSwitch {
             } catch (IOException e) {
                 plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
-                    plugin.getLogger().severe(element.toString());
+                    plugin.getLogger().log(Level.SEVERE, element.toString());
                 }
             } finally {
                 try {
@@ -117,7 +114,7 @@ public class SocketSwitch {
                 } catch (IOException e) {
                     plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
                     for (StackTraceElement element : e.getStackTrace()) {
-                        plugin.getLogger().severe(element.toString());
+                        plugin.getLogger().log(Level.SEVERE, element.toString());
                     }
                 }
             }
@@ -125,9 +122,9 @@ public class SocketSwitch {
 
         socketThread.start();
     }
-
+    
     public void stopSocketServer() {
-        running = false;
+    	running = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close(); // これによりaccept()が解除される
@@ -135,12 +132,11 @@ public class SocketSwitch {
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+                plugin.getLogger().log(Level.SEVERE, element.toString());
             }
         }
 
-        try
-        {
+        try {
             if (socketThread != null && socketThread.isAlive()) {
                 socketThread.join(1000); // 1秒以内にスレッドの終了を待つ
                 if (socketThread.isAlive()) {
@@ -148,9 +144,9 @@ public class SocketSwitch {
                 }
             }
         } catch (InterruptedException e) {
-            plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+            plugin.getLogger().log(Level.SEVERE, "An InterruptedException error occurred: {0}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+                plugin.getLogger().log(Level.SEVERE, element.toString());
             }
         }
     }

@@ -6,7 +6,6 @@ import com.google.inject.AbstractModule;
 import spigot_command.PortalsDelete;
 import spigot_command.PortalsMenu;
 import spigot_command.ReloadConfig;
-import spigot_command.ServerStatusCache;
 
 public class Module extends AbstractModule {
 	
@@ -34,5 +33,6 @@ public class Module extends AbstractModule {
 		bind(WandListener.class);
 		bind(ReloadConfig.class);
 		bind(ServerStatusCache.class).in(com.google.inject.Scopes.SINGLETON);
+		bind(PortFinder.class);
     }
 }

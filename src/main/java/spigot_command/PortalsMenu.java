@@ -17,6 +17,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import com.google.inject.Inject;
 
+import spigot.ServerStatusCache;
+
 public class PortalsMenu {
     public static Map<String, Map<Player, Integer>> playerOpenningInventoryMap = new HashMap<>();
 	private final common.Main plugin;
@@ -41,12 +43,6 @@ public class PortalsMenu {
             player.openInventory(plugin.getServer().createInventory(null, 27, "Custom Inventory"));
         }
 	}
-
-    public int getTotalServers(String serverType) {
-        Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
-        Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
-        return serverStatusList != null ? serverStatusList.size() : 0;
-    }
 
     public void OpenServerTypeInventory(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, "server type");
@@ -76,31 +72,6 @@ public class PortalsMenu {
         inv.setItem(15, modServerItem);
 
         player.openInventory(inv);
-    }
-
-    public void resetPage(Player player, String serverType) {
-        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
-        if (playerMap != null) {
-            playerMap.remove(player);
-        }
-    }
-
-    public void setPage(Player player, String serverType, int page) {
-        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
-        if (playerMap == null) {
-            playerMap = new HashMap<>();
-            playerOpenningInventoryMap.put(serverType, playerMap);
-        }
-        playerMap.put(player, page);
-    }
-    
-    public int getPage(Player player, String serverType) {
-        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
-        if (playerMap == null) {
-            playerMap = new HashMap<>();
-            playerOpenningInventoryMap.put(serverType, playerMap);
-        }
-        return playerMap.getOrDefault(player, 1);
     }
 
     public void openServerEachInventory(Player player, String serverType, int page) {
@@ -168,5 +139,36 @@ public class PortalsMenu {
 
         // プレイヤーのページを更新
         setPage(player, serverType, page);
+    }
+
+    public int getTotalServers(String serverType) {
+        Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
+        Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
+        return serverStatusList != null ? serverStatusList.size() : 0;
+    }
+    
+    public void resetPage(Player player, String serverType) {
+        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
+        if (playerMap != null) {
+            playerMap.remove(player);
+        }
+    }
+
+    public void setPage(Player player, String serverType, int page) {
+        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
+        if (playerMap == null) {
+            playerMap = new HashMap<>();
+            playerOpenningInventoryMap.put(serverType, playerMap);
+        }
+        playerMap.put(player, page);
+    }
+    
+    public int getPage(Player player, String serverType) {
+        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
+        if (playerMap == null) {
+            playerMap = new HashMap<>();
+            playerOpenningInventoryMap.put(serverType, playerMap);
+        }
+        return playerMap.getOrDefault(player, 1);
     }
 }

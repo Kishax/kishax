@@ -16,12 +16,9 @@ public class SocketSwitch {
 
 	private Thread clientThread;
 	private Thread socketThread;
-	private Thread bufferedsocketThread;
 	private ServerSocket serverSocket;
-	private ServerSocket bufferedserverSocket;
 	public String sendmsg;
 	private volatile boolean running = true;
-	private volatile boolean bufferedrunning = true;
 	private final Config config;
 	private final Logger logger;
 	private final SocketResponse sr;
@@ -91,9 +88,9 @@ public class SocketSwitch {
         }
     }
     
-    //Server side
     public void startSocketServer() {
 		if (config.getInt("Socket.Server_Port",0)==0) {
+            logger.info("Socket.Server_Port: "+config.getInt("Socket.Server_Port"));
 			logger.info("Server Socket is canceled for config value not given");
 			return;
 		}
@@ -106,25 +103,24 @@ public class SocketSwitch {
 
                 while (running) {
                     try {
-                        Socket socket = serverSocket.accept();
+                        Socket socket2 = serverSocket.accept();
                         if (!running) {
-                            socket.close();
+                            socket2.close();
                             break;
                         }
-
-                        logger.info("New client connected(Non Buffered)");
-                        new SocketServerThread(logger, socket, sr).start();
+                        // logger.info("New client connected()");
+                        new SocketServerThread(logger, sr, socket2).start();
                     } catch (IOException e) {
                         if (running) {
-                            logger.error("Error accepting client connection");
+                            logger.error("An IOException error occurred: " + e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace()) {
+                                logger.error(element.toString());
+                            }
                         }
                     }
                 }
             } catch (IOException e) {
-                logger.error("An IOException error occurred: " + e.getMessage());
-                for (StackTraceElement element : e.getStackTrace()) {
-                    logger.error(element.toString());
-                }
+                logger.error("Socket Server socket error");
             } finally {
                 try {
                     if (serverSocket != null && !serverSocket.isClosed()) {
@@ -141,87 +137,9 @@ public class SocketSwitch {
 
         socketThread.start();
     }
-
-    public void startBufferedSocketServer() {
-		if (config.getInt("Socket.Buffered_Server_Port",0)==0) {
-            logger.info("Socket.Buffered_Server_Port"+config.getInt("Socket.Buffered_Server_Port"));
-			logger.info("Buffered Server Socket is canceled for config value not given");
-			return;
-		}
-
-		logger.info("Buffered Server Socket is Available");
-        bufferedsocketThread = new Thread(() -> {
-            try {
-                bufferedserverSocket = new ServerSocket(config.getInt("Socket.Buffered_Server_Port"));
-                logger.info("Buffered Socket Server is listening on port " + config.getInt("Socket.Buffered_Server_Port"));
-
-                while (bufferedrunning) {
-                    try {
-                        Socket socket2 = bufferedserverSocket.accept();
-                        if (!bufferedrunning) {
-                            socket2.close();
-                            break;
-                        }
-                        // logger.info("New client connected(Buffered)");
-                        new BufferedSocketServerThread(logger, sr, socket2).start();
-                    } catch (IOException e) {
-                        if (bufferedrunning) {
-                            logger.error("An IOException error occurred: " + e.getMessage());
-                            for (StackTraceElement element : e.getStackTrace()) {
-                                logger.error(element.toString());
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("Socket Server socket error");
-            } finally {
-                try {
-                    if (bufferedserverSocket != null && !bufferedserverSocket.isClosed()) {
-                        bufferedserverSocket.close();
-                    }
-                } catch (IOException e) {
-                    logger.error("An IOException error occurred: " + e.getMessage());
-                    for (StackTraceElement element : e.getStackTrace()) {
-                        logger.error(element.toString());
-                    }
-                }
-            }
-        });
-
-        bufferedsocketThread.start();
-    }
-    
-    public void stopBufferedSocketServer() {
-    	bufferedrunning = false;
-        try {
-            if (bufferedserverSocket != null && !bufferedserverSocket.isClosed()) {
-                bufferedserverSocket.close(); // これによりaccept()が解除される
-            }
-        } catch (IOException e) {
-            logger.error("An IOException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-        }
-
-        try {
-            if (bufferedsocketThread != null && bufferedsocketThread.isAlive()) {
-                bufferedsocketThread.join(1000); // 1秒以内にスレッドの終了を待つ
-                if (bufferedsocketThread.isAlive()) {
-                    bufferedsocketThread.interrupt(); // 強制的にスレッドを停止
-                }
-            }
-        } catch (InterruptedException e) {
-            logger.error("An InterruptedException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-        }
-    }
     
     public void stopSocketServer() {
-        running = false;
+    	running = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close(); // これによりaccept()が解除される

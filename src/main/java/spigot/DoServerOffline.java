@@ -37,10 +37,11 @@ public class DoServerOffline {
     		conn = db.getConnection();
 			// サーバーをオフラインに
 			if (Objects.nonNull(conn)) {
-				String sql = "UPDATE status SET online=? WHERE name=?;";
+				String sql = "UPDATE status SET online=?, socketport=? WHERE name=?;";
 				ps = conn.prepareStatement(sql);
 				ps.setBoolean(1,false);
-				ps.setString(2, serverName);
+				ps.setInt(2, 0);
+				ps.setString(3, serverName);
 				ps.executeUpdate();
 			}
 			

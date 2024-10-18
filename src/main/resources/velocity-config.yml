@@ -10,9 +10,7 @@ MySQL:
     Password: ""
   
 Socket:
-    Client_Port: 
     Server_Port: 
-    Buffered_Server_Port: 
 
 Discord:
     Token: ""

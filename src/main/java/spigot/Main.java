@@ -9,7 +9,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import spigot_command.FMCCommand;
-import spigot_command.ServerStatusCache;
 
 public class Main {
 
@@ -47,8 +46,8 @@ public class Main {
     	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
 		}
-    	
-    	getInjector().getInstance(DoServerOnline.class).UpdateDatabase();
+		
+    	// DoServerOnlineとPortFinderとSocketの処理を統合
 		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
     	plugin.getLogger().info("プラグインが有効になりました。");
     }
