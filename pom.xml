@@ -9,7 +9,9 @@
    <properties>
       <!--<java.version>1.8</java.version>POPPOOO!!!-->
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.release>22</maven.compiler.release>
+      <maven.compiler.release>17</maven.compiler.release>
+      <maven.compiler.source>17</maven.compiler.source>
+      <maven.compiler.target>17</maven.compiler.target>
       <velocity.version>3.3.0</velocity.version>
    </properties>
    <repositories>
@@ -38,7 +40,7 @@
       <dependency>
          <groupId>org.spigotmc</groupId>
          <artifactId>spigot-api</artifactId>
-         <version>1.20.6-R0.1-SNAPSHOT</version><!--[1.20,1.22)-->
+         <version>1.20.6-R0.1-SNAPSHOT</version><!--[1.20,1.17)-->
          <scope>provided</scope>
       </dependency>
       <dependency>
@@ -92,7 +94,7 @@
       <!--<dependency>
          <groupId>org.bukkit</groupId>
          <artifactId>bukkit</artifactId>
-         <version>[1.20,1.22)</version>
+         <version>[1.20,1.17)</version>
          <scope>provided</scope>
       </dependency>-->
       <dependency>
@@ -130,43 +132,46 @@
          <artifactId>okhttp</artifactId>
          <version>4.9.3</version> <!-- 最新のバージョンを確認してください -->
       </dependency>
-      </dependencies>
-      <build>
+   </dependencies>
+   <build>
       <finalName>FMC</finalName>
       <plugins>
          <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-shade-plugin</artifactId>
-               <version>3.2.4</version>
-               <executions>
-                  <execution>
-                     <phase>package</phase>
-                     <goals>
-                           <goal>shade</goal>
-                     </goals>
-                     <configuration>
-                           <source>22</source>
-                           <target>22</target>
-                           <filters>
-                              <filter>
-                                 <artifact>mysql:mysql-connector-java</artifact>
-                                 <includes>
-                                       <include>**/*</include>
-                                 </includes>
-                              </filter>
-                              <!--<filter>
-                                 <artifact>com.github.ucchyocean:LunaChat</artifact>
-                                 <excludes>
-                                       <exclude>**/*</exclude>
-                                 </excludes>
-                              </filter>-->
-                           </filters>
-                           <relocations>
-                              <!-- Optionally, relocate classes to avoid conflicts -->
-                           </relocations>
-                     </configuration>
-                  </execution>
-               </executions>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version>
+            <configuration>
+               <release>17</release>
+               <!--<compilerArgs>
+                  <arg>enable-preview</arg>
+               </compilerArgs>-->
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>3.2.4</version>
+            <executions>
+               <execution>
+                  <phase>package</phase>
+                  <goals>
+                        <goal>shade</goal>
+                  </goals>
+                  <configuration>
+                        <createDependencyReducedPom>false</createDependencyReducedPom>
+                        <filters>
+                           <filter>
+                              <artifact>*:*</artifact>
+                              <excludes>
+                                    <exclude>META-INF/*.SF</exclude>
+                                    <exclude>META-INF/*.DSA</exclude>
+                                    <exclude>META-INF/*.RSA</exclude>
+                              </excludes>
+                           </filter>
+                        </filters>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
       </plugins>
    </build>

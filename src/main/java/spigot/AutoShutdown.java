@@ -6,18 +6,19 @@ import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class AutoShutdown {
 
 	private final common.Main plugin;
-	private final SocketSwitch ssw;
+	private final Provider<SocketSwitch> sswProvider;
 	private final ServerHomeDir shd;
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown (common.Main plugin, SocketSwitch ssw, ServerHomeDir shd) {
+	public AutoShutdown (common.Main plugin, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
 		this.plugin = plugin;
-		this.ssw = ssw;
+		this.sswProvider = sswProvider;
 		this.shd = shd;
 	}
 	
@@ -34,6 +35,7 @@ public class AutoShutdown {
 		task = new BukkitRunnable() {
 	        @Override
 	        public void run() {
+				SocketSwitch ssw = sswProvider.get();
 	            if (plugin.getServer().getOnlinePlayers().isEmpty()) {
 	            	String serverName = shd.getServerName();
 	            	ssw.sendVelocityServer("プレイヤー不在のため、"+serverName+"サーバーを停止させます。");

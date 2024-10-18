@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class DoServerOffline {
 
@@ -14,17 +15,17 @@ public class DoServerOffline {
 	public PreparedStatement ps = null;
 	
 	private final common.Main plugin;
-	private final SocketSwitch ssw;
+	private final Provider<SocketSwitch> sswProvider;
 	private final ServerHomeDir shd;
 	private final Database db;
 	
 	@Inject
 	public DoServerOffline (
-		common.Main plugin, SocketSwitch ssw, ServerHomeDir shd,
+		common.Main plugin, Provider<SocketSwitch> sswProvider, ServerHomeDir shd,
 		Database db
 	) {
 		this.plugin = plugin;
-		this.ssw = ssw;
+		this.sswProvider = sswProvider;
 		this.shd = shd;
 		this.db = db;
 	}
@@ -45,6 +46,7 @@ public class DoServerOffline {
 				ps.executeUpdate();
 			}
 			
+			SocketSwitch ssw = sswProvider.get();
 			ssw.stopSocketServer();
 		} catch (SQLException | ClassNotFoundException e2) {
 			plugin.getLogger().log(Level.SEVERE, "A SQLException | ClassNotFoundException error occurred: {0}", e2.getMessage());

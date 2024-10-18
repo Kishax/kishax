@@ -15,6 +15,7 @@ public class SocketSwitch {
     public final common.Main plugin;
     private final SocketResponse sr;
     private final ServerStatusCache serverStatusCache;
+    private final String hostname = "localhost";
     private ServerSocket serverSocket;
     private Thread clientThread, socketThread;
     private volatile boolean running = true;
@@ -26,85 +27,13 @@ public class SocketSwitch {
         this.sr = sr;
 	}
     
-    public void sendSpigotServer(String sendmsg) {
-        Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
-        for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
-            for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
-                Map<String, String> serverInfo = entry.getValue();
-                if ("0".equals(serverInfo.get("online")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
-                    int port = Integer.parseInt(serverInfo.get("port"));
-                    startSocketClient(port, sendmsg);
-                }
-            }
-        }
-    }
-
-    public void sendVelocityServer(String sendmsg) {
-        Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
-        for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
-            for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
-                Map<String, String> serverInfo = entry.getValue();
-                if ("0".equals(serverInfo.get("online")) && "velocity".equalsIgnoreCase(serverInfo.get("platform"))) {
-                    int port = Integer.parseInt(serverInfo.get("port"));
-                    startSocketClient(port, sendmsg);
-                }
-            }
-        }
-    }
-	public void startSocketClient(int port, String sendmsg) {
-	    if (port == 0) {
-	        plugin.getLogger().info("Client Socket is canceled because socketport is 0");
-	        return;
-	    }
-
-	    plugin.getLogger().info("Client Socket is Available");
-
-	    clientThread = new Thread(() -> {
-	        sendMessage(sendmsg);
-	    });
-
-	    clientThread.start();
-	}
-
-	private void sendMessage(String sendmsg) {
-	    String hostname = "localhost";
-
-	    try (
-	    	Socket socket = new Socket(hostname, plugin.getConfig().getInt("Socket.Client_Port"));
-	    	BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
-	    ) {
-	    	writer.write(sendmsg + "\n");
-	    	writer.flush();
-	    } catch (Exception e) {
-	        plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
-            }
-	    }
-	}
-
-    public void stopSocketClient() {
-        try {
-            if (clientThread != null && clientThread.isAlive()) {
-                clientThread.interrupt();
-                clientThread.join();
-            }
-        } catch (InterruptedException e) {
-            plugin.getLogger().log(Level.SEVERE, "An InterruptedException error occurred: {0}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
-            }
-        }
-    }
-    
     //Server side
-    public void startSocketServer() {
+    public void startSocketServer(int port) {
         plugin.getLogger().log(Level.INFO, "Server Socket is Available");
         socketThread = new Thread(() -> {
             try {
-                serverSocket = new ServerSocket(plugin.getConfig().getInt("Socket.Server_Port"));
-                plugin.getLogger().log(Level.INFO, "Socket Server is listening on port {0}", plugin.getConfig().getInt("Socket.Server_Port"));
-
+                serverSocket = new ServerSocket(port);
+                plugin.getLogger().log(Level.INFO, "Socket Server is listening on port {0}", port);
                 while (running) {
                     try {
                         Socket socket2 = serverSocket.accept();
@@ -141,8 +70,72 @@ public class SocketSwitch {
                 }
             }
         });
-
         socketThread.start();
+    }
+
+    public void startSocketClient(int port, String sendmsg) {
+	    if (port == 0) {
+	        plugin.getLogger().info("Client Socket is canceled because socketport is 0");
+	        return;
+	    }
+	    plugin.getLogger().info("Client Socket is Available");
+	    clientThread = new Thread(() -> {
+	        sendMessage(sendmsg, port);
+	    });
+	    clientThread.start();
+	}
+
+	private void sendMessage(String sendmsg, int port) {
+	    try (Socket socket = new Socket(hostname, port);
+	    	BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));) {
+	    	writer.write(sendmsg + "\n");
+	    	writer.flush();
+	    } catch (Exception e) {
+	        plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                plugin.getLogger().severe(element.toString());
+            }
+	    }
+	}
+    
+    public void sendSpigotServer(String sendmsg) {
+        Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
+        for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
+            for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
+                Map<String, String> serverInfo = entry.getValue();
+                if ("1".equals(serverInfo.get("online")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
+                    int port = Integer.parseInt(serverInfo.get("port"));
+                    startSocketClient(port, sendmsg);
+                }
+            }
+        }
+    }
+
+    public void sendVelocityServer(String sendmsg) {
+        Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
+        for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
+            for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
+                Map<String, String> serverInfo = entry.getValue();
+                if ("1".equals(serverInfo.get("online")) && "velocity".equalsIgnoreCase(serverInfo.get("platform"))) {
+                    int port = Integer.parseInt(serverInfo.get("port"));
+                    startSocketClient(port, sendmsg);
+                }
+            }
+        }
+    }
+
+    public void stopSocketClient() {
+        try {
+            if (clientThread != null && clientThread.isAlive()) {
+                clientThread.interrupt();
+                clientThread.join();
+            }
+        } catch (InterruptedException e) {
+            plugin.getLogger().log(Level.SEVERE, "An InterruptedException error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                plugin.getLogger().severe(element.toString());
+            }
+        }
     }
     
     public void stopSocketServer() {

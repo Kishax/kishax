@@ -4,16 +4,17 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import spigot.SocketSwitch;
 
 public class CommandForward {
 
-	private final SocketSwitch ssw;
+	private final Provider<SocketSwitch> sswProvider;
 	
 	@Inject
-	public CommandForward(SocketSwitch ssw) {
-		this.ssw = ssw;
+	public CommandForward(Provider<SocketSwitch> sswProvider) {
+		this.sswProvider = sswProvider;
 	}
 	
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -31,6 +32,7 @@ public class CommandForward {
 			allcmd = "?" + allcmd;
 		}
 		
+		SocketSwitch ssw = sswProvider.get();
 		ssw.sendVelocityServer(allcmd);
 	}
 }

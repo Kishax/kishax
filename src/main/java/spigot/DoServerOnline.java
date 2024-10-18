@@ -7,56 +7,54 @@ import java.util.Objects;
 import java.util.logging.Level;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class DoServerOnline {
-	public Connection conn = null;
-	public PreparedStatement ps = null;
-	
 	private final common.Main plugin;
-	private final SocketSwitch ssw;
+	private final Provider<SocketSwitch> sswProvider;
 	private final ServerHomeDir shd;
 	private final Database db;
 	
 	@Inject
 	public DoServerOnline (
-		common.Main plugin, SocketSwitch ssw, ServerHomeDir shd,
+		common.Main plugin, Provider<SocketSwitch> sswProvider, ServerHomeDir shd,
 		Database db
 	) {
 		this.plugin = plugin;
-		this.ssw = ssw;
+		this.sswProvider = sswProvider;
 		this.shd = shd;
 		this.db = db;
 	}
 	
 	public void UpdateDatabase(int socketport) {
-		try {
-        	// "plugins"ディレクトリの親ディレクトリを取得
-            String serverName = shd.getServerName();
-            
-			conn = db.getConnection();
-			
-			if(Objects.nonNull(conn) && Objects.nonNull(serverName)) {
-				// サーバーをオンラインに
-				ssw.sendVelocityServer(serverName+"サーバーが起動しました。");
-				plugin.getLogger().info(String.format("""
-					%sサーバーが起動しました。""", serverName));
-				
-				String sql = "UPDATE status SET online=?,socketport=? WHERE name=?;";
-				ps = conn.prepareStatement(sql);
-				ps.setBoolean(1,true);
-				ps.setInt(2, socketport);
-				ps.setString(3, serverName);
-				ps.executeUpdate();
-				
-				plugin.getLogger().info("MySQL Server is connected!");
-			} else plugin.getLogger().info("MySQL Server is canceled for config value not given");
+		// "plugins"ディレクトリの親ディレクトリを取得
+		String serverName = shd.getServerName();
+		Objects.requireNonNull(serverName);
+
+		// サーバーをオンラインに
+		SocketSwitch ssw = sswProvider.get();
+		ssw.sendVelocityServer(serverName+"サーバーが起動しました。");
+		plugin.getLogger().info(String.format("""
+			%sサーバーが起動しました。""", serverName));
+		
+		String sql = "UPDATE status SET online=?,socketport=? WHERE name=?;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(sql)) {
+			if (conn.isClosed()) {
+				plugin.getLogger().severe("Connection is closed.");
+				return;
+			}
+			ps.setBoolean(1,true);
+			ps.setInt(2, socketport);
+			ps.setString(3, serverName);
+			ps.executeUpdate();
+		
+			plugin.getLogger().info("MySQL Server is connected!");
 		} catch (SQLException | ClassNotFoundException e) {
-			plugin.getLogger().log(Level.SEVERE, "A sendWebhookMessage error occurred: {0}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
-            }
-		} finally {
-        	db.close_resource(null, conn, ps);
-        }
+			plugin.getLogger().log(Level.SEVERE, "An error occurred while updating the database: " + e.getMessage(), e);
+			for (StackTraceElement element : e.getStackTrace()) {
+				plugin.getLogger().severe(element.toString());
+			}
+		}
 	}
 }

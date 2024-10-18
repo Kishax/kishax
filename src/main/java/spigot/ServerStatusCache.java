@@ -14,6 +14,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -24,15 +25,19 @@ public class ServerStatusCache {
     private final Database db;
     private final PortFinder pf;
     private final DoServerOnline dso;
+    private final Provider<SocketSwitch> sswProvider;
+    private final ServerHomeDir shd;
     private final AtomicBoolean isFirstRefreshing = new AtomicBoolean(false);
     private Map<String, Map<String, Map<String, String>>> statusMap = new HashMap<>();
 
     @Inject
-    public ServerStatusCache(common.Main plugin, Database db, PortFinder pf, DoServerOnline dso) {
+    public ServerStatusCache(common.Main plugin, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
         this.plugin = plugin;
         this.db = db;
         this.pf = pf;
         this.dso = dso;
+        this.sswProvider = sswProvider;
+        this.shd = shd;
     }
 
     public void serverStatusCache() {
@@ -46,6 +51,7 @@ public class ServerStatusCache {
     }
     
     private void refreshCache() {
+        SocketSwitch ssw = sswProvider.get();
         Map<String, Map<String, Map<String, String>>> newServerStatusMap = new HashMap<>();
         try (Connection conn = db.getConnection();
             PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
@@ -85,13 +91,15 @@ public class ServerStatusCache {
 
                 sortedServerStatusMap.put(serverType, sortedServers);
             }
-            
+
             this.statusMap = sortedServerStatusMap;
             // 初回ループのみ
             if (isFirstRefreshing.compareAndSet(false, true)) {
                 plugin.getLogger().info("Server status cache has been initialized.");
                 pf.findAvailablePortAsync(statusMap).thenAccept(port -> {
                     dso.UpdateDatabase(port);
+                    ssw.startSocketServer(port);
+                    ssw.sendSpigotServer("test message from "+shd.getServerName());
                 }).exceptionally(ex -> {
                     plugin.getLogger().log(Level.SEVERE, "ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
                     for (StackTraceElement element : ex.getStackTrace()) {
