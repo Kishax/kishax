@@ -31,6 +31,6 @@ public class CommandForward {
 			allcmd = "?" + allcmd;
 		}
 		
-		ssw.startSocketClient(allcmd);
+		ssw.sendVelocityServer(allcmd);
 	}
 }

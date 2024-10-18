@@ -36,7 +36,7 @@ public class AutoShutdown {
 	        public void run() {
 	            if (plugin.getServer().getOnlinePlayers().isEmpty()) {
 	            	String serverName = shd.getServerName();
-	            	ssw.startSocketClient("プレイヤー不在のため、"+serverName+"サーバーを停止させます。");
+	            	ssw.sendVelocityServer("プレイヤー不在のため、"+serverName+"サーバーを停止させます。");
 	            	
 	                plugin.getServer().broadcastMessage(ChatColor.RED+"プレイヤー不在のため、"+serverName+"サーバーを5秒後に停止します。");
 	                countdownAndShutdown(5);
