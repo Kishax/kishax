@@ -103,9 +103,13 @@ public class SocketSwitch {
         for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
             for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
                 Map<String, String> serverInfo = entry.getValue();
+                plugin.getLogger().log(Level.INFO, "sendSpigotServer: Checking server {0}", entry.getKey());
                 if ("1".equals(serverInfo.get("online")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
-                    int port = Integer.parseInt(serverInfo.get("port"));
+                    int port = Integer.parseInt(serverInfo.get("socketport"));
+                    plugin.getLogger().log(Level.INFO, "sendSpigotServer: Starting client for server {0} on port {1}", new Object[]{entry.getKey(), port});
                     startSocketClient(port, sendmsg);
+                } else {
+                    plugin.getLogger().log(Level.INFO, "sendSpigotServer: Server {0} is not online or not a spigot server", entry.getKey());
                 }
             }
         }
@@ -117,7 +121,7 @@ public class SocketSwitch {
             for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
                 Map<String, String> serverInfo = entry.getValue();
                 if ("1".equals(serverInfo.get("online")) && "velocity".equalsIgnoreCase(serverInfo.get("platform"))) {
-                    int port = Integer.parseInt(serverInfo.get("port"));
+                    int port = Integer.parseInt(serverInfo.get("socketport"));
                     startSocketClient(port, sendmsg);
                 }
             }

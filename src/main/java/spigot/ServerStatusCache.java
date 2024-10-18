@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -28,7 +29,7 @@ public class ServerStatusCache {
     private final Provider<SocketSwitch> sswProvider;
     private final ServerHomeDir shd;
     private final AtomicBoolean isFirstRefreshing = new AtomicBoolean(false);
-    private Map<String, Map<String, Map<String, String>>> statusMap = new HashMap<>();
+    private Map<String, Map<String, Map<String, String>>> statusMap = new ConcurrentHashMap<>();
 
     @Inject
     public ServerStatusCache(common.Main plugin, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
@@ -99,7 +100,6 @@ public class ServerStatusCache {
                 pf.findAvailablePortAsync(statusMap).thenAccept(port -> {
                     dso.UpdateDatabase(port);
                     ssw.startSocketServer(port);
-                    ssw.sendSpigotServer("test message from "+shd.getServerName());
                 }).exceptionally(ex -> {
                     plugin.getLogger().log(Level.SEVERE, "ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
                     for (StackTraceElement element : ex.getStackTrace()) {
@@ -120,5 +120,9 @@ public class ServerStatusCache {
 
     public Map<String, Map<String, Map<String, String>>> getStatusMap() {
         return this.statusMap;
+    }
+
+    public void setStatusMap(Map<String, Map<String, Map<String, String>>> statusMap) {
+        this.statusMap = statusMap;
     }
 }

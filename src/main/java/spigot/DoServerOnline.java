@@ -33,7 +33,9 @@ public class DoServerOnline {
 
 		// サーバーをオンラインに
 		SocketSwitch ssw = sswProvider.get();
+		// 他のサーバーに通知
 		ssw.sendVelocityServer(serverName+"サーバーが起動しました。");
+		ssw.sendSpigotServer(serverName+"サーバーが起動しました。");
 		plugin.getLogger().info(String.format("""
 			%sサーバーが起動しました。""", serverName));
 		
