@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
-import org.bukkit.Bukkit;
 import static org.bukkit.Bukkit.getServer;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -24,7 +23,6 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
-import org.bukkit.inventory.Inventory;
 
 import com.google.inject.Inject;
 
@@ -111,7 +109,7 @@ public final class EventListener implements Listener {
                                     plugin.getLogger().info("YES");
                                     String serverName = (String) serverStatusList.keySet().toArray()[index];
                                     player.performCommand("fmc fv " + playerName + " fmcp ss " + serverName);
-                                    Inventory inv = Bukkit.createInventory(null, 54, serverType + "");
+                                    //Inventory inv = Bukkit.createInventory(null, 54, serverType + "");
                                 }
                             }
                         }

@@ -41,6 +41,7 @@ public class PortFinder {
             // 使用可能なポートを検索
             for (int port : portRange) {
                 try (ServerSocket serverSocket = new ServerSocket(port)) {
+                    serverSocket.close();
                     return port; // 使用可能なポートを見つけたら返す
                 } catch (Exception e) {
                     // ポートが使用中の場合は次のポートを試す

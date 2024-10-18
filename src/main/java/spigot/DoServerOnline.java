@@ -37,7 +37,7 @@ public class DoServerOnline {
 			
 			if(Objects.nonNull(conn) && Objects.nonNull(serverName)) {
 				// サーバーをオンラインに
-				ssw.startSocketClient(serverName+"サーバーが起動しました。");
+				ssw.sendVelocityServer(serverName+"サーバーが起動しました。");
 				plugin.getLogger().info(String.format("""
 					%sサーバーが起動しました。""", serverName));
 				

@@ -14,7 +14,6 @@ public class SocketSwitch {
 
     public final common.Main plugin;
     private final SocketResponse sr;
-    private final PortFinder pf;
     private final ServerStatusCache serverStatusCache;
     private ServerSocket serverSocket;
     private Thread clientThread, socketThread;
@@ -25,7 +24,6 @@ public class SocketSwitch {
         this.serverStatusCache = serverStatusCache;
 		this.plugin = plugin;
         this.sr = sr;
-        this.pf = pf;
 	}
     
     public void sendSpigotServer(String sendmsg) {
@@ -33,7 +31,7 @@ public class SocketSwitch {
         for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
             for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
                 Map<String, String> serverInfo = entry.getValue();
-                if ("0".equals(serverInfo.get("")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
+                if ("0".equals(serverInfo.get("online")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
                     int port = Integer.parseInt(serverInfo.get("port"));
                     startSocketClient(port, sendmsg);
                 }
@@ -41,6 +39,18 @@ public class SocketSwitch {
         }
     }
 
+    public void sendVelocityServer(String sendmsg) {
+        Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
+        for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
+            for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
+                Map<String, String> serverInfo = entry.getValue();
+                if ("0".equals(serverInfo.get("online")) && "velocity".equalsIgnoreCase(serverInfo.get("platform"))) {
+                    int port = Integer.parseInt(serverInfo.get("port"));
+                    startSocketClient(port, sendmsg);
+                }
+            }
+        }
+    }
 	public void startSocketClient(int port, String sendmsg) {
 	    if (port == 0) {
 	        plugin.getLogger().info("Client Socket is canceled because socketport is 0");
