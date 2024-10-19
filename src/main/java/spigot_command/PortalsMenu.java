@@ -141,6 +141,65 @@ public class PortalsMenu {
         setPage(player, serverType, page);
     }
 
+    public void openServerInventory(Player player, String serverName) {
+        // プレイヤーが今、どのサーバーの情報を見ているかを配列にまとめなければならない
+        
+        Inventory inv = Bukkit.createInventory(null, 54, serverName + " server");
+        // インベントリの0個目にブロックを配置
+        ItemStack backItem = new ItemStack(Material.BARRIER);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.RED + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+
+        Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
+        for (Map.Entry<String, Map<String, Map<String, String>>> entry : serverStatusMap.entrySet()) {
+            String serverType = entry.getKey();
+            Map<String, Map<String, String>> serverStatusList = entry.getValue();
+            for (Map.Entry<String, Map<String, String>> serverEntry : serverStatusList.entrySet()) {
+                String name = serverEntry.getKey();
+                if (name.equals(serverName)) {
+                    Map<String, String> serverData = serverEntry.getValue();
+                    for (Map.Entry<String, String> dataEntry : serverData.entrySet()) {
+                        String key = dataEntry.getKey();
+                        String value = dataEntry.getValue();
+                        if (key.equals("online")) {
+                            if (value.equals("1")) {
+                                ItemStack onlineItem = new ItemStack(Material.GREEN_WOOL);
+                                ItemMeta onlineMeta = onlineItem.getItemMeta();
+                                if (onlineMeta != null) {
+                                    onlineMeta.setDisplayName(ChatColor.GREEN + "オンライン");
+                                    onlineItem.setItemMeta(onlineMeta);
+                                }
+                                inv.setItem(8, onlineItem);
+                            } else {
+                                ItemStack offlineItem = new ItemStack(Material.RED_WOOL);
+                                ItemMeta offlineMeta = offlineItem.getItemMeta();
+                                if (offlineMeta != null) {
+                                    offlineMeta.setDisplayName(ChatColor.RED + "オフライン");
+                                    offlineItem.setItemMeta(offlineMeta);
+                                }
+                                inv.setItem(8, offlineItem);
+                            }
+                        }
+                        ItemStack serverItem = new ItemStack(Material.PAPER);
+                        ItemMeta serverMeta = serverItem.getItemMeta();
+                        if (serverMeta != null) {
+                            serverMeta.setDisplayName(ChatColor.GREEN + key);
+                            serverMeta.setLore(Arrays.asList(ChatColor.GRAY + value));
+                            serverItem.setItemMeta(serverMeta);
+                        }
+                        inv.addItem(serverItem);
+                    }
+                }
+            }
+            
+        }
+        player.openInventory(inv);
+    }
+
     public int getTotalServers(String serverType) {
         Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
         Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);

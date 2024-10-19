@@ -99,17 +99,17 @@ public final class EventListener implements Listener {
                         case 11, 13, 15, 29, 31, 33 -> {
                             Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
                             Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
-                            plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
+                            //plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
                             if (serverStatusList != null) {
-                                plugin.getLogger().log(Level.INFO, "serverStatusList: {0}", serverStatusList);
+                                //plugin.getLogger().log(Level.INFO, "serverStatusList: {0}", serverStatusList);
                                 int page = pm.getPage(player, serverType);
                                 int slotIndex = Arrays.asList(Arrays.stream(PortalsMenu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
                                 int index = PortalsMenu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
                                 if (index < serverStatusList.size()) {
-                                    plugin.getLogger().info("YES");
+                                    //plugin.getLogger().info("YES");
                                     String serverName = (String) serverStatusList.keySet().toArray()[index];
-                                    player.performCommand("fmc fv " + playerName + " fmcp ss " + serverName);
-                                    //Inventory inv = Bukkit.createInventory(null, 54, serverType + "");
+                                    //player.performCommand("fmc fv " + playerName + " fmcp ss " + serverName);
+                                    pm.openServerInventory(player, serverName);
                                 }
                             }
                         }
