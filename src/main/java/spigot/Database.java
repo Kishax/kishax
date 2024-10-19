@@ -9,11 +9,13 @@ import java.util.Objects;
 import java.util.logging.Level;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton 
 public class Database {
 
-    public static Connection conn;
-	public static Connection conn2;
+    private Connection conn;
+	private Connection conn2;
     private final common.Main plugin;
     
     @Inject
@@ -35,10 +37,10 @@ public class Database {
             }
             
             synchronized (Database.class) {
-                if (Objects.nonNull(conn2) && !conn2.isClosed()) return conn2;
+                //if (Objects.nonNull(conn2) && !conn2.isClosed()) return conn2;
                 
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                conn2 = DriverManager.getConnection (
+                this.conn2 = DriverManager.getConnection (
                             "jdbc:mysql://" + host + ":" + 
                             port + "/" + 
                             customDatabase +
@@ -59,10 +61,10 @@ public class Database {
             }
             
             synchronized (Database.class) {
-                if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
+                //if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
                 
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                conn = DriverManager.getConnection (
+                this.conn = DriverManager.getConnection (
                             "jdbc:mysql://" + host + ":" + 
                             port + "/" + 
                             database +

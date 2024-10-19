@@ -74,18 +74,15 @@ public class SocketSwitch {
     }
 
     public void startSocketClient(int port, String sendmsg) {
-	    if (port == 0) {
-	        plugin.getLogger().info("Client Socket is canceled because socketport is 0");
-	        return;
-	    }
+	    if (port == 0) return;
 	    plugin.getLogger().info("Client Socket is Available");
 	    clientThread = new Thread(() -> {
-	        sendMessage(sendmsg, port);
+	        sendMessage(port, sendmsg);
 	    });
 	    clientThread.start();
 	}
 
-	private void sendMessage(String sendmsg, int port) {
+	private void sendMessage(int port, String sendmsg) {
 	    try (Socket socket = new Socket(hostname, port);
 	    	BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));) {
 	    	writer.write(sendmsg + "\n");
@@ -103,13 +100,17 @@ public class SocketSwitch {
         for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
             for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
                 Map<String, String> serverInfo = entry.getValue();
-                plugin.getLogger().log(Level.INFO, "sendSpigotServer: Checking server {0}", entry.getKey());
+                //plugin.getLogger().log(Level.INFO, "sendSpigotServer: Checking server {0}", entry.getKey());
                 if ("1".equals(serverInfo.get("online")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
                     int port = Integer.parseInt(serverInfo.get("socketport"));
+                    if (port == 0) {
+                        plugin.getLogger().log(Level.INFO, "sendSpigotServer: Server {0} has no socketport", entry.getKey());
+                        continue;
+                    }
                     plugin.getLogger().log(Level.INFO, "sendSpigotServer: Starting client for server {0} on port {1}", new Object[]{entry.getKey(), port});
                     startSocketClient(port, sendmsg);
                 } else {
-                    plugin.getLogger().log(Level.INFO, "sendSpigotServer: Server {0} is not online or not a spigot server", entry.getKey());
+                    //plugin.getLogger().log(Level.INFO, "sendSpigotServer: Server {0} is not online or not a spigot server", entry.getKey());
                 }
             }
         }

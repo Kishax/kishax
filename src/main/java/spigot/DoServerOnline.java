@@ -41,8 +41,8 @@ public class DoServerOnline {
 		
 		String sql = "UPDATE status SET online=?,socketport=? WHERE name=?;";
 		try (Connection conn = db.getConnection();
-			PreparedStatement ps = conn.prepareStatement(sql)) {
-			if (conn.isClosed()) {
+			PreparedStatement ps = conn != null && !conn.isClosed() ? conn.prepareStatement(sql) : db.getConnection().prepareStatement(sql)) {
+			if (conn == null || conn.isClosed()) {
 				plugin.getLogger().severe("Connection is closed.");
 				return;
 			}

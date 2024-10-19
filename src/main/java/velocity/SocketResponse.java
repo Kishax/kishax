@@ -127,6 +127,7 @@ public class SocketResponse {
             // パターンにマッチする部分を抽出
             if (matcher.find()) {
                 String extracted = matcher.group(1);
+				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
                 TextComponent component = Component.text()
                 		.append(Component.text(res).color(NamedTextColor.AQUA))
     			    	.append(Component.text("サーバーに入りますか？\n").color(NamedTextColor.WHITE))
@@ -156,7 +157,6 @@ public class SocketResponse {
         				}
         			} else {
         				player.sendMessage(Component.text(res).color(NamedTextColor.AQUA));
-        				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
         			}
                 }
             }

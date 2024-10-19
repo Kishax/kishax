@@ -18,7 +18,7 @@ public class SocketResponse {
 
     public void resaction(String res) {
     	if (res != null) {
-            //plugin.getLogger().log(Level.INFO, "Received Message: {0}", res);
+            res = res.replace("\n", "").replace("\r", "");
             plugin.getLogger().log(Level.INFO, "{0}", res);
             if (res.contains("起動")) {
                 // /stpで用いるセッションタイム(現在時刻)(sst)をデータベースに
@@ -38,7 +38,7 @@ public class SocketResponse {
                             if (serverInfo.get("name").equals(extracted)) {
                                 serverInfo.put("online", "1");
                                 serverStatusCache.setStatusMap(statusMap);
-                                plugin.getLogger().log(Level.INFO, "Server {0} is now online", extracted);
+                                //plugin.getLogger().log(Level.INFO, "Server {0} is now online", extracted);
                             }
                         }
                     }
