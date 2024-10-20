@@ -46,7 +46,7 @@ public class PortalsMenu {
         }
 	}
 
-    public void OpenServerTypeInventory(Player player) {
+    public void openServerTypeInventory(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, "server type");
 
         ItemStack lifeServerItem = new ItemStack(Material.GRASS_BLOCK);

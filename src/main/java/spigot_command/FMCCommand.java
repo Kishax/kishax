@@ -131,7 +131,7 @@ public class FMCCommand implements TabExecutor {
 								} else {
 									// /fmc portal menu serverと打った場合
 									//sender.sendMessage("Usage: /fmc portal menu server <life|distribution|mod>");
-									Main.getInjector().getInstance(PortalsMenu.class).OpenServerTypeInventory((Player) sender);
+									Main.getInjector().getInstance(PortalsMenu.class).openServerTypeInventory((Player) sender);
 									return true;
 								}
 							} else {

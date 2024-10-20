@@ -125,4 +125,19 @@ public class ServerStatusCache {
     public void setStatusMap(Map<String, Map<String, Map<String, String>>> statusMap) {
         this.statusMap = statusMap;
     }
+
+    public String getServerType(String serverName) {
+        Map<String, Map<String, Map<String, String>>> serverStatusMap = getStatusMap();
+        for (Map.Entry<String, Map<String, Map<String, String>>> serverEntry : serverStatusMap.entrySet()) {
+            String serverType = serverEntry.getKey();
+            Map<String, Map<String, String>> serverStatusList = serverEntry.getValue();
+            for (Map.Entry<String, Map<String, String>> serverDataEntry : serverStatusList.entrySet()) {
+                String name = serverDataEntry.getKey();
+                if (name.equals(serverName)) {
+                    return serverType;
+                }
+            }
+        }
+        return null;
+    }
 }

@@ -91,7 +91,15 @@ public final class EventListener implements Listener {
                 int slot = event.getRawSlot();
                 switch (slot) {
                     case 0 -> {
-                        pm.OpenServerTypeInventory(player);
+                        pm.resetPage(player, serverName);
+                        String serverType = serverStatusCache.getServerType(serverName);
+                        if (serverType != null) {
+                            int page = pm.getPage(player, serverType);
+                            pm.openServerEachInventory(player, serverType, page);
+                        } else {
+                            player.closeInventory();
+                            player.sendMessage("サーバーが見つかりませんでした。");
+                        }
                     }
                 }
             } else if (title.endsWith(" servers")) {
@@ -102,7 +110,7 @@ public final class EventListener implements Listener {
                 switch (slot) {
                     case 0 -> {
                         pm.resetPage(player, serverType);
-                        pm.OpenServerTypeInventory(player);
+                        pm.openServerTypeInventory(player);
                     }
                     case 11, 13, 15, 29, 31, 33 -> {
                         Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
