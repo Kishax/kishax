@@ -16,11 +16,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import spigot.ServerStatusCache;
 
+@Singleton
 public class PortalsMenu {
-    public static Map<String, Map<Player, Integer>> playerOpenningInventoryMap = new HashMap<>();
+    public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
 	private final common.Main plugin;
     private static final List<Material> ORE_BLOCKS = Arrays.asList(
         Material.NETHERITE_BLOCK, Material.GOLD_BLOCK, Material.REDSTONE_BLOCK, 
@@ -28,8 +30,8 @@ public class PortalsMenu {
         Material.COAL_BLOCK, Material.LAPIS_BLOCK, Material.QUARTZ_BLOCK,
         Material.COPPER_BLOCK
     );
-    public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     private final ServerStatusCache serverStatusCache;
+    private final Map<Player, Map<String, Integer>> playerOpenningInventoryMap = new HashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
@@ -207,27 +209,27 @@ public class PortalsMenu {
     }
     
     public void resetPage(Player player, String serverType) {
-        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
-        if (playerMap != null) {
-            playerMap.remove(player);
+        Map<String, Integer> inventoryMap = playerOpenningInventoryMap.get(player);
+        if (inventoryMap != null) {
+            inventoryMap.entrySet().removeIf(entry -> entry.getKey().equals(serverType));
         }
     }
 
     public void setPage(Player player, String serverType, int page) {
-        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
-        if (playerMap == null) {
-            playerMap = new HashMap<>();
-            playerOpenningInventoryMap.put(serverType, playerMap);
+        Map<String, Integer> inventoryMap = playerOpenningInventoryMap.get(player);
+        if (inventoryMap == null) {
+            inventoryMap = new HashMap<>();
+            playerOpenningInventoryMap.put(player, inventoryMap);
         }
-        playerMap.put(player, page);
+        inventoryMap.put(serverType, page);
     }
     
     public int getPage(Player player, String serverType) {
-        Map<Player, Integer> playerMap = playerOpenningInventoryMap.get(serverType);
-        if (playerMap == null) {
-            playerMap = new HashMap<>();
-            playerOpenningInventoryMap.put(serverType, playerMap);
+        Map<String, Integer> inventoryMap = playerOpenningInventoryMap.get(player);
+        if (inventoryMap == null) {
+            inventoryMap = new HashMap<>();
+            playerOpenningInventoryMap.put(player, inventoryMap);
         }
-        return playerMap.getOrDefault(player, 1);
+        return inventoryMap.getOrDefault(player, 1);
     }
 }

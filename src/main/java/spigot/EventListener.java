@@ -85,69 +85,75 @@ public final class EventListener implements Listener {
                 }
             }*/
 
-            switch (title) {
-                case "life servers", "mod servers", "distributed servers" -> {
-                    event.setCancelled(true);
-                    String serverType = title.split(" ")[0];
-                    int slot = event.getRawSlot();
+            if (title.endsWith(" server")) {
+                event.setCancelled(true);
+                String serverName = title.split(" ")[0];
+                int slot = event.getRawSlot();
+                switch (slot) {
+                    case 0 -> {
+                        pm.OpenServerTypeInventory(player);
+                    }
+                }
+            } else if (title.endsWith(" servers")) {
+                event.setCancelled(true);
+                String serverType = title.split(" ")[0];
+                int slot = event.getRawSlot();
 
-                    switch (slot) {
-                        case 0 -> {
-                            pm.resetPage(player, serverType);
-                            pm.OpenServerTypeInventory(player);
-                        }
-                        case 11, 13, 15, 29, 31, 33 -> {
-                            Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
-                            Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
-                            //plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
-                            if (serverStatusList != null) {
-                                //plugin.getLogger().log(Level.INFO, "serverStatusList: {0}", serverStatusList);
-                                int page = pm.getPage(player, serverType);
-                                int slotIndex = Arrays.asList(Arrays.stream(PortalsMenu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
-                                int index = PortalsMenu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
-                                if (index < serverStatusList.size()) {
-                                    //plugin.getLogger().info("YES");
-                                    String serverName = (String) serverStatusList.keySet().toArray()[index];
-                                    //player.performCommand("fmc fv " + playerName + " fmcp ss " + serverName);
-                                    pm.openServerInventory(player, serverName);
-                                }
-                            }
-                        }
-                        case 45 -> {
-                            // 戻るボタンがあれば
+                switch (slot) {
+                    case 0 -> {
+                        pm.resetPage(player, serverType);
+                        pm.OpenServerTypeInventory(player);
+                    }
+                    case 11, 13, 15, 29, 31, 33 -> {
+                        Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
+                        Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
+                        //plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
+                        if (serverStatusList != null) {
+                            //plugin.getLogger().log(Level.INFO, "serverStatusList: {0}", serverStatusList);
                             int page = pm.getPage(player, serverType);
-                            if (page > 1) {
-                                pm.openServerEachInventory(player, serverType, page - 1);
-                            }
-                        }
-                        case 53 -> {
-                            // 進むボタンがあれば
-                            int page = pm.getPage(player, serverType);
-                            int totalServers = pm.getTotalServers(serverType); // 総サーバー数を取得
-                            int totalPages = (int) Math.ceil((double) totalServers / PortalsMenu.SLOT_POSITIONS.length); // 総ページ数を計算
-                            if (page < totalPages) {
-                                pm.openServerEachInventory(player, serverType, page + 1);
+                            int slotIndex = Arrays.asList(Arrays.stream(PortalsMenu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
+                            int index = PortalsMenu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
+                            if (index < serverStatusList.size()) {
+                                //plugin.getLogger().info("YES");
+                                String serverName = (String) serverStatusList.keySet().toArray()[index];
+                                //player.performCommand("fmc fv " + playerName + " fmcp ss " + serverName);
+                                pm.openServerInventory(player, serverName);
                             }
                         }
                     }
+                    case 45 -> {
+                        // 戻るボタンがあれば
+                        int page = pm.getPage(player, serverType);
+                        if (page > 1) {
+                            pm.openServerEachInventory(player, serverType, page - 1);
+                        }
+                    }
+                    case 53 -> {
+                        // 進むボタンがあれば
+                        int page = pm.getPage(player, serverType);
+                        int totalServers = pm.getTotalServers(serverType); // 総サーバー数を取得
+                        int totalPages = (int) Math.ceil((double) totalServers / PortalsMenu.SLOT_POSITIONS.length); // 総ページ数を計算
+                        if (page < totalPages) {
+                            pm.openServerEachInventory(player, serverType, page + 1);
+                        }
+                    }
                 }
-                case "server type" -> {
-                    event.setCancelled(true);
-                    int slot = event.getRawSlot();
+            } else if (title.equals("server type")) {
+                event.setCancelled(true);
+                int slot = event.getRawSlot();
 
-                    switch (slot) {
-                        case 11 -> {
-                            int page = pm.getPage(player, "life");
-                            pm.openServerEachInventory(player, "life", page);
-                        }
-                        case 13 -> {
-                            int page = pm.getPage(player, "distributed");
-                            pm.openServerEachInventory(player, "distributed", page);
-                        }
-                        case 15 -> {
-                            int page = pm.getPage(player, "mod");
-                            pm.openServerEachInventory(player, "mod", page);
-                        }
+                switch (slot) {
+                    case 11 -> {
+                        int page = pm.getPage(player, "life");
+                        pm.openServerEachInventory(player, "life", page);
+                    }
+                    case 13 -> {
+                        int page = pm.getPage(player, "distributed");
+                        pm.openServerEachInventory(player, "distributed", page);
+                    }
+                    case 15 -> {
+                        int page = pm.getPage(player, "mod");
+                        pm.openServerEachInventory(player, "mod", page);
                     }
                 }
             }
