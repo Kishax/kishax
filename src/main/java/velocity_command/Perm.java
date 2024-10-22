@@ -32,8 +32,8 @@ public class Perm {
 	private final Luckperms lp;
 	private final DatabaseInterface db;
 	
-	public Connection conn = null, connLp = null;
-	public Connection[] conns = {conn, connLp};
+	public Connection conn = null;
+	public Connection[] conns = {conn};
 	public ResultSet minecrafts = null, database_uuid = null, isperm = null;
 	public ResultSet[] resultsets = {minecrafts,database_uuid,isperm};
 	public PreparedStatement ps = null;
@@ -42,17 +42,14 @@ public class Perm {
 	public static List<String> permD = null;
 	
 	@Inject
-	public Perm (
-		Main plugin, ProxyServer server, Config config, 
-		Logger logger, Luckperms lp, DatabaseInterface db
-	) {
+	public Perm (Main plugin, ProxyServer server, Config config, Logger logger, Luckperms lp, DatabaseInterface db) {
 		this.config = config;
 		this.logger = logger;
 		this.lp = lp;
 		this.db = db;
 	}
 	
-	public void execute(@NotNull CommandSource source,String[] args) {
+	public void execute(@NotNull CommandSource source, String[] args) {
 		permS = config.getList("Permission.Short_Name");
 		permD = config.getList("Permission.Detail_Name");
 		
@@ -63,72 +60,66 @@ public class Perm {
 
         try {
         	conn = db.getConnection();
-        	connLp = db.getConnection("fmc_lp");
         	String sql = "SELECT * FROM members ORDER BY id DESC;";
 			ps = conn.prepareStatement(sql);
 			minecrafts = ps.executeQuery();
-			
-			boolean containsPlayer = false;
-			boolean ispermindb = false;
 	        
 			String permD1;
 			
 	        switch (args.length) {
-	        	case 0,1-> {
+	        	case 0, 1 -> {
 	        		source.sendMessage(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 				}
-	        	case 2-> {
+	        	case 2 -> {
         			switch(args[1].toLowerCase()) {
 	        			case "list"-> {
-	        				TextComponent component = Component.text()
-	        					.append(Component.text("FMC Specific Permission List")
-		    			    	.color(NamedTextColor.GOLD)
-		    			    	.decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-	        					.build();
-	        				
-	        				// アドミンリスト表示処理
-	        				while (minecrafts.next()) {
-	        					for (int i = 0; i < permD.size(); i++) {
-	        						// permSのindex値をもって、permDからDetail_Nameを取得(1:1対応)
-		                			//permD1 = permD.get(permS.indexOf(args[2]));
-		                			
-	        						sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-		        					ps = connLp.prepareStatement(sql);
-		        					ps.setString(1, minecrafts.getString("uuid"));
-		        					ps.setString(2, permD.get(i));
-		        					isperm = ps.executeQuery();
-		        					
-	        		        		if (isperm.next()) {
-	        		        			TextComponent additionalComponent;
-	        		        			additionalComponent = Component.text()
-	        		        						.append(Component.text("\n"+minecrafts.getString("name"))
-	        		        							.color(NamedTextColor.WHITE))
-	        		        						.append(Component.text("  -"+permS.get(i))
-	        		        							.color(NamedTextColor.GOLD))
-	        		        						.build();
-	        		        			component = component.append(additionalComponent);
-	        		        			ispermindb = true;
-	        		        		}
-	        					}
-	        	            }
-	        				
-	        				if (!(ispermindb)) {
-	        					TextComponent additionalComponent;
-	        					additionalComponent = Component.text()
-	        							.append(Component.text("\nコンフィグで設定されているすべての権限が見つかりませんでした。"))
-        								.color(NamedTextColor.GREEN)
-        								.build();
-	        					component = component.append(additionalComponent);
-	        				}
-	        				
-	        				source.sendMessage(component);
+							TextComponent componentBuilder = Component.text()
+								.append(Component.text("FMC Specific Permission List")
+									.color(NamedTextColor.GOLD)
+									.decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+								.build();
+							
+							// アドミンリスト表示処理
+							List<String> nonFoundPermList = new ArrayList<>();
+							for (int i = 0; i < permD.size(); i++) {
+								String permission = permD.get(i);
+								String shortPermission = permS.get(i);
+								List<String> playersPermList = lp.getPlayersWithPermission(permission);
+								if (playersPermList.isEmpty()) {
+									nonFoundPermList.add(shortPermission);
+									continue;
+								}
+								for (String playerName : playersPermList) {
+									TextComponent additionalComponent;
+									additionalComponent = Component.text()
+											.append(Component.text("\n"+playerName)
+												.color(NamedTextColor.WHITE))
+											.append(Component.text("  -"+shortPermission)
+												.color(NamedTextColor.GOLD))
+											.build();
+									componentBuilder = componentBuilder.append(additionalComponent);
+								}
+							}
+							if (!nonFoundPermList.isEmpty()) {
+								for (String nonFoundPerm : nonFoundPermList) {
+									TextComponent additionalComponent;
+									additionalComponent = Component.text()
+											.append(Component.text("\n"+nonFoundPerm)
+												.color(NamedTextColor.GOLD))
+											.append(Component.text("  -No player has this permission.")
+												.color(NamedTextColor.RED))
+											.build();
+									componentBuilder = componentBuilder.append(additionalComponent);
+								}
+							}
+							source.sendMessage(componentBuilder);
 						}
 	        			default-> {
 	        				source.sendMessage(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN));
 						}
 	        		}
 				}
-	        	case 3-> {
+	        	case 3 -> {
 	        		// 以下はパーミッションが所持していることが確認されている上で、permというコマンドを使っているので、確認の必要なし
 	        		//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
 	        		if (!(args1.contains(args[1].toLowerCase()))) {
@@ -143,7 +134,7 @@ public class Perm {
 	        		
 	        		source.sendMessage(Component.text("対象のプレイヤー名を入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
 				}
-	        	case 4-> {
+	        	case 4 -> {
         			if (!(args1.contains(args[1].toLowerCase()))) {
         				source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
         				break;
@@ -155,46 +146,27 @@ public class Perm {
         			}
         			
         			// permSのindex値をもって、permDからDetail_Nameを取得(1:1対応)
-        			permD1 = permD.get(permS.indexOf(args[2]));
-        			while (minecrafts.next()) {
-        				sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-    					ps = connLp.prepareStatement(sql);
-    					ps.setString(1, minecrafts.getString("uuid"));
-    					ps.setString(2, permD1);
-    					isperm = ps.executeQuery();
-    					
-    	            	if (minecrafts.getString("name").equalsIgnoreCase(args[3])) {
-    		        		containsPlayer = true;
-    		        		if(isperm.next()) {
-    		        			ispermindb = true;
-    		        		}
-
-    		        		break;
-    		        	}
-    	            }
-        			
-        			if (!containsPlayer) {
-    		        	source.sendMessage(Component.text("サーバーに参加したことのあるプレイヤーを指定してください。").color(NamedTextColor.RED));
-    		        	break;
-    		        }
-    		        
+					String detailPermissionName = args[2],
+						playerName = args[3];
+					
+        			permD1 = permD.get(permS.indexOf(detailPermissionName));
     				switch (args[1].toLowerCase()) {
         				case "add"-> {
-        					if (ispermindb) {
-        						source.sendMessage(Component.text(args[3]+"はすでにpermission: "+permD1+"を持っているため、追加できません。").color(NamedTextColor.RED));
+        					if (lp.hasPermission(playerName, permD1)) {
+        						source.sendMessage(Component.text(playerName+"はすでにpermission: "+permD1+"を持っているため、追加できません。").color(NamedTextColor.RED));
 		    		        	break;
         					}
-
-        					SetAdmin(permD1,args[3],true,source);
+        					lp.addPermission(playerName, permD1);
+							source.sendMessage(Component.text(playerName+"にpermission: "+permD1+"を追加しました。").color(NamedTextColor.GREEN));
         					break;
         				}
         				case "remove"-> {
-        					if (!(ispermindb)) {
-        						source.sendMessage(Component.text(args[3]+"はpermission: "+permD1+"を持っていないため、除去できません。").color(NamedTextColor.RED));
+        					if (!lp.hasPermission(playerName, permD1)) {
+        						source.sendMessage(Component.text(playerName+"はpermission: "+permD1+"を持っていないため、除去できません。").color(NamedTextColor.RED));
 		    		        	break;
         					}
-
-        					SetAdmin(permD1,args[3],false,source);
+        					lp.removePermission(playerName, permD1);
+							source.sendMessage(Component.text(playerName+"からpermission: "+permD1+"を除去しました。").color(NamedTextColor.GREEN));
         					break;
 						}
 	        		}
@@ -210,50 +182,6 @@ public class Perm {
             }
         } finally {
         	db.close_resource(resultsets, conns, ps);
-        }
-	}
-	
-	public void SetAdmin(String permission,String name,Boolean bool,CommandSource source) {
-		// 上のAdminメソッドの途中なので、connは閉じない。(finallyを省く)
-		try {
-			conn = db.getConnection();
-			connLp = db.getConnection("fmc_lp");
-			String sql = "SELECT * FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
-			ps = conn.prepareStatement(sql);
-			ps.setString(1, name);
-			database_uuid = ps.executeQuery();
-			
-			if (database_uuid.next()) {
-				// lp処理
-				if (bool) {
-					sql = "INSERT INTO lp_user_permissions "
-							+ "(uuid,permission,value,server,world,expiry,contexts) VALUES (?,?,?,?,?,?,?);";
-					ps = connLp.prepareStatement(sql);
-					ps.setString(1,database_uuid.getString("uuid"));
-					ps.setString(2,permission);
-					ps.setBoolean(3,true);
-					ps.setString(4,"global");
-					ps.setString(5,"global");
-					ps.setInt(6,0);
-					ps.setString(7,"{}");
-					ps.executeUpdate();
-					source.sendMessage(Component.text(name+"にpermission: "+permission+"を追加しました。").color(NamedTextColor.GREEN));
-				} else {
-					sql = "DELETE FROM lp_user_permissions WHERE uuid=?;";
-					ps = connLp.prepareStatement(sql);
-					ps.setString(1,database_uuid.getString("uuid"));
-					ps.executeUpdate();
-					source.sendMessage(Component.text(name+"からpermission: "+permission+"を除去しました。").color(NamedTextColor.GREEN));
-				}
-				
-				lp.triggerNetworkSync();
-				source.sendMessage(Component.text("権限を更新しました。").color(NamedTextColor.GREEN));
-			}
-		} catch (SQLException | ClassNotFoundException e) {
-        	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
         }
 	}
 }

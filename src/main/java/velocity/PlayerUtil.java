@@ -12,7 +12,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -145,28 +148,64 @@ public class PlayerUtil {
 		}
 	}
 	
-	public String getPlayerNameByUUIDFromDB(UUID playerUUID) {
-		try {
-			conn = db.getConnection();
-			String sql = "SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;";
-			ps = conn.prepareStatement(sql);
-			ps.setString(1, playerUUID.toString());
-			dbname = ps.executeQuery();
-			if (dbname.next()) {
-				return dbname.getString("uuid");
-			} else {
-				return null;
+	public List<String> getPlayerNamesListFromUUIDs(List<String> playerUUIDs) {
+		List<String> playerNames = new ArrayList<>();
+		Map<String, String> playerUUIDToNameMap = new HashMap<>();
+		try (Connection conn = db.getConnection();
+			 PreparedStatement ps = conn.prepareStatement("SELECT name, uuid FROM members;")) {
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					playerUUIDToNameMap.put(rs.getString("uuid"), rs.getString("name"));
+				}
 			}
-		} catch(ClassNotFoundException | SQLException e) {
+			for (String playerUUID : playerUUIDs) {
+				playerNames.add(playerUUIDToNameMap.get(playerUUID));
+			}
+		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("A ClassNotFoundException | SQLException error occurred: " + e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-
-			return null;
 		}
+		return playerNames;
+	}
+
+	public String getPlayerNameByUUIDFromDB(String playerUUID) {
+		try (Connection conn = db.getConnection();
+			 PreparedStatement ps = conn.prepareStatement("SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;")) {
+			ps.setString(1, playerUUID);
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					return rs.getString("name");
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("A ClassNotFoundException | SQLException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
+		return null;
 	}
 	
+	public UUID getPlayerNameByUUIDFromDB(UUID playerUUID) {
+		try (Connection conn = db.getConnection();
+			 PreparedStatement ps = conn.prepareStatement("SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;")) {
+			ps.setString(1, playerUUID.toString());
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					return UUID.fromString(rs.getString("name"));
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("A ClassNotFoundException | SQLException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
+		return null;
+	}
+
 	public int getPlayerTime(Player player, ServerInfo serverInfo) {
 		try {
         	conn = db.getConnection();

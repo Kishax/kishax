@@ -115,6 +115,10 @@ public class FMCCommand implements TabExecutor {
 					if (sender instanceof Player player) {
 						if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
 							if (args.length > 2 && args[2].equalsIgnoreCase("server")) {
+								if (!(player.hasPermission("group.new-fmc-user") || player.hasPermission("group.sub-admin") || player.hasPermission("group.super-admin"))) {
+									player.sendMessage("先にUUID認証を完了させてください。");
+									return true;
+								}
 								if (args.length > 3) {
 									String serverType = args[3].toLowerCase();
 									switch (serverType) {
@@ -213,15 +217,17 @@ public class FMCCommand implements TabExecutor {
 							case "delete","rename" -> {
 								// portals.ymlからポータル名を読み取る
                                 FileConfiguration portalsConfig = psConfig.getPortalsConfig();
-                                List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
-                                if (portals != null) {
-                                    for (Map<?, ?> portal : portals) {
-                                        String portalName = (String) portal.get("name");
-                                        if (portalName != null && sender.hasPermission("fmc.portal.delete." + portalName)) {
-                                            ret.add(portalName);
-                                        }
-                                    }
-                                }
+								List<?> rawPortals = portalsConfig.getList("portals");
+								if (rawPortals != null) {
+									for (Object obj : rawPortals) {
+										if (obj instanceof Map<?, ?> portal) {
+											String portalName = (String) portal.get("name");
+											if (portalName != null && sender.hasPermission("fmc.portal.delete." + portalName)) {
+												ret.add(portalName);
+											}
+										}
+									}
+								}
                                 return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
 							}
 						}

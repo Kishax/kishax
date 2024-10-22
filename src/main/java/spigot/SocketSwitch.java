@@ -29,7 +29,6 @@ public class SocketSwitch {
     
     //Server side
     public void startSocketServer(int port) {
-        plugin.getLogger().log(Level.INFO, "Server Socket is Available");
         socketThread = new Thread(() -> {
             try {
                 serverSocket = new ServerSocket(port);
@@ -75,7 +74,7 @@ public class SocketSwitch {
 
     public void startSocketClient(int port, String sendmsg) {
 	    if (port == 0) return;
-	    plugin.getLogger().info("Client Socket is Available");
+	    //plugin.getLogger().info("Client Socket is Available");
 	    clientThread = new Thread(() -> {
 	        sendMessage(port, sendmsg);
 	    });
@@ -104,7 +103,7 @@ public class SocketSwitch {
                 if ("1".equals(serverInfo.get("online")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
                     int port = Integer.parseInt(serverInfo.get("socketport"));
                     if (port == 0) {
-                        plugin.getLogger().log(Level.INFO, "sendSpigotServer: Server {0} has no socketport", entry.getKey());
+                        //plugin.getLogger().log(Level.INFO, "sendSpigotServer: Server {0} has no socketport", entry.getKey());
                         continue;
                     }
                     plugin.getLogger().log(Level.INFO, "sendSpigotServer: Starting client for server {0} on port {1}", new Object[]{entry.getKey(), port});

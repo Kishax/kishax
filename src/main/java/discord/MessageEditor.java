@@ -83,7 +83,7 @@ public class MessageEditor implements MessageEditorInterface {
 				// プレイヤー変数がnullかつalternativePlayerNameがnullかつplayerUUIDが与えられていた時
 				// データベースからnameを取ってくる
 				uuid = playerUUID.toString();
-				playerName = pu.getPlayerNameByUUIDFromDB(playerUUID);
+				playerName = pu.getPlayerNameByUUIDFromDB(uuid);
 			}
 		} else {
 			uuid = player.getUniqueId().toString();

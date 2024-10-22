@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -42,6 +43,7 @@ public class SocketResponse {
 	private final ConsoleCommandSource console;
 	private final PlayerUtil pu;
 	private final MessageEditorInterface discordME;
+	private final Provider<SocketSwitch> sswProvider;
 	private String mineName = null;
 	
 	@Inject
@@ -49,7 +51,7 @@ public class SocketResponse {
 		Main plugin, ProxyServer server, Logger logger,
 		Config config, Luckperms lp, BroadCast bc, 
 		Database db, ConsoleCommandSource console, PlayerUtil pu, 
-		MessageEditorInterface discordME
+		MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider
 	) {
 		this.server = server;
         this.logger = logger;
@@ -60,15 +62,15 @@ public class SocketResponse {
         this.console = console;
         this.pu = pu;
         this.discordME = discordME;
+		this.sswProvider = sswProvider;
 	}
 	
 	public void resaction(String res) {
     	if (Objects.isNull(res)) return;
-    	//if (res.contains("サーバー->"))	return;
+		res = res.replace("\n", "").replace("\r", "");
     	if (res.contains("PHP")) {
     		if (res.contains("uuid")) {
     			// PHPの方でlpテーブルへの追加は完了済み
-    			lp.triggerNetworkSync();
     			String pattern = "PHP->uuid->new->(.*?)->";
 
                 // パターンをコンパイル
@@ -78,7 +80,11 @@ public class SocketResponse {
                 // パターンにマッチする部分を抽出
                 if (matcher.find()) {
                 	mineName = matcher.group(1);
-                	
+					lp.addPermission(mineName, "group.new-fmc-user");
+					// spigotsに通知し、serverCacheを更新させる
+					SocketSwitch ssw = sswProvider.get();
+					ssw.sendSpigotServer(res);
+
                 	Optional<Player> playerOptional = pu.getPlayerByName(mineName);
 
                 	if (playerOptional.isPresent()) {
@@ -129,7 +135,6 @@ public class SocketResponse {
                 String extracted = matcher.group(1);
 				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
                 TextComponent component = Component.text()
-                		.append(Component.text(res).color(NamedTextColor.AQUA))
     			    	.append(Component.text("サーバーに入りますか？\n").color(NamedTextColor.WHITE))
     			    	.append(Component.text("YES")
     			    			.color(NamedTextColor.GOLD)

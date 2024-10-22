@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,13 +42,14 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
 public class EventListener {
-
+	public static Map<String, String> PlayerMessageIds = new HashMap<>();
+	public static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
+	public static final Map<Player, String> playersServerMap = new ConcurrentHashMap<>();
 	public final Main plugin;
 	public Connection conn = null;
 	public ResultSet yuyu = null, yu = null, logs = null, rs = null, bj_logs = null, ismente = null;
 	public ResultSet[] resultsets = {yuyu, yu, logs, rs, bj_logs, ismente};
 	public PreparedStatement ps = null;
-	public static Map<String, String> PlayerMessageIds = new HashMap<>();
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -63,8 +65,7 @@ public class EventListener {
 	private final MessageEditorInterface discordME;
 	private ServerInfo serverInfo = null;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
-	
+
 	@Inject
 	public EventListener (
 		Main plugin, Logger logger, ProxyServer server,
@@ -485,6 +486,7 @@ public class EventListener {
     						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
 	            		} else {
 	            			if (beforejoin_sa_minute>=config.getInt("Interval.Login",0)) {
+								EventListener.playersServerMap.put(player, serverInfo.getName());
 		    					if (previousServerInfo.isPresent()) {
 		    						// どこからか移動してきたとき
 		    						discordME.AddEmbedSomeMessage("Move", player, serverInfo);
@@ -583,6 +585,8 @@ public class EventListener {
 	@Subscribe
     public void onPlayerDisconnect(DisconnectEvent e) {
     	Player player = e.getPlayer();
+		EventListener.playersServerMap.remove(player);
+		logger.info("Player disconnected: " + player.getUsername());
     	Runnable task = () -> {
             // プレイヤーがReconnectしなかった場合に実行する処理
     		server.getScheduler().buildTask(plugin, () -> {

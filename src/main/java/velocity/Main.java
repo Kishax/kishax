@@ -57,12 +57,12 @@ public class Main {
  		getInjector().getInstance(PlayerUtil.class).loadPlayers(); // プレイヤーリストをアップデート
     	
     	CommandManager commandManager = server.getCommandManager();
-        commandManager.register("fmcp", getInjector().getInstance(FMCCommand.class));
-        commandManager.register("hub", getInjector().getInstance(Hub.class));
-        commandManager.register("cend", getInjector().getInstance(CEnd.class));
+        commandManager.register(commandManager.metaBuilder("fmcp").build(), getInjector().getInstance(FMCCommand.class));
+        commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
+        commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         
 	    // Server side
-        getInjector().getInstance(SocketSwitch.class).startSocketServer();
+        getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
         
 	    logger.info("プラグインが有効になりました。");
     }
@@ -73,11 +73,10 @@ public class Main {
     
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent e) {
-    	getInjector().getInstance(SocketSwitch.class).stopSocketClient();
+    	getInjector().getProvider(SocketSwitch.class).get().stopSocketClient();
 		logger.info( "Client Socket Stopping..." );
-		getInjector().getInstance(SocketSwitch.class).stopSocketServer();
+		getInjector().getProvider(SocketSwitch.class).get().stopSocketServer();
     	logger.info("Socket Server stopping...");
-    	logger.info("Buffered Socket Server stopping...");
 		logger.info( "プラグインが無効になりました。" );
     }
 }

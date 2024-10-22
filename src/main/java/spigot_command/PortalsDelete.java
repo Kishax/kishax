@@ -21,6 +21,7 @@ public class PortalsDelete {
 
     public void execute(CommandSender sender, String portalName) {
         FileConfiguration portalsConfig = psConfig.getPortalsConfig();
+        @SuppressWarnings("unchecked")
         List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
 
         if (portals != null) {

@@ -33,7 +33,7 @@ public class DoServerOnline {
     private final ConsoleCommandSource console;
     private final Database db;
     private final Map<String, Integer> velocityToml = new ConcurrentHashMap<>();
-	private Map<String, Map<String, String>> dbStatusMap = new ConcurrentHashMap<>();
+	private final Map<String, Map<String, String>> dbStatusMap = new ConcurrentHashMap<>();
     //private final Map<String, Integer> serverDBInfo = new HashMap<>();
 	//private final Map<String, String> serverDBTypeInfo = new HashMap<>();
     

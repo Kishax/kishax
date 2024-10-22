@@ -9,11 +9,11 @@ import com.google.inject.Inject;
 
 public class SocketResponse {
     private final common.Main plugin;
-    private final ServerStatusCache serverStatusCache;
+    private final ServerStatusCache ssc;
     @Inject
-    public SocketResponse(common.Main plugin, ServerStatusCache serverStatusCache) {
+    public SocketResponse(common.Main plugin, ServerStatusCache ssc) {
         this.plugin = plugin;
-        this.serverStatusCache = serverStatusCache;
+        this.ssc = ssc;
     }
 
     public void resaction(String res) {
@@ -31,17 +31,21 @@ public class SocketResponse {
                 // パターンにマッチする部分を抽出
                 if (matcher.find()) {
                     String extracted = matcher.group(1);
-                    Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
+                    Map<String, Map<String, Map<String, String>>> statusMap = ssc.getStatusMap();
                     for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
                         for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
                             Map<String, String> serverInfo = entry.getValue();
                             if (serverInfo.get("name").equals(extracted)) {
                                 serverInfo.put("online", "1");
-                                serverStatusCache.setStatusMap(statusMap);
+                                ssc.setStatusMap(statusMap);
                                 //plugin.getLogger().log(Level.INFO, "Server {0} is now online", extracted);
                             }
                         }
                     }
+                }
+            } else if (res.contains("PHP")) {
+                if (res.contains("uuid")) {
+                    ssc.refreshMemberInfo();
                 }
             }
         }

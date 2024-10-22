@@ -28,6 +28,7 @@ public final class PortalsConfig {
         }
     }
     
+    @SuppressWarnings("unchecked")
     public void createPortalsConfig() {
         this.portalsFile = new File(plugin.getDataFolder(), "portals.yml");
         if (!portalsFile.exists()) {
@@ -60,6 +61,7 @@ public final class PortalsConfig {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void reloadPortalsConfig() {
         //this.portalsFile = new File(plugin.getDataFolder(), "portals.yml");
     

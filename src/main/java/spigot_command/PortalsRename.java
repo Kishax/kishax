@@ -1,5 +1,6 @@
 package spigot_command;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,20 +20,26 @@ public class PortalsRename {
         this.psConfig = psConfig;
     }
 
+    @SuppressWarnings("unchecked")
     public void execute(CommandSender sender, String portalUUID, String newName) {
         FileConfiguration portalsConfig = psConfig.getPortalsConfig();
         List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
 
         if (portals != null) {
-            boolean renamed = false;
+            boolean portalFind = false;
+            Map<String, Object> portalFound = new HashMap<>();
             for (Map<String, Object> portal : (List<Map<String, Object>>) (List<?>) portals) {
                 if (portalUUID.equals(portal.get("uuid"))) {
-                    portal.put("name", newName);
-                    renamed = true;
-                    break;
+                    portalFound = portal;
+                    portalFind = true;
+                }
+                if (newName.equals(portal.get("name"))) {
+                    sender.sendMessage(ChatColor.RED + "名前が重複しています。");
+                    return;
                 }
             }
-            if (renamed) {
+            if (portalFind) {
+                portalFound.put("name", newName);
                 portalsConfig.set("portals", portals);
                 psConfig.savePortalsConfig();
                 psConfig.reloadPortalsConfig();

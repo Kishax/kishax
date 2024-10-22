@@ -27,6 +27,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.DatabaseInterface;
+import velocity.Luckperms;
 
 public class SetServer {
 
@@ -34,25 +35,26 @@ public class SetServer {
 	private final Config config;
 	private final Logger logger;
 	private final DatabaseInterface db;
-	
-	public Connection conn = null, connLp = null;
-	public Connection[] conns = {conn, connLp};
-	public ResultSet minecrafts = null, mine_status = null, issuperadmin = null, issubadmin = null;
-	public ResultSet[] resultsets = {minecrafts,mine_status,issuperadmin,issubadmin};
+	private final Luckperms lp;
+	public Connection conn = null;
+	public Connection[] conns = {conn};
+	public ResultSet minecrafts = null, mine_status = null;
+	public ResultSet[] resultsets = {minecrafts,mine_status};
 	public PreparedStatement ps = null;
 	
 	@Inject
-	public SetServer(ProxyServer server, Logger logger, Config config, DatabaseInterface db) {
+	public SetServer(ProxyServer server, Logger logger, Config config, DatabaseInterface db, Luckperms lp) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
+		this.lp = lp;
 	}
 	
 	public void execute(@NotNull CommandSource source,String[] args) {
 		if (source instanceof Player player) {
             // プレイヤーがコマンドを実行した場合の処理
-        
+			String playerName = player.getUsername();
             if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
             	player.sendMessage(Component.text(NamedTextColor.RED+"サーバー名を入力してください。"));
             	return;
@@ -75,7 +77,6 @@ public class SetServer {
 
             try {
             	conn = db.getConnection();
-				connLp = db.getConnection("fmc_lp");
     			String sql = "SELECT * FROM members WHERE uuid=?;";
     			ps = conn.prepareStatement(sql);
     			ps.setString(1,player.getUniqueId().toString());
@@ -218,7 +219,7 @@ public class SetServer {
 						break;
 					} else {
 						// オフライン
-						if (minecrafts.getBoolean("confirm")) {
+						if (lp.hasPermission(playerName, "group.new-fmc-user")) {
 							// 上のwhile文で進んだカーソルの次から最後までの行まで回す
 							while (mine_status.next()) {
 								// ここ、for文でmine_statusテーブルを回す必要あるかも
@@ -242,20 +243,9 @@ public class SetServer {
 								return;
 							}
 							
-							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-							ps = connLp.prepareStatement(sql);
-							ps.setString(1, player.getUniqueId().toString());
-							ps.setString(2, "group.super-admin");
-							issuperadmin = ps.executeQuery();
-							
-							sql = "SELECT * FROM lp_user_permissions WHERE uuid=? AND permission=?;";
-							ps = connLp.prepareStatement(sql);
-							ps.setString(1, player.getUniqueId().toString());
-							ps.setString(2, "group.sub-admin");
-							issubadmin = ps.executeQuery();
-							
 							// fmcアカウントを持っている
-							if (issuperadmin.next() || issubadmin.next()) {
+							String[] permissions = {"group.super-admin","group.sub-admin"};
+							if (lp.hasPermission(playerName, permissions)) {
 								// adminである /startが使用可能
 								// /startで用いるセッションタイム(現在時刻)(sst)をデータベースに
 								LocalDateTime now = LocalDateTime.now();

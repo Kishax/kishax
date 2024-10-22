@@ -9,9 +9,7 @@
    <properties>
       <!--<java.version>1.8</java.version>POPPOOO!!!-->
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.release>17</maven.compiler.release>
-      <maven.compiler.source>17</maven.compiler.source>
-      <maven.compiler.target>17</maven.compiler.target>
+      <maven.compiler.release>22</maven.compiler.release>
       <velocity.version>3.3.0</velocity.version>
    </properties>
    <repositories>
@@ -40,7 +38,7 @@
       <dependency>
          <groupId>org.spigotmc</groupId>
          <artifactId>spigot-api</artifactId>
-         <version>1.20.6-R0.1-SNAPSHOT</version><!--[1.20,1.17)-->
+         <version>1.20.6-R0.1-SNAPSHOT</version><!--[1.20,1.22)-->
          <scope>provided</scope>
       </dependency>
       <dependency>
@@ -94,7 +92,7 @@
       <!--<dependency>
          <groupId>org.bukkit</groupId>
          <artifactId>bukkit</artifactId>
-         <version>[1.20,1.17)</version>
+         <version>[1.20,1.22)</version>
          <scope>provided</scope>
       </dependency>-->
       <dependency>
@@ -141,7 +139,7 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.8.1</version>
             <configuration>
-               <release>17</release>
+               <release>22</release>
                <!--<compilerArgs>
                   <arg>enable-preview</arg>
                </compilerArgs>-->

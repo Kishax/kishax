@@ -27,18 +27,17 @@ public class ServerStatusCache {
     private final PortFinder pf;
     private final DoServerOnline dso;
     private final Provider<SocketSwitch> sswProvider;
-    private final ServerHomeDir shd;
     private final AtomicBoolean isFirstRefreshing = new AtomicBoolean(false);
     private Map<String, Map<String, Map<String, String>>> statusMap = new ConcurrentHashMap<>();
+    private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
     @Inject
-    public ServerStatusCache(common.Main plugin, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+    public ServerStatusCache(common.Main plugin, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
         this.db = db;
         this.pf = pf;
         this.dso = dso;
         this.sswProvider = sswProvider;
-        this.shd = shd;
     }
 
     public void serverStatusCache() {
@@ -47,6 +46,7 @@ public class ServerStatusCache {
             @Override
             public void run() {
                 refreshCache();
+                refreshMemberInfo();
             }
         }, 0, CACHE_REFRESH_INTERVAL);
     }
@@ -139,5 +139,30 @@ public class ServerStatusCache {
             }
         }
         return null;
+    }
+
+    public void refreshMemberInfo() {
+        try (Connection conn = db.getConnection();
+            PreparedStatement ps = conn.prepareStatement("SELECT * FROM members;")) {
+            ResultSet rs = ps.executeQuery();
+            Map<String, Map<String, String>> newMemberMap = new HashMap<>();
+            while (rs.next()) {
+                String uuid = rs.getString("uuid");
+                String name = rs.getString("name");
+                newMemberMap.put(name, new HashMap<String, String>() {{
+                    put("uuid", uuid);
+                }});
+            }
+            this.memberMap = newMemberMap;
+        } catch (SQLException | ClassNotFoundException e) {
+            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                plugin.getLogger().severe(element.toString());
+            }
+        }
+    }
+
+    public Map<String, Map<String, String>> getMemberMap() {
+        return this.memberMap;
     }
 }

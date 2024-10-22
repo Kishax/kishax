@@ -35,16 +35,16 @@ public final class EventListener implements Listener {
     private final common.Main plugin;
 	private final PortalsConfig psConfig;
     private final PortalsMenu pm;
-    private final ServerStatusCache serverStatusCache;
+    private final ServerStatusCache ssc;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm, ServerStatusCache serverStatusCache) {
+	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm, ServerStatusCache ssc) {
 		this.plugin = plugin;
 		this.psConfig = psConfig;
         this.pm = pm;
-        this.serverStatusCache = serverStatusCache;
+        this.ssc = ssc;
 		// new Location(Bukkit.getWorld("world"), 100, 64, 100);
 	}
 
@@ -52,6 +52,7 @@ public final class EventListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
         String title = event.getView().getTitle();
+
 
         // インベントリのタイトルに基づいて処理を行う
         if (title.endsWith(" servers")) {
@@ -61,7 +62,19 @@ public final class EventListener implements Listener {
             } else {
                 // インベントリを閉じたときに、プレイヤーのページをリセット
                 String serverType = title.split(" ")[0];
-                pm.resetPage(player, serverType);
+                if (serverType != null) {
+                    pm.resetPage(player, serverType);
+                }
+            }
+        } else if (title.endsWith(" server")) {
+            if (playersOpeningNewInventory.contains(player)) {
+                // プレイヤーが新しいインベントリを開いている場合はリセットしない
+                playersOpeningNewInventory.remove(player);
+            } else {
+                String serverName = title.split(" ")[0];
+                if (serverName != null) {
+                    pm.resetPage(player, serverName);
+                }
             }
         }
     }
@@ -71,19 +84,8 @@ public final class EventListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             playersOpeningNewInventory.add(player);
-            String playerName = player.getName();
+            //String playerName = player.getName();
             String title = event.getView().getTitle();
-            // プレイヤーフェイスブロックのインベントリを作るときに使う
-            /*ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem != null && clickedItem.hasItemMeta()) {
-                ItemMeta itemMeta = clickedItem.getItemMeta();
-                String displayName;
-                if (itemMeta != null && itemMeta.hasDisplayName()) {
-                    displayName = itemMeta.getDisplayName();
-                } else {
-                    displayName = null;
-                }
-            }*/
 
             if (title.endsWith(" server")) {
                 event.setCancelled(true);
@@ -92,13 +94,29 @@ public final class EventListener implements Listener {
                 switch (slot) {
                     case 0 -> {
                         pm.resetPage(player, serverName);
-                        String serverType = serverStatusCache.getServerType(serverName);
+                        String serverType = ssc.getServerType(serverName);
                         if (serverType != null) {
                             int page = pm.getPage(player, serverType);
                             pm.openServerEachInventory(player, serverType, page);
                         } else {
                             player.closeInventory();
                             player.sendMessage("サーバーが見つかりませんでした。");
+                        }
+                    }
+                    case 45 -> {
+                        // 戻るボタンがあれば
+                        int page = pm.getPage(player, serverName);
+                        if (page > 1) {
+                            pm.openServerInventory(player, serverName, page - 1);
+                        }
+                    }
+                    case 53 -> {
+                        // 進むボタンがあれば
+                        int page = pm.getPage(player, serverName);
+                        int totalServers = pm.getTotalPlayers(serverName); // 総サーバー数を取得
+                        int totalPages = (int) Math.ceil((double) totalServers / PortalsMenu.FACE_POSITIONS.length); // 総ページ数を計算
+                        if (page < totalPages) {
+                            pm.openServerInventory(player, serverName, page + 1);
                         }
                     }
                 }
@@ -113,7 +131,7 @@ public final class EventListener implements Listener {
                         pm.openServerTypeInventory(player);
                     }
                     case 11, 13, 15, 29, 31, 33 -> {
-                        Map<String, Map<String, Map<String, String>>> serverStatusMap = serverStatusCache.getStatusMap();
+                        Map<String, Map<String, Map<String, String>>> serverStatusMap = ssc.getStatusMap();
                         Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
                         //plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
                         if (serverStatusList != null) {
@@ -124,8 +142,9 @@ public final class EventListener implements Listener {
                             if (index < serverStatusList.size()) {
                                 //plugin.getLogger().info("YES");
                                 String serverName = (String) serverStatusList.keySet().toArray()[index];
-                                //player.performCommand("fmc fv " + playerName + " fmcp ss " + serverName);
-                                pm.openServerInventory(player, serverName);
+                                int facepage = pm.getPage(player, serverName);
+                                pm.setPage(player, serverName, page);
+                                pm.openServerInventory(player, serverName, facepage);
                             }
                         }
                     }
@@ -149,7 +168,6 @@ public final class EventListener implements Listener {
             } else if (title.equals("server type")) {
                 event.setCancelled(true);
                 int slot = event.getRawSlot();
-
                 switch (slot) {
                     case 11 -> {
                         int page = pm.getPage(player, "life");
@@ -169,13 +187,11 @@ public final class EventListener implements Listener {
     }
 
 	@EventHandler
+    @SuppressWarnings("unchecked")
     public void onPlayerMove(PlayerMoveEvent e) {
         if (plugin.getConfig().getBoolean("Portals.Move", false)) {
             Player player = e.getPlayer();
             Location loc = player.getLocation();
-
-            // plugin.getLogger().log(Level.INFO, "Player location: {0}", loc);
-
             FileConfiguration portalsConfig;
             List<Map<?, ?>> portals;
             if (WandListener.isMakePortal) {
@@ -192,9 +208,6 @@ public final class EventListener implements Listener {
             if (portals != null) {
                 for (Map<?, ?> portal : portals) {
                     String name = (String) portal.get("name");
-                    // portalの名前によって、処理を分ける
-                    // (例) /fmc portal menu live, /fmc portal menu distributed
-
                     List<?> corner1List = (List<?>) portal.get("corner1");
                     List<?> corner2List = (List<?>) portal.get("corner2");
 
@@ -207,9 +220,6 @@ public final class EventListener implements Listener {
                                 ((Number) corner2List.get(0)).doubleValue(),
                                 ((Number) corner2List.get(1)).doubleValue(),
                                 ((Number) corner2List.get(2)).doubleValue());
-                        
-                        // plugin.getLogger().log(Level.INFO, "Portal {0} \n - corner1: {1}\n - corner2: {2}", new Object[]{name, corner1, corner2});
-
                         if (isWithinBounds(loc, corner1, corner2)) {
                             isInAnyPortal = true;
                             if (!playersInPortal.contains(player)) {
@@ -218,7 +228,7 @@ public final class EventListener implements Listener {
                                 BaseComponent[] component = new ComponentBuilder()
                                     .append(ChatColor.WHITE + "ゲート: ")
                                     .append(ChatColor.AQUA + name)
-                                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("クリックしてコピー").create()))
+                                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new net.md_5.bungee.api.chat.hover.content.Text("クリックしてコピー")))
                                         .event(new net.md_5.bungee.api.chat.ClickEvent(net.md_5.bungee.api.chat.ClickEvent.Action.COPY_TO_CLIPBOARD, name))
                                     .append(ChatColor.WHITE + " に入りました！")
                                     .create();
@@ -229,7 +239,6 @@ public final class EventListener implements Listener {
                                     }
                                 }
                             }
-                            
                             break; // 一つのポータルに触れたらループを抜ける
                         }
                     }

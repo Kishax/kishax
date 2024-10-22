@@ -103,7 +103,11 @@ public class FMCCommand implements SimpleCommand {
         }
 
         String subCommand = args[0];
-
+        if (!source.hasPermission("fmc.proxy." + subCommand)) {
+            source.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
+            return;
+        }
+        
         switch (subCommand.toLowerCase()) {
             case "debug" -> Main.getInjector().getInstance(Debug.class).execute(source, args);
 

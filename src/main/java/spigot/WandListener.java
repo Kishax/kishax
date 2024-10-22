@@ -41,6 +41,7 @@ public class WandListener implements Listener {
     }
 
     @EventHandler
+    @SuppressWarnings("unchecked")
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (plugin.getConfig().getBoolean("Portals.Wand", false)) {
             Player player = event.getPlayer();

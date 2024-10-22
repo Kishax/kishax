@@ -1,92 +1,39 @@
 package velocity;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import org.slf4j.Logger;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 
 public class SocketSwitch {
-
+    private final Logger logger;
+    private final DatabaseInterface db;
+	private final Config config;
+	private final SocketResponse sr;
+    private final String hostname = "localhost";
 	private Thread clientThread;
 	private Thread socketThread;
 	private ServerSocket serverSocket;
 	public String sendmsg;
 	private volatile boolean running = true;
-	private final Config config;
-	private final Logger logger;
-	private final SocketResponse sr;
 	
 	@Inject
-	public SocketSwitch(Logger logger, Config config, SocketResponse sr) {
+	public SocketSwitch(Logger logger, Config config, DatabaseInterface db, SocketResponse sr) {
 		this.logger = logger;
 		this.config = config;
+        this.db = db;
 		this.sr = sr;
 	}
 	
-	//Client side
-	public void startSocketClient(String sendmsg) {
-		if (config.getInt("Socket.Client_Port",0)==0) {
-			logger.info("Client Socket is canceled for config value not given");
-			return;
-		}
-
-		logger.info("Client Socket is Available");
-        clientThread = new Thread(() -> {
-            String hostname = "localhost";
-            try (
-            	Socket socket = new Socket(hostname, config.getInt("Socket.Client_Port"));
-            	DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            	DataInputStream in = new DataInputStream(socket.getInputStream())
-            ) {
-                // 送信するデータの準備
-                ByteArrayDataOutput dataOut = ByteStreams.newDataOutput();
-                dataOut.writeUTF(sendmsg); // 例として文字列を送信
-
-                // データの送信
-                byte[] dataToSend = dataOut.toByteArray();
-                out.writeInt(dataToSend.length); // データの長さを最初に送信
-                out.write(dataToSend); // 実際のデータを送信
-
-                // レスポンスの受信
-                int length = in.readInt(); // レスポンスの長さを最初に受信
-                byte[] responseData = new byte[length];
-                in.readFully(responseData); // レスポンスデータを受信
-
-                // 受信したデータの処理
-                String response = new String(responseData, "UTF-8");
-                logger.info("Server response: " + response);
-                
-            } catch (Exception e) {
-                logger.error("An Exception error occurred: " + e.getMessage());
-                for (StackTraceElement element : e.getStackTrace()) {
-                    logger.error(element.toString());
-                }
-            }
-        });
-
-        clientThread.start();
-    }
-	
-    public void stopSocketClient() {
-        try {
-            if (clientThread != null && clientThread.isAlive()) {
-                clientThread.interrupt();
-                clientThread.join();
-            }
-        } catch (InterruptedException e) {
-            logger.error("An InterruptedException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-        }
-    }
     
     public void startSocketServer() {
 		if (config.getInt("Socket.Server_Port",0)==0) {
@@ -95,7 +42,6 @@ public class SocketSwitch {
 			return;
 		}
 
-		logger.info("Server Socket is Available");
         socketThread = new Thread(() -> {
             try {
                 serverSocket = new ServerSocket(config.getInt("Socket.Server_Port"));
@@ -138,6 +84,68 @@ public class SocketSwitch {
         socketThread.start();
     }
     
+    public void startSocketClient(int port, String sendmsg) {
+	    if (port == 0) return;
+	    //logger.info("Client Socket is Available");
+	    clientThread = new Thread(() -> {
+	        sendMessage(port, sendmsg);
+	    });
+	    clientThread.start();
+	}
+
+	private void sendMessage(int port, String sendmsg) {
+	    try (Socket socket = new Socket(hostname, port);
+	    	BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));) {
+	    	writer.write(sendmsg + "\n");
+	    	writer.flush();
+	    } catch (Exception e) {
+	        logger.error("An Exception error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+	    }
+	}
+    
+    public void sendSpigotServer(String sendmsg) {
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM status");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String serverName = rs.getString("name"),
+                    platform = rs.getString("platform");
+                int port = rs.getInt("socketport");
+                boolean online = rs.getBoolean("online");
+                if (port == 0) {
+                    //logger.info("sendSpigotServer: Server " + serverName + " has no socketport");
+                    continue;
+                }
+                if (online && platform.equalsIgnoreCase("spigot")) {
+                    logger.info("sendSpigotServer: Starting client for server " + serverName + " on port " + port);
+                    startSocketClient(port, sendmsg);
+                }
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.error("An Exception error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+    }
+
+    public void stopSocketClient() {
+        try {
+            if (clientThread != null && clientThread.isAlive()) {
+                clientThread.interrupt();
+                clientThread.join();
+            }
+        } catch (InterruptedException e) {
+            logger.error("An InterruptedException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+    }
+
     public void stopSocketServer() {
     	running = false;
         try {
