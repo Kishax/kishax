@@ -51,7 +51,7 @@ public class ServerStatusCache {
         }, 0, CACHE_REFRESH_INTERVAL);
     }
     
-    private void refreshCache() {
+    public void refreshCache() {
         SocketSwitch ssw = sswProvider.get();
         Map<String, Map<String, Map<String, String>>> newServerStatusMap = new HashMap<>();
         String query = "SELECT * FROM status;";

@@ -34,6 +34,7 @@ public class DoServerOffline {
 			int rsAffected = ps.executeUpdate();
 			if (rsAffected > 0) {
 				SocketSwitch ssw = sswProvider.get();
+				ssw.sendSpigotServer("MineStatusSync");
 				ssw.stopSocketServer();
 			}
 		} catch (SQLException | ClassNotFoundException e2) {

@@ -122,12 +122,8 @@ public class SocketResponse {
 	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	        String formattedDateTime = now.format(formatter);
             String pattern = "(.*?)サーバーが起動しました。";
-
-            // パターンをコンパイル
             Pattern compiledPattern = Pattern.compile(pattern);
             Matcher matcher = compiledPattern.matcher(res);
-
-            // パターンにマッチする部分を抽出
             if (matcher.find()) {
                 String extracted = matcher.group(1);
 				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));

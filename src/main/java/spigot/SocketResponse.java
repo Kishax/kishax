@@ -21,14 +21,9 @@ public class SocketResponse {
             res = res.replace("\n", "").replace("\r", "");
             plugin.getLogger().log(Level.INFO, "{0}", res);
             if (res.contains("起動")) {
-                // /stpで用いるセッションタイム(現在時刻)(sst)をデータベースに
                 String pattern = "(.*?)サーバーが起動しました。";
-    
-                // パターンをコンパイル
                 Pattern compiledPattern = Pattern.compile(pattern);
                 Matcher matcher = compiledPattern.matcher(res);
-    
-                // パターンにマッチする部分を抽出
                 if (matcher.find()) {
                     String extracted = matcher.group(1);
                     Map<String, Map<String, Map<String, String>>> statusMap = ssc.getStatusMap();
@@ -47,6 +42,8 @@ public class SocketResponse {
                 if (res.contains("uuid")) {
                     ssc.refreshMemberInfo();
                 }
+            } else if (res.contains("MineStatusSync")) {
+                ssc.refreshCache();
             }
         }
     }

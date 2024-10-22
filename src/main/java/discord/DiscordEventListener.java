@@ -330,10 +330,8 @@ public class DiscordEventListener extends ListenerAdapter {
 								processBuilder.start();
 								// Discord通知
 								discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
-								
 								// マイクラサーバーへ通知
 								bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
-								
 								// フラグから削除
 								String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
 								Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
@@ -391,10 +389,8 @@ public class DiscordEventListener extends ListenerAdapter {
 						if (rsAffected > 0) {
 							// Discord通知
 							discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
-							
 							// マイクラサーバーへ通知
 							bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
-							
 							// フラグから削除
 							String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
 							Request.PlayerReqFlags.remove(playerUUID); // フラグから除去

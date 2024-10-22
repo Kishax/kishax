@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +43,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 public class EventListener {
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
 	public static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
-	public static final Map<Player, String> playersServerMap = new ConcurrentHashMap<>();
 	public final Main plugin;
 	private final ProxyServer server;
 	private final Config config;
@@ -466,7 +464,6 @@ public class EventListener {
 												discordME.AddEmbedSomeMessage("Move", player, serverInfo);
 											} else {
 												if (beforejoin_sa_minute>=config.getInt("Interval.Login",0)) {
-													EventListener.playersServerMap.put(player, serverInfo.getName());
 													if (previousServerInfo.isPresent()) {
 														// どこからか移動してきたとき
 														discordME.AddEmbedSomeMessage("Move", player, serverInfo);
@@ -580,7 +577,6 @@ public class EventListener {
 	@Subscribe
     public void onPlayerDisconnect(DisconnectEvent e) {
     	Player player = e.getPlayer();
-		EventListener.playersServerMap.remove(player);
     	Runnable task = () -> {
             // プレイヤーがReconnectしなかった場合に実行する処理
     		server.getScheduler().buildTask(plugin, () -> {
