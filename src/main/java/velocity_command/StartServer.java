@@ -54,8 +54,9 @@ public class StartServer {
 	}
 	
 	public void execute(@NotNull CommandSource source,String[] args) {
+		String targetServerName = args[1];
 		if (source instanceof Player player) {
-			if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
+			if (args.length == 1 || Objects.isNull(targetServerName) || targetServerName.isEmpty()) {
 				player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
 				return;
 			}
@@ -66,7 +67,6 @@ public class StartServer {
 	            currentServerName = registeredServer.getServerInfo().getName();
 	        });
 			
-			String targetServerName = args[1];
 			boolean containsServer = false;
 			for (RegisteredServer registeredServer : server.getAllServers()) {
 				if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName)) {
@@ -84,9 +84,9 @@ public class StartServer {
 					PreparedStatement ps = conn.prepareStatement(query);
 					PreparedStatement ps2 = conn.prepareStatement(query2)) {
 	    			ps.setString(1,player.getUniqueId().toString());
-					ps2.setString(1,args[1]);
+					ps2.setString(1,targetServerName);
 					try (ResultSet minecrafts = ps.executeQuery();
-						ResultSet mine_status = ps.executeQuery()) {
+						ResultSet mine_status = ps2.executeQuery()) {
 						if (minecrafts.next()) {
 							//初参加のプレイヤーのsst,req,stカラムはnull値を返すので
 							if (Objects.nonNull(minecrafts.getTimestamp("sst")) && Objects.nonNull(minecrafts.getTimestamp("st"))) {
@@ -118,17 +118,17 @@ public class StartServer {
 							
 							if (mine_status.next()) {
 								if (mine_status.getBoolean("online")) {
-									player.sendMessage(Component.text(args[1]+"サーバーは起動中です。").color(NamedTextColor.RED));
-									logger.info(NamedTextColor.RED+args[1]+"サーバーは起動中です。");
+									player.sendMessage(Component.text(targetServerName+"サーバーは起動中です。").color(NamedTextColor.RED));
+									logger.info(NamedTextColor.RED+targetServerName+"サーバーは起動中です。");
 								} else {
-									if (config.getString("Servers."+args[1]+".Exec_Path","").isEmpty()) {
+									if (config.getString("Servers."+targetServerName+".Exec_Path","").isEmpty()) {
 										player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
 										return;
 									}
 									
 									// 全サーバーにプレイヤーがサーバーを起動したことを通知
 									TextComponent notifyComponent = Component.text()
-											.append(Component.text(player.getUsername()+"が"+args[1]+"サーバーを起動しました。\nまもなく"+args[1]+"サーバーが起動します。").color(NamedTextColor.AQUA))
+											.append(Component.text(player.getUsername()+"が"+targetServerName+"サーバーを起動しました。\nまもなく"+targetServerName+"サーバーが起動します。").color(NamedTextColor.AQUA))
 											.build();
 									bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
 									
@@ -139,7 +139,7 @@ public class StartServer {
 										int rsAffected3 = ps3.executeUpdate();
 										if (rsAffected3 > 0) {
 											// バッチファイルのパスを指定
-											String execFilePath = config.getString("Servers."+args[1]+".Exec_Path");
+											String execFilePath = config.getString("Servers."+targetServerName+".Exec_Path");
 											ProcessBuilder processBuilder = new ProcessBuilder(execFilePath);
 											processBuilder.start();
 											String query4 = "UPDATE status SET online=? WHERE name=?;",
@@ -147,8 +147,7 @@ public class StartServer {
 											try (PreparedStatement ps4 = conn.prepareStatement(query4);
 												PreparedStatement ps5 = conn.prepareStatement(query5)) {
 												ps4.setBoolean(1, true);
-												ps4.setString(2, args[1]);
-												
+												ps4.setString(2, targetServerName);
 												
 												ps5.setString(1, player.getUsername());
 												ps5.setString(2, player.getUniqueId().toString());
@@ -158,13 +157,13 @@ public class StartServer {
 												int rsAffected4 = ps4.executeUpdate(),
 													rsAffected5 = ps5.executeUpdate();
 												if (rsAffected4 > 0 && rsAffected5 > 0) {
-													discordME.AddEmbedSomeMessage("Start", player, args[1]);
+													discordME.AddEmbedSomeMessage("Start", player, targetServerName);
 													TextComponent component = Component.text()
 																.append(Component.text("UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
-																.append(Component.text(args[1]+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
+																.append(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
 																.build();
 													player.sendMessage(component);
-													console.sendMessage(Component.text(args[1]+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
+													console.sendMessage(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
 												}
 											}
 										} else {
