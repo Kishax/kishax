@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -32,15 +31,9 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 public class PlayerUtil {
-
 	private final ProxyServer server;
 	private final DatabaseInterface db;
 	private final Logger logger;
-	
-	private Connection conn = null;
-	private PreparedStatement ps = null;
-	private ResultSet playerlist = null, dbuuid = null, bj_logs = null, dbname = null;
-	private final ResultSet[] resultsets = {playerlist, dbuuid, bj_logs, dbname};
 	private final List<String> Players = new CopyOnWriteArrayList<>();
 	private boolean isLoaded = false;
 	
@@ -53,51 +46,39 @@ public class PlayerUtil {
 	
 	public synchronized void loadPlayers() {
 		if (isLoaded) return;
-		
-		try {
-			conn = db.getConnection();
-			
-			if(Objects.isNull(conn))	return;
-			
-			String sql = "SELECT * FROM members;";
-			ps = conn.prepareStatement(sql);
-			playerlist = ps.executeQuery();
-			
-			while(playerlist.next()) {
-				Players.add(playerlist.getString("name"));
+		String query = "SELECT * FROM members;";
+		try (Connection conn = db.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(query)) {
+			try (ResultSet playerlist = ps.executeQuery()) {
+				while(playerlist.next()) {
+					Players.add(playerlist.getString("name"));
+				}
+				isLoaded = true;
 			}
-
-			isLoaded = true;
 		} catch (ClassNotFoundException | SQLException e) {
 			logger.error("A ClassNotFoundException | SQLException error occurred: " + e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-		} finally {
-			db.close_resource(resultsets, conn, ps);
 		}
  	}
 	
 	public void updatePlayers() {
-		try {
-			conn = db.getConnection();
-			String sql = "SELECT * FROM members;";
-			ps = conn.prepareStatement(sql);
-			playerlist = ps.executeQuery();
-			
-			// Playersリストを初期化
-			Players.clear();
-					
-			while (playerlist.next()) {
-				Players.add(playerlist.getString("name"));
+		String query = "SELECT * FROM members;";
+		try (Connection conn = db.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(query)) {
+			try (ResultSet playerlist = ps.executeQuery()) {
+				// Playersリストを初期化
+				Players.clear();
+				while (playerlist.next()) {
+					Players.add(playerlist.getString("name"));
+				}
 			}
 		} catch (ClassNotFoundException | SQLException e) {
 			logger.error("A ClassNotFoundException | SQLException error occurred: " + e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-		} finally {
-			db.close_resource(resultsets, conn, ps);
 		}
  	}
 	
@@ -127,25 +108,22 @@ public class PlayerUtil {
     }
 	
 	public String getPlayerUUIDByNameFromDB(String playerName) {
-		try {
-			conn = db.getConnection();
-			String sql = "SELECT uuid FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
-			ps = conn.prepareStatement(sql);
+		String query = "SELECT uuid FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
+		try (Connection conn = db.getConnection();
+			 PreparedStatement ps = conn.prepareStatement(query)) {
 			ps.setString(1, playerName);
-			dbuuid = ps.executeQuery();
-			if (dbuuid.next()) {
-				return dbuuid.getString("uuid");
-			} else {
-				return null;
+			try (ResultSet dbuuid = ps.executeQuery()) {
+				if (dbuuid.next()) {
+					return dbuuid.getString("uuid");
+				}
 			}
 		} catch (ClassNotFoundException | SQLException e) {
 			logger.error("A ClassNotFoundException | SQLException error occurred: " + e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-
-			return null;
 		}
+		return null;
 	}
 	
 	public List<String> getPlayerNamesListFromUUIDs(List<String> playerUUIDs) {
@@ -207,34 +185,27 @@ public class PlayerUtil {
 	}
 
 	public int getPlayerTime(Player player, ServerInfo serverInfo) {
-		try {
-        	conn = db.getConnection();
-    		
+		String query = "SELECT * FROM log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
     		// calc playtime
-    		String sql = "SELECT * FROM log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
-    		ps = conn.prepareStatement(sql);
     		ps.setString(1, player.getUniqueId().toString());
     		ps.setBoolean(2, true);
-    		bj_logs = ps.executeQuery();
-    		
-    		if (bj_logs.next()) {
-    			long now_timestamp = Instant.now().getEpochSecond();
-                Timestamp bj_time = bj_logs.getTimestamp("time");
-                long bj_timestamp = bj_time.getTime() / 1000L;
-    			
-    			long bj_sa = now_timestamp-bj_timestamp;
-        		
-    			return (int) bj_sa;
-    		}
+    		try (ResultSet bj_logs = ps.executeQuery()) {
+				if (bj_logs.next()) {
+					long now_timestamp = Instant.now().getEpochSecond();
+					Timestamp bj_time = bj_logs.getTimestamp("time");
+					long bj_timestamp = bj_time.getTime() / 1000L;
+					long bj_sa = now_timestamp-bj_timestamp;
+					return (int) bj_sa;
+				}
+			}
     	} catch (SQLException | ClassNotFoundException e1) {
             logger.error("A ClassNotFoundException | SQLException error occurred: " + e1.getMessage());
             for (StackTraceElement element : e1.getStackTrace()) {
                 logger.error(element.toString());
             }
-
-            return 0;
         }
-
 		return 0;
 	}
 	
@@ -243,7 +214,6 @@ public class PlayerUtil {
             if (seconds < 10) {
                 return String.format("00:00:0%d", seconds);
             }
-
             return String.format("00:00:%d", seconds);
         } else if (seconds < 3600) {
             int minutes = seconds / 60;
@@ -261,7 +231,6 @@ public class PlayerUtil {
 	public String getPlayerNameFromUUID(UUID uuid) {
         String uuidString = uuid.toString().replace("-", "");
         String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuidString;
-        
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -270,7 +239,6 @@ public class PlayerUtil {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
             if (response.statusCode() == 200) {
                 // JSONレスポンスを解析
                 Gson gson = new Gson();
@@ -285,7 +253,6 @@ public class PlayerUtil {
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-			
             return null;
         }
     }

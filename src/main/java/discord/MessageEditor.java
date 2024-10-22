@@ -32,9 +32,6 @@ import velocity.PlayerUtil;
 import velocity_command.Maintenance;
 
 public class MessageEditor implements MessageEditorInterface {
-
-	private PreparedStatement ps = null;
-	public Connection conn = null;
 	public final Main plugin;
 	private final ProxyServer server;
 	private final Logger logger;
@@ -371,42 +368,35 @@ public class MessageEditor implements MessageEditorInterface {
                     }
 	                    
 	                case "Join" -> {
-						try {
-							conn = db.getConnection();
+						String query = "UPDATE members SET emid=? WHERE uuid=?;";
+						try (Connection conn = db.getConnection();
+							 PreparedStatement ps = conn.prepareStatement(query)) {
 							if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 								// 絵文字IDをアップデートしておく
-								if (Objects.nonNull(conn)) {
-									ps = conn.prepareStatement("UPDATE members SET emid=? WHERE uuid=?;");
-									ps.setString(1, FaceEmojiId);
-									ps.setString(2, uuid);
-									ps.executeUpdate();
-								}
-								
+								ps.setString(1, FaceEmojiId);
 								addMessage = Emoji + FaceEmoji +
-										playerName + "が" + serverInfo.getName() +
-										"サーバーに参加しました。";
+									playerName + "が" + serverInfo.getName() +
+									"サーバーに参加しました。";
 							} else {
 								//logger.info("Emoji ID is null");
-								if (Objects.nonNull(conn)) {
-									// 絵文字IDをアップデートしておく
-									ps = conn.prepareStatement("UPDATE members SET emid=? WHERE uuid=?;");
-									ps.setString(1, null);
-									ps.setString(2, uuid);
-									ps.executeUpdate();
-								}
+								// 絵文字IDをアップデートしておく
+								ps.setString(1, null);
 								
 								addMessage = playerName + "が" + serverInfo.getName() +
 										"サーバーに参加しました。";
 							}
-							
-							createEmbed = discord.createEmbed (
+							ps.setString(2, uuid);
+							int rsAffected = ps.executeUpdate();
+							if (rsAffected > 0) {
+								createEmbed = discord.createEmbed (
 													addMessage,
 													ColorUtil.GREEN.getRGB()
 											);
-							discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
-								//logger.info("Message sent with ID: " + messageId2);
-								EventListener.PlayerMessageIds.put(uuid, messageId2);
-							});
+								discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+									//logger.info("Message sent with ID: " + messageId2);
+									EventListener.PlayerMessageIds.put(uuid, messageId2);
+								});
+							}
 						} catch (SQLException | ClassNotFoundException e1) {
 							logger.error("An onConnection error occurred: " + e1.getMessage());
 							for (StackTraceElement element : e1.getStackTrace()) {
@@ -418,40 +408,35 @@ public class MessageEditor implements MessageEditorInterface {
                     }
                         
 	                case "FirstJoin" -> {
-						try {
-							conn = db.getConnection();
+						String query = "INSERT INTO members (name, uuid, server, emid) VALUES (?, ?, ?, ?);";
+						try (Connection conn = db.getConnection();
+							 PreparedStatement ps = conn.prepareStatement(query)) {
+							ps.setString(1, playerName);
+							ps.setString(2, uuid);
+							ps.setString(3, serverInfo.getName());
 							if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 								//logger.info("Emoji ID retrieved: " + emojiId);
-								ps = conn.prepareStatement("INSERT INTO members (name,uuid,server, emid) VALUES (?,?,?,?);");
-								ps.setString(1, playerName);
-								ps.setString(2, uuid);
-								ps.setString(3, serverInfo.getName());
 								ps.setString(4, FaceEmojiId);
-								ps.executeUpdate();
-								
 								addMessage = Emoji + FaceEmoji +
 										playerName + "が" + serverInfo.getName() +
 										"サーバーに初参加です！";
 							} else {
 								//logger.info("Emoji ID is null");
-								ps = conn.prepareStatement("INSERT INTO minecraft (name,uuid,server) VALUES (?,?,?);");
-								ps.setString(1, playerName);
-								ps.setString(2, uuid);
-								ps.setString(3, serverInfo.getName());
-								ps.executeUpdate();
-								
+								ps.setString(4, null);
 								addMessage = playerName + "が" + serverInfo.getName() +
 										"サーバーに初参加です！";
 							}
-							
-							createEmbed = discord.createEmbed (
+							int rsAffected = ps.executeUpdate();
+							if (rsAffected > 0) {
+								createEmbed = discord.createEmbed (
 											addMessage,
 											ColorUtil.ORANGE.getRGB()
 										);
-							discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
-								//logger.info("Message sent with ID: " + messageId2);
-								EventListener.PlayerMessageIds.put(uuid, messageId2);
-							});
+								discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+									//logger.info("Message sent with ID: " + messageId2);
+									EventListener.PlayerMessageIds.put(uuid, messageId2);
+								});
+							}
 						} catch (SQLException | ClassNotFoundException e1) {
 							logger.error("An onConnection error occurred: " + e1.getMessage());
 							for (StackTraceElement element : e1.getStackTrace()) {

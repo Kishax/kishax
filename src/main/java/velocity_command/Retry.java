@@ -24,9 +24,6 @@ public class Retry {
 	private final Logger logger;
 	private final DatabaseInterface db;
 	
-	private Connection conn = null;
-	private PreparedStatement ps = null;
-
 	@Inject
 	public Retry(Logger logger, DatabaseInterface db) {
 		this.logger = logger;
@@ -40,21 +37,19 @@ public class Retry {
 		}
 		
 		Player player = (Player) source;
-		try {
-			conn = db.getConnection();
-			
+		String query = "UPDATE members SET secret2=? WHERE uuid=?;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
 			// 6桁の乱数を生成
 			Random rnd = new Random();
 			int ranum = 100000 + rnd.nextInt(900000);
 			String ranumstr = Integer.toString(ranum);
 			
-			String sql = "UPDATE members SET secret2=? WHERE uuid=?;";
-			ps = conn.prepareStatement(sql);
 			ps.setInt(1, ranum);
 			ps.setString(2, player.getUniqueId().toString());
-			ps.executeUpdate();
-			
-			TextComponent component = Component.text()
+			int rsAffected = ps.executeUpdate();
+			if (rsAffected > 0) {
+				TextComponent component = Component.text()
 						.append(Component.text("認証コードを再生成しました。").color(NamedTextColor.GREEN))
 						.append(Component.text("\n認証コードは ").color(NamedTextColor.WHITE))
 						.append(Component.text(ranumstr).color(NamedTextColor.BLUE)
@@ -62,16 +57,15 @@ public class Retry {
 							.hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
 						.append(Component.text(" です。").color(NamedTextColor.WHITE))
 						.build();
-			// BaseComponent[]に変換
-						
-			player.sendMessage(component);
+				player.sendMessage(component);
+			} else {
+				player.sendMessage(Component.text("認証コードの再生成に失敗しました。").color(NamedTextColor.RED));
+			}
 		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
 			for (StackTraceElement element : e.getStackTrace()) {
 				logger.error(element.toString());
 			}
-		} finally {
-			db.close_resource(null, conn, ps);
 		}
 	}
 }

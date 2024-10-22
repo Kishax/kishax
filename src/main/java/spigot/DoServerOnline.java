@@ -39,19 +39,16 @@ public class DoServerOnline {
 		plugin.getLogger().info(String.format("""
 			%sサーバーが起動しました。""", serverName));
 		
-		String sql = "UPDATE status SET online=?,socketport=? WHERE name=?;";
+		String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
 		try (Connection conn = db.getConnection();
-			PreparedStatement ps = conn != null && !conn.isClosed() ? conn.prepareStatement(sql) : db.getConnection().prepareStatement(sql)) {
-			if (conn == null || conn.isClosed()) {
-				plugin.getLogger().severe("Connection is closed.");
-				return;
-			}
+			PreparedStatement ps = conn != null && !conn.isClosed() ? conn.prepareStatement(query) : db.getConnection().prepareStatement(query)) {
 			ps.setBoolean(1,true);
 			ps.setInt(2, socketport);
 			ps.setString(3, serverName);
-			ps.executeUpdate();
-		
-			plugin.getLogger().info("MySQL Server is connected!");
+			int rsAffected = ps.executeUpdate();
+			if (rsAffected > 0) {
+				plugin.getLogger().info("MySQL Server is connected!");
+			}
 		} catch (SQLException | ClassNotFoundException e) {
 			plugin.getLogger().log(Level.SEVERE, "An error occurred while updating the database: " + e.getMessage(), e);
 			for (StackTraceElement element : e.getStackTrace()) {

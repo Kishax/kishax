@@ -31,9 +31,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import velocity_command.CommandForwarder;
 
 public class SocketResponse {
-
-	private Connection conn = null;
-	private PreparedStatement ps = null;
 	private final ProxyServer server;
 	private final Logger logger;
 	private final Config config;
@@ -148,15 +145,16 @@ public class SocketResponse {
                 
                 for (Player player : server.getAllPlayers()) {
         			if (player.hasPermission("group.new-fmc-user")) {
-        				try {
-        					conn = db.getConnection();
-        					String sql = "UPDATE members SET sst=? WHERE uuid=?;";
-        					ps = conn.prepareStatement(sql);
+						String query = "UPDATE members SET sst=? WHERE uuid=?;";
+        				try (Connection conn = db.getConnection();
+							PreparedStatement ps = conn.prepareStatement(query)) {
         					ps.setString(1,formattedDateTime);
         					ps.setString(2,player.getUniqueId().toString());
-        					ps.executeUpdate();
-        					player.sendMessage(component);
-        					console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
+        					int rsAffected = ps.executeUpdate();
+							if (rsAffected > 0) {
+								player.sendMessage(component);
+								console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
+							}
         				} catch (SQLException | ClassNotFoundException e) {
         					logger.error("A SocketResponse error: ",e);
         				}
@@ -167,7 +165,6 @@ public class SocketResponse {
             }
     	} else if (res.contains("fv")) {
     		if (res.contains("\\n")) res = res.replace("\\n", "");
-    		
     		String pattern = "(\\S+) fv (\\S+) (.+)";
             java.util.regex.Pattern r = java.util.regex.Pattern.compile(pattern);
             java.util.regex.Matcher m = r.matcher(res);
@@ -176,7 +173,6 @@ public class SocketResponse {
             	String execplayerName = m.group(1);
                 String playerName = m.group(2);
                 String command = m.group(3);
-        		
                 Main.getInjector().getInstance(CommandForwarder.class).forwardCommand(execplayerName, command, playerName);
             }
     	} else if(res.contains("プレイヤー不在")) {

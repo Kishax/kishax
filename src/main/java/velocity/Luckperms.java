@@ -18,7 +18,6 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 
 public class Luckperms {
-	// なお、LuckPerms = net.luckperms.api.LuckPerms, Luckperms = velocity.Luckperm
 	private final DatabaseInterface db;
 	private final Provider<LuckPerms> lpapiProvider;
 	private final Logger logger;
@@ -60,14 +59,15 @@ public class Luckperms {
 	public List<String> getPlayersWithPermission(String permission) {
 		pu.loadPlayers();
 		List<String> playersWithPermission = new ArrayList<>();
-		try (Connection connLp = db.getConnection("fmc_lp");
-				PreparedStatement ps = connLp.prepareStatement("SELECT * FROM lp_user_permissions WHERE permission = ?")) {
+		try (Connection conn = db.getConnection("fmc_lp");
+				PreparedStatement ps = conn.prepareStatement("SELECT * FROM lp_user_permissions WHERE permission = ?")) {
 			ps.setString(1, permission);
-			ResultSet rs = ps.executeQuery();
-			while (rs.next()) {
-				playersWithPermission.add(rs.getString("uuid"));
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					playersWithPermission.add(rs.getString("uuid"));
+				}
+				return pu.getPlayerNamesListFromUUIDs(playersWithPermission);
 			}
-			return pu.getPlayerNamesListFromUUIDs(playersWithPermission);
 		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
 			for (StackTraceElement element : e.getStackTrace()) {
@@ -114,7 +114,6 @@ public class Luckperms {
 				logger.error(element.toString());
 			}
 			return false;
-
 		}
 	}
 }

@@ -54,61 +54,62 @@ public class ServerStatusCache {
     private void refreshCache() {
         SocketSwitch ssw = sswProvider.get();
         Map<String, Map<String, Map<String, String>>> newServerStatusMap = new HashMap<>();
+        String query = "SELECT * FROM status;";
         try (Connection conn = db.getConnection();
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Map<String, String> rowMap = new HashMap<>();
-                rowMap.put("id", String.valueOf(rs.getInt("id")));
-                rowMap.put("name", rs.getString("name"));
-                rowMap.put("port", String.valueOf(rs.getInt("port")));
-                rowMap.put("online", String.valueOf(rs.getInt("online")));
-                rowMap.put("player_list", rs.getString("player_list"));
-                rowMap.put("current_players", rs.getString("current_players"));
-                rowMap.put("exception", String.valueOf(rs.getInt("exception")));
-                rowMap.put("exception2", String.valueOf(rs.getInt("exception2")));
-                rowMap.put("type", rs.getString("type"));
-                rowMap.put("socketport", String.valueOf(rs.getInt("socketport")));
-                rowMap.put("platform", rs.getString("platform"));
-                String serverType = rs.getString("type");
-                newServerStatusMap.computeIfAbsent(serverType, k -> new HashMap<>()).put(rs.getString("name"), rowMap);
+            PreparedStatement ps = conn.prepareStatement(query)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, String> rowMap = new HashMap<>();
+                    rowMap.put("id", String.valueOf(rs.getInt("id")));
+                    rowMap.put("name", rs.getString("name"));
+                    rowMap.put("port", String.valueOf(rs.getInt("port")));
+                    rowMap.put("online", String.valueOf(rs.getInt("online")));
+                    rowMap.put("player_list", rs.getString("player_list"));
+                    rowMap.put("current_players", rs.getString("current_players"));
+                    rowMap.put("exception", String.valueOf(rs.getInt("exception")));
+                    rowMap.put("exception2", String.valueOf(rs.getInt("exception2")));
+                    rowMap.put("type", rs.getString("type"));
+                    rowMap.put("socketport", String.valueOf(rs.getInt("socketport")));
+                    rowMap.put("platform", rs.getString("platform"));
+                    String serverType = rs.getString("type");
+                    newServerStatusMap.computeIfAbsent(serverType, k -> new HashMap<>()).put(rs.getString("name"), rowMap);
+                }
+    
+                // サーバーネームをアルファベット順にソート
+                Map<String, Map<String, Map<String, String>>> sortedServerStatusMap = new HashMap<>();
+                for (Map.Entry<String, Map<String, Map<String, String>>> entry : newServerStatusMap.entrySet()) {
+                    String serverType = entry.getKey();
+                    Map<String, Map<String, String>> servers = entry.getValue();
+    
+                    // サーバーネームをソート
+                    Map<String, Map<String, String>> sortedServers = servers.entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (e1, e2) -> e1,
+                            LinkedHashMap::new
+                        ));
+    
+                    sortedServerStatusMap.put(serverType, sortedServers);
+                }
+    
+                this.statusMap = sortedServerStatusMap;
+                // 初回ループのみ
+                if (isFirstRefreshing.compareAndSet(false, true)) {
+                    plugin.getLogger().info("Server status cache has been initialized.");
+                    pf.findAvailablePortAsync(statusMap).thenAccept(port -> {
+                        dso.UpdateDatabase(port);
+                        ssw.startSocketServer(port);
+                    }).exceptionally(ex -> {
+                        plugin.getLogger().log(Level.SEVERE, "ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
+                        for (StackTraceElement element : ex.getStackTrace()) {
+                            plugin.getLogger().log(Level.SEVERE, element.toString());
+                        }
+                        return null;
+                    });
+                }
             }
-
-            // サーバーネームをアルファベット順にソート
-            Map<String, Map<String, Map<String, String>>> sortedServerStatusMap = new HashMap<>();
-            for (Map.Entry<String, Map<String, Map<String, String>>> entry : newServerStatusMap.entrySet()) {
-                String serverType = entry.getKey();
-                Map<String, Map<String, String>> servers = entry.getValue();
-
-                // サーバーネームをソート
-                Map<String, Map<String, String>> sortedServers = servers.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
-                    ));
-
-                sortedServerStatusMap.put(serverType, sortedServers);
-            }
-
-            this.statusMap = sortedServerStatusMap;
-            // 初回ループのみ
-            if (isFirstRefreshing.compareAndSet(false, true)) {
-                plugin.getLogger().info("Server status cache has been initialized.");
-                pf.findAvailablePortAsync(statusMap).thenAccept(port -> {
-                    dso.UpdateDatabase(port);
-                    ssw.startSocketServer(port);
-                }).exceptionally(ex -> {
-                    plugin.getLogger().log(Level.SEVERE, "ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
-                    for (StackTraceElement element : ex.getStackTrace()) {
-                        plugin.getLogger().log(Level.SEVERE, element.toString());
-                    }
-                    return null;
-                });
-            }
-
         } catch (SQLException | ClassNotFoundException e) {
             this.statusMap = null;
             plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
@@ -144,16 +145,17 @@ public class ServerStatusCache {
     public void refreshMemberInfo() {
         try (Connection conn = db.getConnection();
             PreparedStatement ps = conn.prepareStatement("SELECT * FROM members;")) {
-            ResultSet rs = ps.executeQuery();
-            Map<String, Map<String, String>> newMemberMap = new HashMap<>();
-            while (rs.next()) {
-                String uuid = rs.getString("uuid");
-                String name = rs.getString("name");
-                newMemberMap.put(name, new HashMap<String, String>() {{
-                    put("uuid", uuid);
-                }});
+            try (ResultSet rs = ps.executeQuery()) {
+                Map<String, Map<String, String>> newMemberMap = new HashMap<>();
+                while (rs.next()) {
+                    String uuid = rs.getString("uuid");
+                    String name = rs.getString("name");
+                    newMemberMap.put(name, new HashMap<String, String>() {{
+                        put("uuid", uuid);
+                    }});
+                }
+                this.memberMap = newMemberMap;
             }
-            this.memberMap = newMemberMap;
         } catch (SQLException | ClassNotFoundException e) {
             plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {

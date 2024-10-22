@@ -2,7 +2,6 @@ package velocity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -26,11 +25,6 @@ public class PlayerDisconnect {
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
 	private final MessageEditorInterface discordME;
-	
-	public Connection conn = null;
-	public ResultSet ismente = null;
-	public ResultSet[] resultsets = {ismente};
-	public PreparedStatement ps = null;
 	
 	@Inject
 	public PlayerDisconnect (
@@ -65,27 +59,22 @@ public class PlayerDisconnect {
 	
 	public void playerDisconnect(Boolean bool, Player player, TextComponent component) {
 		player.disconnect(component);
-		
-		if (!(bool))	return;
-		
-		try {
-			conn = db.getConnection();
-			String sql="UPDATE members SET ban=? WHERE uuid=?;";
-			ps = conn.prepareStatement(sql);
+		if (!(bool)) return;
+		String query = "UPDATE members SET ban=? WHERE uuid=?;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
 			ps.setBoolean(1, true);
 			ps.setString(2, player.getUniqueId().toString());
-			ps.executeUpdate();
-			
-			discordME.AddEmbedSomeMessage("Invader", player);
+			int rsAffected = ps.executeUpdate();
+			if (rsAffected > 0) {
+				discordME.AddEmbedSomeMessage("Invader", player);
+			}
 		} catch (SQLException | ClassNotFoundException e) {
 			// スタックトレースをログに出力
             logger.error("An onChat error occurred: " + e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-		} finally {
-			// 途中だから閉じたらresultsets全体は閉じてはいけない
-			db.close_resource(null, conn, ps);
 		}
 	}
 }

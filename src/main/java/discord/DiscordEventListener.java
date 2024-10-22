@@ -55,9 +55,7 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final String teraToken, teraExecFilePath;
 	private final Long teraChannelId;
 	private final boolean require;
-	private Connection conn = null;
-	private PreparedStatement ps = null;
-	private String pattern = null, sql = null, replyMessage = null, 
+	private String pattern = null, replyMessage = null, 
         		reqServerName = null, reqPlayerName = null, 
 				execFilePath = null, reqPlayerUUID = null, restAPIUrl = null;
 	private Pattern compiledPattern = null;
@@ -80,9 +78,9 @@ public class DiscordEventListener extends ListenerAdapter {
 		this.teraChannelId = config.getLong("Terraria.ChannelId", 0);
 		this.restAPIUrl = config.getString("Terraria.RestApiUrl");
 		this.require = !restAPIUrl.isEmpty() && 
-					!teraToken.isEmpty() && 
-					!teraExecFilePath.isEmpty() && 
-					teraChannelId != 0;
+			!teraToken.isEmpty() && 
+			!teraExecFilePath.isEmpty() && 
+			teraChannelId != 0;
 	}
 	
 	@SuppressWarnings("null")
@@ -316,49 +314,50 @@ public class DiscordEventListener extends ListenerAdapter {
 					reqPlayerName = matcher.group(2);
 					reqServerName = matcher.group(3);
 					reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-					
-					try {
-						conn = db.getConnection();
-						sql = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
-						ps = conn.prepareStatement(sql);
+					String query = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+					try (Connection conn = db.getConnection();
+						PreparedStatement ps = conn.prepareStatement(query)) {
 						ps.setString(1, reqPlayerName);
 						ps.setString(2, reqPlayerUUID);
 						ps.setBoolean(3, true);
 						ps.setString(4, reqServerName);
 						ps.setString(5, "ok");
-						ps.executeUpdate();
+						int rsAffected = ps.executeUpdate();
+						if (rsAffected > 0) {
+							execFilePath = config.getString("Servers."+reqServerName+".Exec_Path");
+							processBuilder = new ProcessBuilder(execFilePath);
+							try {
+								processBuilder.start();
+								// Discord通知
+								discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
+								
+								// マイクラサーバーへ通知
+								bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
+								
+								// フラグから削除
+								String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+								Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
+							} catch (IOException e1) {
+								replyMessage = "内部エラーが発生しました。\nサーバーが起動できません。";
+								logger.error("An IOException error occurred: " + e1.getMessage());
+								for (StackTraceElement element : e1.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
+						}
 					} catch (SQLException | ClassNotFoundException e1) {
 						logger.error("A SQLException error occurred: " + e1.getMessage());
 						for (StackTraceElement element : e1.getStackTrace()) {
 							logger.error(element.toString());
 						}
 					}
-					
-					execFilePath = config.getString("Servers."+reqServerName+".Exec_Path");
-					processBuilder = new ProcessBuilder(execFilePath);
-					try {
-						processBuilder.start();
-					} catch (IOException e1) {
-						logger.error("An IOException error occurred: " + e1.getMessage());
-						for (StackTraceElement element : e1.getStackTrace()) {
-							logger.error(element.toString());
-						}
-					}
-					
-					// Discord通知
-					discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
-					
-					// マイクラサーバーへ通知
-					bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
-					
-					// フラグから削除
-					String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-					Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
 				
-				e.reply(replyMessage).queue();
+				if (replyMessage != null) {
+					e.reply(replyMessage).queue();
+				}
 				
 				// ボタンを削除
 				e.getMessage().editMessageComponents().queue();
@@ -380,17 +379,26 @@ public class DiscordEventListener extends ListenerAdapter {
 					reqPlayerName = matcher.group(2);
 					reqServerName = matcher.group(3);
 					reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-					
-					try {
-						conn = db.getConnection();
-						sql = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
-						ps = conn.prepareStatement(sql);
+					String query = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+					try (Connection conn = db.getConnection();
+						PreparedStatement ps = conn.prepareStatement(query)) {
 						ps.setString(1, reqPlayerName);
 						ps.setString(2, reqPlayerUUID);
 						ps.setBoolean(3, true);
 						ps.setString(4, reqServerName);
 						ps.setString(5, "cancel");
-						ps.executeUpdate();
+						int rsAffected = ps.executeUpdate();
+						if (rsAffected > 0) {
+							// Discord通知
+							discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
+							
+							// マイクラサーバーへ通知
+							bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
+							
+							// フラグから削除
+							String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+							Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
+						}
 					}
 					catch (SQLException | ClassNotFoundException e1) {
 						logger.error("A SQLException error occurred: " + e1.getMessage());
@@ -398,21 +406,13 @@ public class DiscordEventListener extends ListenerAdapter {
 							logger.error(element.toString());
 						}
 					}
-					
-					// Discord通知
-					discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
-					
-					// マイクラサーバーへ通知
-					bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
-					
-					// フラグから削除
-					String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-					Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
 				
-				e.reply(replyMessage).queue();
+				if (replyMessage != null) {
+					e.reply(replyMessage).queue();
+				}
 				
 				// ボタンを削除
 				e.getMessage().editMessageComponents().queue();

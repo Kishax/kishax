@@ -23,11 +23,6 @@ import velocity.Config;
 import velocity.DatabaseInterface;
 
 public class ServerTeleport {
-
-    public Connection conn = null;
-    public ResultSet minecrafts = null;
-    public ResultSet[] resultsets = {minecrafts};
-    public PreparedStatement ps = null;
     private final Logger logger;
     private final ProxyServer server;
     private final DatabaseInterface db;
@@ -65,25 +60,23 @@ public class ServerTeleport {
             player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
             return;
         }
-
-        try {
-            conn = db.getConnection();
-            String sql = "SELECT * FROM members WHERE uuid=?;";
-            ps = conn.prepareStatement(sql);
+        String query = "SELECT * FROM members WHERE uuid=?;";
+        try (Connection conn = db.getConnection();
+            PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, player.getUniqueId().toString());
-            minecrafts = ps.executeQuery();
-            if (minecrafts.next()) {
-                long nowTimestamp = Instant.now().getEpochSecond();
-                Timestamp sstTimeGet = minecrafts.getTimestamp("sst");
-                long sstTimestamp = sstTimeGet.getTime() / 1000L;
-                long ssSa = nowTimestamp - sstTimestamp;
-                long ssSaMinute = ssSa / 60;
-                if (ssSaMinute > 3) {
-                    player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
-                    return;
+            try (ResultSet minecrafts = ps.executeQuery()) {
+                if (minecrafts.next()) {
+                    long nowTimestamp = Instant.now().getEpochSecond();
+                    Timestamp sstTimeGet = minecrafts.getTimestamp("sst");
+                    long sstTimestamp = sstTimeGet.getTime() / 1000L;
+                    long ssSa = nowTimestamp - sstTimestamp;
+                    long ssSaMinute = ssSa / 60;
+                    if (ssSaMinute > 3) {
+                        player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
+                    }
+                } else {
+                    player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
                 }
-            } else {
-                player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
                 return;
             }
         } catch (SQLException | ClassNotFoundException e) {
@@ -91,10 +84,7 @@ public class ServerTeleport {
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-        } finally {
-            db.close_resource(resultsets, conn, ps);
         }
-
         server.getServer(targetServerName).ifPresent(registeredServer -> player.createConnectionRequest(registeredServer).fireAndForget());
     }
 }

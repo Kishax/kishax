@@ -30,11 +30,6 @@ import velocity.Config;
 import velocity.Database;
 
 public class EmojiManager {
-	private Connection conn = null;
-	private PreparedStatement ps = null;
-	private ResultSet minecrafts = null;
-	private final ResultSet[] resultsset = {minecrafts};
-	
     private JDA jda = null;
     private String emojiId = null;
     private final Logger logger;
@@ -147,80 +142,80 @@ public class EmojiManager {
         }
 
         Guild guild = jda.getGuilds().get(0); // 最初のギルドを取得（適切なギルドを選択する必要があります）
-        try {
-            conn = db.getConnection();
-            String sql = "SELECT * FROM members;";
-            ps = conn.prepareStatement(sql);
-            minecrafts = ps.executeQuery();
-
-            while (minecrafts.next()) {
-            	emojiId = null; // while文の中で、最初にemojiIDを初期化しておく
-            	
-                String mineName = minecrafts.getString("name");
-                String uuid = minecrafts.getString("uuid");
-                String dbEmojiId = minecrafts.getString("emid");
-                
-                // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
-                Optional<RichCustomEmoji> existingEmote = guild.getEmojis().stream()
-                    .filter(emote -> emote.getName().equals(mineName))
-                    .findFirst();
-
-                if (existingEmote.isPresent()) {
-                    emojiId = existingEmote.get().getId();
-                    //logger.info(mineName + "の絵文字はすでに追加されています。");
-                    //logger.info("Existing Emoji ID: " + emojiId);
+        String query = "SELECT * FROM members;";
+        try (Connection conn = db.getConnection();
+            PreparedStatement ps = conn.prepareStatement(query);) {
+            try (ResultSet minecrafts = ps.executeQuery()) {
+                while (minecrafts.next()) {
+                    emojiId = null; // while文の中で、最初にemojiIDを初期化しておく
                     
-                    // もし、emojiIdがminecrafts.getString("emid")と違ったら更新する
-                    // データベース保存処理
-                    if(Objects.nonNull(emojiId) && !emojiId.equals(dbEmojiId)) {
-                    	sql = "UPDATE members SET emid=? WHERE uuid=?;";
-                    	ps = conn.prepareStatement(sql);
-                    	ps.setString(1, emojiId);
-                    	ps.setString(2, uuid);
-                    	ps.executeUpdate();
-                    }
-                } else {
-                    String imageUrl = "https://minotar.net/avatar/" + uuid;
-                    //logger.info("Downloading image from URL: " + imageUrl); // 画像URLをログに出力
-
-                    try {
-                        //logger.info("Downloading image from URL: " + imageUrl);
+                    String mineName = minecrafts.getString("name");
+                    String uuid = minecrafts.getString("uuid");
+                    String dbEmojiId = minecrafts.getString("emid");
+                    
+                    // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
+                    Optional<RichCustomEmoji> existingEmote = guild.getEmojis().stream()
+                        .filter(emote -> emote.getName().equals(mineName))
+                        .findFirst();
+    
+                    if (existingEmote.isPresent()) {
+                        emojiId = existingEmote.get().getId();
+                        //logger.info(mineName + "の絵文字はすでに追加されています。");
+                        //logger.info("Existing Emoji ID: " + emojiId);
                         
-                        URI uri = new URI(imageUrl);
-                        URL url = uri.toURL();
-                        BufferedImage bufferedImage = ImageIO.read(url);
-                        if (Objects.isNull(bufferedImage)) {
-                            logger.error("Failed to read image from URL: " + imageUrl);
-                            continue;
+                        // もし、emojiIdがminecrafts.getString("emid")と違ったら更新する
+                        // データベース保存処理
+                        if(Objects.nonNull(emojiId) && !emojiId.equals(dbEmojiId)) {
+                            String query2 = "UPDATE members SET emid=? WHERE uuid=?;";
+                            try (PreparedStatement ps2 = conn.prepareStatement(query2);) {
+                                ps2.setString(1, emojiId);
+                                ps2.setString(2, uuid);
+                                ps2.executeUpdate();
+                            }
                         }
-
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        ImageIO.write(bufferedImage, "png", baos);
-                        byte[] imageBytes = baos.toByteArray();
-                        Icon icon = Icon.from(imageBytes);
-
-                        // Create the emote with the specified name and icon
-                        AuditableRestAction<RichCustomEmoji> action = guild.createEmoji(mineName, icon);
-                        action.queue(
-                        	success -> {
-                                logger.info(mineName + "を絵文字に追加しました。");
-                                emojiId = success.getId(); // 絵文字IDを取得
-                                //logger.info("Emoji ID: " + emojiId);
-                            }, failure -> logger.error("Failed to create emoji: " + failure.getMessage())
-                        );
-                        
-                        // データベース更新処理
-                        if (Objects.nonNull(emojiId)) {
-                        	sql = "UPDATE members SET emid=? WHERE uuid=?;";
-                        	ps = conn.prepareStatement(sql);
-                        	ps.setString(1, emojiId);
-                        	ps.setString(2, uuid);
-                        	ps.executeUpdate();
-                        }
-                    } catch (IOException | URISyntaxException e) {
-                        logger.error("Failed to download image: " + e.getMessage());
-                        for (StackTraceElement element : e.getStackTrace()) {
-                            logger.error(element.toString());
+                    } else {
+                        String imageUrl = "https://minotar.net/avatar/" + uuid;
+                        //logger.info("Downloading image from URL: " + imageUrl); // 画像URLをログに出力
+                        try {
+                            //logger.info("Downloading image from URL: " + imageUrl);
+                            URI uri = new URI(imageUrl);
+                            URL url = uri.toURL();
+                            BufferedImage bufferedImage = ImageIO.read(url);
+                            if (Objects.isNull(bufferedImage)) {
+                                logger.error("Failed to read image from URL: " + imageUrl);
+                                continue;
+                            }
+    
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ImageIO.write(bufferedImage, "png", baos);
+                            byte[] imageBytes = baos.toByteArray();
+                            Icon icon = Icon.from(imageBytes);
+    
+                            // Create the emote with the specified name and icon
+                            AuditableRestAction<RichCustomEmoji> action = guild.createEmoji(mineName, icon);
+                            action.queue(
+                                success -> {
+                                    logger.info(mineName + "を絵文字に追加しました。");
+                                    emojiId = success.getId(); // 絵文字IDを取得
+                                    //logger.info("Emoji ID: " + emojiId);
+                                }, failure -> logger.error("Failed to create emoji: " + failure.getMessage())
+                            );
+                            
+                            // データベース更新処理
+                            if (Objects.nonNull(emojiId)) {
+                                String query2 = "UPDATE members SET emid=? WHERE uuid=?;";
+                                try (Connection conn2 = db.getConnection();
+                                    PreparedStatement ps2 = conn2.prepareStatement(query2);) {
+                                    ps2.setString(1, emojiId);
+                                    ps2.setString(2, uuid);
+                                    ps2.executeUpdate();
+                                }
+                            }
+                        } catch (IOException | URISyntaxException e) {
+                            logger.error("Failed to download image: " + e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace()) {
+                                logger.error(element.toString());
+                            }
                         }
                     }
                 }
@@ -230,8 +225,6 @@ public class EmojiManager {
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-        } finally {
-            db.close_resource(resultsset, conn, ps);
         }
     }
     

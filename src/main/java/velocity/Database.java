@@ -2,29 +2,16 @@ package velocity;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
-
-import org.slf4j.Logger;
 
 import com.google.inject.Inject;
-import com.velocitypowered.api.proxy.ConsoleCommandSource;
-import com.velocitypowered.api.proxy.ProxyServer;
 
 public class Database implements DatabaseInterface {
 
 	private final Config config;
-	private final Logger logger;
-    private Connection conn = null;
     
     @Inject
-    public Database (
-		Main plugin, ProxyServer server, Logger logger, 
-		Config config, ConsoleCommandSource console
-	) {
-		this.logger = logger;
+    public Database (Config config) {
     	this.config = config;
     }
 
@@ -67,10 +54,10 @@ public class Database implements DatabaseInterface {
 			}
 			
 			synchronized (Database.class) {
-				if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
+				//if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
 				
 				Class.forName("com.mysql.cj.jdbc.Driver");
-				conn = DriverManager.getConnection (
+				return DriverManager.getConnection (
 							"jdbc:mysql://" + host + ":" + 
 							port + "/" + 
 							database +
@@ -78,8 +65,6 @@ public class Database implements DatabaseInterface {
 							user, 
 							password
 						);
-
-				return conn;
 			}
 		}
     }
@@ -87,55 +72,5 @@ public class Database implements DatabaseInterface {
 	@Override
 	public Connection getConnection() throws SQLException, ClassNotFoundException {
 		return getConnection(null);
-	}
-
-    @Override
-	public void close_resource(ResultSet[] resultsets, Connection[] conns, PreparedStatement ps) {
-		if (Objects.nonNull(resultsets)) {
-			for (ResultSet resultSet : resultsets) {
-			    if (Objects.nonNull(resultSet)) {
-			    	try {
-	                    resultSet.close();
-	                } catch (SQLException e) {
-						logger.error("A mysql close-resource error occurred: " + e.getMessage());
-						for (StackTraceElement element : e.getStackTrace()) {
-							logger.error(element.toString());
-						}
-	                }
-			    }
-			}
-		}
-		
-		if (Objects.nonNull(conns)) {
-			for (Connection simpleconn : conns) {
-			    if (Objects.nonNull(simpleconn)) {
-					try {
-						simpleconn.close();
-					} catch (SQLException e) {
-						logger.error("A SQLException error occurred: " + e.getMessage());
-						for (StackTraceElement element : e.getStackTrace()) {
-							logger.error(element.toString());
-						}
-					}
-				}
-			}
-		}
-		
-		if (Objects.nonNull(ps)) {
-			try {
-                ps.close();
-            } catch (SQLException e) {
-                logger.error("A SQLException error occurred: " + e.getMessage());
-				for (StackTraceElement element : e.getStackTrace()) {
-					logger.error(element.toString());
-				}
-            }
-		}
-	}
-
-	@Override
-	public void close_resource(ResultSet[] resultsets, Connection conn, PreparedStatement ps) {
-		Connection[] conns = {conn};
-		close_resource(resultsets, conns, ps);
 	}
 }

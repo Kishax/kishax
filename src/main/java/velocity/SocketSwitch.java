@@ -108,20 +108,21 @@ public class SocketSwitch {
     
     public void sendSpigotServer(String sendmsg) {
         try (Connection conn = db.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT * FROM status");
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                String serverName = rs.getString("name"),
-                    platform = rs.getString("platform");
-                int port = rs.getInt("socketport");
-                boolean online = rs.getBoolean("online");
-                if (port == 0) {
-                    //logger.info("sendSpigotServer: Server " + serverName + " has no socketport");
-                    continue;
-                }
-                if (online && platform.equalsIgnoreCase("spigot")) {
-                    logger.info("sendSpigotServer: Starting client for server " + serverName + " on port " + port);
-                    startSocketClient(port, sendmsg);
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM status")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String serverName = rs.getString("name"),
+                        platform = rs.getString("platform");
+                    int port = rs.getInt("socketport");
+                    boolean online = rs.getBoolean("online");
+                    if (port == 0) {
+                        //logger.info("sendSpigotServer: Server " + serverName + " has no socketport");
+                        continue;
+                    }
+                    if (online && platform.equalsIgnoreCase("spigot")) {
+                        logger.info("sendSpigotServer: Starting client for server " + serverName + " on port " + port);
+                        startSocketClient(port, sendmsg);
+                    }
                 }
             }
         } catch (SQLException | ClassNotFoundException e) {

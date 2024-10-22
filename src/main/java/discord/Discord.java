@@ -56,8 +56,6 @@ public class Discord implements DiscordInterface {
     private final MessageEditorInterface discordME;
     private String channelId = null;
     private MessageChannel channel= null;
-	private Connection conn = null;
-	private PreparedStatement ps = null;
 	
     @Inject
     public Discord (
@@ -152,36 +150,36 @@ public class Discord implements DiscordInterface {
                     	String reqPlayerName = matcher.group(2);
                     	String reqServerName = matcher.group(3);
                     	String reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-                    			
-                    	try {
-                        	conn = db.getConnection();
-                        	String sql = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
-                        	ps = conn.prepareStatement(sql);
+                        
+                        String query = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
+                    	try (Connection conn = db.getConnection();
+                            PreparedStatement ps = conn.prepareStatement(query)) {
                         	ps.setString(1, reqPlayerName);
                         	ps.setString(2, reqPlayerUUID);
                         	ps.setBoolean(3, true);
                         	ps.setString(4, reqServerName);
                         	ps.setString(5, "nores");
-                        	ps.executeUpdate();
+                        	int rsAffected = ps.executeUpdate();
+                            if (rsAffected > 0) {
+                                // Discord通知
+                                discordME.AddEmbedSomeMessage("RequestNoRes", reqPlayerName);
+                                
+                                // マイクラサーバーへ通知
+                                bc.broadCastMessage(Component.text("管理者がリクエストに応答しませんでした。").color(NamedTextColor.BLUE));
+                                
+                                message.reply("管理者が応答しませんでした。").queue();
+                                message.editMessageComponents().queue(); // ボタンを削除
+                                
+                                // フラグから削除
+                                String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
+                                Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
+                            }
                         } catch (SQLException | ClassNotFoundException e1) {
                         	logger.error("A discord error occurred: " + e1.getMessage());
                             for (StackTraceElement element : e1.getStackTrace()) {
                                 logger.error(element.toString());
                             }
                         }
-                    	
-                        // Discord通知
-                        discordME.AddEmbedSomeMessage("RequestNoRes", reqPlayerName);
-                        
-                        // マイクラサーバーへ通知
-                        bc.broadCastMessage(Component.text("管理者がリクエストに応答しませんでした。").color(NamedTextColor.BLUE));
-                        
-                        message.reply("管理者が応答しませんでした。").queue();
-                        message.editMessageComponents().queue(); // ボタンを削除
-                        
-                        // フラグから削除
-                        String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-                        Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
                     }
             	}
             });
