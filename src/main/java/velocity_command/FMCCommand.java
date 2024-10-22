@@ -5,12 +5,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
@@ -21,6 +23,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
+import velocity.Luckperms;
 import velocity.Main;
 import velocity.PlayerUtil;
 import velocity.RomajiConversion;
@@ -30,15 +33,17 @@ public class FMCCommand implements SimpleCommand {
     private final ProxyServer server;
     private final Config config;
     private final PlayerUtil pu;
+    private final Luckperms lp;
     
     public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","configtest","maintenance","conv","test","chat","cend"));
     public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
-    public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerUtil pu) {
+    public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerUtil pu, Luckperms lp) {
         this.server = server;
         this.config = config;
         this.pu = pu;
+        this.lp = lp;
     }
 
     @Override
@@ -103,44 +108,30 @@ public class FMCCommand implements SimpleCommand {
         }
 
         String subCommand = args[0];
-        if (!source.hasPermission("fmc.proxy." + subCommand)) {
-            source.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
-            return;
+        if (source instanceof Player player) {
+            if (!lp.hasPermission(player.getUsername(),"fmc.proxy." + subCommand)) {
+                source.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
+                return;
+            }
         }
-        
+        Objects.requireNonNull(source);
         switch (subCommand.toLowerCase()) {
             case "debug" -> Main.getInjector().getInstance(Debug.class).execute(source, args);
-
             case "start" -> Main.getInjector().getInstance(StartServer.class).execute(source, args);
-
             case "ss" -> Main.getInjector().getInstance(SetServer.class).execute(source, args);
-
             case "hub" -> Main.getInjector().getInstance(Hub.class).execute(invocation);
-
             case "retry" -> Main.getInjector().getInstance(Retry.class).execute(source, args);
-
             case "reload" -> Main.getInjector().getInstance(ReloadConfig.class).execute(source, args);
-
             case "stp" -> Main.getInjector().getInstance(ServerTeleport.class).execute(source, args);
-
             case "req" -> Main.getInjector().getInstance(Request.class).execute(source, args);
-
             case "cancel" -> Main.getInjector().getInstance(Cancel.class).execute(source, args);
-
             case "perm" -> Main.getInjector().getInstance(Perm.class).execute(source, args);
-                
             case "configtest" -> Main.getInjector().getInstance(ConfigTest.class).execute(source, args);
-            	
             case "maintenance" -> Main.getInjector().getInstance(Maintenance.class).execute(source, args);
-            
             case "conv" -> Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
-            	
             case "test" -> Main.getInjector().getInstance(Test.class).execute(source, args);
-            	
             case "chat" -> Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
-            	
             case "cend" -> Main.getInjector().getInstance(CEnd.class).execute(invocation);
-            	
             default -> source.sendMessage(Component.text("Unknown subcommand: " + subCommand));
         }
     }
@@ -162,7 +153,6 @@ public class FMCCommand implements SimpleCommand {
             }
             case 2 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
-
                 switch (args[0].toLowerCase()) {
                     case "something" -> {
                         for (String any : bools) {

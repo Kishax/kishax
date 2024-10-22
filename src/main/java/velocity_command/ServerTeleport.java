@@ -73,18 +73,19 @@ public class ServerTeleport {
                     long ssSaMinute = ssSa / 60;
                     if (ssSaMinute > 3) {
                         player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
+                        return;
                     }
+                    server.getServer(targetServerName).ifPresent(registeredServer -> player.createConnectionRequest(registeredServer).fireAndForget());
                 } else {
                     player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
                 }
-                return;
             }
         } catch (SQLException | ClassNotFoundException e) {
+            player.sendMessage(Component.text("エラーが発生しました。").color(NamedTextColor.RED));
             logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
         }
-        server.getServer(targetServerName).ifPresent(registeredServer -> player.createConnectionRequest(registeredServer).fireAndForget());
     }
 }

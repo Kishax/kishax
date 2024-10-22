@@ -107,7 +107,7 @@ public class Maintenance {
 							source.sendMessage(Component.text("第4引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 							break;
 						}
-						if (args[3].equals("true") || args[3].equals("false")) {
+						if (!(args[3].equals("true") || args[3].equals("false"))) {
 							source.sendMessage(Component.text("trueかfalseを入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 							break;
 						}

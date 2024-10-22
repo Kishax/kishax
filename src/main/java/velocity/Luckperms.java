@@ -5,8 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 
@@ -15,8 +15,10 @@ import com.google.inject.Provider;
 
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.messaging.MessagingService;
+import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
+import net.luckperms.api.node.types.InheritanceNode;
 
 public class Luckperms {
 	private final DatabaseInterface db;
@@ -92,9 +94,62 @@ public class Luckperms {
 	}
 
 	public boolean hasPermission(String playerName, String permission) {
-		List<String> permissions = Arrays.asList(permission);
-		return hasPermission(playerName, permissions);
-	}
+		LuckPerms lpapi = lpapiProvider.get();
+        User user = lpapi.getUserManager().getUser(playerName);
+        if (user == null) {
+            //logger.info("User not found: " + playerName);
+            return false;
+        }
+        //logger.info("User: " + playerName);
+
+        // ユーザーが所属するすべてのグループを取得
+        List<String> groups = user.getNodes().stream()
+                .filter(node -> node instanceof InheritanceNode)
+                .map(node -> ((InheritanceNode) node).getGroupName())
+                .collect(Collectors.toList());
+
+        for (String groupName : groups) {
+            if (checkGroupPermission(groupName, permission)) {
+                return true;
+            }
+        }
+
+        //logger.info("Permission not found: " + permission + " in any group for user: " + playerName);
+        return false;
+    }
+
+    private boolean checkGroupPermission(String groupName, String permission) {
+		LuckPerms lpapi = lpapiProvider.get();
+        Group group = lpapi.getGroupManager().getGroup(groupName);
+        if (group == null) {
+            //logger.info("Group not found: " + groupName);
+            return false;
+        }
+        //logger.info("Checking group: " + groupName);
+
+        // グループに含まれる各パーミッションをチェック
+        boolean hasPermission = group.getNodes().stream()
+                .anyMatch(node -> node.getKey().equalsIgnoreCase(permission));
+
+        if (hasPermission) {
+            //logger.info("Found permission: " + permission + " in group: " + group.getName());
+            return true;
+        }
+
+        // サブグループのチェック
+        List<String> subGroups = group.getNodes().stream()
+                .filter(node -> node instanceof InheritanceNode)
+                .map(node -> ((InheritanceNode) node).getGroupName())
+                .collect(Collectors.toList());
+
+        for (String subGroupName : subGroups) {
+            if (checkGroupPermission(subGroupName, permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 	public boolean hasPermission(String playerName, List<String> permission) {
 		try (Connection conn = db.getConnection("fmc_lp");
