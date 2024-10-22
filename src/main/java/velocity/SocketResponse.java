@@ -132,6 +132,7 @@ public class SocketResponse {
                 String extracted = matcher.group(1);
 				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
                 TextComponent component = Component.text()
+						.append(Component.text("\n"+extracted+"サーバーが起動しました。\n").color(NamedTextColor.WHITE))
     			    	.append(Component.text("サーバーに入りますか？\n").color(NamedTextColor.WHITE))
     			    	.append(Component.text("YES")
     			    			.color(NamedTextColor.GOLD)
