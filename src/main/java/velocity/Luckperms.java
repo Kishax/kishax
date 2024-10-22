@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -91,11 +92,11 @@ public class Luckperms {
 	}
 
 	public boolean hasPermission(String playerName, String permission) {
-		String[] permissions = {permission};
+		List<String> permissions = Arrays.asList(permission);
 		return hasPermission(playerName, permissions);
 	}
 
-	public boolean hasPermission(String playerName, String[] permission) {
+	public boolean hasPermission(String playerName, List<String> permission) {
 		try (Connection conn = db.getConnection("fmc_lp");
 				PreparedStatement ps = conn.prepareStatement("SELECT * FROM lp_user_permissions WHERE uuid = ? AND permission = ?")) {
 			ps.setString(1, pu.getPlayerUUIDByNameFromDB(playerName));

@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
@@ -36,7 +38,9 @@ public class SetServer {
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final Luckperms lp;
-	
+	private final List<String> adminPerms = Arrays.asList("group.super-admin","group.sub-admin"),
+		fmcUserPerms = Arrays.asList("group.super-admin","group.sub-admin","group.new-fmc-user");;
+
 	@Inject
 	public SetServer(ProxyServer server, Logger logger, Config config, DatabaseInterface db, Luckperms lp) {
 		this.server = server;
@@ -214,7 +218,7 @@ public class SetServer {
 							break;
 						} else {
 							// オフライン
-							if (lp.hasPermission(playerName, "group.new-fmc-user")) {
+							if (lp.hasPermission(playerName, fmcUserPerms)) {
 								// 上のwhile文で進んだカーソルの次から最後までの行まで回す
 								while (mine_status.next()) {
 									// ここ、for文でmine_statusテーブルを回す必要あるかも
@@ -239,8 +243,7 @@ public class SetServer {
 								}
 								
 								// fmcアカウントを持っている
-								String[] permissions = {"group.super-admin","group.sub-admin"};
-								if (lp.hasPermission(playerName, permissions)) {
+								if (lp.hasPermission(playerName, adminPerms)) {
 									// adminである /startが使用可能
 									// /startで用いるセッションタイム(現在時刻)(sst)をデータベースに
 									LocalDateTime now = LocalDateTime.now();
