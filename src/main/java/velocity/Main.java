@@ -40,30 +40,22 @@ public class Main {
     public void onProxyInitialization(ProxyInitializeEvent e) {
     	logger.info("Detected Velocity platform.");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
-        // Guice インジェクターを作成
         injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory, LuckPermsProvider.get()));
-        
-        // 依存性が解決された@Injectを使用するクラスのインスタンスを取得
-    	
-    	getInjector().getInstance(Discord.class).loginDiscordBotAsync(); // Discordボットのログインを非同期で実行		
-    	
+    	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
+            if (jda != null) {
+                getInjector().getInstance(MineStatusReflect.class).start(jda);
+            }
+        }); 		
     	getInjector().getInstance(DoServerOnline.class).updateDatabase();
-    	
     	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
-    	
     	getInjector().getInstance(Luckperms.class).triggerNetworkSync();
  		logger.info("luckpermsと連携しました。");
- 		
- 		getInjector().getInstance(PlayerUtil.class).loadPlayers(); // プレイヤーリストをアップデート
-    	
+ 		getInjector().getInstance(PlayerUtil.class).loadPlayers();
     	CommandManager commandManager = server.getCommandManager();
         commandManager.register(commandManager.metaBuilder("fmcp").build(), getInjector().getInstance(FMCCommand.class));
         commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
-        
-	    // Server side
         getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
-        
 	    logger.info("プラグインが有効になりました。");
     }
     

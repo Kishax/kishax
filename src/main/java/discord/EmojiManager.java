@@ -10,9 +10,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -42,16 +44,39 @@ public class EmojiManager {
         this.config = config;
         this.db = db;
     }
-    
+    public CompletableFuture<List<String>> getEmojiIds(List<String> emojiNames) {
+        CompletableFuture<List<String>> future = new CompletableFuture<>();
+    	this.jda = Discord.jda;
+        if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0 || emojiNames.isEmpty()) {
+        	future.complete(null);
+            return future;
+        }
+    	String guildId = Long.toString(config.getLong("Discord.GuildId"));
+        Guild guild = jda.getGuildById(guildId);
+        if (Objects.isNull(guild)) {
+            //logger.info("Guild not found!");
+            future.complete(null);
+            return future;
+        }
+        @SuppressWarnings("null")
+        List<String> emojiIds = emojiNames.stream()
+            .map(emojiName -> guild.getEmojis().stream()
+                .filter(emote -> emote.getName().equals(emojiName))
+                .findFirst()
+                .map(RichCustomEmoji::getId)
+                .orElse(null))
+            .collect(Collectors.toList());
+        future.complete(emojiIds);
+        return future;
+    }
+
     public CompletableFuture<String> createOrgetEmojiId(String emojiName, String imageUrl) throws URISyntaxException {
     	CompletableFuture<String> future = new CompletableFuture<>();
-    	
     	this.jda = Discord.jda;
         if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0) {
         	future.complete(null);
             return future;
         }
-        
         // emojiNameが空白かnullだった場合
         if (Objects.isNull(emojiName) || emojiName.isEmpty()) {
         	future.complete(null);
@@ -82,7 +107,6 @@ public class EmojiManager {
         		future.complete(null);
                 return future;
         	}
-        		
         	try {
                 URI uri = new URI(imageUrl);
                 URL url = uri.toURL();

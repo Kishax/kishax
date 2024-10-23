@@ -74,39 +74,44 @@ public class Discord implements DiscordInterface {
     }
     
     @Override
-    public void loginDiscordBotAsync() {
-    	if (config.getString("Discord.Token","").isEmpty()) return;
-    	server.getScheduler().buildTask(plugin, () -> {
-			try {
-				jda = JDABuilder.createDefault(config.getString("Discord.Token"))
-						.addEventListeners(Main.getInjector().getInstance(DiscordEventListener.class))
-						.build();
+    public CompletableFuture<JDA> loginDiscordBotAsync() {
+        return CompletableFuture.supplyAsync(() -> {
+            if (config.getString("Discord.Token","").isEmpty()) {
+                return null;
+            }
+            //server.getScheduler().buildTask(plugin, () -> {}).schedule();
+            try {
+                jda = JDABuilder.createDefault(config.getString("Discord.Token"))
+                        .addEventListeners(Main.getInjector().getInstance(DiscordEventListener.class))
+                        .build();
 
                 // Botが完全に起動するのを待つ
-				jda.awaitReady();
+                jda.awaitReady();
 
                 CommandCreateAction createTeraCommand = jda.upsertCommand("fmc", "FMC commands");
-				createTeraCommand.addSubcommands(
-					new SubcommandData("tera", "GCP commands")
-						.addOptions(new OptionData(OptionType.STRING, "action", "Choose an action")
-							.addChoice("Start", "start")
-							.addChoice("Stop", "stop")
-							.addChoice("Status", "status")
-					)
-				).queue();
+                createTeraCommand.addSubcommands(
+                    new SubcommandData("tera", "GCP commands")
+                        .addOptions(new OptionData(OptionType.STRING, "action", "Choose an action")
+                            .addChoice("Start", "start")
+                            .addChoice("Stop", "stop")
+                            .addChoice("Status", "status")
+                    )
+                ).queue();
 
-	            jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
-	            
-				isDiscord = true;
-				logger.info("Discord-Botがログインしました。");
+                jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
+                
+                isDiscord = true;
+                logger.info("Discord-Botがログインしました。");
+                return jda;
             } catch (InterruptedException e) {
-				// スタックトレースをログに出力
-	            logger.error("An discord-bot-login error occurred: " + e.getMessage());
-	            for (StackTraceElement element : e.getStackTrace()) {
-	                logger.error(element.toString());
-	            }
-			}
-    	}).schedule();
+                // スタックトレースをログに出力
+                logger.error("An discord-bot-login error occurred: " + e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.error(element.toString());
+                }
+                return null;
+            }
+        });
     }
     
     @Override

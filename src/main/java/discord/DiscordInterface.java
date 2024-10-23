@@ -4,10 +4,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
 public interface DiscordInterface {
-	void loginDiscordBotAsync();
+	CompletableFuture<JDA> loginDiscordBotAsync();
 	CompletableFuture<Void> logoutDiscordBot();
 	void sendRequestButtonWithMessage(String buttonMessage);
 	void sendWebhookMessage(WebhookMessageBuilder builder);

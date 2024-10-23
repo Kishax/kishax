@@ -65,7 +65,7 @@ public class MineStatus {
                                     int rsAffected2 = ps2.executeUpdate();
                                     rsAffecteds2.add(rsAffected2);
                                     if (rsAffected2 > 0) {
-                                        logger.info("Player {} has been added to server {}", playerName, "proxy");
+                                        //logger.info("Player {} has been added to server {}", playerName, "proxy");
                                     }
                                 }
                             }
@@ -75,7 +75,7 @@ public class MineStatus {
                             if (serverName.equals("proxy")) {
                                 playersList.removeIf(player -> player.equals(playerName));
                                 playersList.sort(String.CASE_INSENSITIVE_ORDER);
-                                logger.info("playersList: " + playersList);
+                                //logger.info("playersList: " + playersList);
                                 String updatePlayers = String.join(", ", playersList);
                                 String query2 = "UPDATE status SET player_list=?, current_players=? WHERE name=?;";
                                 try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
@@ -90,7 +90,7 @@ public class MineStatus {
                                     int rsAffected2 = ps2.executeUpdate();
                                     rsAffecteds2.add(rsAffected2);
                                     if (rsAffected2 > 0) {
-                                        logger.info("Player {} has been removed from server {}", playerName, "proxy");
+                                        //logger.info("Player {} has been removed from server {}", playerName, "proxy");
                                     }
                                 }
                             }
@@ -99,7 +99,7 @@ public class MineStatus {
                             if (serverName.equals(beforeServerName)) {
                                 playersList.removeIf(player -> player.equals(playerName));
                                 playersList.sort(String.CASE_INSENSITIVE_ORDER);
-                                logger.info("playersList: " + playersList);
+                                //logger.info("playersList: " + playersList);
                                 String updatePlayers = String.join(", ", playersList);
                                 String query2 = "UPDATE status SET player_list=?, current_players=? WHERE name=?;";
                                 try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
@@ -114,7 +114,7 @@ public class MineStatus {
                                     int rsAffected2 = ps2.executeUpdate();
                                     rsAffecteds2.add(rsAffected2);
                                     if (rsAffected2 > 0) {
-                                        logger.info("Player {} has been removed from server {}", playerName, beforeServerName);
+                                        //logger.info("Player {} has been removed from server {}", playerName, beforeServerName);
                                     }
                                 }
                             }
@@ -132,7 +132,7 @@ public class MineStatus {
                                     int rsAffected2 = ps2.executeUpdate();
                                     rsAffecteds2.add(rsAffected2);
                                     if (rsAffected2 > 0) {
-                                        logger.info("Player {} has been added to server {}", playerName, currentServerName);
+                                        //logger.info("Player {} has been added to server {}", playerName, currentServerName);
                                     }
                                 }
                             }
