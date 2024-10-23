@@ -18,6 +18,7 @@ Discord:
     ChannelId: 
     ChatChannelId: 
     AdminChannelId: 
+    MineStatusChannelId: 
     AdCraRoleId: 
     ChatType: false
     Webhook_URL: ""

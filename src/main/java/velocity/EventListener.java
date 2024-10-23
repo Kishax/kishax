@@ -307,6 +307,7 @@ public class EventListener {
 		}
 		RegisteredServer serverConnection = e.getServer();
         serverInfo = serverConnection.getServerInfo();
+		String currentServerName = serverInfo.getName();
         Optional <RegisteredServer> previousServerInfo = e.getPreviousServer();
         if (Objects.isNull(serverInfo)) {
         	pd.playerDisconnect (
@@ -362,8 +363,8 @@ public class EventListener {
 									return;
 								} else {
 									// メッセージ送信
-									component = Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに参加しました。").color(NamedTextColor.YELLOW);
-									bc.sendSpecificServerMessage(component, serverInfo.getName());
+									component = Component.text(player.getUsername()+"が"+currentServerName+"サーバーに参加しました。").color(NamedTextColor.YELLOW);
+									bc.sendSpecificServerMessage(component, currentServerName);
 									joinMessage = config.getString("EventMessage.Join","");
 									if (!joinMessage.isEmpty()) {
 										// \\n を \n に変換
@@ -402,7 +403,7 @@ public class EventListener {
 												try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
 													ps5.setString(1, player.getUsername());
 													ps5.setString(2, player.getUniqueId().toString());
-													ps5.setString(3, serverInfo.getName());
+													ps5.setString(3, currentServerName);
 													ps5.setBoolean(4, true);
 													ps5.executeUpdate();
 												}
@@ -422,7 +423,7 @@ public class EventListener {
 												String query5 = "UPDATE members SET name=?, server=?, old_name=? WHERE uuid=?;";
 												try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
 													ps5.setString(1, current_name);
-													ps5.setString(2, serverInfo.getName());
+													ps5.setString(2, currentServerName);
 													ps5.setString(3, yuyu.getString("name"));
 													ps5.setString(4, player.getUniqueId().toString());
 													int rsAffected5 = ps5.executeUpdate();
@@ -464,17 +465,31 @@ public class EventListener {
 											// AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
 											if (EventListener.PlayerMessageIds.containsKey(player.getUniqueId().toString())) {
 												// どこからか移動してきたとき
-												ms.updateJoinPlayers(player.getUsername(), serverInfo.getName());
-												discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+												//ms.updateJoinPlayers(player.getUsername(), currentServerName);
+												if (previousServerInfo.isPresent()) {
+													RegisteredServer previousServer = previousServerInfo.get();
+													ServerInfo beforeServerInfo = previousServer.getServerInfo();
+													String beforeServerName = beforeServerInfo.getName();
+													logger.info("Player connected to server: " + beforeServerName);
+													logger.info("Player connected to server: " + currentServerName);
+													ms.updateMovePlayers(player.getUsername(), beforeServerName, currentServerName);
+													discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+												}
 											} else {
 												if (beforejoin_sa_minute>=config.getInt("Interval.Login",0)) {
 													if (previousServerInfo.isPresent()) {
 														// どこからか移動してきたとき
-														ms.updateMovePlayers(player.getUsername(), previousServerInfo.get().getServerInfo().getName(), serverInfo.getName());
-														discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+														RegisteredServer previousServer = previousServerInfo.get();
+														ServerInfo beforeServerInfo = previousServer.getServerInfo();
+														String beforeServerName = beforeServerInfo.getName();
+
+														//logger.info("Player connected to server: " + beforeServerName);
+														//logger.info("Player connected to server: " + currentServerName);
+														ms.updateMovePlayers(player.getUsername(), beforeServerName, currentServerName);
+														discordME.AddEmbedSomeMessage("Move", player, currentServerName);
 													} else {
 														// 1回目のどこかのサーバーに上陸したとき
-														ms.updateJoinPlayers(player.getUsername(), serverInfo.getName());
+														ms.updateJoinPlayers(player.getUsername(), currentServerName);
 														discordME.AddEmbedSomeMessage("Join", player, serverInfo);
 													}
 												}
@@ -502,7 +517,7 @@ public class EventListener {
 											try (PreparedStatement ps4 = conn.prepareStatement(query4)) {
 												ps4.setString(1, player.getUsername());
 												ps4.setString(2, player.getUniqueId().toString());
-												ps4.setString(3, serverInfo.getName());
+												ps4.setString(3, currentServerName);
 												ps4.setBoolean(4, true);
 												ps4.executeUpdate();
 											}
@@ -511,7 +526,7 @@ public class EventListener {
 										
 										String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
 										if (!DiscordInviteUrl.isEmpty()) {
-											component = Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
+											component = Component.text(player.getUsername()+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
 													.append(Component.text("\nFMCサーバー").color(NamedTextColor.AQUA).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
 													.append(Component.text("へようこそ！\n当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成と、それをマイクラアカウントと紐づける").color(NamedTextColor.AQUA))
 													.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
@@ -525,7 +540,7 @@ public class EventListener {
 													.append(Component.text("にて質問してください！参加するには、上の「Discord」をクリックしてね。").color(NamedTextColor.AQUA));
 											player.sendMessage(component);
 										} else {
-											component = Component.text(player.getUsername()+"が"+serverInfo.getName()+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
+											component = Component.text(player.getUsername()+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
 													.append(Component.text("\nFMCサーバー").color(NamedTextColor.AQUA).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
 													.append(Component.text("へようこそ！\n当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成と、それをマイクラアカウントと紐づける").color(NamedTextColor.AQUA))
 													.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
@@ -535,23 +550,23 @@ public class EventListener {
 											player.sendMessage(component);
 										}
 										
-										ms.updateJoinPlayers(player.getUsername(), serverInfo.getName());
+										ms.updateJoinPlayers(player.getUsername(), currentServerName);
 										discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
 									}
 								}
 							}
 							
 							// サーバー移動通知
-							//logger.info("Player connected to server: " + serverInfo.getName());
-							if (serverInfo.getName().equalsIgnoreCase(config.getString("hub"))) {
+							//logger.info("Player connected to server: " + currentServerName);
+							if (currentServerName.equalsIgnoreCase(config.getString("hub"))) {
 								component = Component.text(player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーに初めてやってきました！").color(NamedTextColor.AQUA);
-								bc.sendExceptServerMessage(component, serverInfo.getName());
+								bc.sendExceptServerMessage(component, currentServerName);
 							} else {
-								component = Component.text("サーバー移動通知: "+player.getUsername()+" -> "+serverInfo.getName()).color(NamedTextColor.AQUA);
-								bc.sendExceptServerMessage(component, serverInfo.getName());
+								component = Component.text("サーバー移動通知: "+player.getUsername()+" -> "+currentServerName).color(NamedTextColor.AQUA);
+								bc.sendExceptServerMessage(component, currentServerName);
 							}
 							
-							if (serverInfo.getName().equals("latest")) {
+							if (currentServerName.equals("latest")) {
 								component = Component.text()
 											.append(Component.text("dynmap").decorate(TextDecoration.BOLD).color(NamedTextColor.GOLD))
 											.append(Component.text("\nhttps://keypforev.ddns.net/dynmap/").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED)

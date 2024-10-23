@@ -28,9 +28,10 @@ public class DoServerOffline {
             ps.setString(2, "proxy");
             int rsAffected = ps.executeUpdate();
             if (rsAffected > 0) {
-                String query2 = "UPDATE status SET player_list=?;";
+                String query2 = "UPDATE status SET player_list=?, current_players=?;";
                 try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
                     ps2.setString(1, null);
+                    ps2.setInt(2, 0);
                     int rsAffected2 = ps2.executeUpdate();
                     if (rsAffected2 > 0) {
                         SocketSwitch ssw = sswProvider.get();
