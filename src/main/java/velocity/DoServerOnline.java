@@ -43,7 +43,7 @@ public class DoServerOnline {
     	this.console = console;
     }
 	
-	public void UpdateDatabase() {
+	public void updateDatabase() {
 		// Tomlのサーバー優先
 		// Tomlのサーバー名から得られるconfig情報をDBに反映
 		server.getScheduler().buildTask(plugin, () -> {

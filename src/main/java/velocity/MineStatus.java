@@ -24,19 +24,19 @@ public class MineStatus {
         this.sswProvider = sswProvider;
     }
 
-    public void UpdateJoinPlayers(String playerName, String currentServerName) {
-        UpdatePlayers(playerName, null, currentServerName);
+    public void updateJoinPlayers(String playerName, String currentServerName) {
+        updatePlayers(playerName, null, currentServerName);
     }
 
-    public void UpdateQuitPlayers(String playerName, String beforeServerName) {
-        UpdatePlayers(playerName, beforeServerName, null);
+    public void updateQuitPlayers(String playerName, String beforeServerName) {
+        updatePlayers(playerName, beforeServerName, null);
     }
 
-    public void UpdateMovePlayers(String playerName, String beforeServerName, String currentServerName) {
-        UpdatePlayers(playerName, beforeServerName, currentServerName);
+    public void updateMovePlayers(String playerName, String beforeServerName, String currentServerName) {
+        updatePlayers(playerName, beforeServerName, currentServerName);
     }
 
-    private void UpdatePlayers(String playerName, String beforeServerName, String currentServerName) {
+    private void updatePlayers(String playerName, String beforeServerName, String currentServerName) {
         String query = "SELECT * FROM status;";
         try (Connection conn = db.getConnection();
             PreparedStatement ps = conn.prepareStatement(query)) {
@@ -44,18 +44,26 @@ public class MineStatus {
                 List<Integer> rsAffecteds2 = new ArrayList<>();
                 while (rs.next()) {
                     String serverName = rs.getString("name");
-                    String players = rs.getString("player_name");
-                    String[] playerArray = players.split(",\\s*");
-                    List<String> playersList = Arrays.asList(playerArray);
+                    String players = rs.getString("player_list");
+                    List<String> playersList = new ArrayList<>();
+                    if (players != null && !players.trim().isEmpty()) {
+                        String[] playerArray = players.split(",\\s*");
+                        playersList.addAll(Arrays.asList(playerArray));
+                    }
                     if (serverName != null) {
                         if (beforeServerName != null) {
                             if (serverName.equals(beforeServerName)) {
-                                playersList.remove(playerName);
+                                playersList.removeIf(player -> player.equals(playerName));
                                 playersList.sort(String.CASE_INSENSITIVE_ORDER);
+                                logger.info("playersList: " + playersList);
                                 String updatePlayers = String.join(", ", playersList);
                                 String query2 = "UPDATE status SET player_list=? WHERE name=?;";
                                 try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
-                                    ps2.setString(1, updatePlayers);
+                                    if (playersList.isEmpty()) {
+                                        ps2.setString(1, null);
+                                    } else {
+                                        ps2.setString(1, updatePlayers);
+                                    }
                                     ps2.setString(2, beforeServerName);
                                     int rsAffected2 = ps2.executeUpdate();
                                     rsAffecteds2.add(rsAffected2);

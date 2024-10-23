@@ -57,6 +57,7 @@ public class EventListener {
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
 	private final MessageEditorInterface discordME;
+	private final MineStatus ms;
 	private ServerInfo serverInfo = null;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
@@ -65,7 +66,8 @@ public class EventListener {
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, DatabaseInterface db, BroadCast bc,
 		ConsoleCommandSource console, RomaToKanji conv, PlayerUtil pu,
-		PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME
+		PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME,
+		MineStatus ms
 	) {
 		this.plugin = plugin;
 		this.logger = logger;
@@ -79,6 +81,7 @@ public class EventListener {
 		this.pd = pd;
 		this.rc = rc;
 		this.discordME = discordME;
+		this.ms = ms;
 	}
 	
 	@Subscribe
@@ -461,14 +464,17 @@ public class EventListener {
 											// AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
 											if (EventListener.PlayerMessageIds.containsKey(player.getUniqueId().toString())) {
 												// どこからか移動してきたとき
+												ms.updateJoinPlayers(player.getUsername(), serverInfo.getName());
 												discordME.AddEmbedSomeMessage("Move", player, serverInfo);
 											} else {
 												if (beforejoin_sa_minute>=config.getInt("Interval.Login",0)) {
 													if (previousServerInfo.isPresent()) {
 														// どこからか移動してきたとき
+														ms.updateMovePlayers(player.getUsername(), previousServerInfo.get().getServerInfo().getName(), serverInfo.getName());
 														discordME.AddEmbedSomeMessage("Move", player, serverInfo);
 													} else {
 														// 1回目のどこかのサーバーに上陸したとき
+														ms.updateJoinPlayers(player.getUsername(), serverInfo.getName());
 														discordME.AddEmbedSomeMessage("Join", player, serverInfo);
 													}
 												}
@@ -529,6 +535,7 @@ public class EventListener {
 											player.sendMessage(component);
 										}
 										
+										ms.updateJoinPlayers(player.getUsername(), serverInfo.getName());
 										discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
 									}
 								}
@@ -577,6 +584,12 @@ public class EventListener {
 	@Subscribe
     public void onPlayerDisconnect(DisconnectEvent e) {
     	Player player = e.getPlayer();
+		player.getCurrentServer().ifPresent(serverConnection -> {
+			RegisteredServer registeredServer = serverConnection.getServer();
+			serverInfo = registeredServer.getServerInfo();
+			ms.updateQuitPlayers(player.getUsername(), serverInfo.getName());
+		});
+		
     	Runnable task = () -> {
             // プレイヤーがReconnectしなかった場合に実行する処理
     		server.getScheduler().buildTask(plugin, () -> {

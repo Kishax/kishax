@@ -23,6 +23,8 @@ public class DoServerOffline {
 	}
 	
 	public void UpdateDatabase() {
+		SocketSwitch ssw = sswProvider.get();
+		ssw.sendSpigotServer("MineStatusSync");
 		String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
 		try (Connection conn = db.getConnection();
 			PreparedStatement ps = conn.prepareStatement(query)) {
@@ -33,8 +35,6 @@ public class DoServerOffline {
 			ps.setString(3, serverName);
 			int rsAffected = ps.executeUpdate();
 			if (rsAffected > 0) {
-				SocketSwitch ssw = sswProvider.get();
-				ssw.sendSpigotServer("MineStatusSync");
 				ssw.stopSocketServer();
 			}
 		} catch (SQLException | ClassNotFoundException e2) {

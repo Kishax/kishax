@@ -66,5 +66,6 @@ public class Module extends AbstractModule {
         bind(DiscordEventListener.class);
         bind(EmojiManager.class);
         bind(MessageEditorInterface.class).to(MessageEditor.class);
+        bind(MineStatus.class);
     }
 }

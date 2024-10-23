@@ -47,7 +47,7 @@ public class Main {
     	
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync(); // Discordボットのログインを非同期で実行		
     	
-    	getInjector().getInstance(DoServerOnline.class).UpdateDatabase();
+    	getInjector().getInstance(DoServerOnline.class).updateDatabase();
     	
     	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
     	
@@ -73,6 +73,7 @@ public class Main {
     
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent e) {
+        getInjector().getInstance(DoServerOffline.class).updateDatabase();
     	getInjector().getProvider(SocketSwitch.class).get().stopSocketClient();
 		logger.info( "Client Socket Stopping..." );
 		getInjector().getProvider(SocketSwitch.class).get().stopSocketServer();

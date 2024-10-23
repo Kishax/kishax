@@ -1,5 +1,7 @@
 package spigot;
 
+import java.util.logging.Level;
+
 import org.bukkit.command.PluginCommand;
 
 import com.google.inject.Guice;
@@ -42,12 +44,16 @@ public class Main {
     }
 	
     public void onDisable() {
+		try {
+			getInjector().getInstance(DoServerOffline.class).UpdateDatabase();
+		} catch (Exception e) {
+			plugin.getLogger().log(Level.SEVERE, "An error occurred while updating the database: {0}", e.getMessage());
+		}
     	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).stopMCVC();
 		}
     	getInjector().getInstance(AutoShutdown.class).stopCheckForPlayers();
     	plugin.getLogger().info("Socket Server stopping...");
-    	getInjector().getInstance(DoServerOffline.class).UpdateDatabase();
     	plugin.getLogger().info("プラグインが無効になりました。");
     }
 }

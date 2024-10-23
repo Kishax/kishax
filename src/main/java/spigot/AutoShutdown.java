@@ -1,6 +1,7 @@
 package spigot;
 
 import java.util.Objects;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -24,7 +25,7 @@ public class AutoShutdown {
 	
 	public void startCheckForPlayers() {
 		if (!plugin.getConfig().getBoolean("AutoStop.Mode", false)) {	
-			plugin.getServer().getConsoleSender().sendMessage(ChatColor.GREEN+"Auto-Stopはキャンセルされました。");
+			plugin.getLogger().log(Level.INFO, "{0}Auto-Stopはキャンセルされました。", ChatColor.GREEN);
 			return;
 		}
 		
