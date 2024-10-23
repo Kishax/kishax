@@ -93,7 +93,7 @@ public class Request {
                 return;
             }
             
-            if (config.getString("Servers."+args[1]+".Exec_Path").isEmpty()) {
+            if (config.getString("Servers."+args[1]+".Exec_Path").isEmpty() || !config.getBoolean("Servers."+args[1]+".Entry", false)) {
             	player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
             	return;
             }

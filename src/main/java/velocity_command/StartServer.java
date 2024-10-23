@@ -121,7 +121,7 @@ public class StartServer {
 									player.sendMessage(Component.text(targetServerName+"サーバーは起動中です。").color(NamedTextColor.RED));
 									logger.info(NamedTextColor.RED+targetServerName+"サーバーは起動中です。");
 								} else {
-									if (config.getString("Servers."+targetServerName+".Exec_Path","").isEmpty()) {
+									if (config.getString("Servers."+targetServerName+".Exec_Path","").isEmpty() || !config.getBoolean("Servers."+args[1]+".Entry", false)) {
 										player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
 										return;
 									}

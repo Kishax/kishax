@@ -38,6 +38,9 @@ Discord:
     EndEmojiName: ""
     Presence:
         Activity: ""
+    Status:
+        ChannelId: 
+        MessageId: 
 
 Interval:
     Login: 

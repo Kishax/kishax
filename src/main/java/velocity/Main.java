@@ -43,6 +43,7 @@ public class Main {
         injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory, LuckPermsProvider.get()));
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
             if (jda != null) {
+                //getInjector().getInstance(MineStatusReflect.class).sendEmbedMessage(jda);
                 getInjector().getInstance(MineStatusReflect.class).start(jda);
             }
         }); 		

@@ -19,8 +19,8 @@ public class SocketResponse {
     public void resaction(String res) {
     	if (res != null) {
             res = res.replace("\n", "").replace("\r", "");
-            plugin.getLogger().log(Level.INFO, "{0}", res);
             if (res.contains("起動")) {
+                plugin.getLogger().log(Level.INFO, "{0}", res);
                 String pattern = "(.*?)サーバーが起動しました。";
                 Pattern compiledPattern = Pattern.compile(pattern);
                 Matcher matcher = compiledPattern.matcher(res);
@@ -43,6 +43,7 @@ public class SocketResponse {
                     ssc.refreshMemberInfo();
                 }
             } else if (res.contains("MineStatusSync")) {
+                plugin.getLogger().log(Level.INFO, "{0}", res);
                 ssc.refreshCache();
             }
         }

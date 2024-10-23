@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -44,8 +45,13 @@ public class EmojiManager {
         this.config = config;
         this.db = db;
     }
-    public CompletableFuture<List<String>> getEmojiIds(List<String> emojiNames) {
-        CompletableFuture<List<String>> future = new CompletableFuture<>();
+    public CompletableFuture<Map<String, String>> getEmojiIds(List<String> emojiNames) {
+        CompletableFuture<Map<String, String>> future = new CompletableFuture<>();
+        if (emojiNames.isEmpty()) {
+            future.complete(null);
+            return future;
+        }
+
     	this.jda = Discord.jda;
         if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0 || emojiNames.isEmpty()) {
         	future.complete(null);
@@ -59,14 +65,17 @@ public class EmojiManager {
             return future;
         }
         @SuppressWarnings("null")
-        List<String> emojiIds = emojiNames.stream()
-            .map(emojiName -> guild.getEmojis().stream()
-                .filter(emote -> emote.getName().equals(emojiName))
-                .findFirst()
-                .map(RichCustomEmoji::getId)
-                .orElse(null))
-            .collect(Collectors.toList());
-        future.complete(emojiIds);
+        Map<String, String> emojiMap = emojiNames.stream()
+            .collect(Collectors.toMap(
+                emojiName -> emojiName,
+                emojiName -> guild.getEmojis().stream()
+                    .filter(emote -> emote.getName().equals(emojiName))
+                    .findFirst()
+                    .map(RichCustomEmoji::getId)
+                    .orElse(null)
+            ));
+        //logger.info("emojiMap: " + emojiMap);
+        future.complete(emojiMap);
         return future;
     }
 

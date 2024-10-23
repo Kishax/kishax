@@ -5,9 +5,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
@@ -20,8 +26,8 @@ import discord.EmojiManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 
 public class MineStatusReflect {
 
@@ -71,82 +77,119 @@ public class MineStatusReflect {
 
     private void updateStatus(JDA jda) {
         TextChannel channel = jda.getTextChannelById(channelId);
-        createStatusEmbed(channel).thenAccept(statusEmbed -> {
-            if (channel != null && statusEmbed != null) {
-                Message message = channel.retrieveMessageById(messageId).complete();
-                message.editMessageEmbeds(statusEmbed.build()).queue(
-                    success -> logger.info("Embed updated successfully!"),
-                    error -> logger.error("Failed to update embed: " + error.getMessage())
-                );
+        getPlayersMap().thenCompose(playersMap -> {
+            if (playersMap != null) {
+                Set<String> uniquePlayersSet = new HashSet<>();
+                for (Map.Entry<String, String> entry : playersMap.entrySet()) {
+                    String players = entry.getValue();
+                    if (players != null && !players.trim().isEmpty()) {
+                        String[] playerArray = players.split(",\\s*");
+                        uniquePlayersSet.addAll(Arrays.asList(playerArray));
+                    }
+                }
+                List<String> uniquePlayersList = new ArrayList<>(uniquePlayersSet);
+                // 例えば、"home"->nullとかであれば、getEmojiIdsはnullを返す
+                return emoji.getEmojiIds(uniquePlayersList).thenApply(emojiIds -> {
+                    return createStatusEmbed(channel, playersMap, emojiIds);
+                });
+            }
+            return CompletableFuture.completedFuture(null);
+        }).thenAccept(statusEmbedFuture -> {
+            if (statusEmbedFuture != null) {
+                statusEmbedFuture.thenAccept(statusEmbed -> {
+                    if (channel != null) {
+                        Message message = channel.retrieveMessageById(messageId).complete();
+                        message.editMessageEmbeds(statusEmbed).queue(
+                            success -> {},//logger.info("Embed updated successfully!"),
+                            error -> logger.error("Failed to update embed: " + error.getMessage())
+                        );
+                    }
+                });
             }
         }).exceptionally(error -> {
-            logger.error("Failed to create status embed: " + error.getMessage());
+            logger.error("Failed to update status: " + error.getMessage());
             return null;
         });
     }
 
-    public CompletableFuture<EmbedBuilder> createStatusEmbed(TextChannel channel) {
-        CompletableFuture<EmbedBuilder> future = new CompletableFuture<>();
-        EmbedBuilder embed = new EmbedBuilder();
+    public CompletableFuture<Map<String, String>> getPlayersMap() {
+        CompletableFuture<Map<String, String>> future = new CompletableFuture<>();
         String query = "SELECT * FROM status";
         try (Connection conn = db.getConnection();
             PreparedStatement ps = conn.prepareStatement(query)) {
             try (ResultSet rs = ps.executeQuery()) {
-                boolean maintenance = false;
-                boolean isOnline = false;
+                Map<String, String> playersMap = new HashMap<>();
                 while (rs.next()) {
                     String serverName = rs.getString("name"),
                         players = rs.getString("player_list");
-                    int currentPlayers = rs.getInt("current_players");
                     boolean online = rs.getBoolean("online");
-                    List<String> playersList = new ArrayList<>();
-                    if (serverName.equals("maintenance") && online) {
-                        maintenance = true;
-                        break;
-                    }
                     if (online) {
-                        isOnline = true;
-                        if (players != null && !players.trim().isEmpty()) {
-                            String[] playerArray = players.split(",\\s*");
-                            playersList.addAll(Arrays.asList(playerArray));
-                        }
-                        if (!playersList.isEmpty()) {
-                            playersList.sort(String.CASE_INSENSITIVE_ORDER);
-                            List<String> playersListWithEmoji = new ArrayList<>();
-                            emoji.getEmojiIds(playersList).thenAccept(emojiIds -> {
-                                for (int i = 0; i < playersList.size(); i++) {
-                                    String emojiId = emojiIds.get(i);
-                                    if (emojiId != null) {
-                                        String playerName = playersList.get(i);
-                                        String emojiString = emoji.getEmojiString(playerName, emojiId);
-                                        playersListWithEmoji.add(emojiString + " " + playerName);
-                                    } else {
-                                        playersListWithEmoji.add(playersList.get(i));
-                                    }
-                                }
-                            }).thenRun(() -> {
-                                String playersWithEmoji = String.join("\n   ", playersListWithEmoji);
-                                embed.addField(":green_circle: " + serverName, currentPlayers + "/10: " + playersWithEmoji, false);
-                            });
-                        } else {
-                            embed.addField(":green_circle: " + serverName, "0/10: No Player", false);
-                        }
+                        playersMap.put(serverName, players);
                     }
                 }
-                if (maintenance) {
-                    embed.setTitle(":red_circle: 現在サーバーメンテナンス中");
-                    embed.setColor(Color.RED);
-                } else if (!isOnline) {
-                    embed.setTitle(":red_circle: すべてのサーバーがオフライン");
-                    embed.setColor(Color.RED);
-                } else {
-                    embed.setColor(Color.GREEN);
-                }
+                future.complete(playersMap);
             }
-        } catch (SQLException | ErrorResponseException | ClassNotFoundException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             logger.info("MySQLサーバーに再接続を試みています。");
+            future.completeExceptionally(e);
+            // これが、exceptionallyにいくなら、exceptionallyで、
+            // discordメッセージ編集で、「MySQLサーバーにアクセスできません」と出せば、エラー発見しやすい
         }
-        future.complete(null);
+        return future;
+    }
+
+    public CompletableFuture<MessageEmbed> createStatusEmbed(TextChannel channel, Map<String, String> playersMap, Map<String, String> emojiMap) {
+        CompletableFuture<MessageEmbed> future = new CompletableFuture<>();
+        EmbedBuilder embed = new EmbedBuilder();
+        boolean maintenance = false, isOnline = false;
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        String formattedNow = now.format(formatter);
+        embed.setFooter("最終更新日時: " + formattedNow, null);
+        for (Map.Entry<String, String> entry : playersMap.entrySet()) {
+            isOnline = true;
+            String serverName = entry.getKey(),
+                players = entry.getValue();
+            List<String> playersList = new ArrayList<>();
+            if (serverName.equals("maintenance")) {
+                maintenance = true;
+                continue;
+            }
+            if (players != null && !players.trim().isEmpty()) {
+                String[] playerArray = players.split(",\\s*");
+                playersList.addAll(Arrays.asList(playerArray));
+            }
+            int currentPlayers = playersList.size();
+            if (!playersList.isEmpty()) {
+                playersList.sort(String.CASE_INSENSITIVE_ORDER);
+                List<String> playersListWithEmoji = new ArrayList<>();
+                for (int i = 0; i < playersList.size(); i++) {
+                    String playerName = playersList.get(i),
+                        emojiId = emojiMap.get(playerName);
+                    if (emojiId != null) {
+                        String emojiString = emoji.getEmojiString(playerName, emojiId);
+                        playersListWithEmoji.add(emojiString + " " + playerName);
+                    } else {
+                        playersListWithEmoji.add(playersList.get(i));
+                    }
+                }
+                String playersWithEmoji = String.join("\n   ", playersListWithEmoji);
+                embed.addField(":green_circle: " + serverName, currentPlayers + "/10: " + playersWithEmoji, false);
+            } else {
+                embed.addField(":green_circle: " + serverName, "0/10: No Player", false);
+            }
+        }
+        if (maintenance) {
+            embed.setTitle(":tools: 現在サーバーメンテナンス中");
+            embed.setColor(Color.ORANGE);
+        } else if (!isOnline) {
+            embed.setTitle(":red_circle: すべてのサーバーがオフライン");
+            embed.setColor(Color.RED);
+        } else {
+            embed.setTitle(":white_check_mark: 現在サーバー開放中");
+            embed.setColor(Color.GREEN);
+        }
+        future.complete(embed.build());
         return future;
     }
 }

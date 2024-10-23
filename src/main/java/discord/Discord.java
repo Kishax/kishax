@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
-import com.velocitypowered.api.proxy.ProxyServer;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessage;
@@ -46,8 +45,6 @@ public class Discord implements DiscordInterface {
 	public static JDA jda = null;
 	public static boolean isDiscord = false;
 	
-	private final Main plugin;
-	private final ProxyServer server;
     private final Logger logger;
     private final Config config;
     private final Database db;
@@ -58,13 +55,7 @@ public class Discord implements DiscordInterface {
     private MessageChannel channel= null;
 	
     @Inject
-    public Discord (
-    	Main plugin, ProxyServer server, Logger logger, 
-    	Config config, Database db, BroadCast bc, 
-    	PlayerUtil pu, MessageEditorInterface discordME
-    ) {
-    	this.plugin = plugin;
-    	this.server = server;
+    public Discord (Logger logger, Config config, Database db, BroadCast bc, PlayerUtil pu, MessageEditorInterface discordME) {
     	this.logger = logger;
     	this.config = config;
     	this.db = db;
