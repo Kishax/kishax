@@ -19,6 +19,7 @@ public class ConfigUtils {
     }
 
     public void configKeySetOutPut(Map<String, Object> servers) {
+        this.savedConfig = servers;
         Map<String, Map<String, String>> flattenedConfig = flattenConfig(servers);
         flattenedConfig.entrySet().forEach(entry -> {
             String key = entry.getKey();
@@ -38,24 +39,25 @@ public class ConfigUtils {
     }
 
     private Map<String, Map<String, String>> flattenConfig(Map<String, Object> config) {
-        this.savedConfig = config;
         Map<String, Map<String, String>> result = new HashMap<>();
         for (Map.Entry<String, Object> entry : config.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
             if (value instanceof Map) {
                 flattenMap(key, (Map<?, ?>) value, result);
+            } else {
+                result.computeIfAbsent(key, k -> new HashMap<>()).put(key, value != null ? value.toString() : null);
             }
         }
         return result;
     }
 
     private void flattenMap(String parentKey, Map<?, ?> map, Map<String, Map<String, String>> result) {
-        map.entrySet().forEach(entry -> {
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
             String key = entry.getKey().toString();
             Object value = entry.getValue();
             String newKey;
-             if (savedConfig.containsKey(parentKey)) {
+            if (savedConfig.containsKey(parentKey)) {
                 newKey = key;
             } else {
                 // 特定のKeyの中で、Mapをもつ値に当たった場合、
@@ -65,12 +67,8 @@ public class ConfigUtils {
             if (value instanceof Map) {
                 flattenMap(newKey, (Map<?, ?>) value, result);
             } else {
-                if (value != null) {
-                    result.computeIfAbsent(parentKey, k -> new HashMap<>()).put(newKey, value.toString());
-                } else {
-                    result.computeIfAbsent(parentKey, k -> new HashMap<>()).put(newKey, null);
-                }
+                result.computeIfAbsent(parentKey, k -> new HashMap<>()).put(newKey, value != null ? value.toString() : null);
             }
-        });
+        }
     }
 }

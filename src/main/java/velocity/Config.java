@@ -158,21 +158,6 @@ public class Config {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> getServersMap() {
-        Map<String, Object> configsServer = getMap("Servers");
-        for (Map.Entry<String, Object> entry : configsServer.entrySet()) {
-            //String key = entry.getKey();
-            Object value = entry.getValue();
-            if (value instanceof Map) {
-                Map<String, Object> servers = (Map<String, Object>) value;
-                return servers;
-            }
-        }
-        return null;
-    }
-    
-
     /**
      * 階層的なキーを指定して値を取得する
      * @param path 階層的なキー (例: "MySQL.Database")
