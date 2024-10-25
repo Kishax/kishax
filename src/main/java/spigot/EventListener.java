@@ -90,33 +90,42 @@ public final class EventListener implements Listener {
             if (title.endsWith(" server")) {
                 event.setCancelled(true);
                 String serverName = title.split(" ")[0];
-                int slot = event.getRawSlot();
-                switch (slot) {
-                    case 0 -> {
-                        pm.resetPage(player, serverName);
-                        String serverType = ssc.getServerType(serverName);
-                        if (serverType != null) {
-                            int page = pm.getPage(player, serverType);
-                            pm.openServerEachInventory(player, serverType, page);
-                        } else {
-                            player.closeInventory();
-                            player.sendMessage("サーバーが見つかりませんでした。");
+                boolean iskey = ssc.getStatusMap().entrySet().stream().anyMatch(e -> e.getValue().entrySet().stream().anyMatch(e2 -> e2.getKey().equals(serverName)));
+                if (iskey) {
+                    int slot = event.getRawSlot();
+                    switch (slot) {
+                        case 0 -> {
+                            pm.resetPage(player, serverName);
+                            String serverType = ssc.getServerType(serverName);
+                            if (serverType != null) {
+                                int page = pm.getPage(player, serverType);
+                                pm.openServerEachInventory(player, serverType, page);
+                            } else {
+                                player.closeInventory();
+                                player.sendMessage("サーバーが見つかりませんでした。");
+                            }
                         }
-                    }
-                    case 45 -> {
-                        // 戻るボタンがあれば
-                        int page = pm.getPage(player, serverName);
-                        if (page > 1) {
-                            pm.openServerInventory(player, serverName, page - 1);
+                        case 22 -> {
+                            pm.serverSwitch(player, serverName);
                         }
-                    }
-                    case 53 -> {
-                        // 進むボタンがあれば
-                        int page = pm.getPage(player, serverName);
-                        int totalServers = pm.getTotalPlayers(serverName); // 総サーバー数を取得
-                        int totalPages = (int) Math.ceil((double) totalServers / PortalsMenu.FACE_POSITIONS.length); // 総ページ数を計算
-                        if (page < totalPages) {
-                            pm.openServerInventory(player, serverName, page + 1);
+                        case 23 -> {
+                            pm.enterServer(player, serverName);
+                        }
+                        case 45 -> {
+                            // 戻るボタンがあれば
+                            int page = pm.getPage(player, serverName);
+                            if (page > 1) {
+                                pm.openServerInventory(player, serverName, page - 1);
+                            }
+                        }
+                        case 53 -> {
+                            // 進むボタンがあれば
+                            int page = pm.getPage(player, serverName);
+                            int totalServers = pm.getTotalPlayers(serverName); // 総サーバー数を取得
+                            int totalPages = (int) Math.ceil((double) totalServers / PortalsMenu.FACE_POSITIONS.length); // 総ページ数を計算
+                            if (page < totalPages) {
+                                pm.openServerInventory(player, serverName, page + 1);
+                            }
                         }
                     }
                 }

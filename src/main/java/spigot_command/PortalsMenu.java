@@ -147,6 +147,13 @@ public class PortalsMenu {
         setPage(player, serverType, page);
     }
 
+    public void enterServer(Player player, String serverName) {
+        String playerName = player.getName();
+        // player.performCommand("fmc fv " + playerName + " stp " + serverName);
+        // やっぱ各spigotsで検証してもらった方が早いか
+        // velocity.SetServerで確認していることをここで確認して飛ばす
+    }
+
     public void openServerInventory(Player player, String serverName, int page) {
         Inventory inv = Bukkit.createInventory(null, 54, serverName + " server");
         ItemStack backItem = new ItemStack(Material.BARRIER);
@@ -156,7 +163,15 @@ public class PortalsMenu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-
+        // 自動入室ドグル
+        // サーバーを起動or起動リクエストにより、オンラインになったら自動で入室する
+        // だれかが、サーバーを起動or起動リクエストした場合、そのサーバーにいるプレイヤーたちに、
+        // 「サーバーがまもなく起動します。自動入室エリアにいると、自動で転送されます。」というメッセージを送信する
+        // そのメッセージを受け取ったプレイヤーたちは、自動入室エリアに移動する
+        // もしくは、自動転送エリアをつくって、そこにいるプレイヤーたちは、自動で転送されるようにするか
+        // どちらかの方法で実装する
+        // オンラインサーバーゲートを作る
+        // くぐると、現在オンラインのサーバーが出てくる
         Map<String, Map<String, Map<String, String>>> serverStatusMap = ssc.getStatusMap();
         for (Map.Entry<String, Map<String, Map<String, String>>> entry : serverStatusMap.entrySet()) {
             //String serverType = entry.getKey();
@@ -177,6 +192,27 @@ public class PortalsMenu {
                                     onlineItem.setItemMeta(onlineMeta);
                                 }
                                 inv.setItem(8, onlineItem);
+                                ItemStack leverItem = new ItemStack(Material.LEVER);
+                                ItemMeta leverMeta = leverItem.getItemMeta();
+                                if (leverMeta != null) {
+                                    int permLevel = getPermLevel(player);
+                                    if (permLevel == 1) {
+                                        leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーが起動中です！");
+                                        //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
+                                    } else if (permLevel >= 2) {
+                                        leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーを停止する");
+                                        //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + ""));
+                                    }
+                                    leverItem.setItemMeta(leverMeta);
+                                }
+                                inv.setItem(22, leverItem);
+                                ItemStack doorItem = new ItemStack(Material.IRON_DOOR);
+                                ItemMeta doorMeta = doorItem.getItemMeta();
+                                if (doorMeta != null) {
+                                    doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーに入る");
+                                    doorItem.setItemMeta(doorMeta);
+                                }
+                                inv.setItem(23, doorItem);
                             } else {
                                 ItemStack offlineItem = new ItemStack(Material.RED_WOOL);
                                 ItemMeta offlineMeta = offlineItem.getItemMeta();
@@ -185,21 +221,38 @@ public class PortalsMenu {
                                     offlineItem.setItemMeta(offlineMeta);
                                 }
                                 inv.setItem(8, offlineItem);
+                                ItemStack leverItem = new ItemStack(Material.LEVER);
+                                ItemMeta leverMeta = leverItem.getItemMeta();
+                                if (leverMeta != null) {
+                                    int permLevel = getPermLevel(player);
+                                    if (permLevel == 1) {
+                                        leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動リクエスト");
+                                        leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
+                                    } else if (permLevel >= 2) {
+                                        leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動");
+                                        leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
+                                    }
+                                    leverItem.setItemMeta(leverMeta);
+                                }
+                                inv.setItem(22, leverItem);
+                                ItemStack doorItem = new ItemStack(Material.IRON_DOOR);
+                                ItemMeta doorMeta = doorItem.getItemMeta();
+                                if (doorMeta != null) {
+                                    doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーがオンラインでないため、入れません。");
+                                    doorItem.setItemMeta(doorMeta);
+                                }
+                                inv.setItem(23, doorItem);
                             }
                         }
-
                         if (key.equals("player_list")) {
                             //plugin.getLogger().log(Level.INFO, "value: {0}", value);
                             if (value != null && !value.isEmpty() && !value.equals("None")) {
                                 String[] playerArray = value.split(",\\s*");
                                 List<String> players = Arrays.asList(playerArray);
-
                                 int totalItems = players.size();
                                 int totalPages = (totalItems + FACE_POSITIONS.length - 1) / SLOT_POSITIONS.length;
-
                                 int startIndex = (page - 1) * SLOT_POSITIONS.length;
                                 int endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
-
                                 for (int i = startIndex; i < endIndex; i++) {
                                     String playerName = players.get(i);
                                     ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
@@ -208,7 +261,6 @@ public class PortalsMenu {
                                         Map<String, Map<String, String>> memberMap = ssc.getMemberMap();
                                         UUID playerUUID = UUID.fromString(memberMap.get(playerName).get("uuid"));
                                         OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
-                
                                         // プレイヤーが一度でもサーバーに参加したことがあるか確認
                                         if (offlinePlayer.hasPlayedBefore() || offlinePlayer.isOnline()) {
                                             playerMeta.setOwningPlayer(offlinePlayer);
@@ -217,12 +269,11 @@ public class PortalsMenu {
                                             playerMeta.setDisplayName(ChatColor.RED + "Unknown Player");
                                         }
                                         playerMeta.setDisplayName(ChatColor.GREEN + playerName.trim());
-                                        playerMeta.setLore(Arrays.asList(ChatColor.GRAY + value));
+                                        playerMeta.setLore(Arrays.asList(ChatColor.GRAY + "現在オンラインです！"));
                                         playerItem.setItemMeta(playerMeta);
                                     }
                                     inv.setItem(FACE_POSITIONS[i - startIndex], playerItem);
                                 }
-
                                 // ページ戻るブロックを配置
                                 if (page > 1) {
                                     ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -233,7 +284,6 @@ public class PortalsMenu {
                                     }
                                     inv.setItem(45, prevPageItem);
                                 }
-
                                 // ページ進むブロックを配置
                                 if (page < totalPages) {
                                     ItemStack nextPageItem = new ItemStack(Material.ARROW);
@@ -268,6 +318,14 @@ public class PortalsMenu {
             
         }
         player.openInventory(inv);
+    }
+
+    private int getPermLevel(Player player) {
+        int permLevel = 0;
+        if (player.hasPermission("group.new-fmc-user")) permLevel += 1;
+        if (player.hasPermission("group.sub-admin")) permLevel += 1;
+        if (player.hasPermission("group.super-admin")) permLevel += 1;
+        return permLevel;
     }
 
     public int getTotalPlayers(String serverName) {

@@ -172,9 +172,9 @@ public class SocketResponse {
                 String command = m.group(3);
                 Main.getInjector().getInstance(CommandForwarder.class).forwardCommand(execplayerName, command, playerName);
             }
-    	} else if(res.contains("プレイヤー不在")) {
+    	} else if (res.contains("プレイヤー不在")) {
     		bc.broadCastMessage(Component.text(res).color(NamedTextColor.RED));
-    	} else {	
+    	} else {
     		// Discordからのメッセージ処理
     		sendMixUrl(res);
     	}

@@ -43,7 +43,6 @@ public class SocketResponse {
                     ssc.refreshMemberInfo();
                 }
             } else if (res.contains("MineStatusSync")) {
-                plugin.getLogger().log(Level.INFO, "{0}", res);
                 ssc.refreshCache();
             }
         }
