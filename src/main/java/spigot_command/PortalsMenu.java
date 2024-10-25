@@ -148,10 +148,11 @@ public class PortalsMenu {
     }
 
     public void enterServer(Player player, String serverName) {
-        String playerName = player.getName();
+        //String playerName = player.getName();
         // player.performCommand("fmc fv " + playerName + " stp " + serverName);
         // やっぱ各spigotsで検証してもらった方が早いか
         // velocity.SetServerで確認していることをここで確認して飛ばす
+        
     }
 
     public void openServerInventory(Player player, String serverName, int page) {

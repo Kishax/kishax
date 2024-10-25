@@ -67,5 +67,6 @@ public class Module extends AbstractModule {
         bind(EmojiManager.class);
         bind(MessageEditorInterface.class).to(MessageEditor.class);
         bind(MineStatus.class);
+        bind(ConfigUtils.class).in(com.google.inject.Scopes.SINGLETON);
     }
 }

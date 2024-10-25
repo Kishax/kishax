@@ -140,6 +140,39 @@ public class Config {
         }
     }
     
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getMap(String key) {
+        if (Objects.isNull(config)) {
+            logger.error("Config has not been initialized.");
+            return null;
+        }
+        Object value = config.get(key);
+        if (value instanceof Map) {
+            return (Map<String, Object>) value;
+        } else if (Objects.isNull(value)) {
+            logger.error("The key '" + key + "' does not exist in the configuration.");
+            return null;
+        } else {
+            logger.error("The value for the key '" + key + "' is not a map.");
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getServersMap() {
+        Map<String, Object> configsServer = getMap("Servers");
+        for (Map.Entry<String, Object> entry : configsServer.entrySet()) {
+            //String key = entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                Map<String, Object> servers = (Map<String, Object>) value;
+                return servers;
+            }
+        }
+        return null;
+    }
+    
+
     /**
      * 階層的なキーを指定して値を取得する
      * @param path 階層的なキー (例: "MySQL.Database")
@@ -165,7 +198,6 @@ public class Config {
                 return null; // キーがマップではない場合
             }
         }
-
         return null;
     }
 

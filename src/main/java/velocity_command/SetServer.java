@@ -144,7 +144,6 @@ public class SetServer {
 
 							player.sendMessage(builder.build());
 						}
-
 						if (mine_status.getBoolean("online")) {
 							// オンライン
 							if (minecrafts.getBoolean("confirm")) {
@@ -153,7 +152,6 @@ public class SetServer {
 								LocalDateTime now = LocalDateTime.now();
 								DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 								String formattedDateTime = now.format(formatter);
-								
 								String query3 = "UPDATE members SET sst=? WHERE uuid=?;";
 								try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
 									ps3.setString(1,formattedDateTime);
