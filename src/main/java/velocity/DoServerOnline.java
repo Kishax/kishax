@@ -84,7 +84,7 @@ public class DoServerOnline {
 										}
 										
 										// proxyのみ、特別、〇〇が固定なので更新をチェック
-										String proxyConfigPlatform = config.getString("Servers.proxy.Platform", null);
+										String proxyConfigPlatform = config.getString("Servers.proxy.platform", null);
 										int proxyConfigSocketServerPort = config.getInt("Socket.Server_Port", 0);
 										String query3 = "UPDATE status SET socketport=?,platform=? WHERE name=?;";
 										try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
@@ -142,9 +142,9 @@ public class DoServerOnline {
 														// 適切なデフォルト値を設定するか、エラーハンドリングを行います
 														serverDBTomlPort = 0; // 例: デフォルト値を0に設定
 													}
-													String serverDBConfigType = config.getString("Servers." + serverDBName + ".Type", ""),
+													String serverDBConfigType = config.getString("Servers." + serverDBName + ".type", ""),
 															serverDBType = eachServerStatus.get("type"),
-															serverDBConfigPlatform = config.getString("Servers." + serverDBName + ".Platform", ""),
+															serverDBConfigPlatform = config.getString("Servers." + serverDBName + ".platform", ""),
 															serverDBPlatform = eachServerStatus.get("platform");
 								
 													// Tomlに存在しないサーバーは削除
@@ -197,8 +197,8 @@ public class DoServerOnline {
 													for (Map.Entry<String, Integer> configEntry : velocityToml.entrySet()) {
 														// 以下、Tomlの配列を回して得られるサーバーネームで得たconfig情報
 														String serverTomlName = configEntry.getKey(),
-																serverTomlConfigType = config.getString("Servers." + serverTomlName + ".Type", null),
-																serverTomlConfigPlatform = config.getString("Servers." + serverTomlName + ".Platform", null);
+																serverTomlConfigType = config.getString("Servers." + serverTomlName + ".type", null),
+																serverTomlConfigPlatform = config.getString("Servers." + serverTomlName + ".platform", null);
 														int serverTomlPort = configEntry.getValue();
 														if (!dbStatusMap.containsKey(serverTomlName)) {
 															// ポートの重複をチェック

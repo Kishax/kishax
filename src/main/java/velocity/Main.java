@@ -1,7 +1,6 @@
 package velocity;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.TimeZone;
 
 import org.slf4j.Logger;
@@ -58,22 +57,7 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
-        Config config = getInjector().getInstance(Config.class);
-        //Map<String, Object> servers = config.getServersMap();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> serversMap = (Map<String, Object>) config.getConfig().get("Servers");
-        /*serversMap.entrySet().stream().forEach(entry -> {
-            Object value = entry.getValue();
-            if (value instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> servers = (Map<String, Object>) value;
-                getInjector().getInstance(ConfigUtils.class).configKeySetOutPut(servers);
-            }
-        });*/
-        //getInjector().getInstance(ConfigUtils.class).configKeySetOutPut(serversMap);
-        //getInjector().getInstance(ConfigUtils.class).output();
-        getInjector().getInstance(ConfigUtils2.class).configOutput();
-        
+        getInjector().getInstance(ConfigUtils.class).configOutput();
 	    logger.info("プラグインが有効になりました。");
     }
     
