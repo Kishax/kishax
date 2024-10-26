@@ -324,7 +324,7 @@ public class DiscordEventListener extends ListenerAdapter {
 						ps.setString(5, "ok");
 						int rsAffected = ps.executeUpdate();
 						if (rsAffected > 0) {
-							execFilePath = config.getString("Servers."+reqServerName+".Exec_Path");
+							execFilePath = config.getString("Servers."+reqServerName+".exec");
 							processBuilder = new ProcessBuilder(execFilePath);
 							try {
 								processBuilder.start();
