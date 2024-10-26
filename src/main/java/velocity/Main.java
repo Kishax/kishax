@@ -70,7 +70,9 @@ public class Main {
                 getInjector().getInstance(ConfigUtils.class).configKeySetOutPut(servers);
             }
         });*/
-        getInjector().getInstance(ConfigUtils.class).configKeySetOutPut(serversMap);
+        //getInjector().getInstance(ConfigUtils.class).configKeySetOutPut(serversMap);
+        //getInjector().getInstance(ConfigUtils.class).output();
+        getInjector().getInstance(ConfigUtils2.class).configOutput();
         
 	    logger.info("プラグインが有効になりました。");
     }
