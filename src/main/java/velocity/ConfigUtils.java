@@ -6,16 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.slf4j.Logger;
-
 import com.google.inject.Inject;
 
 public class ConfigUtils {
-    private final Logger logger;
     private final Config config;
     @Inject
-    public ConfigUtils(Logger logger, Config config) {
-        this.logger = logger;
+    public ConfigUtils(Config config) {
         this.config = config;
     }
 
