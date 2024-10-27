@@ -19,7 +19,7 @@ public class ConfigUtils {
         this.config = config;
     }
 
-    public Set<String> getKeySets(Map<String, Map<String, Object>> configMap) {
+    public Set<String> getKeySet(Map<String, Map<String, Object>> configMap) {
         Set<String> keySet = new HashSet<>();
         for (Map<String, Object> innerMap : configMap.values()) {
             keySet.addAll(innerMap.keySet());

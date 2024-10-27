@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.inject.Inject;
 
@@ -30,10 +32,8 @@ public class Database implements DatabaseInterface {
 				(password != null && password.isEmpty())) {
 				return null;
 			}
-			
 			synchronized (Database.class) {
 				//if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
-				
 				Class.forName("com.mysql.cj.jdbc.Driver");
 				return DriverManager.getConnection (
 							"jdbc:mysql://" + host + ":" + 
@@ -53,10 +53,8 @@ public class Database implements DatabaseInterface {
 				(password != null && password.isEmpty())) {
 				return null;
 			}
-			
 			synchronized (Database.class) {
 				//if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
-				
 				Class.forName("com.mysql.cj.jdbc.Driver");
 				return DriverManager.getConnection (
 							"jdbc:mysql://" + host + ":" + 
@@ -75,7 +73,20 @@ public class Database implements DatabaseInterface {
 		return getConnection(null);
 	}
 
-	public static void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException {
+	@Override
+    public String createPlaceholders(int count) {
+        return String.join(", ", java.util.Collections.nCopies(count, "?"));
+    }
+
+	@Override
+    public String createQueryPart(Set<String> keySet) {
+        return keySet.stream()
+                     .map(key -> key + " = ?")
+                     .collect(Collectors.joining(", "));
+    }
+
+	@Override
+    public void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException {
         if (value == null) {
             ps.setNull(parameterIndex, java.sql.Types.NULL);
 		} else if (value instanceof Integer i) {
@@ -98,4 +109,8 @@ public class Database implements DatabaseInterface {
             throw new SQLException("Unsupported data type: " + value.getClass().getName());
         }
     }
+
+	public Class<?> getTypes(Object value) {
+		return value.getClass();
+	}
 }
