@@ -1,6 +1,8 @@
 package velocity;
 
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import org.slf4j.Logger;
@@ -57,8 +59,13 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
-        //getInjector().getInstance(ConfigUtils.class).configOutput();
-        getInjector().getInstance(ConfigUtils.class).testOutput();
+        //
+        ConfigUtils cutils = getInjector().getInstance(ConfigUtils.class);
+        Map<String, Map<String, Object>> configMap = cutils.getConfigMap("Servers");
+        cutils.configOutputWithType(configMap);
+        Set<String> configKeySets = cutils.getKeySets(configMap);
+        logger.info("configKeySets: " + configKeySets);
+        //
 	    logger.info("プラグインが有効になりました。");
     }
     

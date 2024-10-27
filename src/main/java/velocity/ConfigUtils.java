@@ -19,33 +19,6 @@ public class ConfigUtils {
         this.config = config;
     }
 
-    public void testOutput() {
-        String configKey = config.getString("Test.config.key", null);
-        if (configKey != null) {
-            logger.info("Test.config.key: " + configKey);
-            getConfigMap(configKey).forEach((key, value) -> {
-                System.out.println("Server: " + key);
-                value.forEach((k, v) -> {
-                    if (v == null) {
-                        System.out.println("  " + k + ": " + "(Null) " + v);
-                    } else if (v instanceof Integer) {
-                        System.out.println("  " + k + ": " + "(Integer) " + v);
-                    } else if (v instanceof Boolean) {
-                        System.out.println("  " + k + ": " + "(Boolean) " + v);
-                    } else if (v instanceof String) {
-                        System.out.println("  " + k + ": " + "(String) " + v);
-                    } else if (v instanceof List) {
-                        System.out.println("  " + k + ": " + "(List) " + v);
-                    } else {
-                        System.out.println("  " + k + ": " + "(Unknown type) " + v);
-                    }
-                });
-            }); 
-        } else {
-            logger.error("Test.config.key is not found.");
-        }
-    }
-
     public Set<String> getKeySets(Map<String, Map<String, Object>> configMap) {
         Set<String> keySet = new HashSet<>();
         for (Map<String, Object> innerMap : configMap.values()) {
@@ -76,6 +49,29 @@ public class ConfigUtils {
             return updatedResult;
         }
         return null;
+    }
+
+    public void configOutputWithType(Map<String, Map<String, Object>> configMap) {
+        if (configMap != null) {
+            configMap.forEach((key, value) -> {
+                System.out.println("Server: " + key);
+                value.forEach((k, v) -> {
+                    if (v == null) {
+                        System.out.println("  " + k + ": " + "(Null) " + v);
+                    } else if (v instanceof Integer) {
+                        System.out.println("  " + k + ": " + "(Integer) " + v);
+                    } else if (v instanceof Boolean) {
+                        System.out.println("  " + k + ": " + "(Boolean) " + v);
+                    } else if (v instanceof String) {
+                        System.out.println("  " + k + ": " + "(String) " + v);
+                    } else if (v instanceof List) {
+                        System.out.println("  " + k + ": " + "(List) " + v);
+                    } else {
+                        System.out.println("  " + k + ": " + "(Unknown type) " + v);
+                    }
+                });
+            }); 
+        }
     }
 
     @SuppressWarnings("unchecked")
