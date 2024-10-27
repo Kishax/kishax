@@ -120,6 +120,7 @@ public class DoServerOnline {
 			}
 		}
 	}
+	
 	public void updateDatabase() {
 		server.getScheduler().buildTask(plugin, () -> {
 			try (Connection conn = db.getConnection()) {
