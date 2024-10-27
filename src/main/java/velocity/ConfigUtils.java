@@ -3,13 +3,56 @@ package velocity;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+
 import com.google.inject.Inject;
 
 public class ConfigUtils {
+    private final Logger logger;
     private final Config config;
     @Inject
-    public ConfigUtils(Config config) {
+    public ConfigUtils(Logger logger, Config config) {
+        this.logger = logger;
         this.config = config;
+    }
+
+    public void testOutput() {
+        String configKey = config.getString("Test.config.key", null);
+        if (configKey != null) {
+            logger.info("Test.config.key: " + configKey);
+            getConfigMap(configKey).forEach((key, value) -> {
+                System.out.println("Server: " + key);
+                value.forEach((k, v) -> {
+                    System.out.println("  " + k + ": " + v);
+                });
+            }); 
+        } else {
+            logger.error("Test.config.key is not found.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String,Map<String,String>> getConfigMap(String configKey) {
+        if (configKey == null) {
+            return null;
+        }
+        Object configKeyObj = config.getConfig().get(configKey);
+        if (configKeyObj instanceof Map) {
+            Map<String, Object> configMap = (Map<String, Object>) configKeyObj;
+            Map<String, Map<String, String>> result = new HashMap<>();
+            processConfig(configMap, "", result);
+            Map<String, Map<String, String>> updatedResult = new HashMap<>();
+            result.forEach((key, value) -> {
+                Map<String, String> updatedValue = new HashMap<>();
+                value.forEach((k, v) -> {
+                    //value.put(k.replace(key + "_", ""), v);
+                    updatedValue.put(k.replace(key + "_", ""), v);
+                });
+                updatedResult.put(key, updatedValue);
+            });
+            return updatedResult;
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")

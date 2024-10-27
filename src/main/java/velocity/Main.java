@@ -57,7 +57,8 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
-        getInjector().getInstance(ConfigUtils.class).configOutput();
+        //getInjector().getInstance(ConfigUtils.class).configOutput();
+        getInjector().getInstance(ConfigUtils.class).testOutput();
 	    logger.info("プラグインが有効になりました。");
     }
     
