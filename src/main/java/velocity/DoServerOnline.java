@@ -102,10 +102,7 @@ public class DoServerOnline {
 		String query = "DELETE FROM status WHERE name = ?;";
 		try (PreparedStatement ps1 = conn.prepareStatement(query)) {
 			ps1.setString(1, serverName);
-			int rsAffected1 = ps1.executeUpdate();
-			if (rsAffected1 > 0) {
-				console.sendMessage(Component.text(serverName+"サーバーはTomlに記載されていないため、データベースから削除しました。").color(NamedTextColor.GREEN));
-			}
+			console.sendMessage(Component.text(serverName+"サーバーはTomlに記載されていないため、データベースから削除しました。").color(NamedTextColor.GREEN));
 		}
 	}
 
