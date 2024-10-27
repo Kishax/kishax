@@ -93,7 +93,7 @@ public class SetServer {
 					while (mine_status.next()) {
 						if (!targetServerName.equalsIgnoreCase(mine_status.getString("name"))) {
 							if (mine_status.getBoolean("online")) {
-								sum_memory = sum_memory + config.getInt("Servers."+mine_status.getString("name")+".Memory", 0);
+								sum_memory = sum_memory + config.getInt("Servers."+mine_status.getString("name")+".memory", 0);
 							}
 
 							continue;
@@ -102,8 +102,8 @@ public class SetServer {
 						isTable = true;
 
 						// サーバーが配布ワールドを含むかどうか
-						if (config.getBoolean("Servers."+targetServerName+".Distributed.Mode", false)) {
-							String distributedUrl = config.getString("Servers."+targetServerName+".Distributed.Url", "None");
+						if (config.getBoolean("Servers."+targetServerName+".distributed.mode", false)) {
+							String distributedUrl = config.getString("Servers."+targetServerName+".distributed.url", "None");
 							TextComponent component = Component.text()
 										.append(Component.text(targetServerName+"サーバーは、配布ワールドを含みます。").color(NamedTextColor.GOLD).decorate(TextDecoration.UNDERLINED))
 										.append(Component.text("\n\n配布元: ").color(NamedTextColor.WHITE))
@@ -116,10 +116,10 @@ public class SetServer {
 						}
 
 						// サーバーがモッドサーバーかどうか
-						if (config.getBoolean("Servers."+targetServerName+".Modded.Mode", false)) {
-							String moddedUrl = config.getString("Servers."+targetServerName+".Modded.ListUrl", "None");
-							String loaderType = config.getString("Servers."+targetServerName+".Modded.LoaderType", "None");
-							String loaderUrl = config.getString("Servers."+targetServerName+".Modded.LoaderUrl", "None");
+						if (config.getBoolean("Servers."+targetServerName+".modded.mode", false)) {
+							String moddedUrl = config.getString("Servers."+targetServerName+".modded.listUrl", "None");
+							String loaderType = config.getString("Servers."+targetServerName+".modded.loaderType", "None");
+							String loaderUrl = config.getString("Servers."+targetServerName+".modded.loaderUrl", "None");
 							ComponentBuilder<TextComponent, ?> builder = Component.text()
 								.append(Component.text(targetServerName+"サーバーは、MODサーバーです。").color(NamedTextColor.GOLD).decorate(TextDecoration.UNDERLINED));
 							
@@ -221,19 +221,19 @@ public class SetServer {
 								while (mine_status.next()) {
 									// ここ、for文でmine_statusテーブルを回す必要あるかも
 									if (mine_status.getBoolean("online")) {
-										sum_memory = sum_memory + config.getInt("Servers."+targetServerName+".Memory",0);
+										sum_memory = sum_memory + config.getInt("Servers."+targetServerName+".memory",0);
 									}
 								}
 
 								// 最後に、起動/起動リクエストしたいサーバーのメモリも足す
-								sum_memory = sum_memory + config.getInt("Servers."+targetServerName+".Memory",0);
+								sum_memory = sum_memory + config.getInt("Servers."+targetServerName+".memory",0);
 								
-								if (!(sum_memory<=config.getInt("Servers.Memory_Limit",0))) {
+								if (!(sum_memory<=config.getInt("Memory_Limit",0))) {
 									TextComponent component = Component.text()
 												.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))
 												.append(Component.text("オフライン").color(NamedTextColor.BLUE))
 												.append(Component.text("です。").color(NamedTextColor.WHITE))
-												.append(Component.text("\nメモリ超過のため、サーバーを起動できません。("+sum_memory+"GB/"+config.getInt("Servers.Memory_Limit",0)+"GB)").color(NamedTextColor.RED))
+												.append(Component.text("\nメモリ超過のため、サーバーを起動できません。("+sum_memory+"GB/"+config.getInt("Memory_Limit",0)+"GB)").color(NamedTextColor.RED))
 												.build();
 									
 									player.sendMessage(component);

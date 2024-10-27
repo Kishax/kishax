@@ -72,3 +72,5 @@ Terraria:
     Token: ""
     ChannelId: 
     Exec_Path: ""
+
+Memory_Limit: 0

@@ -346,14 +346,6 @@ public class EventListener {
 						try (ResultSet yuyu = ps2.executeQuery();) {
 							//一番最初に登録された名前と一致したら
 							if (yuyu.next()) {
-								// 結果セットに少なくとも1行が存在するかどうかをチェック 
-								String query3 = "UPDATE members SET server=? WHERE uuid=?;";
-								try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
-									ps3.setString(1, config.getString("Servers.Hub"));
-									ps3.setString(2, player.getUniqueId().toString());
-									ps3.executeUpdate();
-								}
-								
 								if (yuyu.getBoolean("ban")) {
 									pd.playerDisconnect (
 										true,
@@ -399,7 +391,7 @@ public class EventListener {
 											}
 											
 											if (player.getUsername().equals(yuyu.getString("name"))) {
-												String query5 = "INSERT INTO log (name, uuid, server, `join`) VALUES (?, ?, ?, ?);";
+												String query5 = "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);";
 												try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
 													ps5.setString(1, player.getUsername());
 													ps5.setString(2, player.getUniqueId().toString());
@@ -420,12 +412,11 @@ public class EventListener {
 													return;
 												}
 												
-												String query5 = "UPDATE members SET name=?, server=?, old_name=? WHERE uuid=?;";
+												String query5 = "UPDATE members SET name=?, old_name=? WHERE uuid=?;";
 												try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
 													ps5.setString(1, current_name);
-													ps5.setString(2, currentServerName);
-													ps5.setString(3, yuyu.getString("name"));
-													ps5.setString(4, player.getUniqueId().toString());
+													ps5.setString(2, yuyu.getString("name"));
+													ps5.setString(3, player.getUniqueId().toString());
 													int rsAffected5 = ps5.executeUpdate();
 													if (rsAffected5 > 0) {
 														player.sendMessage(Component.text("MCIDの変更が検出されたため、データベースを更新しました。").color(NamedTextColor.GREEN));
@@ -513,12 +504,11 @@ public class EventListener {
 												player,
 												Component.text("You are banned from this server.").color(NamedTextColor.RED)
 											);
-											String query4 = "INSERT INTO members (name, uuid, server, ban) VALUES (?, ?, ?, ?);";
+											String query4 = "INSERT INTO members (name, uuid, ban) VALUES (?, ?, ?);";
 											try (PreparedStatement ps4 = conn.prepareStatement(query4)) {
 												ps4.setString(1, player.getUsername());
 												ps4.setString(2, player.getUniqueId().toString());
-												ps4.setString(3, currentServerName);
-												ps4.setBoolean(4, true);
+												ps4.setBoolean(3, true);
 												ps4.executeUpdate();
 											}
 											return;
@@ -558,8 +548,8 @@ public class EventListener {
 							
 							// サーバー移動通知
 							//logger.info("Player connected to server: " + currentServerName);
-							if (currentServerName.equalsIgnoreCase(config.getString("hub"))) {
-								component = Component.text(player.getUsername()+"が"+config.getString("Servers.Hub")+"サーバーに初めてやってきました！").color(NamedTextColor.AQUA);
+							if (config.getBoolean("Servers." + currentServerName + ".hub")) {
+								component = Component.text(player.getUsername()+"がhomeサーバーに初めてやってきました！").color(NamedTextColor.AQUA);
 								bc.sendExceptServerMessage(component, currentServerName);
 							} else {
 								component = Component.text("サーバー移動通知: "+player.getUsername()+" -> "+currentServerName).color(NamedTextColor.AQUA);
@@ -617,7 +607,7 @@ public class EventListener {
     	            int playTime = pu.getPlayerTime(player, serverInfo);
     	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo, playTime);
     	            
-					String query = "INSERT INTO log (name,uuid,server,quit,playtime) VALUES (?,?,?,?,?);";
+					String query = "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);";
     	            try (Connection conn = db.getConnection();
 						PreparedStatement ps = conn.prepareStatement(query)) {
                 		ps.setString(1, player.getUsername());
