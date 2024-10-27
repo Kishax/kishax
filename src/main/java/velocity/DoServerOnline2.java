@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
-import com.moandjiezana.toml.Toml;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -66,7 +66,7 @@ public class DoServerOnline2 {
 						int rsAffected = ps.executeUpdate();
 						if (rsAffected > 0) {
 							// Toml, Config情報, DB情報をすべて同期
-							Map<String, Map<String, String>> configMap = cutil.getConfigMap("Servers");
+							Map<String, Map<String, Object>> configMap = cutil.getConfigMap("Servers");
 							for (RegisteredServer registeredServer : server.getAllServers()) {
 								ServerInfo serverInfo = registeredServer.getServerInfo();
 								String TomlServerName = serverInfo.getName();
@@ -76,12 +76,14 @@ public class DoServerOnline2 {
 									// configMapのキーがemptyの場合は、configにそのサーバー情報がないので、DBにはポート、サーバー名以外はnullで追加する
 								} else {
 									// のちに、configMapを回すときに、DBの情報と比較する?
-									Map<String, String> configServerInfo = configMap.get(TomlServerName);
+									Map<String, Object> configServerInfo = configMap.get(TomlServerName);
 									configServerInfo.put("port", String.valueOf(TomlServerPort));
 								}
 								velocityToml.put(TomlServerName, TomlServerPort);
 							}
 							// 最新のToml情報がconfigServerInfoに入った。
+							// configMapの値であるMap<String, Object>の重複のないキーセットを取得
+							Set<String> keySet = cutil.getKeySets(configMap);
 							String query3 = "SELECT * FROM status;";
 							try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
 								try (ResultSet status = ps3.executeQuery()) {
