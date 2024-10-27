@@ -139,10 +139,12 @@ public class StartServer {
 										int rsAffected3 = ps3.executeUpdate();
 										if (rsAffected3 > 0) {
 											// バッチファイルのパスを指定
-											String execFilePath = config.getString("Servers."+targetServerName+".exec");
-											ProcessBuilder processBuilder = new ProcessBuilder(execFilePath);
-											processBuilder.start();
-											String query4 = "UPDATE status SET online=? WHERE name=?;",
+											try {
+												String execFilePath = config.getString("Servers."+targetServerName+".exec");
+												ProcessBuilder processBuilder = new ProcessBuilder(execFilePath);
+												processBuilder.start();
+
+												String query4 = "UPDATE status SET online=? WHERE name=?;",
 												query5 = "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);";
 											try (PreparedStatement ps4 = conn.prepareStatement(query4);
 												PreparedStatement ps5 = conn.prepareStatement(query5)) {
@@ -166,9 +168,13 @@ public class StartServer {
 													console.sendMessage(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
 												}
 											}
+											} catch (IOException e) {
+												player.sendMessage(Component.text("内部エラーが発生しました。\n実行パスが範囲外です。").color(NamedTextColor.RED));
+												logger.error(NamedTextColor.RED+"内部エラーが発生しました。\n実行パスが範囲外です。");
+											}
 										} else {
-											player.sendMessage(Component.text("内部エラーが発生しました。\nサーバーが起動できません。").color(NamedTextColor.RED));
-											logger.error(NamedTextColor.RED+"内部エラーが発生しました。\nサーバーが起動できません。");
+											player.sendMessage(Component.text("内部エラーが発生しました。\nサーバーを起動できません。").color(NamedTextColor.RED));
+											logger.error(NamedTextColor.RED+"内部エラーが発生しました。\nサーバーを起動できません。");
 										}
 									}
 								}
@@ -179,7 +185,7 @@ public class StartServer {
 							player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
 						}
 					}
-		        } catch (IOException | SQLException | ClassNotFoundException e) {
+		        } catch (SQLException | ClassNotFoundException e) {
 		            logger.error("An IOException | SQLException | ClassNotFoundException error occurred: " + e.getMessage());
 					for (StackTraceElement element : e.getStackTrace()) {
 						logger.error(element.toString());

@@ -199,9 +199,7 @@ public class Request {
 				for (StackTraceElement element : e.getStackTrace()) {
 					logger.error(element.toString());
 				}
-            } /*finally {
-            	db.close_resource(resultsets, conn, ps);
-            }*/
+            }
         } else {
 			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
 		}
