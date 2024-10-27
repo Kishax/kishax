@@ -1,6 +1,12 @@
 package velocity_command;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Objects;
+
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
@@ -10,38 +16,48 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.Config;
-
+import velocity.DatabaseInterface;
 
 public class Hub implements SimpleCommand {
 
 	private final ProxyServer server;
-	private final Config config;
+	private final Logger logger;
+	private final DatabaseInterface db;
 	
 	@Inject
-    public Hub(ProxyServer server, Config config) {
+    public Hub(ProxyServer server, Logger logger, DatabaseInterface db) {
 		this.server = server;
-		this.config = config;
+		this.logger = logger;
+		this.db = db;
 	}
 
 	@Override
 	public void execute(Invocation invocation) {
 		CommandSource source = invocation.source();
-        
-        if (config.getString("Servers.Hub","").isEmpty()) {
-        	source.sendMessage(Component.text("コンフィグで設定されていません。").color(NamedTextColor.RED));
-        	return;
-        }
-        
-        if (!(source instanceof Player)) {
+		if (!(source instanceof Player)) {
 			Objects.requireNonNull(source);
             source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
             return;
         }
-
-        Player player = (Player) source;
-        // Implement the logic to send the player to the hub server
-        player.sendMessage(Component.text("Sending you to the hub..."));
-        this.server.getServer(config.getString("Servers.Hub")).ifPresent(presentServer -> player.createConnectionRequest(presentServer).fireAndForget());
+		Player player = (Player) source;
+		String query = "SELECT * FROM status WHERE hub = 1 LIMIT 1;";
+        try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					String serverName = rs.getString("name");
+					player.sendMessage(Component.text("Sending you to the hub..."));
+					this.server.getServer(serverName).ifPresent(presentServer -> player.createConnectionRequest(presentServer).fireAndForget());
+				} else {
+					source.sendMessage(Component.text("Hub server is not available.").color(NamedTextColor.RED));
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("Error executing query: {}", e.getMessage());
+			for (StackTraceElement ste : e.getStackTrace()) {
+				logger.error(ste.toString());
+			}
+			source.sendMessage(Component.text("エラーが発生しました。").color(NamedTextColor.RED));
+		}
 	}
 }

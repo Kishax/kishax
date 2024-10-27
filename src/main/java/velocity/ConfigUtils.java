@@ -52,4 +52,30 @@ public class ConfigUtils {
             }
         }
     }
+
+    /*
+    Object configServersObj = config.getConfig().get("Servers");
+    if (configServersObj != null) {
+        if (configServersObj instanceof Map) {
+            Map<String, Object> configServers = (Map<String, Object>) config.getConfig().get("Servers");
+            configServers.entrySet().stream().forEach(entry -> {
+                String serverName = (String) entry.getKey();
+                Object entryObj = entry.getValue();
+                if (entryObj instanceof Map) {
+                    Map<String, Object> entry2 = (Map<String, Object>) entry.getValue();
+                    entry2.entrySet().stream().forEach(entry3 -> {
+                        String key = (String) entry3.getKey();
+                        Object value = entry3.getValue();
+                        if (key.equalsIgnoreCase("hub")) {
+                            if (value instanceof Boolean hubfound) {
+                                if (hubfound && serverName.equalsIgnoreCase(currentServerName)) {
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
+    */
 }

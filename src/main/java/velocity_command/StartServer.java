@@ -121,7 +121,7 @@ public class StartServer {
 									player.sendMessage(Component.text(targetServerName+"サーバーは起動中です。").color(NamedTextColor.RED));
 									logger.info(NamedTextColor.RED+targetServerName+"サーバーは起動中です。");
 								} else {
-									if (config.getString("Servers."+targetServerName+".Exec_Path","").isEmpty() || !config.getBoolean("Servers."+args[1]+".Entry", false)) {
+									if (config.getString("Servers."+targetServerName+".exec","").isEmpty() || !config.getBoolean("Servers."+args[1]+".entry", false)) {
 										player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
 										return;
 									}
@@ -139,7 +139,7 @@ public class StartServer {
 										int rsAffected3 = ps3.executeUpdate();
 										if (rsAffected3 > 0) {
 											// バッチファイルのパスを指定
-											String execFilePath = config.getString("Servers."+targetServerName+".Exec_Path");
+											String execFilePath = config.getString("Servers."+targetServerName+".exec");
 											ProcessBuilder processBuilder = new ProcessBuilder(execFilePath);
 											processBuilder.start();
 											String query4 = "UPDATE status SET online=? WHERE name=?;",

@@ -71,25 +71,29 @@ public class Config {
                 
                 // 読み込みと新規内容の追加
                 String existingContent = Files.readString(configPath);
-                String addContents = "\n\nServers:\n    Hub: \"\"\n    Memory_Limit: ";
-                addContents += "\n\n    Proxy:\n        Memory: ";
+                String addContents = "\n\nServers:\n";
+                addContents += "\n\n    proxy:";
+                addContents += "\n        entry: false";
+                addContents += "\n        platform: \"\"";
+                addContents += "\n        memory: ";
                 
                 // 例: サーバー名を追加する部分
                 for (RegisteredServer registeredServer : server.getAllServers()) {
                 	addContents += "\n    "+registeredServer.getServerInfo().getName()+":";
-                    addContents += "\n        Entry: false";
-                    addContents += "\n        Platform: \"\"";
-                    addContents += "\n        Type: \"\"";
-                    addContents += "\n        Modded:";
-                    addContents += "\n          Mode: false";
-                    addContents += "\n          ListUrl: \"\"";
-                    addContents += "\n          LoaderType: \"\"";
-                    addContents += "\n          LoaderUrl: \"\"";
-                    addContents += "\n        Distributed:";
-                    addContents += "\n          Mode: false";
-                    addContents += "\n          Url: \"\"";
-                	addContents += "\n        Memory: ";
-                	addContents += "\n        Exec_Path: \"\"";
+                    addContents += "\n        entry: false";
+                    addContents += "\n        hub: false";
+                    addContents += "\n        platform: \"\"";
+                    addContents += "\n        type: \"\"";
+                    addContents += "\n        modded:";
+                    addContents += "\n          mode: false";
+                    addContents += "\n          listUrl: \"\"";
+                    addContents += "\n          loaderType: \"\"";
+                    addContents += "\n          loaderUrl: \"\"";
+                    addContents += "\n        distributed:";
+                    addContents += "\n          mode: false";
+                    addContents += "\n          url: \"\"";
+                	addContents += "\n        memory: ";
+                	addContents += "\n        exec: \"\"";
                 }
                 
                 // 新しい内容を追加してファイルに書き込み
