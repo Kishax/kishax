@@ -67,6 +67,27 @@ public class DoServerOnline {
         return resultMap;
     }
 
+	public Map<String, Object> loadStatusTable(Connection conn, String serverName) throws SQLException {
+		Map<String, Object> resultMap = new HashMap<>();
+		String query = "SELECT * FROM status WHERE name=? AND exception!=? AND exception2!=?;";
+		try (PreparedStatement ps = conn.prepareStatement(query)) {
+			ps.setString(1, serverName);
+			ps.setBoolean(2, true);
+			ps.setBoolean(3, true);
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					int columnCount = rs.getMetaData().getColumnCount();
+					for (int i = 1; i <= columnCount; i++) {
+						String columnName = rs.getMetaData().getColumnName(i);
+						if (!"name".equals(columnName)) {
+							resultMap.put(columnName, rs.getObject(columnName));
+						}
+					}
+				}
+			}
+		}
+		return resultMap;
+	}
 	private Map<String, Integer> getServerFromToml () {
 		Map<String, Integer> velocityToml = new ConcurrentHashMap<>();
 		for (RegisteredServer registeredServer : server.getAllServers()) {
@@ -144,13 +165,17 @@ public class DoServerOnline {
 				// Tomlにあってdbにないサーバーは追加・更新対象
 				// Set(velocityTomlKeySet \ dbServersKeySet)
 				// 追加
+				AtomicBoolean isAdded = new AtomicBoolean(false);
 				velocityToml.keySet().stream().filter(e -> !dbStatusMap.keySet().contains(e)).forEach(entry -> {
 					int velocityTomlPort = velocityToml.get(entry);
-					boolean isDupPort = velocityToml.containsValue(velocityTomlPort);
+					boolean isDupPort = dbStatusMap.values().stream()
+        				.anyMatch(map -> map.containsKey("port") && velocityTomlPort == (int) map.get("port"));
 					if (!isDupPort) {
 						try {
+							isAdded.set(true);
 							addDBServer(conn, entry, velocityTomlPort);
-							dbStatusMap.put(entry, Map.of("port", velocityTomlPort));
+							// ここで、追加されたサーバーの情報を取得して、configMapとdbStatusMapに追加する
+							dbStatusMap.put(entry, loadStatusTable(conn, entry));
 							configMap.put(entry, Map.of("port", velocityTomlPort));
 						} catch (SQLException e) {
 							logger.error("A SQLException error occurred: " + e.getMessage());
@@ -162,6 +187,11 @@ public class DoServerOnline {
 						console.sendMessage(Component.text(entry+"サーバーのポート番号が重複しているため、データベースに追加できません。").color(NamedTextColor.RED));
 					}
 				});
+				if (isAdded.get()) {
+					// 追加されたサーバーがある場合は、再度同期を行う
+					logger.info("追加されたサーバーがあるため、再度同期を実行します。");
+					updateDatabase();
+				}
 				// toml, db, configのキーが同期した
 				// ここから、configMapとDBの情報を比較
 				// 更新 (ポートの更新も含む)
@@ -171,8 +201,6 @@ public class DoServerOnline {
 					configMap.keySet().stream().filter(entry2 -> entry2.equals(entry)).forEach(entry3 -> {
 						Map<String, Object> configServerInfo = configMap.get(entry);
 						Map<String, Object> dbServerInfo = dbStatusMap.get(entry);
-						// 下の処理で、すべての同期は完了されているが、どの情報が更新されたかはわからない
-						// そのため、上のconfigServerInfoとdbServerInfoの比較が必要
 						// ここで、configServerInfoとdbServerInfoの比較を行う
 						configServerInfo.keySet().stream().forEach(entry4 -> {
 							Object configServerValue = configServerInfo.get(entry4);
