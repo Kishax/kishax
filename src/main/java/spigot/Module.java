@@ -8,7 +8,6 @@ import spigot_command.PortalsMenu;
 import spigot_command.ReloadConfig;
 
 public class Module extends AbstractModule {
-	
 	private final common.Main plugin;
 	private final Main main;
 	
@@ -34,5 +33,9 @@ public class Module extends AbstractModule {
 		bind(ReloadConfig.class);
 		bind(ServerStatusCache.class).in(com.google.inject.Scopes.SINGLETON);
 		bind(PortFinder.class);
+		bind(PlayerUtil.class);
+		bind(AutoShutdown.class);
+		bind(Rcon.class);
+		bind(Luckperms.class);
     }
 }

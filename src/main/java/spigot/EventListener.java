@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
-import static org.bukkit.Bukkit.getServer;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -22,7 +21,6 @@ import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerPortalEvent;
 
 import com.google.inject.Inject;
 
@@ -36,24 +34,23 @@ public final class EventListener implements Listener {
 	private final PortalsConfig psConfig;
     private final PortalsMenu pm;
     private final ServerStatusCache ssc;
+    private final Luckperms lp;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm, ServerStatusCache ssc) {
+	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm, ServerStatusCache ssc, Luckperms lp) {
 		this.plugin = plugin;
 		this.psConfig = psConfig;
         this.pm = pm;
         this.ssc = ssc;
-		// new Location(Bukkit.getWorld("world"), 100, 64, 100);
+        this.lp = lp;
 	}
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
         String title = event.getView().getTitle();
-
-
         // インベントリのタイトルに基づいて処理を行う
         if (title.endsWith(" servers")) {
             if (playersOpeningNewInventory.contains(player)) {
@@ -79,18 +76,26 @@ public final class EventListener implements Listener {
         }
     }
     
-    //player.performCommand("");
+    @EventHandler
+	public void onPlayerJoin(PlayerJoinEvent e) {
+		e.setJoinMessage(null);
+        Player player = e.getPlayer();
+        plugin.getLogger().log(Level.INFO, "group.new-fmc-user: {0}", lp.hasPermission(player.getName(), "group.new-fmc-user"));
+	}
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             playersOpeningNewInventory.add(player);
-            //String playerName = player.getName();
+            String playerName = player.getName();
             String title = event.getView().getTitle();
-
+            Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
             if (title.endsWith(" server")) {
                 event.setCancelled(true);
                 String serverName = title.split(" ")[0];
-                boolean iskey = ssc.getStatusMap().entrySet().stream().anyMatch(e -> e.getValue().entrySet().stream().anyMatch(e2 -> e2.getKey().equals(serverName)));
+                boolean iskey = serverStatusMap.entrySet().stream()
+                    .anyMatch(e -> e.getValue().entrySet().stream()
+                    .anyMatch(e2 -> e2.getKey() instanceof String statusServerName && statusServerName.equals(serverName)));
                 if (iskey) {
                     int slot = event.getRawSlot();
                     switch (slot) {
@@ -107,8 +112,9 @@ public final class EventListener implements Listener {
                         }
                         case 22 -> {
                             int permLevel = pm.getPermLevel(player);
-                            if ()
-                            pm.serverSwitch(player, serverName);
+
+                            // ここで、permlevelに応じて処理を分岐させる
+                            //pm.serverSwitch(player, serverName);
                         }
                         case 23 -> {
                             pm.enterServer(player, serverName);
@@ -135,24 +141,18 @@ public final class EventListener implements Listener {
                 event.setCancelled(true);
                 String serverType = title.split(" ")[0];
                 int slot = event.getRawSlot();
-
                 switch (slot) {
                     case 0 -> {
                         pm.resetPage(player, serverType);
                         pm.openServerTypeInventory(player);
                     }
                     case 11, 13, 15, 29, 31, 33 -> {
-                        Map<String, Map<String, Map<String, String>>> serverStatusMap = ssc.getStatusMap();
-                        Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
-                        //plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
-                        if (serverStatusList != null) {
-                            //plugin.getLogger().log(Level.INFO, "serverStatusList: {0}", serverStatusList);
-                            int page = pm.getPage(player, serverType);
-                            int slotIndex = Arrays.asList(Arrays.stream(PortalsMenu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
-                            int index = PortalsMenu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
-                            if (index < serverStatusList.size()) {
-                                //plugin.getLogger().info("YES");
-                                String serverName = (String) serverStatusList.keySet().toArray()[index];
+                        Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
+                        int page = pm.getPage(player, serverType);
+                        int slotIndex = Arrays.asList(Arrays.stream(PortalsMenu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
+                        int index = PortalsMenu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
+                        if (index < serverStatusList.size()) {
+                            if (serverStatusList.keySet().toArray()[index] instanceof String serverName) {
                                 int facepage = pm.getPage(player, serverName);
                                 pm.setPage(player, serverName, page);
                                 pm.openServerInventory(player, serverName, facepage);
@@ -255,9 +255,6 @@ public final class EventListener implements Listener {
                     }
                 }
             }
-
-            // プレイヤーがどのポータルにもいない場合、セットから削除
-            // もしくは、ワールドから出た場合
             if (!isInAnyPortal) {
                 playersInPortal.remove(player);
             }
@@ -285,35 +282,17 @@ public final class EventListener implements Listener {
                loc.getZ() >= z1 && loc.getZ() < z2+1;
     }
 
-	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent e) {
-		e.setJoinMessage(null);
-	}
-
 	// MCVCをONにすると、ベッドで寝れなくなるため、必要なメソッド
 	@EventHandler
     public void onPlayerBedEnter(PlayerBedEnterEvent e) {
 		if (Rcon.isMCVC) {
-			// プレイヤーがベッドに入ったかどうかを確認
 	        if (e.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK) {
 	            World world = e.getPlayer().getWorld();
-	            // 時間を朝に設定 (1000 ticks = 朝6時)
 	            world.setTime(1000);
-	            // 天気を晴れに設定
 	            world.setStorm(false);
 	            world.setThundering(false);
-	            // メッセージをプレイヤーに送信
 	            e.getPlayer().sendMessage("おはようございます！時間を朝にしました。");
 	        }
 		}
-    }
-
-	public void onPlayerPortal(PlayerPortalEvent e) {
-        Player player = e.getPlayer();
-        if (e.getCause() == PlayerPortalEvent.TeleportCause.NETHER_PORTAL) {
-            player.sendMessage(ChatColor.AQUA + "You trapped in the portal!");
-            // ここでインベントリを開く処理を追加
-            player.openInventory(getServer().createInventory(null, 27, "Custom Inventory"));
-        }
     }
 }

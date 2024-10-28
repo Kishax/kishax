@@ -70,7 +70,7 @@ public class ServerStatusCache {
 							rowMap.put(columnName, rs.getObject(columnName));
 						}
 					}
-                    newServerStatusMap.computeIfAbsent(serverType, k -> new HashMap<>()).put(rs.getString("name"), rowMap);
+                    newServerStatusMap.computeIfAbsent(serverType, k -> new HashMap<>()).put(serverName, rowMap);
                 }
     
                 // サーバーネームをアルファベット順にソート
@@ -117,27 +117,20 @@ public class ServerStatusCache {
         }
     }
 
-    public Map<String, Map<String, Map<String, String>>> getStatusMap() {
+    public Map<String, Map<String, Map<String, Object>>> getStatusMap() {
         return this.statusMap;
     }
 
-    public void setStatusMap(Map<String, Map<String, Map<String, String>>> statusMap) {
+    public void setStatusMap(Map<String, Map<String, Map<String, Object>>> statusMap) {
         this.statusMap = statusMap;
     }
 
     public String getServerType(String serverName) {
-        Map<String, Map<String, Map<String, String>>> serverStatusMap = getStatusMap();
-        for (Map.Entry<String, Map<String, Map<String, String>>> serverEntry : serverStatusMap.entrySet()) {
-            String serverType = serverEntry.getKey();
-            Map<String, Map<String, String>> serverStatusList = serverEntry.getValue();
-            for (Map.Entry<String, Map<String, String>> serverDataEntry : serverStatusList.entrySet()) {
-                String name = serverDataEntry.getKey();
-                if (name.equals(serverName)) {
-                    return serverType;
-                }
-            }
-        }
-        return null;
+        return getStatusMap().entrySet().stream()
+            .filter(entry -> entry.getValue().containsKey(serverName))
+            .map(Map.Entry::getKey)
+            .findFirst()
+            .orElse(null);
     }
 
     public void refreshMemberInfo() {
