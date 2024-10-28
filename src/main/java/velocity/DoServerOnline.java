@@ -116,6 +116,7 @@ public class DoServerOnline {
 		try (PreparedStatement ps = conn.prepareStatement(query)) {
 			ps.setBoolean(1, true);
 			ps.setString(2, "proxy");
+			ps.executeUpdate();
 		}
 	}
 
@@ -123,6 +124,7 @@ public class DoServerOnline {
 		String query = "DELETE FROM status WHERE name = ?;";
 		try (PreparedStatement ps1 = conn.prepareStatement(query)) {
 			ps1.setString(1, serverName);
+			ps1.executeUpdate();
 			console.sendMessage(Component.text(serverName+"サーバーはTomlに記載されていないため、データベースから削除しました。").color(NamedTextColor.GREEN));
 		}
 	}
