@@ -28,7 +28,7 @@ public class ServerStatusCache {
     private final DoServerOnline dso;
     private final Provider<SocketSwitch> sswProvider;
     private final AtomicBoolean isFirstRefreshing = new AtomicBoolean(false);
-    private Map<String, Map<String, Map<String, String>>> statusMap = new ConcurrentHashMap<>();
+    private Map<String, Map<String, Map<String, Object>>> statusMap = new ConcurrentHashMap<>();
     private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
     @Inject
@@ -53,36 +53,34 @@ public class ServerStatusCache {
     
     public void refreshCache() {
         SocketSwitch ssw = sswProvider.get();
-        Map<String, Map<String, Map<String, String>>> newServerStatusMap = new HashMap<>();
+        Map<String, Map<String, Map<String, Object>>> newServerStatusMap = new HashMap<>();
         String query = "SELECT * FROM status;";
         try (Connection conn = db.getConnection();
             PreparedStatement ps = conn.prepareStatement(query)) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Map<String, String> rowMap = new HashMap<>();
-                    rowMap.put("id", String.valueOf(rs.getInt("id")));
-                    rowMap.put("name", rs.getString("name"));
-                    rowMap.put("port", String.valueOf(rs.getInt("port")));
-                    rowMap.put("online", String.valueOf(rs.getInt("online")));
-                    rowMap.put("player_list", rs.getString("player_list"));
-                    rowMap.put("current_players", rs.getString("current_players"));
-                    rowMap.put("exception", String.valueOf(rs.getInt("exception")));
-                    rowMap.put("exception2", String.valueOf(rs.getInt("exception2")));
-                    rowMap.put("type", rs.getString("type"));
-                    rowMap.put("socketport", String.valueOf(rs.getInt("socketport")));
-                    rowMap.put("platform", rs.getString("platform"));
-                    String serverType = rs.getString("type");
+                    Map<String, Object> rowMap = new HashMap<>();
+                    String serverName = rs.getString("name"),
+                        serverType = rs.getString("type");
+
+                    int columnCount = rs.getMetaData().getColumnCount();
+					for (int i = 1; i <= columnCount; i++) {
+						String columnName = rs.getMetaData().getColumnName(i);
+						if (!columnName.equals("name") || !columnName.equals("type")) {
+							rowMap.put(columnName, rs.getObject(columnName));
+						}
+					}
                     newServerStatusMap.computeIfAbsent(serverType, k -> new HashMap<>()).put(rs.getString("name"), rowMap);
                 }
     
                 // サーバーネームをアルファベット順にソート
-                Map<String, Map<String, Map<String, String>>> sortedServerStatusMap = new HashMap<>();
-                for (Map.Entry<String, Map<String, Map<String, String>>> entry : newServerStatusMap.entrySet()) {
+                Map<String, Map<String, Map<String, Object>>> sortedServerStatusMap = new HashMap<>();
+                for (Map.Entry<String, Map<String, Map<String, Object>>> entry : newServerStatusMap.entrySet()) {
                     String serverType = entry.getKey();
-                    Map<String, Map<String, String>> servers = entry.getValue();
+                    Map<String, Map<String, Object>> servers = entry.getValue();
     
                     // サーバーネームをソート
-                    Map<String, Map<String, String>> sortedServers = servers.entrySet().stream()
+                    Map<String, Map<String, Object>> sortedServers = servers.entrySet().stream()
                         .sorted(Map.Entry.comparingByKey())
                         .collect(Collectors.toMap(
                             Map.Entry::getKey,

@@ -87,56 +87,45 @@ public class EventListener {
 	@Subscribe
 	public void onChat(PlayerChatEvent e) {
 		if (e.getMessage().startsWith("/")) return;
-
 	    Player player = e.getPlayer();
 	    originalMessage = e.getMessage();
-	    
 	    // プレイヤーの現在のサーバーを取得
         player.getCurrentServer().ifPresent(serverConnection -> {
             RegisteredServer registeredServer = serverConnection.getServer();
             serverInfo = registeredServer.getServerInfo();
             chatServerName = serverInfo.getName();
         });
-        
         // マルチバイト文字の長さを取得
         int NameCount = player.getUsername().length();
-        
         // スペースを生成
         StringBuilder space = new StringBuilder();
         for (int i = 0; i <= NameCount; i++) {
             space.append('\u0020');  // Unicodeのスペースを追加
         }
-        
         server.getScheduler().buildTask(plugin, () -> {
         	try {
         		// 正規表現パターンを定義（URLを見つけるための正規表現）
     		    String urlRegex = "https?://\\S+";
     		    Pattern pattern = Pattern.compile(urlRegex);
     		    Matcher matcher = pattern.matcher(originalMessage);
-
     		    // URLリストを作成
     		    List<String> urls = new ArrayList<>();
     		    List<String> textParts = new ArrayList<>();
-
     		    int lastMatchEnd = 0;
     		    boolean isUrl = false;
     		    String mixtext = "";
-
     		    // マッチするものをリストに追加
     		    while (matcher.find()) {
     		        // URLが含まれていたら
     		        isUrl = true;
-
     		        // マッチしたURLをリストに追加
     		        urls.add(matcher.group());
-
     		        // URLの前のテキスト部分をリストに追加
     		        textParts.add(originalMessage.substring(lastMatchEnd, matcher.start()));
     		        lastMatchEnd = matcher.end();
     		    }
 
     		    component = Component.text(space+"(").color(NamedTextColor.GOLD);
-    		    
     	        boolean isEnglish = false;
     	        if (originalMessage.length() >= 1) {
     	        	String firstOneChars = originalMessage.substring(0, 1);
@@ -145,7 +134,6 @@ public class EventListener {
         	        	originalMessage = originalMessage.substring(1);
         	        }
     	        }
-    	        
     	        if (originalMessage.length() >= 2) {
     	        	String firstTwoChars = originalMessage.substring(0, 2);
     	        	if("@n".equalsIgnoreCase(firstTwoChars)) {
@@ -154,7 +142,6 @@ public class EventListener {
         	        	originalMessage = originalMessage.substring(2);
         	        }
     	        }
-    	        
     	        if (originalMessage.length() >= 3) {
     	        	String firstThreeChars = originalMessage.substring(0, 3);
     	        	if ("@en".equalsIgnoreCase(firstThreeChars)) {
@@ -162,62 +149,44 @@ public class EventListener {
         	        	originalMessage = originalMessage.substring(3);
         	        }
     	        }
-    	        
     		    // URLが含まれてなかったら
     		    if (!isUrl) {
     		    	// 漢字の検出
     		        String kanjiPattern = "[\\u4E00-\\u9FFF]+";
-    		        
     		        // ひらがなの検出
     		        String hiraganaPattern = "[\\u3040-\\u309F]+";
-    		        
     		        // カタカナの検出
     		        String katakanaPattern = "[\\u30A0-\\u30FF]+";
-    		        
-    		        if (
-    		        	detectMatches(originalMessage, kanjiPattern) ||
-    		        	detectMatches(originalMessage, hiraganaPattern) ||
-    		        	detectMatches(originalMessage, katakanaPattern) ||
-    		        	isEnglish
-    		        ) {
+    		        if (detectMatches(originalMessage, kanjiPattern) || detectMatches(originalMessage, hiraganaPattern) || detectMatches(originalMessage, katakanaPattern) || isEnglish) {
     		        	// 日本語であったら
     			        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, originalMessage);
     		        	return;
     		        }
-    		        
     		        if (config.getBoolean("Conv.Mode")) {
 		        		// Map方式
 		        		String kanaMessage = conv.ConvRomaToKana(originalMessage);
         		        String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-        		        
         		        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
-    			        
         		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
         		        bc.sendSpecificServerMessage(component, chatServerName);
 		        	} else {
 		        		// pde方式
 		        		String kanaMessage = rc.Romaji(originalMessage);
 		        		String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-		        		
 		        		discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
-    			        
         		        component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
         		        bc.sendSpecificServerMessage(component, chatServerName);
 		        	}
-
     		        return;
     		    }
-
 		    	// 最後のURLの後のテキスト部分を追加
     		    if (lastMatchEnd < originalMessage.length()) {
     		        textParts.add(originalMessage.substring(lastMatchEnd));
     		    }
-
     		    // テキスト部分を結合
     		    int textPartsSize = textParts.size();
     		    int urlsSize = urls.size();
     		    //boolean isUrlLineBreak = false;
-    		    
     		    for (int i = 0; i < textPartsSize; i++) {
     		        if (Objects.nonNull(textParts) && textPartsSize != 0) {
     		            String text = textParts.get(i);
@@ -237,12 +206,10 @@ public class EventListener {
         		            	kanaMessage = rc.Romaji(text);
             		            kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
         		            }
-
         		            mixtext += kanjiMessage;
         		            component = component.append(Component.text(kanjiMessage).color(NamedTextColor.GOLD));
     		            }
     		        }
-
     		        if (i < urlsSize) {
     		            String getUrl;
     		            String getUrl2;
@@ -260,17 +227,14 @@ public class EventListener {
     		                getUrl = "\n" + urls.get(i);
     		                getUrl2 = "\n" + space + urls.get(i);
     		            }
-
     		            mixtext += getUrl;
     		            component = component.append(Component.text(getUrl2).color(NamedTextColor.GRAY).clickEvent(ClickEvent.openUrl(urls.get(i))).hoverEvent(HoverEvent.showText(Component.text("リンク"+(i+1)))));
     		        }
     		    }
-    		    
     		    if (!isEnglish) {
     		    	component = component.append(Component.text(")").color(NamedTextColor.GOLD));
         		    bc.sendSpecificServerMessage(component, chatServerName);
     		    }
-    		    
     		    discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext);
     		} catch (Exception ex) {
     			// スタックトレースをログに出力
@@ -285,13 +249,11 @@ public class EventListener {
 	public boolean detectMatches(String input, String pattern) {
         Pattern regex = Pattern.compile(pattern);
         Matcher matcher = regex.matcher(input);
-
         while (matcher.find()) {
             //String found = matcher.group();
             //System.out.println(message + ": " + found);
         	return true;
         }
-
         return false;
     }
 	
@@ -315,7 +277,6 @@ public class EventListener {
         		player,
         		Component.text("コネクションエラー: 接続サーバー名が不明です。").color(NamedTextColor.RED)
         	);
-
         	logger.error("コネクションエラー: 接続サーバー名が不明です。");
         	return;
         }
@@ -333,10 +294,8 @@ public class EventListener {
 									player,
 									Component.text("現在メンテナンス中です。").color(NamedTextColor.BLUE)
 								);
-												
 								return;
 							}
-	
 							player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
 						}
 					}
@@ -364,7 +323,6 @@ public class EventListener {
 										
 										player.sendMessage(Component.text(joinMessage).color(NamedTextColor.AQUA));
 									}
-									
 									// 2時間経ってたら
 									String query4 = "SELECT * FROM log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
 									try (PreparedStatement ps4 = conn.prepareStatement(query4)) {
@@ -377,10 +335,8 @@ public class EventListener {
 												// Asia/Tokyoのタイムゾーンで現在の時刻を取得
 												ZonedDateTime nowTokyo = ZonedDateTime.now(ZoneId.of("Asia/Tokyo"));
 												long now_timestamp = nowTokyo.toEpochSecond();
-						
 												// TIMESTAMP型のカラムを取得
 												Timestamp beforejoin_timeget = logs.getTimestamp("time");
-					
 												// Unixタイムスタンプに変換
 												long beforejoin_timestamp = beforejoin_timeget.getTime() / 1000L;
 												long beforejoin_sa = now_timestamp - beforejoin_timestamp;
@@ -389,7 +345,6 @@ public class EventListener {
 												}
 												beforejoin_sa_minute = Math.max(beforejoin_sa / 60, 0); // マイナス値を防ぐためにMath.maxを使用
 											}
-											
 											if (player.getUsername().equals(yuyu.getString("name"))) {
 												String query5 = "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);";
 												try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
@@ -411,7 +366,6 @@ public class EventListener {
 													);
 													return;
 												}
-												
 												String query5 = "UPDATE members SET name=?, old_name=? WHERE uuid=?;";
 												try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
 													ps5.setString(1, current_name);
@@ -452,7 +406,6 @@ public class EventListener {
 													}
 												}
 											}
-											
 											// AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
 											if (EventListener.PlayerMessageIds.containsKey(player.getUniqueId().toString())) {
 												// どこからか移動してきたとき
@@ -461,8 +414,8 @@ public class EventListener {
 													RegisteredServer previousServer = previousServerInfo.get();
 													ServerInfo beforeServerInfo = previousServer.getServerInfo();
 													String beforeServerName = beforeServerInfo.getName();
-													logger.info("Player connected to server: " + beforeServerName);
-													logger.info("Player connected to server: " + currentServerName);
+													//logger.info("Player connected to server: " + beforeServerName);
+													//logger.info("Player connected to server: " + currentServerName);
 													ms.updateMovePlayers(player.getUsername(), beforeServerName, currentServerName);
 													discordME.AddEmbedSomeMessage("Move", player, serverInfo);
 												}
@@ -473,7 +426,6 @@ public class EventListener {
 														RegisteredServer previousServer = previousServerInfo.get();
 														ServerInfo beforeServerInfo = previousServer.getServerInfo();
 														String beforeServerName = beforeServerInfo.getName();
-
 														//logger.info("Player connected to server: " + beforeServerName);
 														//logger.info("Player connected to server: " + currentServerName);
 														ms.updateMovePlayers(player.getUsername(), beforeServerName, currentServerName);
@@ -513,7 +465,6 @@ public class EventListener {
 											}
 											return;
 										}
-										
 										String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
 										if (!DiscordInviteUrl.isEmpty()) {
 											component = Component.text(player.getUsername()+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
@@ -539,7 +490,6 @@ public class EventListener {
 													.append(Component.text("\n正面にいるNPCをクリックして、UUID認証手続きへ移ります。").color(NamedTextColor.AQUA));
 											player.sendMessage(component);
 										}
-										
 										ms.updateJoinPlayers(player.getUsername(), currentServerName);
 										discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
 									}
@@ -555,7 +505,6 @@ public class EventListener {
 								component = Component.text("サーバー移動通知: "+player.getUsername()+" -> "+currentServerName).color(NamedTextColor.AQUA);
 								bc.sendExceptServerMessage(component, currentServerName);
 							}
-							
 							if (currentServerName.equals("latest")) {
 								component = Component.text()
 											.append(Component.text("dynmap").decorate(TextDecoration.BOLD).color(NamedTextColor.GOLD))
@@ -565,7 +514,6 @@ public class EventListener {
 											.build();
 								player.sendMessage(component);
 							}
-							
 							// Amabassadorプラグインと競合している可能性あり
 							// Main.getInjector().getInstance(velocity.PlayerUtil.class).updatePlayers();
 							pu.updatePlayers();
@@ -594,7 +542,6 @@ public class EventListener {
 			serverInfo = registeredServer.getServerInfo();
 			ms.updateQuitPlayers(player.getUsername(), serverInfo.getName());
 		});
-		
     	Runnable task = () -> {
             // プレイヤーがReconnectしなかった場合に実行する処理
     		server.getScheduler().buildTask(plugin, () -> {
@@ -603,10 +550,8 @@ public class EventListener {
     	            RegisteredServer registeredServer = currentServer.getServer();
     	            serverInfo = registeredServer.getServerInfo();
     	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
-    	            
     	            int playTime = pu.getPlayerTime(player, serverInfo);
     	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo, playTime);
-    	            
 					String query = "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);";
     	            try (Connection conn = db.getConnection();
 						PreparedStatement ps = conn.prepareStatement(query)) {
@@ -625,7 +570,6 @@ public class EventListener {
     	        });
         	}).schedule();
         };
-        
         // タイマーを設定し、一定時間後に処理Aを実行
         disconnectTasks.put(player, task);
         scheduler.schedule(() -> {

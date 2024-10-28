@@ -77,8 +77,7 @@ public class SetServer {
 			String query2 = "SELECT * FROM status;";
             try (Connection conn = db.getConnection();
 				PreparedStatement ps = conn.prepareStatement(query);
-				PreparedStatement ps2 = conn.prepareStatement(query2);
-				) {
+				PreparedStatement ps2 = conn.prepareStatement(query2)) {
     			ps.setString(1,player.getUniqueId().toString());
     			try (ResultSet minecrafts = ps.executeQuery();
 					ResultSet mine_status = ps2.executeQuery()) {
@@ -158,6 +157,7 @@ public class SetServer {
 									ps3.setString(2,player.getUniqueId().toString());
 									int rsAffected3 = ps3.executeUpdate();
 									if (rsAffected3 > 0) {
+										//logger.info("rsAffected3: "+rsAffected3); // debug
 										TextComponent component = Component.text()
 											.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))
 											.append(Component.text("オンライン").color(NamedTextColor.AQUA))
@@ -253,6 +253,7 @@ public class SetServer {
 										ps3.setString(1,formattedDateTime);
 										ps3.setString(2,player.getUniqueId().toString());
 										int rsAffected3 = ps3.executeUpdate();
+										//logger.info("rsAffected3: "+rsAffected3); // debug
 										if (rsAffected3 > 0) {
 											TextComponent component = Component.text()
 												.append(Component.text(targetServerName+"サーバーは現在").color(NamedTextColor.WHITE))

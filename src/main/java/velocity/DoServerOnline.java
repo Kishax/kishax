@@ -79,7 +79,7 @@ public class DoServerOnline {
 					int columnCount = rs.getMetaData().getColumnCount();
 					for (int i = 1; i <= columnCount; i++) {
 						String columnName = rs.getMetaData().getColumnName(i);
-						if (!"name".equals(columnName)) {
+						if (!columnName.equals("name")) {
 							resultMap.put(columnName, rs.getObject(columnName));
 						}
 					}
