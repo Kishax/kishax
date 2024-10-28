@@ -110,6 +110,7 @@ public class Database implements DatabaseInterface {
         }
     }
 
+	@Override
 	public Class<?> getTypes(Object value) {
 		return value.getClass();
 	}

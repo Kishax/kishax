@@ -12,4 +12,5 @@ public interface DatabaseInterface {
     String createPlaceholders(int count);
     String createQueryPart(Set<String> keySet);
     void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException;
+    Class<?> getTypes(Object value);
 }

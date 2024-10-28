@@ -106,10 +106,12 @@ public final class EventListener implements Listener {
                             }
                         }
                         case 22 -> {
-                            //pm.serverSwitch(player, serverName);
+                            int permLevel = pm.getPermLevel(player);
+                            if ()
+                            pm.serverSwitch(player, serverName);
                         }
                         case 23 -> {
-                            //pm.enterServer(player, serverName);
+                            pm.enterServer(player, serverName);
                         }
                         case 45 -> {
                             // 戻るボタンがあれば
