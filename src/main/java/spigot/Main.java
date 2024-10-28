@@ -1,5 +1,6 @@
 package spigot;
 
+import java.util.TimeZone;
 import java.util.logging.Level;
 
 import org.bukkit.command.PluginCommand;
@@ -7,6 +8,7 @@ import org.bukkit.command.PluginCommand;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+import net.luckperms.api.LuckPermsProvider;
 import spigot_command.FMCCommand;
 
 public class Main {
@@ -21,6 +23,7 @@ public class Main {
 		// Guice インジェクターを作成
         injector = Guice.createInjector(new spigot.Module(plugin, this));
 		plugin.getLogger().info("Detected Spigot platform.");
+		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
 	    plugin.saveDefaultConfig();
 		getInjector().getInstance(PortalsConfig.class).createPortalsConfig();
@@ -34,6 +37,10 @@ public class Main {
     	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
 		}
+		getInjector().getInstance(Luckperms.class).triggerNetworkSync();
+		plugin.getLogger().info("luckpermsと連携しました。");
+		plugin.getLogger().log(Level.INFO, LuckPermsProvider.get().getPlatform().toString());
+		getInjector().getInstance(PlayerUtil.class).loadPlayers();
     	// DoServerOnlineとPortFinderとSocketの処理を統合
 		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
     	plugin.getLogger().info("プラグインが有効になりました。");

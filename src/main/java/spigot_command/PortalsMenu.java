@@ -27,21 +27,23 @@ import spigot.ServerStatusCache;
 public class PortalsMenu {
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     public static final int[] FACE_POSITIONS = {46, 47, 48, 49, 50, 51, 52};
-	private final common.Main plugin;
     private static final List<Material> ORE_BLOCKS = Arrays.asList(
         Material.NETHERITE_BLOCK, Material.GOLD_BLOCK, Material.REDSTONE_BLOCK, 
         Material.EMERALD_BLOCK, Material.DIAMOND_BLOCK, Material.IRON_BLOCK,
         Material.COAL_BLOCK, Material.LAPIS_BLOCK, Material.QUARTZ_BLOCK,
         Material.COPPER_BLOCK
     );
+    private final common.Main plugin;
     private final ServerStatusCache ssc;
+    private final Luckperms lp;
     private final Map<Player, Map<String, Integer>> playerOpenningInventoryMap = new HashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
-	public PortalsMenu(common.Main plugin, ServerStatusCache ssc) {  
+	public PortalsMenu(common.Main plugin, ServerStatusCache ssc, Luckperms lp) {  
 		this.plugin = plugin;
         this.ssc = ssc;
+        this.lp = lp;
 	}
 
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -82,17 +84,16 @@ public class PortalsMenu {
 
     public void openServerEachInventory(Player player, String serverType, int page) {
         Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
-        Map<String, Map<String, Map<String, String>>> serverStatusMap = ssc.getStatusMap();
-        Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
+        Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
+        Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
         int totalItems = serverStatusList.size(),
             totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length,
             startIndex = (page - 1) * SLOT_POSITIONS.length,
             endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
-
-        List<Map<String, String>> serverDataList = serverStatusList.values().stream().collect(Collectors.toList());
+        List<Map<String, Object>> serverDataList = serverStatusList.values().stream().collect(Collectors.toList());
         for (int i = startIndex; i < endIndex; i++) {
-            Map<String, String> serverData = serverDataList.get(i);
-            String serverName = serverData.get("name");
+            Map<String, Object> serverData = serverDataList.get(i);
+            String serverName = (String) serverData.get("name");
             if (page == 1 && i == 0) {
                 currentOreIndex = 0; // ページが1の場合はインデックスをリセット
             }
@@ -106,8 +107,6 @@ public class PortalsMenu {
             }
             inv.setItem(SLOT_POSITIONS[i - startIndex], serverItem);
         }
-
-        // ページ戻るブロックを配置
         if (page > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
             ItemMeta prevPageMeta = prevPageItem.getItemMeta();
@@ -117,8 +116,6 @@ public class PortalsMenu {
             }
             inv.setItem(45, prevPageItem);
         }
-
-        // ページ進むブロックを配置
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
             ItemMeta nextPageMeta = nextPageItem.getItemMeta();
@@ -128,8 +125,6 @@ public class PortalsMenu {
             }
             inv.setItem(53, nextPageItem);
         }
-
-        // インベントリの0個目にブロックを配置
         ItemStack backItem = new ItemStack(Material.BARRIER);
         ItemMeta backMeta = backItem.getItemMeta();
         if (backMeta != null) {
@@ -137,11 +132,7 @@ public class PortalsMenu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-
-        // プレイヤーにインベントリを開かせる
         player.openInventory(inv);
-
-        // プレイヤーのページを更新
         setPage(player, serverType, page);
     }
 
@@ -186,19 +177,19 @@ public class PortalsMenu {
         // どちらかの方法で実装する
         // オンラインサーバーゲートを作る
         // くぐると、現在オンラインのサーバーが出てくる
-        Map<String, Map<String, Map<String, String>>> serverStatusMap = ssc.getStatusMap();
-        for (Map.Entry<String, Map<String, Map<String, String>>> entry : serverStatusMap.entrySet()) {
+        Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
+        for (Map.Entry<String, Map<String, Map<String, Object>>> entry : serverStatusMap.entrySet()) {
             //String serverType = entry.getKey();
-            Map<String, Map<String, String>> serverStatusList = entry.getValue();
-            for (Map.Entry<String, Map<String, String>> serverEntry : serverStatusList.entrySet()) {
+            Map<String, Map<String, Object>> serverStatusList = entry.getValue();
+            for (Map.Entry<String, Map<String, Object>> serverEntry : serverStatusList.entrySet()) {
                 String name = serverEntry.getKey();
                 if (name.equals(serverName)) {
-                    Map<String, String> serverData = serverEntry.getValue();
-                    for (Map.Entry<String, String> dataEntry : serverData.entrySet()) {
+                    Map<String, Object> serverData = serverEntry.getValue();
+                    for (Map.Entry<String, Object> dataEntry : serverData.entrySet()) {
                         String key = dataEntry.getKey();
-                        String value = dataEntry.getValue();
-                        if (key.equals("online")) {
-                            if (value.equals("1")) {
+                        Object value = dataEntry.getValue();
+                        if (key.equals("online")) { 
+                            if (value instanceof Boolean online && online) {
                                 ItemStack onlineItem = new ItemStack(Material.GREEN_WOOL);
                                 ItemMeta onlineMeta = onlineItem.getItemMeta();
                                 if (onlineMeta != null) {
@@ -280,8 +271,8 @@ public class PortalsMenu {
                         }
                         if (key.equals("player_list")) {
                             //plugin.getLogger().log(Level.INFO, "value: {0}", value);
-                            if (value != null && !value.isEmpty() && !value.equals("None")) {
-                                String[] playerArray = value.split(",\\s*");
+                            if (value instanceof String playerList) {
+                                String[] playerArray = playerList.split(",\\s*");
                                 List<String> players = Arrays.asList(playerArray);
                                 int totalItems = players.size();
                                 int totalPages = (totalItems + FACE_POSITIONS.length - 1) / SLOT_POSITIONS.length;
@@ -338,28 +329,21 @@ public class PortalsMenu {
                                 inv.setItem(36, noPlayerItem);
                             }
                         }
-                        ItemStack serverItem = new ItemStack(Material.PAPER);
-                        ItemMeta serverMeta = serverItem.getItemMeta();
-                        if (serverMeta != null) {
-                            serverMeta.setDisplayName(ChatColor.GREEN + key);
-                            serverMeta.setLore(Arrays.asList(ChatColor.GRAY + value));
-                            serverItem.setItemMeta(serverMeta);
-                        }
-                        inv.addItem(serverItem);
                     }
                 }
             }
-            
         }
         player.openInventory(inv);
     }
 
     public boolean isAllowedToEnter(String serverName) {
-        
+        return false;
     }
 
     public int getPermLevel(Player player) {
         int permLevel = 0;
+        
+
         if (player.hasPermission("group.new-fmc-user")) permLevel += 1;
         if (player.hasPermission("group.sub-admin")) permLevel += 1;
         if (player.hasPermission("group.super-admin")) permLevel += 1;
@@ -367,27 +351,20 @@ public class PortalsMenu {
     }
 
     public int getTotalPlayers(String serverName) {
-        Map<String, Map<String, Map<String, String>>> serverStatusMap = ssc.getStatusMap();
-        for (Map.Entry<String, Map<String, Map<String, String>>> serverEntry : serverStatusMap.entrySet()) {
-            Map<String, Map<String, String>> serverStatusList = serverEntry.getValue();
-            for (Map.Entry<String, Map<String, String>> serverDataEntry : serverStatusList.entrySet()) {
-                String name = serverDataEntry.getKey();
-                if (name.equals(serverName)) {
-                    Map<String, String> serverData = serverDataEntry.getValue();
-                    String playerList = serverData.get("player_list");
-                    if (playerList != null && !playerList.isEmpty() && !playerList.equals("None")) {
-                        String[] playerArray = playerList.split(",\\s*");
-                        return playerArray.length;
-                    }
-                }
-            }
-        }
-        return 0;
+        return ssc.getStatusMap().values().stream()
+            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+            .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
+            .map(serverDataEntry -> serverDataEntry.getValue().get("player_list"))
+            .filter(playerList -> playerList instanceof String)
+            .map(playerList -> (String) playerList)
+            .mapToInt(playerList -> playerList.split(",\\s*").length)
+            .findFirst()
+            .orElse(0);
     }
 
     public int getTotalServers(String serverType) {
-        Map<String, Map<String, Map<String, String>>> serverStatusMap = ssc.getStatusMap();
-        Map<String, Map<String, String>> serverStatusList = serverStatusMap.get(serverType);
+        Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
+        Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
         return serverStatusList != null ? serverStatusList.size() : 0;
     }
     

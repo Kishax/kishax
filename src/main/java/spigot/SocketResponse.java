@@ -26,17 +26,15 @@ public class SocketResponse {
                 Matcher matcher = compiledPattern.matcher(res);
                 if (matcher.find()) {
                     String extracted = matcher.group(1);
-                    Map<String, Map<String, Map<String, String>>> statusMap = ssc.getStatusMap();
-                    for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
-                        for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
-                            Map<String, String> serverInfo = entry.getValue();
-                            if (serverInfo.get("name").equals(extracted)) {
-                                serverInfo.put("online", "1");
-                                ssc.setStatusMap(statusMap);
-                                //plugin.getLogger().log(Level.INFO, "Server {0} is now online", extracted);
-                            }
-                        }
-                    }
+                    Map<String, Map<String, Map<String, Object>>> statusMap = ssc.getStatusMap();
+                    statusMap.values().stream()
+                        .flatMap(serverMap -> serverMap.entrySet().stream())
+                        .filter(entry -> entry.getValue().get("name") instanceof String serverName && serverName.equals(extracted))
+                        .forEach(entry -> {
+                            entry.getValue().put("online", true);
+                            ssc.setStatusMap(statusMap);
+                            //plugin.getLogger().log(Level.INFO, "Server {0} is now online", extracted);
+                        });
                 }
             } else if (res.contains("PHP")) {
                 if (res.contains("uuid")) {

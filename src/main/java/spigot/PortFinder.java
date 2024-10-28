@@ -22,22 +22,15 @@ public class PortFinder {
         this.endPort = 6999;
     }
 
-    public CompletableFuture<Integer> findAvailablePortAsync(Map<String, Map<String, Map<String, String>>> statusMap) {
+    public CompletableFuture<Integer> findAvailablePortAsync(Map<String, Map<String, Map<String, Object>>> statusMap) {
         return CompletableFuture.supplyAsync(() -> {
             // startPortからendPortまでの範囲のポートリストを作成
             List<Integer> portRange = IntStream.rangeClosed(startPort, endPort).boxed().collect(Collectors.toList());
-
-            // statusMapから使用中のポートを取得し、portRangeから削除
-            for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
-                for (Map<String, String> serverInfo : serverMap.values()) {
-                    String portStr = serverInfo.get("socketport");
-                    if (portStr != null) {
-                        int port = Integer.parseInt(portStr);
-                        portRange.remove((Integer) port);
-                    }
-                }
-            }
-            
+            statusMap.values().stream()
+                .flatMap(serverMap -> serverMap.values().stream())
+                .map(serverInfo -> serverInfo.get("socketport"))
+                .filter(port -> port instanceof Integer)
+                .forEach(port -> portRange.remove((Integer) port));
             // 使用可能なポートを検索
             for (int port : portRange) {
                 try (ServerSocket serverSocket = new ServerSocket(port)) {

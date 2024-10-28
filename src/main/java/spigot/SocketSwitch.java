@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
 import java.util.logging.Level;
 
 import com.google.inject.Inject;
@@ -14,15 +13,15 @@ public class SocketSwitch {
 
     public final common.Main plugin;
     private final SocketResponse sr;
-    private final ServerStatusCache serverStatusCache;
+    private final ServerStatusCache ssc;
     private final String hostname = "localhost";
     private ServerSocket serverSocket;
     private Thread clientThread, socketThread;
     private volatile boolean running = true;
     
     @Inject
-	public SocketSwitch(common.Main plugin, SocketResponse sr, PortFinder pf, ServerStatusCache serverStatusCache) {
-        this.serverStatusCache = serverStatusCache;
+	public SocketSwitch(common.Main plugin, SocketResponse sr, PortFinder pf, ServerStatusCache ssc) {
+        this.ssc = ssc;
 		this.plugin = plugin;
         this.sr = sr;
 	}
@@ -95,37 +94,24 @@ public class SocketSwitch {
 	}
     
     public void sendSpigotServer(String sendmsg) {
-        Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
-        for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
-            for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
-                Map<String, String> serverInfo = entry.getValue();
-                //plugin.getLogger().log(Level.INFO, "sendSpigotServer: Checking server {0}", entry.getKey());
-                if ("1".equals(serverInfo.get("online")) && "spigot".equalsIgnoreCase(serverInfo.get("platform"))) {
-                    int port = Integer.parseInt(serverInfo.get("socketport"));
-                    if (port == 0) {
-                        //plugin.getLogger().log(Level.INFO, "sendSpigotServer: Server {0} has no socketport", entry.getKey());
-                        continue;
-                    }
-                    plugin.getLogger().log(Level.INFO, "sendSpigotServer: Starting client for server {0} on port {1}", new Object[]{entry.getKey(), port});
-                    startSocketClient(port, sendmsg);
-                } else {
-                    //plugin.getLogger().log(Level.INFO, "sendSpigotServer: Server {0} is not online or not a spigot server", entry.getKey());
-                }
-            }
-        }
+        sendMessageToServer("spigot", sendmsg);
     }
 
     public void sendVelocityServer(String sendmsg) {
-        Map<String, Map<String, Map<String, String>>> statusMap = serverStatusCache.getStatusMap();
-        for (Map<String, Map<String, String>> serverMap : statusMap.values()) {
-            for (Map.Entry<String, Map<String, String>> entry : serverMap.entrySet()) {
-                Map<String, String> serverInfo = entry.getValue();
-                if ("1".equals(serverInfo.get("online")) && "velocity".equalsIgnoreCase(serverInfo.get("platform"))) {
-                    int port = Integer.parseInt(serverInfo.get("socketport"));
-                    startSocketClient(port, sendmsg);
-                }
-            }
-        }
+        sendMessageToServer("velocity", sendmsg);
+    }
+    
+    private void sendMessageToServer(String serverType, String sendmsg) {
+        ssc.getStatusMap().values().stream()
+            .flatMap(serverMap -> serverMap.entrySet().stream())
+            .filter(entry -> entry.getValue().get("online") instanceof Boolean online && online)
+            .filter(entry -> entry.getValue().get("platform") instanceof String platform && platform.equalsIgnoreCase(serverType))
+            .filter(entry -> entry.getValue().get("socketport") instanceof Integer port && port != 0)
+            .forEach(entry -> {
+                int port = (Integer) entry.getValue().get("socketport");
+                plugin.getLogger().log(Level.INFO, "sendSpigotServer: Starting client for server {0} on port {1}", new Object[]{entry.getKey(), port});
+                startSocketClient(port, sendmsg);
+            });
     }
 
     public void stopSocketClient() {
