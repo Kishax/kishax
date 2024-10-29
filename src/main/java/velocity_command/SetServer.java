@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
@@ -38,8 +36,6 @@ public class SetServer {
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final Luckperms lp;
-	private final List<String> adminPerms = Arrays.asList("group.super-admin","group.sub-admin"),
-		fmcUserPerms = Arrays.asList("group.super-admin","group.sub-admin","group.new-fmc-user");;
 
 	@Inject
 	public SetServer(ProxyServer server, Logger logger, Config config, DatabaseInterface db, Luckperms lp) {
@@ -94,12 +90,9 @@ public class SetServer {
 							if (mine_status.getBoolean("online")) {
 								sum_memory = sum_memory + config.getInt("Servers."+mine_status.getString("name")+".memory", 0);
 							}
-
 							continue;
 						}
-
 						isTable = true;
-
 						// サーバーが配布ワールドを含むかどうか
 						if (config.getBoolean("Servers."+targetServerName+".distributed.mode", false)) {
 							String distributedUrl = config.getString("Servers."+targetServerName+".distributed.url", "None");
@@ -182,7 +175,6 @@ public class SetServer {
 								Random rnd = new Random();
 								int ranum = 100000 + rnd.nextInt(900000);
 								String ranumstr = Integer.toString(ranum);
-								
 								String query3 = "UPDATE members SET secret2=? WHERE uuid=?;";
 								try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
 									ps3.setInt(1,ranum);
@@ -216,7 +208,8 @@ public class SetServer {
 							break;
 						} else {
 							// オフライン
-							if (lp.hasPermission(playerName, fmcUserPerms)) {
+							int permLevel = lp.getPermLevel(playerName);
+							if (permLevel >= 1) {
 								// 上のwhile文で進んだカーソルの次から最後までの行まで回す
 								while (mine_status.next()) {
 									// ここ、for文でmine_statusテーブルを回す必要あるかも
@@ -241,7 +234,7 @@ public class SetServer {
 								}
 								
 								// fmcアカウントを持っている
-								if (lp.hasPermission(playerName, adminPerms)) {
+								if (permLevel >= 2) {
 									// adminである /startが使用可能
 									// /startで用いるセッションタイム(現在時刻)(sst)をデータベースに
 									LocalDateTime now = LocalDateTime.now();
