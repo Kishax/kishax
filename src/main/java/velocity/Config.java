@@ -53,31 +53,22 @@ public class Config {
     
     public synchronized void loadConfig() throws IOException {
         Path configPath = dataDirectory.resolve("velocity-config.yml");
-        
-        // ディレクトリの作成
         if (Files.notExists(dataDirectory)) {
             Files.createDirectories(dataDirectory);
         }
-        
-        // ファイルの作成
         if (!Files.exists(configPath)) {
             try (InputStream in = getClass().getResourceAsStream("/velocity-config.yml")) {
             	if (Objects.isNull(in)) {
             		logger.error("Default configuration file not found in resources.");
                     return;
             	}
-
                 Files.copy(in, configPath);
-                
-                // 読み込みと新規内容の追加
                 String existingContent = Files.readString(configPath);
                 String addContents = "\n\nServers:\n";
                 addContents += "\n\n    proxy:";
                 addContents += "\n        entry: false";
                 addContents += "\n        platform: \"\"";
                 addContents += "\n        memory: ";
-                
-                // 例: サーバー名を追加する部分
                 for (RegisteredServer registeredServer : server.getAllServers()) {
                 	addContents += "\n    "+registeredServer.getServerInfo().getName()+":";
                     addContents += "\n        entry: false";
@@ -95,13 +86,9 @@ public class Config {
                 	addContents += "\n        memory: ";
                 	addContents += "\n        exec: \"\"";
                 }
-                
-                // 新しい内容を追加してファイルに書き込み
                 Files.writeString(configPath, existingContent + addContents);
             }
         }
-
-        // Yamlでの読み込み
         Yaml yaml = new Yaml();
         try (InputStream inputStream = Files.newInputStream(configPath)) {
             config = yaml.load(inputStream);

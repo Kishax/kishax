@@ -21,6 +21,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import spigot.Luckperms;
 import spigot.ServerStatusCache;
 
 @Singleton
@@ -146,7 +147,7 @@ public class PortalsMenu {
     }
 
     public void serverSwitch(Player player, String serverName) {
-        int permLevel = getPermLevel(player);
+        int permLevel = lp.getPermLevel(player.getName());
         if (permLevel == 1) {
             player.sendMessage(ChatColor.RED + "権限がありません");
             return;
@@ -159,7 +160,7 @@ public class PortalsMenu {
     }
 
     public void openServerInventory(Player player, String serverName, int page) {
-        int permLevel = getPermLevel(player);
+        int permLevel = lp.getPermLevel(player.getName());
         Inventory inv = Bukkit.createInventory(null, 54, serverName + " server");
         ItemStack backItem = new ItemStack(Material.BARRIER);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -338,16 +339,6 @@ public class PortalsMenu {
 
     public boolean isAllowedToEnter(String serverName) {
         return false;
-    }
-
-    public int getPermLevel(Player player) {
-        int permLevel = 0;
-        
-
-        if (player.hasPermission("group.new-fmc-user")) permLevel += 1;
-        if (player.hasPermission("group.sub-admin")) permLevel += 1;
-        if (player.hasPermission("group.super-admin")) permLevel += 1;
-        return permLevel;
     }
 
     public int getTotalPlayers(String serverName) {

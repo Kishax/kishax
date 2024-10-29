@@ -40,7 +40,7 @@ public class Main {
     public void onProxyInitialization(ProxyInitializeEvent e) {
     	logger.info("Detected Velocity platform.");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
-        injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory, LuckPermsProvider.get()));
+        injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory));
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
             if (jda != null) {
                 //getInjector().getInstance(MineStatusReflect.class).sendEmbedMessage(jda);

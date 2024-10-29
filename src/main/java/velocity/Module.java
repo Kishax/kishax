@@ -16,23 +16,19 @@ import discord.DiscordInterface;
 import discord.EmojiManager;
 import discord.MessageEditor;
 import discord.MessageEditorInterface;
-import net.luckperms.api.LuckPerms;
 
 public class Module extends AbstractModule {
 	private final Main plugin;
     private final ProxyServer server;
     private final Logger logger;
     private final Path dataDirectory;
-    private final LuckPerms lpapi;
     private final Config config;
     
-    public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory, LuckPerms lpapi) {
+    public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory) {
     	this.plugin = plugin;
         this.server = server;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
-        this.lpapi = lpapi;
-        
         // Config インスタンスの作成とバインド
         // Configをロードする前に、Guiceによってインスタンスが開始されてしまうために、Config not given状態になる。
     	// ゆえ、それよりも前にconfigを手動でインスタンス開始する。
@@ -51,7 +47,6 @@ public class Module extends AbstractModule {
         bind(ProxyServer.class).toInstance(server);
         bind(Logger.class).toInstance(logger);
         bind(Path.class).annotatedWith(DataDirectory.class).toInstance(dataDirectory);
-        bind(LuckPerms.class).toInstance(lpapi);
         bind(ConsoleCommandSource.class).toInstance(server.getConsoleCommandSource());
         bind(Config.class).toInstance(config);
         bind(SocketSwitch.class);

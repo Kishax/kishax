@@ -5,7 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -86,51 +89,70 @@ public class Luckperms {
 		}
 	}
 
-	public List<Boolean> hasPermissionReturnBools(String playerName, List<String> permissions) {
+	public int getPermLevel(String playerName) {
+        int permLevel = 0;
+        List<String> groups = new ArrayList<>(Arrays.asList("group.new-fmc-user", "group.sub-admin", "group.super-admin"));
+        Map<String, Boolean> permMap = hasPermissionWithMap(playerName, groups);
+        if (permMap.get("group.super-admin")) {
+            permLevel = 3;
+        } else if (permMap.get("group.sub-admin")) {
+            permLevel = 2;
+        } else if (permMap.get("group.new-fmc-user")) {
+            permLevel = 1;
+        }
+        return permLevel;
+    }
+
+	public Map<String, Boolean> hasPermissionWithMap(String playerName, List<String> permissions) {
 		User user = lpapi.getUserManager().getUser(playerName);
 		if (user == null) {
-			return null;
+			return permissions.stream().collect(Collectors.toMap(permission -> permission, permission -> false));
 		}
 		List<String> groups = user.getNodes().stream()
 				.filter(node -> node instanceof InheritanceNode)
 				.map(node -> ((InheritanceNode) node).getGroupName())
 				.collect(Collectors.toList());
-		plugin.getLogger().log(Level.INFO, "Groups: {0}", groups);
-		List<Boolean> hasPermission = new ArrayList<>();
+		//plugin.getLogger().log(Level.INFO, "Groups: {0}", groups);
+		Map<String, Boolean> hasPermissionBools = permissions.stream().collect(Collectors.toMap(permission -> permission, permission -> false));
+    	CopyOnWriteArrayList<String> permissionsCopy = new CopyOnWriteArrayList<>(permissions);
+		permissions.stream()
+			.filter(perm -> perm.startsWith("group."))
+			.forEach(perm -> {
+				String groupName = perm.substring(6);
+				if (groups.contains(groupName)) {
+					hasPermissionBools.put(perm, true);
+					permissionsCopy.remove(perm);
+				}
+			});
 		for (String groupName : groups) {
-            if (acheckGroupPermission(groupName, permissions)) {
-                return true;
-            }
+            checkGroupPermissionWithMap(groupName, permissionsCopy, hasPermissionBools);
         }
+		plugin.getLogger().log(Level.INFO, "permMap: {0}", hasPermissionBools);
+		return hasPermissionBools;
 	}
 	
-	private boolean acheckGroupPermission(String groupName, List<String> permissions) {
-		Map<String, Boolean> hasPermission = new HashMap<>();
+	private void checkGroupPermissionWithMap(String groupName, List<String> permissions, Map<String, Boolean> hasPermissionBools) {
         Group group = lpapi.getGroupManager().getGroup(groupName);
         if (group == null) {
-            return false;
+            return;
         }
 		group.getNodes().forEach(node -> permissions.forEach(entry -> {
 			if (node.getKey().equalsIgnoreCase(entry)) {
-				hasPermission.put(entry, true);
+				hasPermissionBools.put(entry, true);
 			}
-		});
-		
-			
-        if (hasPermission) {
-            return true;
-        }
+		}));
         List<String> subGroups = group.getNodes().stream()
                 .filter(node -> node instanceof InheritanceNode)
                 .map(node -> ((InheritanceNode) node).getGroupName())
                 .collect(Collectors.toList());
         for (String subGroupName : subGroups) {
-            if (checkGroupPermission(subGroupName, permissions)) {
-                return true;
-            }
+            checkGroupPermissionWithMap(subGroupName, permissions, hasPermissionBools);
         }
-        return false;
     }
+
+	public boolean hasPermission(String playerName, String permission) {
+		return hasPermission(playerName, List.of(permission));
+	}
 
 	public boolean hasPermission(String playerName, List<String> permissions) {
         User user = lpapi.getUserManager().getUser(playerName);
@@ -141,7 +163,13 @@ public class Luckperms {
                 .filter(node -> node instanceof InheritanceNode)
                 .map(node -> ((InheritanceNode) node).getGroupName())
                 .collect(Collectors.toList());
-		plugin.getLogger().log(Level.INFO, "Groups: {0}", groups);
+		boolean hasGroupPermission = permissions.stream()
+				.filter(perm -> perm.startsWith("group."))
+				.map(perm -> perm.substring(6))
+				.anyMatch(groups::contains);
+		if (hasGroupPermission) {
+			return true;
+		}
         for (String groupName : groups) {
             if (checkGroupPermission(groupName, permissions)) {
                 return true;
@@ -172,26 +200,4 @@ public class Luckperms {
         }
         return false;
     }
-
-	/*public boolean hasPermission(String playerName, List<String> permission) {
-		try (Connection conn = db.getConnection("fmc_lp");
-				PreparedStatement ps = conn.prepareStatement("SELECT * FROM lp_user_permissions WHERE uuid = ? AND permission = ?")) {
-			ps.setString(1, pu.getPlayerUUIDByNameFromDB(playerName));
-			for (String perm : permission) {
-				ps.setString(2, perm);
-				try (ResultSet rs = ps.executeQuery()) {
-					if (rs.next()) {
-						return true;
-					}
-				}
-			}
-			return false;
-		} catch (SQLException | ClassNotFoundException e) {
-			plugin.getLogger().log(Level.SEVERE, "An error occurred while updating the database: {0}", e.getMessage());
-			for (StackTraceElement element : e.getStackTrace()) {
-				plugin.getLogger().log(Level.SEVERE, element.toString());
-			}
-			return false;
-		}
-	}*/
 }

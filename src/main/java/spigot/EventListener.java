@@ -19,7 +19,6 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import com.google.inject.Inject;
@@ -77,13 +76,6 @@ public final class EventListener implements Listener {
     }
     
     @EventHandler
-	public void onPlayerJoin(PlayerJoinEvent e) {
-		e.setJoinMessage(null);
-        Player player = e.getPlayer();
-        plugin.getLogger().log(Level.INFO, "group.new-fmc-user: {0}", lp.hasPermission(player.getName(), "group.new-fmc-user"));
-	}
-
-    @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             playersOpeningNewInventory.add(player);
@@ -111,8 +103,8 @@ public final class EventListener implements Listener {
                             }
                         }
                         case 22 -> {
-                            int permLevel = pm.getPermLevel(player);
-
+                            int permLevel = lp.getPermLevel(playerName);
+                            player.sendMessage("permLevel: " + permLevel);
                             // ここで、permlevelに応じて処理を分岐させる
                             //pm.serverSwitch(player, serverName);
                         }
