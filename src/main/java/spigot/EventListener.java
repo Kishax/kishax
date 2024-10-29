@@ -33,17 +33,15 @@ public final class EventListener implements Listener {
 	private final PortalsConfig psConfig;
     private final PortalsMenu pm;
     private final ServerStatusCache ssc;
-    private final Luckperms lp;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm, ServerStatusCache ssc, Luckperms lp) {
+	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm, ServerStatusCache ssc) {
 		this.plugin = plugin;
 		this.psConfig = psConfig;
         this.pm = pm;
         this.ssc = ssc;
-        this.lp = lp;
 	}
 
     @EventHandler
@@ -79,7 +77,7 @@ public final class EventListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             playersOpeningNewInventory.add(player);
-            String playerName = player.getName();
+            //String playerName = player.getName();
             String title = event.getView().getTitle();
             Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
             if (title.endsWith(" server")) {
@@ -103,10 +101,7 @@ public final class EventListener implements Listener {
                             }
                         }
                         case 22 -> {
-                            int permLevel = lp.getPermLevel(playerName);
-                            player.sendMessage("permLevel: " + permLevel);
-                            // ここで、permlevelに応じて処理を分岐させる
-                            //pm.serverSwitch(player, serverName);
+                            pm.serverSwitch(player, serverName);
                         }
                         case 23 -> {
                             pm.enterServer(player, serverName);

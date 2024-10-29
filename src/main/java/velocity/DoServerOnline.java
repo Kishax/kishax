@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -29,18 +30,20 @@ public class DoServerOnline {
     private final ProxyServer server;
     private final ConsoleCommandSource console;
     private final Database db;
+	private final Provider<SocketSwitch> sswProvider;
 	private final Set<String> addedColumnSet = new HashSet<>();
     //private final Map<String, Integer> serverDBInfo = new HashMap<>();
 	//private final Map<String, String> serverDBTypeInfo = new HashMap<>();
     
     @Inject
-    public DoServerOnline(Main plugin, ConfigUtils cutils, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console) {
+    public DoServerOnline(Main plugin, ConfigUtils cutils, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, Provider<SocketSwitch> sswProvider) {
     	this.plugin = plugin;
 		this.cutils = cutils;
     	this.logger = logger;
     	this.db = db;
     	this.server = server;
     	this.console = console;
+		this.sswProvider = sswProvider;
     }
 	
 	public Map<String, Map<String, Object>> loadStatusTable(Connection conn) throws SQLException {
@@ -141,11 +144,27 @@ public class DoServerOnline {
 		}
 	}
 	
+	public void updateDatabaseFromCmd() {
+		updateDatabase(true);
+		SocketSwitch ssw = sswProvider.get();
+		ssw.sendSpigotServer("MineStatusSync");
+		logger.info("データベースとの同期を完了しました。");
+	}
+
 	public void updateDatabase() {
+		updateDatabase(false);
+		SocketSwitch ssw = sswProvider.get();
+		ssw.sendSpigotServer("MineStatusSync");
+	}
+
+	public void updateDatabase(boolean isCmd) {
 		server.getScheduler().buildTask(plugin, () -> {
 			try (Connection conn = db.getConnection()) {
-				resetDBPlayerList(conn);
-				makeProxyOnline(conn);
+				// コマンドから実行していなければ
+				if (!isCmd) {
+					resetDBPlayerList(conn);
+					makeProxyOnline(conn);
+				}
 				// Toml, Config情報, DB情報をすべて同期 (Tomlを主軸に)
 				Map<String, Map<String, Object>> configMap = cutils.getConfigMap("Servers");
 				Map<String, Integer> velocityToml = getServerFromToml();
