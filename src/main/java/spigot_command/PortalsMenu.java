@@ -138,25 +138,41 @@ public class PortalsMenu {
     }
 
     public void enterServer(Player player, String serverName) {
-        
-        //String playerName = player.getName();
-        // player.performCommand("fmc fv " + playerName + " stp " + serverName);
         // やっぱ各spigotsで検証してもらった方が早いか
         // velocity.SetServerで確認していることをここで確認して飛ばす
-        
+        //String playerName = player.getName();
+        // player.performCommand("fmc fv " + playerName + " stp " + serverName);
+        //player.performCommand("server " + serverName);
+    }
+
+    private boolean checkServerOnline(String serverName) {
+        return ssc.getStatusMap().values().stream()
+            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+            .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
+            .map(serverDataEntry -> serverDataEntry.getValue().get("online"))
+            .filter(online -> online instanceof Boolean)
+            .map(online -> (Boolean) online)
+            .findFirst()
+            .orElse(false);
     }
 
     public void serverSwitch(Player player, String serverName) {
+        // 起動するにあたって、確認するべきもの
+        // 1. プレイヤーがそのサーバーに入る権限があるか
+        // 2. サーバーがオンラインか
+        // 3. サーバーがオンラインでない場合、プレイヤーがそのサーバーを起動する権限があるか
+        // 4. サーバーがオンラインである場合、プレイヤーがそのサーバーを停止する権限があるか
+        // 起動した場合は、serverCacheを更新する
+        // リクエスト受諾時も、serverCacheを更新するように、velocity.Discordにて更新を定義する
+        
         int permLevel = lp.getPermLevel(player.getName());
-        if (permLevel == 1) {
-            player.sendMessage(ChatColor.RED + "権限がありません");
-            return;
+        player.sendMessage("permLevel: " + permLevel);
+        if (checkServerOnline(serverName)) {
+            //serverStop(player, serverName);
+            // 各spigotsが起動させる(いちいちプロキシにリクエストは送らない)
+        } else {
+            //serverStart(player, serverName);
         }
-        if (player.hasPermission("group.new-fmc-user")) {
-            player.sendMessage(ChatColor.RED + "権限がありません");
-            return;
-        }
-        player.performCommand("server " + serverName);
     }
 
     public void openServerInventory(Player player, String serverName, int page) {
@@ -198,7 +214,7 @@ public class PortalsMenu {
                                     onlineItem.setItemMeta(onlineMeta);
                                 }
                                 inv.setItem(8, onlineItem);
-                                if (isAllowedToEnter(serverName) || permLevel >= 3) {
+                                if (isAllowedToEnter(serverName) || permLevel >= 2) {
                                     ItemStack leverItem = new ItemStack(Material.LEVER);
                                     ItemMeta leverMeta = leverItem.getItemMeta();
                                     if (leverMeta != null) {
@@ -237,7 +253,7 @@ public class PortalsMenu {
                                     offlineItem.setItemMeta(offlineMeta);
                                 }
                                 inv.setItem(8, offlineItem);
-                                if (isAllowedToEnter(serverName) || permLevel >= 3) {
+                                if (isAllowedToEnter(serverName) || permLevel >= 2) {
                                     ItemStack leverItem = new ItemStack(Material.LEVER);
                                     ItemMeta leverMeta = leverItem.getItemMeta();
                                     if (leverMeta != null) {

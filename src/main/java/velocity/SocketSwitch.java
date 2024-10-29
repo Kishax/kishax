@@ -41,7 +41,6 @@ public class SocketSwitch {
 			logger.info("Server Socket is canceled for config value not given");
 			return;
 		}
-
         socketThread = new Thread(() -> {
             try {
                 serverSocket = new ServerSocket(config.getInt("Socket.Server_Port"));
