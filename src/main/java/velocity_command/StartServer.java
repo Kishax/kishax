@@ -88,34 +88,18 @@ public class StartServer {
 					try (ResultSet minecrafts = ps.executeQuery();
 						ResultSet mine_status = ps2.executeQuery()) {
 						if (minecrafts.next()) {
-							//初参加のプレイヤーのsst,req,stカラムはnull値を返すので
-							if (Objects.nonNull(minecrafts.getTimestamp("sst")) && Objects.nonNull(minecrafts.getTimestamp("st"))) {
+							Timestamp beforeStartTime = minecrafts.getTimestamp("st");
+							if (beforeStartTime != null) {
 								long now_timestamp = Instant.now().getEpochSecond();
-								
-								// /ssで発行したセッションタイムをみる
-								Timestamp sst_timeget = minecrafts.getTimestamp("sst");
-								long sst_timestamp = sst_timeget.getTime() / 1000L;
-								
-								long ss_sa = now_timestamp-sst_timestamp;
-								long ss_sa_minute = ss_sa/60;
-								if (ss_sa_minute>=config.getInt("Interval.Session",3)) {
-									player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
-									return;
-								}
-								
 								// /startを実行したときに発行したセッションタイムをみる
-								Timestamp st_timeget = minecrafts.getTimestamp("st");
-								long st_timestamp = st_timeget.getTime() / 1000L;
-								
+								long st_timestamp = beforeStartTime.getTime() / 1000L;
 								long sa = now_timestamp-st_timestamp;
 								long sa_minute = sa/60;
-								
 								if (sa_minute<=config.getInt("Interval.Start_Server",0)) {
 									player.sendMessage(Component.text("サーバーの起動間隔は"+config.getInt("Interval.Start_Server",0)+"分以上は空けてください。").color(NamedTextColor.RED));
 									return;
 								}
 							}
-							
 							if (mine_status.next()) {
 								if (mine_status.getBoolean("online")) {
 									player.sendMessage(Component.text(targetServerName+"サーバーは起動中です。").color(NamedTextColor.RED));
