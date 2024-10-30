@@ -156,6 +156,11 @@ public class PortalsMenu {
             .orElse(false);
     }
 
+    private boolean memoryCheck(Connection conn, String serverName) {
+        // Max memory がわからない
+        return false;
+    }
+
     public void serverSwitch(Player player, String serverName) {
         // 起動するにあたって、確認するべきもの
         // 1. プレイヤーがそのサーバーに入る権限があるか
@@ -164,10 +169,18 @@ public class PortalsMenu {
         // 4. サーバーがオンラインである場合、プレイヤーがそのサーバーを停止する権限があるか
         // 起動した場合は、serverCacheを更新する
         // リクエスト受諾時も、serverCacheを更新するように、velocity.Discordにて更新を定義する
-        
+        // セッションを定義
+        // mysqlに保存する?
+        // 起動間隔を設定する
+        // やはりveloに送ろう。そのほうが一から作るよりも早いか
         int permLevel = lp.getPermLevel(player.getName());
         player.sendMessage("permLevel: " + permLevel);
         if (checkServerOnline(serverName)) {
+            if (permLevel == 1) {
+                //serverStartRequest(player, serverName);
+            } else if (permLevel >= 2) {
+                //serverStop(player, serverName);
+            }
             //serverStop(player, serverName);
             // 各spigotsが起動させる(いちいちプロキシにリクエストは送らない)
         } else {
