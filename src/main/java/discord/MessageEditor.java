@@ -154,7 +154,6 @@ public class MessageEditor implements MessageEditorInterface {
 						
 						return CompletableFuture.completedFuture(null);
                     }
-	            		
 	            	case "Exit" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
 							String convStringTime = pu.secondsToStr(playTime);
@@ -333,7 +332,14 @@ public class MessageEditor implements MessageEditorInterface {
 						discord.sendBotMessage(createEmbed);
 						return CompletableFuture.completedFuture(null);
                     }
-	            		
+	            	case "Stop" -> {
+						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
+							addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
+									targetServerName+ "サーバーを停止させました。";
+							discord.editBotEmbed(messageId, addMessage);
+						}
+						return CompletableFuture.completedFuture(null);
+					}
 	                case "Start" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
 							addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +

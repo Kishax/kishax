@@ -46,11 +46,10 @@ public class AutoShutdown {
 	            }
 	        }
 	    };
-
 	    task.runTaskTimer(plugin, NO_PLAYER_THRESHOLD, NO_PLAYER_THRESHOLD);
 	}
 
-    private void countdownAndShutdown(int seconds) {
+    public void countdownAndShutdown(int seconds) {
         new BukkitRunnable() {
             int countdown = seconds;
 

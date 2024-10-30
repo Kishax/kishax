@@ -112,16 +112,16 @@ public class StartServer {
 						.filter(entry -> entry.getKey() instanceof String serverName && serverName.equals(targetServerName))
 						.forEach(entry -> {
 							Map<String, Object> serverInfo = entry.getValue();
-							if (serverInfo.get("enter") instanceof Boolean enter && !enter) {
-								player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
-								return;
-							}
 							if (serverInfo.get("online") instanceof Boolean online && online) {
 								player.sendMessage(Component.text(targetServerName+"サーバーは起動中です。").color(NamedTextColor.RED));
 								logger.info(targetServerName+"サーバーは起動中です。");
 								return;
 							}
 							if (serverInfo.get("exec") instanceof String execPath) {
+								if (permLevel < 3 && serverInfo.get("enter") instanceof Boolean enter && !enter) {
+									player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
+									return;
+								}
 								if (serverInfo.get("memory") instanceof Integer memory) {
 									int currentUsedMemory = dso.getCurrentUsedMemory(statusMap),
 										maxMemory = config.getInt("MaxMemory", 0);

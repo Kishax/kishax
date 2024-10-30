@@ -1,5 +1,9 @@
 package velocity_command;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,8 +17,6 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -23,25 +25,26 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
+import velocity.DatabaseInterface;
 import velocity.Luckperms;
 import velocity.Main;
 import velocity.PlayerUtils;
 import velocity.RomajiConversion;
 
 public class FMCCommand implements SimpleCommand {
-
-    private final ProxyServer server;
+    private final Logger logger;
     private final Config config;
+    private final DatabaseInterface db;
     private final PlayerUtils pu;
     private final Luckperms lp;
-    
-    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend"));
+    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stop", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend"));
     public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
-    public FMCCommand(ProxyServer server, Logger logger, Config config, PlayerUtils pu, Luckperms lp) {
-        this.server = server;
+    public FMCCommand(Logger logger, Config config, DatabaseInterface db, PlayerUtils pu, Luckperms lp) {
+        this.logger = logger;
         this.config = config;
+        this.db = db;
         this.pu = pu;
         this.lp = lp;
     }
@@ -110,6 +113,7 @@ public class FMCCommand implements SimpleCommand {
         switch (subCommand.toLowerCase()) {
             case "debug" -> Main.getInjector().getInstance(Debug.class).execute(source, args);
             case "start" -> Main.getInjector().getInstance(StartServer.class).execute(source, args);
+            case "stop" -> Main.getInjector().getInstance(StopServer.class).execute(source, args);
             case "ss" -> Main.getInjector().getInstance(SetServer.class).execute(source, args);
             case "hub" -> Main.getInjector().getInstance(Hub.class).execute(invocation);
             case "retry" -> Main.getInjector().getInstance(Retry.class).execute(source, args);
@@ -149,9 +153,15 @@ public class FMCCommand implements SimpleCommand {
                         }
                         return ret;
                     }
-                    case "start", "ss", "req", "stp" -> {
-                        for (RegisteredServer registerServer : server.getAllServers()) {
-                            ret.add(registerServer.getServerInfo().getName());
+                    case "start", "req", "ss" -> {
+                        for (String offlineServer : getServersList(false)) {
+                            ret.add(offlineServer);
+                        }
+                        return ret;
+                    }
+                    case "stop", "stp" -> {
+                        for (String onlineServer : getServersList(true)) {
+                            ret.add(onlineServer);
                         }
                         return ret;
                     }
@@ -165,14 +175,12 @@ public class FMCCommand implements SimpleCommand {
                         for (String args1 : Maintenance.args1) {
                             ret.add(args1);
                         }
-
                         return ret;
                     }
                     case "chat" -> {
                         for (String args1 : SwitchChatType.args1) {
                             ret.add(args1);
                         }
-
                         return ret;
                     }
                     case "conv" -> {
@@ -231,7 +239,6 @@ public class FMCCommand implements SimpleCommand {
             }
             case 4 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
-
                 switch (args[0].toLowerCase()) {
                     case "conv" -> {
                         switch (args[1].toLowerCase()) {
@@ -294,5 +301,29 @@ public class FMCCommand implements SimpleCommand {
             }
         }
         return Collections.emptyList();
+    }
+
+    private List<String> getServersList(boolean isOnline) {
+        List<String> servers = new ArrayList<>();
+        String query = "SELECT * FROM status WHERE online=? AND exception!=1 AND exception2!=1;";
+        try (Connection conn = db.getConnection();
+            PreparedStatement ps = conn.prepareStatement(query)) {
+            if (isOnline) {
+                ps.setBoolean(1, true);
+            } else {
+                ps.setBoolean(1, false);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    servers.add(rs.getString("name"));
+                }
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+        return servers;
     }
 }

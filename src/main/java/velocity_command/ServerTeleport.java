@@ -67,10 +67,10 @@ public class ServerTeleport {
 				.filter(entry -> entry.getKey() instanceof String serverName && serverName.equals(targetServerName))
 				.forEach(entry -> {
 					Map<String, Object> serverInfo = entry.getValue();
-					if (serverInfo.get("enter") instanceof Boolean enter && !enter) {
-						player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
-						return;
-					}
+                    if (permLevel < 2 && serverInfo.get("enter") instanceof Boolean enter && !enter) {
+                        player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
+                        return;
+                    }
 					if (serverInfo.get("online") instanceof Boolean online && !online) {
 						player.sendMessage(Component.text(targetServerName+"サーバーは現在オフラインです。").color(NamedTextColor.RED));
 						logger.info(targetServerName+"サーバーは現在オフラインです。");
