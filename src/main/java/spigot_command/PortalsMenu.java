@@ -156,10 +156,10 @@ public class PortalsMenu {
             .orElse(false);
     }
 
-    private boolean memoryCheck(Connection conn, String serverName) {
+    /*private boolean memoryCheck(Connection conn, String serverName) {
         // Max memory がわからない
         return false;
-    }
+    }*/
 
     public void serverSwitch(Player player, String serverName) {
         // 起動するにあたって、確認するべきもの

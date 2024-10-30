@@ -48,10 +48,10 @@ public class DoServerOnline {
 	
 	public Map<String, Map<String, Object>> loadStatusTable(Connection conn) throws SQLException {
         Map<String, Map<String, Object>> resultMap = new HashMap<>();
-        String query = "SELECT * FROM status WHERE exception!=? AND exception2!=?;;";
+        String query = "SELECT * FROM status WHERE exception2!=?;";//SELECT * FROM status WHERE exception!=? AND exception2!=?;
         try (PreparedStatement ps = conn.prepareStatement(query)) {
 			ps.setBoolean(1, true);
-			ps.setBoolean(2, true);
+			//ps.setBoolean(2, true);
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {
 					String name = rs.getString("name");
@@ -72,11 +72,11 @@ public class DoServerOnline {
 
 	public Map<String, Object> loadStatusTable(Connection conn, String serverName) throws SQLException {
 		Map<String, Object> resultMap = new HashMap<>();
-		String query = "SELECT * FROM status WHERE name=? AND exception!=? AND exception2!=?;";
+		String query = "SELECT * FROM status WHERE name=? AND exception2!=?;";//SELECT * FROM status WHERE name=? AND exception!=? AND exception2!=?;
 		try (PreparedStatement ps = conn.prepareStatement(query)) {
 			ps.setString(1, serverName);
 			ps.setBoolean(2, true);
-			ps.setBoolean(3, true);
+			//ps.setBoolean(3, true);
 			try (ResultSet rs = ps.executeQuery()) {
 				if (rs.next()) {
 					int columnCount = rs.getMetaData().getColumnCount();
@@ -91,7 +91,16 @@ public class DoServerOnline {
 		}
 		return resultMap;
 	}
-	private Map<String, Integer> getServerFromToml () {
+
+	public int getCurrentUsedMemory(Map<String, Map<String, Object>> statusMap) {
+		return statusMap.values().stream()
+			.filter(entry -> entry.containsKey("online") && entry.get("online") instanceof Boolean online && online)
+			.filter(entry -> entry.containsKey("memory") && entry.get("memory") instanceof Integer)
+			.mapToInt(entry -> (Integer) entry.get("memory"))
+			.sum();
+	}
+
+	private Map<String, Integer> getServerFromToml() {
 		Map<String, Integer> velocityToml = new ConcurrentHashMap<>();
 		for (RegisteredServer registeredServer : server.getAllServers()) {
 			ServerInfo serverInfo = registeredServer.getServerInfo();
@@ -99,6 +108,7 @@ public class DoServerOnline {
 			int TomlServerPort = serverInfo.getAddress().getPort();
 			velocityToml.put(TomlServerName, TomlServerPort);
 		}
+		velocityToml.put("proxy", 25565); // Add the missing server name and port
 		return velocityToml;
 	}
 

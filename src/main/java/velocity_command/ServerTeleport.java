@@ -1,12 +1,8 @@
 package velocity_command;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Objects;
+import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -15,77 +11,78 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
 import velocity.DatabaseInterface;
+import velocity.DoServerOnline;
+import velocity.Luckperms;
 
 public class ServerTeleport {
     private final Logger logger;
     private final ProxyServer server;
     private final DatabaseInterface db;
-
+    private final Luckperms lp;
+    private final DoServerOnline dso;
     @Inject
-    public ServerTeleport(Logger logger, ProxyServer server, Config config, DatabaseInterface db) {
+    public ServerTeleport(Logger logger, ProxyServer server, Config config, DatabaseInterface db, Luckperms lp, DoServerOnline dso) {
         this.logger = logger;
 		this.server = server;
 		this.db = db;
+        this.lp = lp;
+        this.dso = dso;
 	}
     
     public void execute(@NotNull CommandSource source,String[] args) {
+        if (args.length < 2) {
+			source.sendMessage(Component.text("引数が足りません。").color(NamedTextColor.RED));
+			return;
+		}
+        String targetServerName = args[1];
         if (!(source instanceof Player)) {
             source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
             return;
         }
-
         Player player = (Player) source;
-
-        if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
+        String playerName = player.getUsername();
+        if (args.length == 1 || targetServerName == null || args[1].isEmpty()) {
             player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
             return;
         }
-
-        String targetServerName = args[1];
-        boolean containsServer = false;
-        for (RegisteredServer registeredServer : server.getAllServers()) {
-            if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName)) {
-                containsServer = true;
-                break;
-            }
-        }
-
-        if (!containsServer) {
+		boolean containsServer = server.getAllServers().stream()
+			.anyMatch(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName));
+		if (!containsServer) {
             player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
             return;
         }
-        String query = "SELECT * FROM members WHERE uuid=?;";
-        try (Connection conn = db.getConnection();
-            PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, player.getUniqueId().toString());
-            try (ResultSet minecrafts = ps.executeQuery()) {
-                if (minecrafts.next()) {
-                    long nowTimestamp = Instant.now().getEpochSecond();
-                    Timestamp sstTimeGet = minecrafts.getTimestamp("sst");
-                    long sstTimestamp = sstTimeGet.getTime() / 1000L;
-                    long ssSa = nowTimestamp - sstTimestamp;
-                    long ssSaMinute = ssSa / 60;
-                    if (ssSaMinute > 3) {
-                        player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
-                        return;
-                    }
+        int permLevel = lp.getPermLevel(playerName);
+		if (permLevel < 1) {
+			player.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
+			return;
+		}
+        try (Connection conn = db.getConnection()) {
+            Map<String, Map<String, Object>> statusMap = dso.loadStatusTable(conn);
+			statusMap.entrySet().stream()
+				.filter(entry -> entry.getKey() instanceof String serverName && serverName.equals(targetServerName))
+				.forEach(entry -> {
+					Map<String, Object> serverInfo = entry.getValue();
+					if (serverInfo.get("enter") instanceof Boolean enter && !enter) {
+						player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
+						return;
+					}
+					if (serverInfo.get("online") instanceof Boolean online && !online) {
+						player.sendMessage(Component.text(targetServerName+"サーバーは現在オフラインです。").color(NamedTextColor.RED));
+						logger.info(targetServerName+"サーバーは現在オフラインです。");
+						return;
+					}
                     server.getServer(targetServerName).ifPresent(registeredServer -> player.createConnectionRequest(registeredServer).fireAndForget());
-                } else {
-                    player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
-                }
-            }
+                });
         } catch (SQLException | ClassNotFoundException e) {
-            player.sendMessage(Component.text("エラーが発生しました。").color(NamedTextColor.RED));
-            logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-        }
+			logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
     }
 }

@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Objects;
+import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -26,6 +26,9 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
 import velocity.Config;
 import velocity.DatabaseInterface;
+import velocity.DatabaseLog;
+import velocity.DoServerOnline;
+import velocity.Luckperms;
 
 public class StartServer {
 
@@ -35,15 +38,14 @@ public class StartServer {
 	private final DatabaseInterface db;
 	private final ConsoleCommandSource console;
 	private final BroadCast bc;
+	private final DoServerOnline dso;
 	private final MessageEditorInterface discordME;
+	private final Luckperms lp;
+	private final DatabaseLog dbLog;
 	private String currentServerName = null;
 	
 	@Inject
-	public StartServer (
-		ProxyServer server, Logger logger, Config config,
-		DatabaseInterface db, ConsoleCommandSource console, MessageEditorInterface discordME,
-		BroadCast bc
-	) {
+	public StartServer (ProxyServer server, Logger logger, Config config, DatabaseInterface db, ConsoleCommandSource console, MessageEditorInterface discordME, BroadCast bc, DoServerOnline dso, Luckperms lp, DatabaseLog dbLog) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
@@ -51,133 +53,145 @@ public class StartServer {
 		this.console = console;
 		this.bc = bc;
 		this.discordME = discordME;
+		this.dso = dso;
+		this.lp = lp;
+		this.dbLog = dbLog;
 	}
 	
-	public void execute(@NotNull CommandSource source,String[] args) {
+	public void execute(@NotNull CommandSource source, String[] args) {
+		if (args.length < 2) {
+			source.sendMessage(Component.text("引数が足りません。").color(NamedTextColor.RED));
+			return;
+		}
 		String targetServerName = args[1];
-		if (source instanceof Player player) {
-			if (args.length == 1 || Objects.isNull(targetServerName) || targetServerName.isEmpty()) {
-				player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
-				return;
-			}
-			
-			// プレイヤーの現在のサーバーを取得
-	        player.getCurrentServer().ifPresent(serverConnection -> {
-	            RegisteredServer registeredServer = serverConnection.getServer();
-	            currentServerName = registeredServer.getServerInfo().getName();
-	        });
-			
-			boolean containsServer = false;
-			for (RegisteredServer registeredServer : server.getAllServers()) {
-				if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName)) {
-					containsServer = true;
-					break;
-				}
-			}
-
-			if (!containsServer) {
-		        player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
-			} else {
-				String query = "SELECT * FROM members WHERE uuid=?;",
-					query2 = "SELECT * FROM status WHERE name=?;";
-				try (Connection conn = db.getConnection();
-					PreparedStatement ps = conn.prepareStatement(query);
-					PreparedStatement ps2 = conn.prepareStatement(query2)) {
-	    			ps.setString(1,player.getUniqueId().toString());
-					ps2.setString(1,targetServerName);
-					try (ResultSet minecrafts = ps.executeQuery();
-						ResultSet mine_status = ps2.executeQuery()) {
-						if (minecrafts.next()) {
-							Timestamp beforeStartTime = minecrafts.getTimestamp("st");
-							if (beforeStartTime != null) {
-								long now_timestamp = Instant.now().getEpochSecond();
-								// /startを実行したときに発行したセッションタイムをみる
-								long st_timestamp = beforeStartTime.getTime() / 1000L;
-								long sa = now_timestamp-st_timestamp;
-								long sa_minute = sa/60;
-								if (sa_minute<=config.getInt("Interval.Start_Server",0)) {
-									player.sendMessage(Component.text("サーバーの起動間隔は"+config.getInt("Interval.Start_Server",0)+"分以上は空けてください。").color(NamedTextColor.RED));
-									return;
-								}
+		if (!(source instanceof Player)) {
+			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
+			return;
+		}
+		Player player = (Player) source;
+		String playerName = player.getUsername(),
+			playerUUID = player.getUniqueId().toString();
+		if (args.length == 1 || targetServerName == null || targetServerName.isEmpty()) {
+			player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
+			return;
+		}
+		player.getCurrentServer().ifPresent(serverConnection -> {
+			RegisteredServer registeredServer = serverConnection.getServer();
+			currentServerName = registeredServer.getServerInfo().getName();
+		});
+		boolean containsServer = server.getAllServers().stream()
+			.anyMatch(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName));
+		if (!containsServer) {
+			player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
+			return;
+		}
+		int permLevel = lp.getPermLevel(playerName);
+		if (permLevel < 2) {
+			player.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
+			return;
+		}
+		String query = "SELECT * FROM members WHERE uuid=?;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
+			ps.setString(1, player.getUniqueId().toString());
+			try (ResultSet minecrafts = ps.executeQuery()) {
+				if (minecrafts.next()) {
+					Timestamp beforeStartTime = minecrafts.getTimestamp("st");
+					if (beforeStartTime != null) {
+						long now_timestamp = Instant.now().getEpochSecond();
+						long st_timestamp = beforeStartTime.getTime() / 1000L;
+						long sa = now_timestamp-st_timestamp;
+						long sa_minute = sa/60;
+						if (sa_minute <= config.getInt("Interval.Start_Server",0)) {
+							player.sendMessage(Component.text("サーバーの起動間隔は"+config.getInt("Interval.Start_Server",0)+"分以上は空けてください。").color(NamedTextColor.RED));
+							return;
+						}
+					}
+					Map<String, Map<String, Object>> statusMap = dso.loadStatusTable(conn);
+					statusMap.entrySet().stream()
+						.filter(entry -> entry.getKey() instanceof String serverName && serverName.equals(targetServerName))
+						.forEach(entry -> {
+							Map<String, Object> serverInfo = entry.getValue();
+							if (serverInfo.get("enter") instanceof Boolean enter && !enter) {
+								player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
+								return;
 							}
-							if (mine_status.next()) {
-								if (mine_status.getBoolean("online")) {
-									player.sendMessage(Component.text(targetServerName+"サーバーは起動中です。").color(NamedTextColor.RED));
-									logger.info(NamedTextColor.RED+targetServerName+"サーバーは起動中です。");
-								} else {
-									if (config.getString("Servers."+targetServerName+".exec","").isEmpty() || !config.getBoolean("Servers."+args[1]+".entry", false)) {
-										player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
+							if (serverInfo.get("online") instanceof Boolean online && online) {
+								player.sendMessage(Component.text(targetServerName+"サーバーは起動中です。").color(NamedTextColor.RED));
+								logger.info(targetServerName+"サーバーは起動中です。");
+								return;
+							}
+							if (serverInfo.get("exec") instanceof String execPath) {
+								if (serverInfo.get("memory") instanceof Integer memory) {
+									int currentUsedMemory = dso.getCurrentUsedMemory(statusMap),
+										maxMemory = config.getInt("MaxMemory", 0);
+									int futureMemory = currentUsedMemory + memory;
+									if (maxMemory < futureMemory) {
+										String message = "メモリ超過のため、サーバーを起動できません。(" + futureMemory + "GB/" + maxMemory + "GB)";
+										player.sendMessage(Component.text(message).color(NamedTextColor.RED));
+										logger.info(message);
 										return;
 									}
-									
-									// 全サーバーにプレイヤーがサーバーを起動したことを通知
-									TextComponent notifyComponent = Component.text()
-											.append(Component.text(player.getUsername()+"が"+targetServerName+"サーバーを起動しました。\nまもなく"+targetServerName+"サーバーが起動します。").color(NamedTextColor.AQUA))
-											.build();
-									bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
-									
-									// stにセッションタイムを入れる
 									String query3 = "UPDATE members SET st=CURRENT_TIMESTAMP WHERE uuid=?;";
 									try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
-										ps3.setString(1,player.getUniqueId().toString());
+										ps3.setString(1, player.getUniqueId().toString());
 										int rsAffected3 = ps3.executeUpdate();
 										if (rsAffected3 > 0) {
-											// バッチファイルのパスを指定
 											try {
-												String execFilePath = config.getString("Servers."+targetServerName+".exec");
-												ProcessBuilder processBuilder = new ProcessBuilder(execFilePath);
+												ProcessBuilder processBuilder = new ProcessBuilder(execPath);
 												processBuilder.start();
-
-												String query4 = "UPDATE status SET online=? WHERE name=?;",
-												query5 = "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);";
-											try (PreparedStatement ps4 = conn.prepareStatement(query4);
-												PreparedStatement ps5 = conn.prepareStatement(query5)) {
-												ps4.setBoolean(1, true);
-												ps4.setString(2, targetServerName);
-												
-												ps5.setString(1, player.getUsername());
-												ps5.setString(2, player.getUniqueId().toString());
-												ps5.setString(3, currentServerName);
-												ps5.setBoolean(4, true);
-												ps5.setString(5, "start");
-												int rsAffected4 = ps4.executeUpdate(),
-													rsAffected5 = ps5.executeUpdate();
-												if (rsAffected4 > 0 && rsAffected5 > 0) {
-													discordME.AddEmbedSomeMessage("Start", player, targetServerName);
-													TextComponent component = Component.text()
-																.append(Component.text("UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
-																.append(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
-																.build();
-													player.sendMessage(component);
-													console.sendMessage(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
+												String query4 = "UPDATE status SET online=? WHERE name=?;";
+												try (PreparedStatement ps4 = conn.prepareStatement(query4)) {
+													ps4.setBoolean(1, true);
+													ps4.setString(2, targetServerName);
+													int rsAffected4 = ps4.executeUpdate();
+													if (rsAffected4 > 0) {
+														dbLog.insertLog(conn, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true, "start"});
+														discordME.AddEmbedSomeMessage("Start", player, targetServerName);
+														TextComponent component = Component.text()
+																	.append(Component.text("UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
+																	.append(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
+																	.build();
+														player.sendMessage(component);
+														TextComponent notifyComponent = Component.text()
+															.append(Component.text(player.getUsername()+"が"+targetServerName+"サーバーを起動しました。\nまもなく"+targetServerName+"サーバーが起動します。\n自動転送を希望する方は、自動転送エリアの上でお待ちくださいませ。").color(NamedTextColor.AQUA))
+															.build();
+														bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
+														console.sendMessage(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
+													}
 												}
-											}
 											} catch (IOException e) {
-												player.sendMessage(Component.text("内部エラーが発生しました。\n実行パスが範囲外です。").color(NamedTextColor.RED));
-												logger.error(NamedTextColor.RED+"内部エラーが発生しました。\n実行パスが範囲外です。");
+												player.sendMessage(Component.text("実行時にエラーが発生しました。").color(NamedTextColor.RED));
+												logger.error(NamedTextColor.RED+"実行時にエラーが発生しました。");
 											}
 										} else {
 											player.sendMessage(Component.text("内部エラーが発生しました。\nサーバーを起動できません。").color(NamedTextColor.RED));
 											logger.error(NamedTextColor.RED+"内部エラーが発生しました。\nサーバーを起動できません。");
 										}
+									} catch (SQLException e) {
+										logger.error("An SQLException error occurred: " + e.getMessage());
+										for (StackTraceElement element : e.getStackTrace()) {
+											logger.error(element.toString());
+										}
 									}
+								} else {
+									player.sendMessage(Component.text("メモリが設定されていないため、サーバーを起動できません。").color(NamedTextColor.RED));
 								}
+							} else {
+								player.sendMessage(Component.text("実行パスが設定されていないため、サーバーを起動できません。").color(NamedTextColor.RED));
 							}
-						} else {
-							// MySQLサーバーにプレイヤー情報が登録されてなかった場合
-							logger.info(NamedTextColor.RED+"あなたのプレイヤー情報がデータベースに登録されていません。");
-							player.sendMessage(Component.text(player.getUsername()+"のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
-						}
-					}
-		        } catch (SQLException | ClassNotFoundException e) {
-		            logger.error("An IOException | SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-					for (StackTraceElement element : e.getStackTrace()) {
-						logger.error(element.toString());
-					}
-		        }
+						});
+				} else {
+					// MySQLサーバーにプレイヤー情報が登録されてなかった場合
+					logger.info(playerName + "のプレイヤー情報がデータベースに登録されていません。");
+					player.sendMessage(Component.text(playerName + "のプレイヤー情報がデータベースに登録されていません。").color(NamedTextColor.RED));
+				}
 			}
-		} else {
-			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
 		}
 	}
 }

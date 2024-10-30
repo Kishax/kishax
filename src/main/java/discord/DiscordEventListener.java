@@ -5,11 +5,9 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,41 +36,31 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.BroadCast;
 import velocity.Config;
-import velocity.Database;
-import velocity.PlayerUtil;
+import velocity.DatabaseLog;
 import velocity_command.Request;
+import velocity_command.RequestInterface;
 
 public class DiscordEventListener extends ListenerAdapter {
-
 	public static String PlayerChatMessageId = null;
-	
 	private final Logger logger;
 	private final Config config;
-	private final Database db;
 	private final BroadCast bc;
-	private final PlayerUtil pu;
 	private final MessageEditorInterface discordME;
+	private final RequestInterface req;
+	private final DatabaseLog dbLog;
 	private final String teraToken, teraExecFilePath;
 	private final Long teraChannelId;
 	private final boolean require;
-	private String pattern = null, replyMessage = null, 
-        		reqServerName = null, reqPlayerName = null, 
-				execFilePath = null, reqPlayerUUID = null, restAPIUrl = null;
-	private Pattern compiledPattern = null;
-	private Matcher matcher = null;
-	private ProcessBuilder processBuilder = null;
+	private String replyMessage = null, restAPIUrl = null;
 
 	@Inject
-	public DiscordEventListener (
-		Logger logger, Config config, Database db, 
-		BroadCast bc, PlayerUtil pu, MessageEditorInterface discordME
-	) {
+	public DiscordEventListener (Logger logger, Config config, BroadCast bc, MessageEditorInterface discordME, RequestInterface req, DatabaseLog dbLog) {
 		this.logger = logger;
 		this.config = config;
-		this.db = db;
 		this.bc = bc;
-		this.pu = pu;
 		this.discordME = discordME;
+		this.req = req;
+		this.dbLog = dbLog;
 		this.teraToken = config.getString("Terraria.Token", "");
 		this.teraExecFilePath = config.getString("Terraria.Exec_Path", "");
 		this.teraChannelId = config.getLong("Terraria.ChannelId", 0);
@@ -87,16 +75,85 @@ public class DiscordEventListener extends ListenerAdapter {
 	@Override
 	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
         Member member = e.getMember();
+		if (member.getUser().isBot()) {
+			return;
+		}
 		AudioChannel channel = e.getChannelJoined();
 		if (channel == null) {
-            // チャンネルがnullの場合の処理
             logger.error("チャンネルがnullです。");
             return;
         }
         String message = "(discord) " + member.getEffectiveName() + " がボイスチャットチャンネル " + channel.getName() + " に参加しました。";
-
         TextComponent component = Component.text(message).color(NamedTextColor.GREEN);
         bc.broadCastMessage(component);
+    }
+
+	@SuppressWarnings("null")
+	@Override
+	public void onButtonInteraction(ButtonInteractionEvent e) {
+        String buttonId = e.getComponentId();
+        String buttonMessage = e.getMessage().getContentRaw();
+        if (Objects.isNull(buttonMessage) || Objects.isNull(buttonId)) return;
+        User user = e.getUser();
+        Member member = e.getMember();
+		List<Role> roles = member.getRoles();
+		if (!roles.contains(e.getGuild().getRoleById(config.getLong("Discord.AdCraRoleId")))) {
+			replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
+			e.reply(replyMessage).setEphemeral(true).queue();
+			return;
+		}
+        switch (buttonId) {
+        	case "reqOK" -> {
+				replyMessage = user.getAsMention() + " リクエストを受諾しました。";
+				Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage);
+				if (!reqMap.isEmpty()) {
+					String reqPlayerName = reqMap.get("playerName"),
+						reqServerName = reqMap.get("serverName"),
+						reqPlayerUUID = reqMap.get("playerUUID");
+					dbLog.insertLog("INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "ok"});
+					String execPath = req.getExecPath(reqServerName);
+					ProcessBuilder processBuilder = new ProcessBuilder(execPath);
+					try {
+						processBuilder.start();
+						discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
+						bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
+						Request.PlayerReqFlags.remove(reqPlayerUUID);
+					} catch (IOException e1) {
+						replyMessage = "内部エラーが発生しました。\nサーバーが起動できません。";
+						logger.error("An IOException error occurred: " + e1.getMessage());
+						for (StackTraceElement element : e1.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
+				} else {
+					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
+					e.reply(replyMessage).queue();
+				}
+				if (replyMessage != null) {
+					e.reply(replyMessage).queue();
+				}
+				e.getMessage().editMessageComponents().queue();
+            }
+        	case "reqCancel" -> {
+				replyMessage = user.getAsMention() + " リクエストを拒否しました。";
+				Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage);
+				if (!reqMap.isEmpty()) {
+					String reqPlayerName = reqMap.get("playerName"),
+					reqServerName = reqMap.get("serverName"),
+					reqPlayerUUID = reqMap.get("playerUUID");
+					dbLog.insertLog("INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "cancel"});
+					discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
+					bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
+					Request.PlayerReqFlags.remove(reqPlayerUUID);
+				} else {
+					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
+				}
+				if (replyMessage != null) {
+					e.reply(replyMessage).queue();
+				}
+				e.getMessage().editMessageComponents().queue();
+            }
+        }
     }
 
 	@SuppressWarnings("null")
@@ -163,7 +220,6 @@ public class DiscordEventListener extends ListenerAdapter {
 		String channelId = channel.getId(),
 			guildId = e.getGuild().getId();
 		String channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId);
-
 		if (e.getName().equals("fmc")) {
 			switch (e.getSubcommandName()) {
 				case "tera" -> {
@@ -283,144 +339,11 @@ public class DiscordEventListener extends ListenerAdapter {
 		}
     }
 
-	@SuppressWarnings("null")
-	@Override
-	public void onButtonInteraction(ButtonInteractionEvent e) {
-        // ボタンIDを取得
-        String buttonId = e.getComponentId();
-        String buttonMessage = e.getMessage().getContentRaw();
-        
-        if (Objects.isNull(buttonMessage) || Objects.isNull(buttonId)) return;
-        
-        // ボタンを押したユーザーを取得
-        User user = e.getUser();
-        Member member = e.getMember();
-		List<Role> roles = member.getRoles();
-
-        switch (buttonId) {
-        	case "reqOK" -> {
-				if (!roles.contains(e.getGuild().getRoleById(config.getLong("Discord.AdCraRoleId")))) {
-					replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
-					e.reply(replyMessage).setEphemeral(true).queue();
-					return;
-				}
-
-				replyMessage = user.getAsMention() + " リクエストを受諾しました。";
-				// プレイヤー名・サーバー名、取得
-				pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？(.*?)";
-				compiledPattern = Pattern.compile(pattern);
-				matcher = compiledPattern.matcher(buttonMessage);
-				if (matcher.find()) {
-					reqPlayerName = matcher.group(2);
-					reqServerName = matcher.group(3);
-					reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-					String query = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
-					try (Connection conn = db.getConnection();
-						PreparedStatement ps = conn.prepareStatement(query)) {
-						ps.setString(1, reqPlayerName);
-						ps.setString(2, reqPlayerUUID);
-						ps.setBoolean(3, true);
-						ps.setString(4, reqServerName);
-						ps.setString(5, "ok");
-						int rsAffected = ps.executeUpdate();
-						if (rsAffected > 0) {
-							execFilePath = config.getString("Servers."+reqServerName+".exec");
-							processBuilder = new ProcessBuilder(execFilePath);
-							try {
-								processBuilder.start();
-								// Discord通知
-								discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
-								// マイクラサーバーへ通知
-								bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
-								// フラグから削除
-								String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-								Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
-							} catch (IOException e1) {
-								replyMessage = "内部エラーが発生しました。\nサーバーが起動できません。";
-								logger.error("An IOException error occurred: " + e1.getMessage());
-								for (StackTraceElement element : e1.getStackTrace()) {
-									logger.error(element.toString());
-								}
-							}
-						}
-					} catch (SQLException | ClassNotFoundException e1) {
-						logger.error("A SQLException error occurred: " + e1.getMessage());
-						for (StackTraceElement element : e1.getStackTrace()) {
-							logger.error(element.toString());
-						}
-					}
-				} else {
-					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
-				}
-				
-				if (replyMessage != null) {
-					e.reply(replyMessage).queue();
-				}
-				
-				// ボタンを削除
-				e.getMessage().editMessageComponents().queue();
-            }
-        		
-        	case "reqCancel" -> {
-				if (!roles.contains(e.getGuild().getRoleById(config.getLong("Discord.AdCraRoleId")))) {
-					replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
-					e.reply(replyMessage).setEphemeral(true).queue();
-					return;
-				}
-
-				replyMessage = user.getAsMention() + " リクエストを拒否しました。";
-				// プレイヤー名・サーバー名、取得
-				pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？";
-				compiledPattern = Pattern.compile(pattern);
-				matcher = compiledPattern.matcher(buttonMessage);
-				if (matcher.find()) {
-					reqPlayerName = matcher.group(2);
-					reqServerName = matcher.group(3);
-					reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-					String query = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
-					try (Connection conn = db.getConnection();
-						PreparedStatement ps = conn.prepareStatement(query)) {
-						ps.setString(1, reqPlayerName);
-						ps.setString(2, reqPlayerUUID);
-						ps.setBoolean(3, true);
-						ps.setString(4, reqServerName);
-						ps.setString(5, "cancel");
-						int rsAffected = ps.executeUpdate();
-						if (rsAffected > 0) {
-							// Discord通知
-							discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
-							// マイクラサーバーへ通知
-							bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
-							// フラグから削除
-							String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-							Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
-						}
-					}
-					catch (SQLException | ClassNotFoundException e1) {
-						logger.error("A SQLException error occurred: " + e1.getMessage());
-						for (StackTraceElement element : e1.getStackTrace()) {
-							logger.error(element.toString());
-						}
-					}
-				} else {
-					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
-				}
-				
-				if (replyMessage != null) {
-					e.reply(replyMessage).queue();
-				}
-				
-				// ボタンを削除
-				e.getMessage().editMessageComponents().queue();
-            }
-        }
-    }
-
 	public void sendMixUrl(String string) {
     	// 正規表現パターンを定義（URLを見つけるための正規表現）
         String urlRegex = "https?://\\S+";
         Pattern patternUrl = Pattern.compile(urlRegex);
-        matcher = patternUrl.matcher(string);
+        Matcher matcher = patternUrl.matcher(string);
 
         // URLリストとテキストリストを作成
         List<String> urls = new ArrayList<>();

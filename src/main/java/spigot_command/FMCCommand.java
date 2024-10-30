@@ -25,19 +25,22 @@ import spigot.Main;
 import spigot.PortalsConfig;
 
 public class FMCCommand implements TabExecutor {
+	private final common.Main plugin;
 	private final PortalsConfig psConfig;
 	private final PortalsMenu pm;
 	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal"));
 	@Inject
-	public FMCCommand(PortalsConfig psConfig, PortalsMenu pm) {
+	public FMCCommand(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm) {
+		this.plugin = plugin;
 		this.psConfig = psConfig;
 		this.pm = pm;
 	}
 	
 	@Override
 	public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
-		if(sender == null) return true;
-
+		if (sender == null) {
+			return true;
+		}
     	if (args.length == 0 || !subcommands.contains(args[0].toLowerCase())) {
     		BaseComponent[] component =
     			    new ComponentBuilder(ChatColor.YELLOW+"FMC COMMANDS LIST").bold(true).underlined(true)
@@ -69,51 +72,42 @@ public class FMCCommand implements TabExecutor {
 				Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
 				return true;
 			}
-				
 			case "reload" -> {
 				Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);
 				return true;
 			}
-				
 			case "mcvc" -> {
 				Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
 				return true; 
 			}
-
 			case "portal" -> {
-				try {
-					if (args.length > 1 && args[1].equalsIgnoreCase("wand")) {
-						Main.getInjector().getInstance(PortalsWand.class).execute(sender, cmd, label, args);
+				if (args.length > 1 && args[1].equalsIgnoreCase("wand")) {
+					Main.getInjector().getInstance(PortalsWand.class).execute(sender, cmd, label, args);
+					return true;
+				} else if (args.length > 1 && args[1].equalsIgnoreCase("delete")) {
+					if (args.length > 2) {
+						String portalName = args[2];
+						Main.getInjector().getInstance(PortalsDelete.class).execute(sender,portalName);
+						return true;
+					} else {
+						sender.sendMessage("Usage: /fmc portal delete <portalUUID>");
 						return true;
 					}
-
-					if (args.length > 1 && args[1].equalsIgnoreCase("delete")) {
-						if (args.length > 2) {
-							String portalName = args[2];
-							Main.getInjector().getInstance(PortalsDelete.class).execute(sender,portalName);
-							return true;
-						} else {
-							sender.sendMessage("Usage: /fmc portal delete <portalUUID>");
+				} else if (args.length > 1 && args[1].equalsIgnoreCase("rename")) {
+					if (args.length > 2) {
+						if (args.length > 3) {
+							String portalUUID = args[2];
+							String portalName = args[3];
+							Main.getInjector().getInstance(PortalsRename.class).execute(sender,portalUUID,portalName);
 							return true;
 						}
+					} else {
+						sender.sendMessage("Usage: /fmc portal rename <portalUUID> <newName>");
+						return true;
 					}
-
-					if (args.length > 1 && args[1].equalsIgnoreCase("rename")) {
-						if (args.length > 2) {
-							if (args.length > 3) {
-								String portalUUID = args[2];
-								String portalName = args[3];
-								Main.getInjector().getInstance(PortalsRename.class).execute(sender,portalUUID,portalName);
-								return true;
-							}
-						} else {
-							sender.sendMessage("Usage: /fmc portal rename <portalUUID> <newName>");
-							return true;
-						}
-					}
-
-					if (sender instanceof Player player) {
-						if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
+				} else if (args.length > 1 && args[1].equalsIgnoreCase("menu")) {
+					if (plugin.getConfig().getBoolean("Portals.Menu", false)) {
+						if (sender instanceof Player player) {
 							if (args.length > 2 && args[2].equalsIgnoreCase("server")) {
 								if (!(player.hasPermission("group.new-fmc-user") || player.hasPermission("group.sub-admin") || player.hasPermission("group.super-admin"))) {
 									player.sendMessage("先にUUID認証を完了させてください。");
@@ -133,8 +127,7 @@ public class FMCCommand implements TabExecutor {
 										}
 									}
 								} else {
-									// /fmc portal menu serverと打った場合
-									//sender.sendMessage("Usage: /fmc portal menu server <life|distribution|mod>");
+									// /fmc portal menu serverと打った場合(タイプ指定していない場合)
 									Main.getInjector().getInstance(PortalsMenu.class).openServerTypeInventory((Player) sender);
 									return true;
 								}
@@ -143,20 +136,19 @@ public class FMCCommand implements TabExecutor {
 								return true;
 							}
 						} else {
-							sender.sendMessage("Usage: /fmc portal menu");
+							sender.sendMessage("You must be a player to use this command.");
 							return true;
 						}
 					} else {
-						sender.sendMessage("You must be a player to use this command.");
+						sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
 						return true;
 					}
-				} catch (ClassCastException e) {
-					sender.sendMessage("You must be a player to use this command.");
+				} else {
+					sender.sendMessage("Usage: /fmc portal menu");
 					return true;
 				}
 			}
 		}
-
 		return true;
 	}
 

@@ -40,7 +40,7 @@ public class Main {
 		getInjector().getInstance(Luckperms.class).triggerNetworkSync();
 		plugin.getLogger().info("luckpermsと連携しました。");
 		plugin.getLogger().log(Level.INFO, LuckPermsProvider.get().getPlatform().toString());
-		getInjector().getInstance(PlayerUtil.class).loadPlayers();
+		getInjector().getInstance(PlayerUtils.class).loadPlayers();
     	// DoServerOnlineとPortFinderとSocketの処理を統合
 		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
     	plugin.getLogger().info("プラグインが有効になりました。");

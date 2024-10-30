@@ -53,22 +53,17 @@ public class EventListener {
 	private final RomaToKanji conv;
 	private String chatServerName = null, originalMessage = null, joinMessage = null;
 	private Component component = null;
-	private final PlayerUtil pu;
+	private final PlayerUtils pu;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
 	private final MessageEditorInterface discordME;
 	private final MineStatus ms;
+	private final DatabaseLog dbLog;
 	private ServerInfo serverInfo = null;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 	@Inject
-	public EventListener (
-		Main plugin, Logger logger, ProxyServer server,
-		Config config, DatabaseInterface db, BroadCast bc,
-		ConsoleCommandSource console, RomaToKanji conv, PlayerUtil pu,
-		PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME,
-		MineStatus ms
-	) {
+	public EventListener (Main plugin, Logger logger, ProxyServer server, Config config, DatabaseInterface db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, DatabaseLog dbLog) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
@@ -82,12 +77,14 @@ public class EventListener {
 		this.rc = rc;
 		this.discordME = discordME;
 		this.ms = ms;
+		this.dbLog = dbLog;
 	}
 	
 	@Subscribe
 	public void onChat(PlayerChatEvent e) {
 		if (e.getMessage().startsWith("/")) return;
 	    Player player = e.getPlayer();
+		String playerName = player.getUsername();
 	    originalMessage = e.getMessage();
 	    // プレイヤーの現在のサーバーを取得
         player.getCurrentServer().ifPresent(serverConnection -> {
@@ -96,7 +93,7 @@ public class EventListener {
             chatServerName = serverInfo.getName();
         });
         // マルチバイト文字の長さを取得
-        int NameCount = player.getUsername().length();
+        int NameCount = playerName.length();
         // スペースを生成
         StringBuilder space = new StringBuilder();
         for (int i = 0; i <= NameCount; i++) {
@@ -220,7 +217,6 @@ public class EventListener {
     		            } else if (i != textPartsSize - 1) {
     		                getUrl = "\n" + urls.get(i) + "\n";
     		                getUrl2 = "\n" + space + urls.get(i);
-    		                
     		                //if(i = urlsSize)
     		                //isUrlLineBreak = true;
     		            } else {
@@ -237,7 +233,6 @@ public class EventListener {
     		    }
     		    discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext);
     		} catch (Exception ex) {
-    			// スタックトレースをログに出力
 	            logger.error("An onChat error occurred: " + ex.getMessage());
 	            for (StackTraceElement element : ex.getStackTrace()) {
 	                logger.error(element.toString());
@@ -260,6 +255,8 @@ public class EventListener {
 	@Subscribe
 	public void onServerSwitch(ServerConnectedEvent e) {
 		Player player = e.getPlayer();
+		String playerName = player.getUsername(),
+			playerUUID = player.getUniqueId().toString();
 		if (!disconnectTasks.isEmpty()) {
 			for (Player disconnectPlayer : disconnectTasks.keySet()) {
 				if (disconnectPlayer.getUniqueId().equals(player.getUniqueId())) {
@@ -301,7 +298,7 @@ public class EventListener {
 					}
 					String query2 = "SELECT * FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;";
 					try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
-						ps2.setString(1, player.getUniqueId().toString());
+						ps2.setString(1, playerUUID);
 						try (ResultSet yuyu = ps2.executeQuery();) {
 							//一番最初に登録された名前と一致したら
 							if (yuyu.next()) {
@@ -314,7 +311,7 @@ public class EventListener {
 									return;
 								} else {
 									// メッセージ送信
-									component = Component.text(player.getUsername()+"が"+currentServerName+"サーバーに参加しました。").color(NamedTextColor.YELLOW);
+									component = Component.text(playerName+"が"+currentServerName+"サーバーに参加しました。").color(NamedTextColor.YELLOW);
 									bc.sendSpecificServerMessage(component, currentServerName);
 									joinMessage = config.getString("EventMessage.Join","");
 									if (!joinMessage.isEmpty()) {
@@ -326,7 +323,7 @@ public class EventListener {
 									// 2時間経ってたら
 									String query4 = "SELECT * FROM log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
 									try (PreparedStatement ps4 = conn.prepareStatement(query4)) {
-										ps4.setString(1, player.getUniqueId().toString());
+										ps4.setString(1, playerUUID);
 										ps4.setBoolean(2, true);
 										try (ResultSet logs = ps4.executeQuery()) {
 											// タイムゾーンをAsia/Tokyoに設定
@@ -345,20 +342,13 @@ public class EventListener {
 												}
 												beforejoin_sa_minute = Math.max(beforejoin_sa / 60, 0); // マイナス値を防ぐためにMath.maxを使用
 											}
-											if (player.getUsername().equals(yuyu.getString("name"))) {
-												String query5 = "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);";
-												try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
-													ps5.setString(1, player.getUsername());
-													ps5.setString(2, player.getUniqueId().toString());
-													ps5.setString(3, currentServerName);
-													ps5.setBoolean(4, true);
-													ps5.executeUpdate();
-												}
+											if (playerName.equals(yuyu.getString("name"))) {
+												dbLog.insertLog(conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
 											} else {
 												// 一番最初に登録した名前と一致しなかったら
 												// MOJANG-APIからとってきた名前でレコードを更新させる
 												String current_name = pu.getPlayerNameFromUUID(player.getUniqueId());
-												if (Objects.isNull(current_name) || !(current_name.equals(player.getUsername()))) {
+												if (Objects.isNull(current_name) || !(current_name.equals(playerName))) {
 													pd.playerDisconnect (
 														true,
 														player,
@@ -370,7 +360,7 @@ public class EventListener {
 												try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
 													ps5.setString(1, current_name);
 													ps5.setString(2, yuyu.getString("name"));
-													ps5.setString(3, player.getUniqueId().toString());
+													ps5.setString(3, playerUUID);
 													int rsAffected5 = ps5.executeUpdate();
 													if (rsAffected5 > 0) {
 														player.sendMessage(Component.text("MCIDの変更が検出されたため、データベースを更新しました。").color(NamedTextColor.GREEN));
@@ -407,16 +397,16 @@ public class EventListener {
 												}
 											}
 											// AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
-											if (EventListener.PlayerMessageIds.containsKey(player.getUniqueId().toString())) {
+											if (EventListener.PlayerMessageIds.containsKey(playerUUID)) {
 												// どこからか移動してきたとき
-												//ms.updateJoinPlayers(player.getUsername(), currentServerName);
+												//ms.updateJoinPlayers(playerName, currentServerName);
 												if (previousServerInfo.isPresent()) {
 													RegisteredServer previousServer = previousServerInfo.get();
 													ServerInfo beforeServerInfo = previousServer.getServerInfo();
 													String beforeServerName = beforeServerInfo.getName();
 													//logger.info("Player connected to server: " + beforeServerName);
 													//logger.info("Player connected to server: " + currentServerName);
-													ms.updateMovePlayers(player.getUsername(), beforeServerName, currentServerName);
+													ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
 													discordME.AddEmbedSomeMessage("Move", player, serverInfo);
 												}
 											} else {
@@ -428,11 +418,11 @@ public class EventListener {
 														String beforeServerName = beforeServerInfo.getName();
 														//logger.info("Player connected to server: " + beforeServerName);
 														//logger.info("Player connected to server: " + currentServerName);
-														ms.updateMovePlayers(player.getUsername(), beforeServerName, currentServerName);
+														ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
 														discordME.AddEmbedSomeMessage("Move", player, currentServerName);
 													} else {
 														// 1回目のどこかのサーバーに上陸したとき
-														ms.updateJoinPlayers(player.getUsername(), currentServerName);
+														ms.updateJoinPlayers(playerName, currentServerName);
 														discordME.AddEmbedSomeMessage("Join", player, serverInfo);
 													}
 												}
@@ -447,9 +437,9 @@ public class EventListener {
 								String current_name = pu.getPlayerNameFromUUID(player.getUniqueId());
 								String query3 = "SELECT * FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
 								try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
-									ps3.setString(1, player.getUsername());
+									ps3.setString(1, playerName);
 									try (ResultSet yu = ps3.executeQuery()) {
-										if (yu.next() || Objects.isNull(current_name) || !(current_name.equals(player.getUsername()))) {
+										if (yu.next() || Objects.isNull(current_name) || !(current_name.equals(playerName))) {
 											// クエリ実行より優先してキック
 											pd.playerDisconnect (
 												true,
@@ -458,8 +448,8 @@ public class EventListener {
 											);
 											String query4 = "INSERT INTO members (name, uuid, ban) VALUES (?, ?, ?);";
 											try (PreparedStatement ps4 = conn.prepareStatement(query4)) {
-												ps4.setString(1, player.getUsername());
-												ps4.setString(2, player.getUniqueId().toString());
+												ps4.setString(1, playerName);
+												ps4.setString(2, playerUUID);
 												ps4.setBoolean(3, true);
 												ps4.executeUpdate();
 											}
@@ -467,7 +457,7 @@ public class EventListener {
 										}
 										String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
 										if (!DiscordInviteUrl.isEmpty()) {
-											component = Component.text(player.getUsername()+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
+											component = Component.text(playerName+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
 													.append(Component.text("\nFMCサーバー").color(NamedTextColor.AQUA).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
 													.append(Component.text("へようこそ！\n当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成と、それをマイクラアカウントと紐づける").color(NamedTextColor.AQUA))
 													.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
@@ -481,7 +471,7 @@ public class EventListener {
 													.append(Component.text("にて質問してください！参加するには、上の「Discord」をクリックしてね。").color(NamedTextColor.AQUA));
 											player.sendMessage(component);
 										} else {
-											component = Component.text(player.getUsername()+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
+											component = Component.text(playerName+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
 													.append(Component.text("\nFMCサーバー").color(NamedTextColor.AQUA).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
 													.append(Component.text("へようこそ！\n当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成と、それをマイクラアカウントと紐づける").color(NamedTextColor.AQUA))
 													.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
@@ -490,21 +480,18 @@ public class EventListener {
 													.append(Component.text("\n正面にいるNPCをクリックして、UUID認証手続きへ移ります。").color(NamedTextColor.AQUA));
 											player.sendMessage(component);
 										}
-										ms.updateJoinPlayers(player.getUsername(), currentServerName);
+										ms.updateJoinPlayers(playerName, currentServerName);
 										discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
+										if (config.getBoolean("Servers." + currentServerName + ".hub")) {
+											component = Component.text(playerName+"がhomeサーバーに初めてやってきました！").color(NamedTextColor.AQUA);
+											bc.sendExceptServerMessage(component, currentServerName);
+										}
 									}
 								}
 							}
-							
 							// サーバー移動通知
-							//logger.info("Player connected to server: " + currentServerName);
-							if (config.getBoolean("Servers." + currentServerName + ".hub")) {
-								component = Component.text(player.getUsername()+"がhomeサーバーに初めてやってきました！").color(NamedTextColor.AQUA);
-								bc.sendExceptServerMessage(component, currentServerName);
-							} else {
-								component = Component.text("サーバー移動通知: "+player.getUsername()+" -> "+currentServerName).color(NamedTextColor.AQUA);
-								bc.sendExceptServerMessage(component, currentServerName);
-							}
+							component = Component.text("サーバー移動通知: "+playerName+" -> "+currentServerName).color(NamedTextColor.AQUA);
+							bc.sendExceptServerMessage(component, currentServerName);
 							if (currentServerName.equals("latest")) {
 								component = Component.text()
 											.append(Component.text("dynmap").decorate(TextDecoration.BOLD).color(NamedTextColor.GOLD))
@@ -537,10 +524,12 @@ public class EventListener {
 	@Subscribe
     public void onPlayerDisconnect(DisconnectEvent e) {
     	Player player = e.getPlayer();
+		String playerName = player.getUsername(),
+			playerUUID = player.getUniqueId().toString();
 		player.getCurrentServer().ifPresent(serverConnection -> {
 			RegisteredServer registeredServer = serverConnection.getServer();
 			serverInfo = registeredServer.getServerInfo();
-			ms.updateQuitPlayers(player.getUsername(), serverInfo.getName());
+			ms.updateQuitPlayers(playerName, serverInfo.getName());
 		});
     	Runnable task = () -> {
             // プレイヤーがReconnectしなかった場合に実行する処理
@@ -549,24 +538,10 @@ public class EventListener {
     	        player.getCurrentServer().ifPresent(currentServer -> {
     	            RegisteredServer registeredServer = currentServer.getServer();
     	            serverInfo = registeredServer.getServerInfo();
-    	            console.sendMessage(Component.text("Player " + player.getUsername() + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
+    	            console.sendMessage(Component.text("Player " + playerName + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
     	            int playTime = pu.getPlayerTime(player, serverInfo);
     	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo, playTime);
-					String query = "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);";
-    	            try (Connection conn = db.getConnection();
-						PreparedStatement ps = conn.prepareStatement(query)) {
-                		ps.setString(1, player.getUsername());
-                		ps.setString(2, player.getUniqueId().toString());
-                		ps.setString(3, serverInfo.getName());
-                		ps.setBoolean(4, true);
-                		ps.setInt(5, playTime);
-                		ps.executeUpdate();
-    	        	} catch (SQLException | ClassNotFoundException e1) {
-    	                logger.error("A SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
-						for (StackTraceElement element : e1.getStackTrace()) {
-							logger.error(element.toString());
-						}
-    	            }
+					dbLog.insertLog("INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);", new Object[] {playerName, playerUUID, serverInfo.getName(), true, playTime});
     	        });
         	}).schedule();
         };
