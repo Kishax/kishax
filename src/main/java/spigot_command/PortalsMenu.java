@@ -138,11 +138,8 @@ public class PortalsMenu {
     }
 
     public void enterServer(Player player, String serverName) {
-        // やっぱ各spigotsで検証してもらった方が早いか
-        // velocity.SetServerで確認していることをここで確認して飛ばす
-        //String playerName = player.getName();
-        // player.performCommand("fmc fv " + playerName + " stp " + serverName);
-        //player.performCommand("server " + serverName);
+        String playerName = player.getName();
+        player.performCommand("fmc fv " + playerName + " fmcp stp " + serverName);
     }
 
     private boolean checkServerOnline(String serverName) {
@@ -156,29 +153,13 @@ public class PortalsMenu {
             .orElse(false);
     }
 
-    /*private boolean memoryCheck(Connection conn, String serverName) {
-        // Max memory がわからない
-        return false;
-    }*/
-
     public void serverSwitch(Player player, String serverName) {
-        // 起動するにあたって、確認するべきもの
-        // 1. プレイヤーがそのサーバーに入る権限があるか
-        // 2. サーバーがオンラインか
-        // 3. サーバーがオンラインでない場合、プレイヤーがそのサーバーを起動する権限があるか
-        // 4. サーバーがオンラインである場合、プレイヤーがそのサーバーを停止する権限があるか
-        // 起動した場合は、serverCacheを更新する
-        // リクエスト受諾時も、serverCacheを更新するように、velocity.Discordにて更新を定義する
-        // セッションを定義
-        // mysqlに保存する?
-        // 起動間隔を設定する
-        // やはりveloに送ろう。そのほうが一から作るよりも早いか
         String playerName = player.getName();
         int permLevel = lp.getPermLevel(player.getName());
-        player.sendMessage("permLevel: " + permLevel);
         if (checkServerOnline(serverName)) {
             if (permLevel >= 2) {
                 player.performCommand("fmc fv " + playerName + " fmcp stop " + serverName);
+                player.closeInventory();
             }
         } else {
             if (permLevel == 1) {
@@ -186,8 +167,8 @@ public class PortalsMenu {
             } else if (permLevel >= 2) {
                 player.performCommand("fmc fv " + playerName + " fmcp start " + serverName);
             }
+            player.closeInventory();
         }
-        player.closeInventory();
     }
 
     public void openServerInventory(Player player, String serverName, int page) {
@@ -277,7 +258,7 @@ public class PortalsMenu {
                                             leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
                                         } else if (permLevel >= 2) {
                                             leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動");
-                                            leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
+                                            leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "アドミン権限より起動する。"));
                                         }
                                         leverItem.setItemMeta(leverMeta);
                                     }

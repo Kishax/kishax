@@ -29,6 +29,7 @@ Discord:
     MoveEmojiName: ""
     ExitEmojiName: ""
     StartEmojiName: ""
+    StopEmojiName: ""
     RequestEmojiName: ""
     RequestOKName: ""
     RequestCancelName: ""

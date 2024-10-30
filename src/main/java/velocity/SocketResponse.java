@@ -51,26 +51,18 @@ public class SocketResponse {
 		res = res.replace("\n", "").replace("\r", "");
     	if (res.contains("PHP")) {
     		if (res.contains("uuid")) {
-    			// PHPの方でlpテーブルへの追加は完了済み
     			String pattern = "PHP->uuid->new->(.*?)->";
-
-                // パターンをコンパイル
                 Pattern compiledPattern = Pattern.compile(pattern);
                 Matcher matcher = compiledPattern.matcher(res);
-
-                // パターンにマッチする部分を抽出
                 if (matcher.find()) {
                 	mineName = matcher.group(1);
 					lp.addPermission(mineName, "group.new-fmc-user");
 					// spigotsに通知し、serverCacheを更新させる
 					SocketSwitch ssw = sswProvider.get();
 					ssw.sendSpigotServer(res);
-
                 	Optional<Player> playerOptional = pu.getPlayerByName(mineName);
-
                 	if (playerOptional.isPresent()) {
                 	    Player player = playerOptional.get();
-                	    
                 	    TextComponent component;
                     	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
                     	if (!DiscordInviteUrl.isEmpty()) {

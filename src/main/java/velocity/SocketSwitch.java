@@ -105,6 +105,34 @@ public class SocketSwitch {
 	    }
 	}
     
+    public boolean sendSpecificServer(String serverName, String msg) {
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM status")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String serverDBName = rs.getString("name");
+                    int port = rs.getInt("socketport");
+                    boolean online = rs.getBoolean("online");
+                    if (port == 0) {
+                        //logger.info("sendSpecificServer: Server " + serverName + " has no socketport");
+                        continue;
+                    }
+                    if (online && serverDBName.equalsIgnoreCase(serverName)) {
+                        logger.info("sendSpecificServer: Starting client for server " + serverName + " on port " + port);
+                        startSocketClient(port, msg);
+                        return true;
+                    }
+                }
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.error("An Exception error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+        return false;
+    }
+
     public void sendSpigotServer(String sendmsg) {
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement("SELECT * FROM status")) {
