@@ -173,19 +173,21 @@ public class PortalsMenu {
         // mysqlに保存する?
         // 起動間隔を設定する
         // やはりveloに送ろう。そのほうが一から作るよりも早いか
+        String playerName = player.getName();
         int permLevel = lp.getPermLevel(player.getName());
         player.sendMessage("permLevel: " + permLevel);
         if (checkServerOnline(serverName)) {
-            if (permLevel == 1) {
-                //serverStartRequest(player, serverName);
-            } else if (permLevel >= 2) {
-                //serverStop(player, serverName);
+            if (permLevel >= 2) {
+                player.performCommand("fmc fv " + playerName + " fmcp stop " + serverName);
             }
-            //serverStop(player, serverName);
-            // 各spigotsが起動させる(いちいちプロキシにリクエストは送らない)
         } else {
-            //serverStart(player, serverName);
+            if (permLevel == 1) {
+                player.performCommand("fmc fv " + playerName + " fmcp req " + serverName);
+            } else if (permLevel >= 2) {
+                player.performCommand("fmc fv " + playerName + " fmcp start " + serverName);
+            }
         }
+        player.closeInventory();
     }
 
     public void openServerInventory(Player player, String serverName, int page) {
