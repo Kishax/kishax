@@ -1,15 +1,11 @@
 package discord;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 
@@ -31,14 +27,11 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.BroadCast;
 import velocity.Config;
-import velocity.Database;
+import velocity.DatabaseLog;
 import velocity.Main;
-import velocity.PlayerUtil;
 import velocity_command.Request;
+import velocity_command.RequestInterface;
 
 public class Discord implements DiscordInterface {
 
@@ -47,21 +40,17 @@ public class Discord implements DiscordInterface {
 	
     private final Logger logger;
     private final Config config;
-    private final Database db;
-    private final BroadCast bc;
-    private final PlayerUtil pu;
-    private final MessageEditorInterface discordME;
+    private final RequestInterface req;
+    private final DatabaseLog dbLog;
     private String channelId = null;
     private MessageChannel channel= null;
 	
     @Inject
-    public Discord (Logger logger, Config config, Database db, BroadCast bc, PlayerUtil pu, MessageEditorInterface discordME) {
+    public Discord (Logger logger, Config config, RequestInterface req, DatabaseLog dbLog) {
     	this.logger = logger;
     	this.config = config;
-    	this.db = db;
-    	this.bc = bc;
-    	this.pu = pu;
-    	this.discordME = discordME;
+        this.req = req;
+        this.dbLog = dbLog;
     }
     
     @Override
@@ -120,62 +109,19 @@ public class Discord implements DiscordInterface {
     public void sendRequestButtonWithMessage(String buttonMessage) {
     	if (config.getLong("Discord.AdminChannelId", 0) == 0 || !isDiscord) return;
 		channelId = Long.toString(config.getLong("Discord.AdminChannelId"));
-		
     	channel = jda.getTextChannelById(channelId);
         if (Objects.isNull(channel)) return;
-        
         Button button1 = Button.success("reqOK", "YES");
         Button button2 = Button.danger("reqCancel", "NO");
-        
-        // メッセージにボタンを添えて送信
         MessageCreateAction action = channel.sendMessage(buttonMessage)
-                .setActionRow(button1, button2);
-
+                .setActionRow(button1, button2); // メッセージにボタンを添えて送信
         action.queue(message -> {
-            // 3分後にボタンを削除
             CompletableFuture.delayedExecutor(3, TimeUnit.MINUTES).execute(() -> {
-            	// フラグが立っていなかったら
             	if (!Request.PlayerReqFlags.isEmpty()) {
             		String buttonMessage2 = message.getContentRaw();
-                	
-            		// プレイヤー名・サーバー名、取得
-                	String pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？(.*?)";
-                    Pattern compiledPattern = Pattern.compile(pattern);
-                    Matcher matcher = compiledPattern.matcher(buttonMessage2);
-                    if (matcher.find()) {
-                    	String reqPlayerName = matcher.group(2);
-                    	String reqServerName = matcher.group(3);
-                    	String reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-                        
-                        String query = "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);";
-                    	try (Connection conn = db.getConnection();
-                            PreparedStatement ps = conn.prepareStatement(query)) {
-                        	ps.setString(1, reqPlayerName);
-                        	ps.setString(2, reqPlayerUUID);
-                        	ps.setBoolean(3, true);
-                        	ps.setString(4, reqServerName);
-                        	ps.setString(5, "nores");
-                        	int rsAffected = ps.executeUpdate();
-                            if (rsAffected > 0) {
-                                // Discord通知
-                                discordME.AddEmbedSomeMessage("RequestNoRes", reqPlayerName);
-                                
-                                // マイクラサーバーへ通知
-                                bc.broadCastMessage(Component.text("管理者がリクエストに応答しませんでした。").color(NamedTextColor.BLUE));
-                                
-                                message.reply("管理者が応答しませんでした。").queue();
-                                message.editMessageComponents().queue(); // ボタンを削除
-                                
-                                // フラグから削除
-                                String playerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName);
-                                Request.PlayerReqFlags.remove(playerUUID); // フラグから除去
-                            }
-                        } catch (SQLException | ClassNotFoundException e1) {
-                        	logger.error("A discord error occurred: " + e1.getMessage());
-                            for (StackTraceElement element : e1.getStackTrace()) {
-                                logger.error(element.toString());
-                            }
-                        }
+                    Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage2);
+				    if (!reqMap.isEmpty()) {
+                        dbLog.insertLog("INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqMap.get("playerName"), reqMap.get("playerUUID"), true, reqMap.get("serverName"), "nores"});
                     }
             	}
             });

@@ -8,7 +8,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -28,15 +30,13 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
 import velocity.Config;
 import velocity.DatabaseInterface;
+import velocity.DatabaseLog;
+import velocity.DoServerOnline;
+import velocity.Luckperms;
+import velocity.PlayerUtils;
 
-public class Request {
-
+public class Request implements RequestInterface {
 	public static Map<String, Boolean> PlayerReqFlags = new HashMap<>();
-	public Connection conn = null;
-	public ResultSet minecrafts = null, reqstatus = null;
-	public ResultSet[] resultsets = {minecrafts,reqstatus};
-	public PreparedStatement ps = null;
-	
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -45,14 +45,14 @@ public class Request {
 	private final DiscordInterface discord;
 	private final MessageEditorInterface discordME;
 	private final EmojiManager emoji;
+	private final Luckperms lp;
+	private final PlayerUtils pu;
+	private final DoServerOnline dso;
+	private final DatabaseLog dbLog;
 	private String currentServerName = null;
 	
 	@Inject
-	public Request (
-		ProxyServer server, Logger logger, 
-		Config config, DatabaseInterface db, BroadCast bc,
-		DiscordInterface discord, MessageEditorInterface discordME, EmojiManager emoji
-	) {
+	public Request (ProxyServer server, Logger logger, Config config, DatabaseInterface db, BroadCast bc, DiscordInterface discord, MessageEditorInterface discordME, EmojiManager emoji, Luckperms lp, PlayerUtils pu, DoServerOnline dso, DatabaseLog dbLog) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
@@ -61,147 +61,182 @@ public class Request {
 		this.discord = discord;
 		this.discordME = discordME;
 		this.emoji = emoji;
+		this.lp = lp;
+		this.pu = pu;
+		this.dso = dso;
+		this.dbLog = dbLog;
 	}
 
+	@Override
 	public void execute(@NotNull CommandSource source,String[] args) {
-		if (source instanceof Player player) {
-			// プレイヤーがコマンドを実行した場合の処理
-			String playerName = player.getUsername();
-
-            if (args.length == 1 || Objects.isNull(args[1]) || args[1].isEmpty()) {
-            	player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
-            	return;
-            }
-            
-            // プレイヤーの現在のサーバーを取得
-	        player.getCurrentServer().ifPresent(serverConnection -> {
-	            RegisteredServer registeredServer = serverConnection.getServer();
-	            currentServerName = registeredServer.getServerInfo().getName();
-	        });
-            
-            String targetServerName = args[1];
-            boolean containsServer = false;
-            for (RegisteredServer registeredServer : this.server.getAllServers()) {
-                if (registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName)) {
-                    containsServer = true;
-                    break;
-                }
-            }
-
-            if (!containsServer) {
-                player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
-                return;
-            }
-            
-            if (config.getString("Servers."+args[1]+".exec").isEmpty() || !config.getBoolean("Servers."+args[1]+".entry", false)) {
-            	player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
-            	return;
-            }
-            
-            try {
-            	conn = db.getConnection();
-            	String sql = "SELECT * FROM members WHERE uuid=?;";
-    			ps = conn.prepareStatement(sql);
-    			ps.setString(1,player.getUniqueId().toString());
-    			minecrafts = ps.executeQuery();
-    			if (minecrafts.next()) {
-    				if (Objects.nonNull(minecrafts.getTimestamp("sst")) && Objects.nonNull(minecrafts.getTimestamp("req"))) {
-        				long now_timestamp = Instant.now().getEpochSecond();
-    					
-    					// /ssで発行したセッションタイムをみる
-    	                Timestamp sst_timeget = minecrafts.getTimestamp("sst");
-    	                long sst_timestamp = sst_timeget.getTime() / 1000L;
-    					
-    					long ss_sa = now_timestamp-sst_timestamp;
-    					long ss_sa_minute = ss_sa/60;
-    					if (ss_sa_minute>config.getInt("Interval.Session",3)) {
-    						player.sendMessage(Component.text("セッションが無効です。").color(NamedTextColor.RED));
-    						return;
-    					}
-    					
-        				// /reqを実行したときに発行したセッションタイムをみる
-    	                Timestamp req_timeget = minecrafts.getTimestamp("req");
-    	                long req_timestamp = req_timeget.getTime() / 1000L;
-    					
-    					long req_sa = now_timestamp-req_timestamp;
-    					long req_sa_minute = req_sa/60;
-        				
-        		        if (req_sa_minute<=config.getInt("Interval.Request",0)) {
-        		        	player.sendMessage(Component.text("リクエストは"+config.getInt("Interval.Request",0)+"分に1回までです。").color(NamedTextColor.RED));
-        		        	return;
-        		        }
-    				}
-    			} else {
-    				// MySQLサーバーにサーバーが登録されてなかった場合
-    				logger.info(NamedTextColor.RED+"このサーバーは、データベースに登録されていません。");
-    				player.sendMessage(Component.text("このサーバーは、データベースに登録されていません。").color(NamedTextColor.RED));
-    				return;
-    			}
-    			
-		        // /reqを実行したので、セッションタイムをreqに入れる
-				sql = "UPDATE members SET req=CURRENT_TIMESTAMP WHERE uuid=?;";
-				ps = conn.prepareStatement(sql);
-				ps.setString(1,player.getUniqueId().toString());
-				ps.executeUpdate();
-		        
-				Request.PlayerReqFlags.put(player.getUniqueId().toString(), true); // フラグを設定
-				
-				// 全サーバーにプレイヤーがサーバーを起動したことを通知
-				TextComponent notifyComponent = Component.text()
-						.append(Component.text(playerName+"が"+args[1]+"サーバーの起動リクエストを送信しました。").color(NamedTextColor.AQUA))
-						.build();
-				bc.sendExceptPlayerMessage(notifyComponent, playerName);
-				
-            	// discord:アドミンチャンネルへボタン送信
-				emoji.createOrgetEmojiId(playerName).thenApply(success -> {
-					if (success != null && !success.isEmpty()) {
-						String playerEmoji = emoji.getEmojiString(playerName, success);
-						discord.sendRequestButtonWithMessage(playerEmoji+playerName+"が"+args[1]+"サーバーの起動リクエストを送信しました。\n起動しますか？\n(管理者のみ実行可能です。)");
-				
-						player.sendMessage(Component.text("送信されました。").color(NamedTextColor.GREEN));
-						
-						// discordへリクエスト通知&ボタン送信
-						discordME.AddEmbedSomeMessage("Request", player, args[1]);
-            	
-						// add log
-						try {
-							String asyncSql = "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);";
-							ps = conn.prepareStatement(asyncSql);
-							ps.setString(1, playerName);
-							ps.setString(2, player.getUniqueId().toString());
-							ps.setString(3, currentServerName);
-							ps.setBoolean(4, true);
-							ps.setString(5, args[1]);
-							ps.executeUpdate();
-						} catch (SQLException e) {
-							logger.error("A SQLException error occurred: " + e.getMessage());
-							for (StackTraceElement element : e.getStackTrace()) {
-								logger.error(element.toString());
-							}
-						}
-						
-						return true;
-					} else {
-						return false;
-					}
-				}).thenAccept(result -> {
-					if (result) {
-						logger.info(playerName+"が"+args[1]+"サーバーの起動リクエストを送信しました。");
-					} else {
-						logger.error("Start Error: Emoji is null or empty.");
-					}
-				}).exceptionally(ex -> {
-					logger.error("Start Error: " + ex.getMessage());
-					return null;
-				});
-            } catch (SQLException | ClassNotFoundException e) {
-            	logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-				for (StackTraceElement element : e.getStackTrace()) {
-					logger.error(element.toString());
-				}
-            }
-        } else {
-			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
+		if (args.length < 2) {
+			source.sendMessage(Component.text("引数が足りません。").color(NamedTextColor.RED));
+			return;
 		}
+		String targetServerName = args[1];
+		if (!(source instanceof Player)) {
+			source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
+			return;
+		}
+		Player player = (Player) source;
+		String playerName = player.getUsername(),
+			playerUUID = player.getUniqueId().toString();
+		if (args.length == 1 || targetServerName == null || targetServerName.isEmpty()) {
+			player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
+			return;
+		}
+		player.getCurrentServer().ifPresent(serverConnection -> {
+			RegisteredServer registeredServer = serverConnection.getServer();
+			currentServerName = registeredServer.getServerInfo().getName();
+		});
+		boolean containsServer = server.getAllServers().stream()
+			.anyMatch(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName));
+		if (!containsServer) {
+			player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
+			return;
+		}
+		int permLevel = lp.getPermLevel(playerName);
+		if (permLevel < 1) {
+			player.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
+			return;
+		}
+		String query = "SELECT * FROM members WHERE uuid=?;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
+			ps.setString(1,player.getUniqueId().toString());
+			try (ResultSet minecrafts = ps.executeQuery()) {
+				if (minecrafts.next()) {
+					Timestamp beforeReqTime = minecrafts.getTimestamp("req");
+					if (beforeReqTime != null) {
+						long now_timestamp = Instant.now().getEpochSecond();
+						long req_timestamp = beforeReqTime.getTime() / 1000L;
+						long req_sa = now_timestamp-req_timestamp;
+						long req_sa_minute = req_sa/60;
+						if (req_sa_minute <= config.getInt("Interval.Request",0)) {
+							player.sendMessage(Component.text("リクエストは"+config.getInt("Interval.Request",0)+"分に1回までです。").color(NamedTextColor.RED));
+							return;
+						}
+					}
+				}
+			}
+			Map<String, Map<String, Object>> statusMap = dso.loadStatusTable(conn);
+			statusMap.entrySet().stream()
+				.filter(entry -> entry.getKey() instanceof String serverName && serverName.equals(targetServerName))
+				.forEach(entry -> {
+					Map<String, Object> serverInfo = entry.getValue();
+					if (serverInfo.get("enter") instanceof Boolean enter && !enter) {
+						player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
+						return;
+					}
+					if (serverInfo.get("online") instanceof Boolean online && online) {
+						player.sendMessage(Component.text(targetServerName+"サーバーは起動中です。").color(NamedTextColor.RED));
+						logger.info(targetServerName+"サーバーは起動中です。");
+						return;
+					}
+					if (serverInfo.get("exec") instanceof String) {
+						if (serverInfo.get("memory") instanceof Integer memory) {
+							int currentUsedMemory = dso.getCurrentUsedMemory(statusMap),
+								maxMemory = config.getInt("MaxMemory", 0);
+							int futureMemory = currentUsedMemory + memory;
+							if (maxMemory < futureMemory) {
+								String message = "メモリ超過のため、サーバーを起動できません。(" + futureMemory + "GB/" + maxMemory + "GB)";
+								player.sendMessage(Component.text(message).color(NamedTextColor.RED));
+								logger.info(message);
+								return;
+							}
+							String query2 = "UPDATE members SET req=CURRENT_TIMESTAMP WHERE uuid=?;";
+							try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
+								ps2.setString(1,player.getUniqueId().toString());
+								int rsAffected2 = ps2.executeUpdate();
+								if (rsAffected2 > 0) {
+									Request.PlayerReqFlags.put(player.getUniqueId().toString(), true); // フラグを設定
+									emoji.createOrgetEmojiId(playerName).thenApply(success -> {
+										if (success != null && !success.isEmpty()) {
+											String playerEmoji = emoji.getEmojiString(playerName, success);
+											discord.sendRequestButtonWithMessage(playerEmoji+playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。\n起動しますか？\n(管理者のみ実行可能です。)");
+											player.sendMessage(Component.text("送信されました。\n管理者が3分以内に対応しますのでしばらくお待ちくださいませ。").color(NamedTextColor.GREEN));
+											TextComponent notifyComponent = Component.text()
+												.append(Component.text(playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。").color(NamedTextColor.AQUA))
+												.build();
+											bc.sendExceptPlayerMessage(notifyComponent, playerName);
+											discordME.AddEmbedSomeMessage("Request", player, targetServerName);
+											dbLog.insertLog(conn, "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);" , new Object[] {playerName, playerUUID, currentServerName, true, targetServerName});
+											return true;
+										} else {
+											return false;
+										}
+									}).thenAccept(result -> {
+										if (result) {
+											logger.info(playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。");
+										} else {
+											logger.error("Start Error: Emoji is null or empty.");
+										}
+									}).exceptionally(ex -> {
+										logger.error("Start Error: " + ex.getMessage());
+										return null;
+									});
+								}
+							} catch (SQLException e) {
+								logger.error("A SQLException error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
+						} else {
+							player.sendMessage(Component.text("メモリが設定されていないため、サーバーを起動できません。").color(NamedTextColor.RED));
+						}
+					} else {
+						player.sendMessage(Component.text("実行パスが設定されていないため、サーバーを起動できません。").color(NamedTextColor.RED));
+					}
+			});
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
+	}
+
+    @Override
+	public String getExecPath(String serverName) {
+		String query = "SELECT * FROM status WHERE name=?;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
+			ps.setString(1, serverName);
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					return rs.getString("exec");
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
+		return null;
+	}
+
+    @Override
+	public Map<String, String> paternFinderMapForReq(String buttonMessage) {
+		String pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？(.*?)";
+		Pattern compiledPattern = Pattern.compile(pattern);
+		Matcher matcher = compiledPattern.matcher(buttonMessage);
+		Map<String, String> resultMap = new HashMap<>();
+		if (matcher.find()) {
+			Optional<String> reqPlayerName = Optional.ofNullable(matcher.group(2));
+			Optional<String> reqServerName = Optional.ofNullable(matcher.group(3));
+			if (reqPlayerName.isPresent() && reqServerName.isPresent()) {
+				String reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName.get());
+				resultMap.put("playerName", reqPlayerName.get());
+				resultMap.put("serverName", reqServerName.get());
+				resultMap.put("playerUUID", reqPlayerUUID);
+			} else {
+				logger.error("必要な情報が見つかりませんでした。");
+			}
+		} else {
+			logger.error("パターンに一致するメッセージが見つかりませんでした。");
+		}
+		return resultMap;
 	}
 }

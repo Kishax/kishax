@@ -11,6 +11,7 @@ public interface DatabaseInterface {
     Connection getConnection() throws SQLException, ClassNotFoundException;
     String createPlaceholders(int count);
     String createQueryPart(Set<String> keySet);
+    int countPlaceholders(String query);
     void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException;
     Class<?> getTypes(Object value);
 }

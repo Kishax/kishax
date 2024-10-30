@@ -33,7 +33,7 @@ public class Module extends AbstractModule {
 		bind(ReloadConfig.class);
 		bind(ServerStatusCache.class).in(com.google.inject.Scopes.SINGLETON);
 		bind(PortFinder.class);
-		bind(PlayerUtil.class);
+		bind(PlayerUtils.class);
 		bind(AutoShutdown.class);
 		bind(Rcon.class);
 		bind(Luckperms.class);

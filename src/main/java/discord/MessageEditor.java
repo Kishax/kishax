@@ -28,7 +28,7 @@ import velocity.Config;
 import velocity.Database;
 import velocity.EventListener;
 import velocity.Main;
-import velocity.PlayerUtil;
+import velocity.PlayerUtils;
 import velocity_command.Maintenance;
 
 public class MessageEditor implements MessageEditorInterface {
@@ -39,7 +39,7 @@ public class MessageEditor implements MessageEditorInterface {
 	private final Database db;
 	private final DiscordInterface discord;
 	private final EmojiManager emoji;
-	private final PlayerUtil pu;
+	private final PlayerUtils pu;
 	private String avatarUrl = null, addMessage = null, 
 			Emoji = null, FaceEmoji = null, targetServerName = null,
 			uuid = null, playerName = null, currentServerName = null;
@@ -51,7 +51,7 @@ public class MessageEditor implements MessageEditorInterface {
 	public MessageEditor (
 		Main plugin, Logger logger, ProxyServer server,
 		Config config, Database db, DiscordInterface discord,
-		EmojiManager emoji, PlayerUtil pu
+		EmojiManager emoji, PlayerUtils pu
 	) {
 		this.plugin = plugin;
 		this.logger = logger;
@@ -471,7 +471,6 @@ public class MessageEditor implements MessageEditorInterface {
 											);
 							discord.sendBotMessage(sendEmbed);
 						}
-
 						return CompletableFuture.completedFuture(null);
                     }
 	
@@ -485,7 +484,6 @@ public class MessageEditor implements MessageEditorInterface {
 											);
 							discord.sendBotMessage(sendEmbed);
 						}
-
 						return CompletableFuture.completedFuture(null);
 					}
 	
@@ -498,7 +496,6 @@ public class MessageEditor implements MessageEditorInterface {
 				for (StackTraceElement element : e1.getStackTrace()) {
 					logger.error(element.toString());
 				}
-
 	            return CompletableFuture.completedFuture(null);
 	        }
 	    });

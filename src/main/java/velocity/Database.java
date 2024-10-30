@@ -86,6 +86,17 @@ public class Database implements DatabaseInterface {
     }
 
 	@Override
+	public int countPlaceholders(String query) {
+        int count = 0;
+        for (char c : query.toCharArray()) {
+            if (c == '?') {
+                count++;
+            }
+        }
+        return count;
+    }
+	
+	@Override
     public void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException {
         if (value == null) {
             ps.setNull(parameterIndex, java.sql.Types.NULL);

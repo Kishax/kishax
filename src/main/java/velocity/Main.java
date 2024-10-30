@@ -52,7 +52,7 @@ public class Main {
     	getInjector().getInstance(Luckperms.class).triggerNetworkSync();
  		logger.info("luckpermsと連携しました。");
         logger.info(LuckPermsProvider.get().getPlatform().toString());
- 		getInjector().getInstance(PlayerUtil.class).loadPlayers();
+ 		getInjector().getInstance(PlayerUtils.class).loadPlayers();
     	CommandManager commandManager = server.getCommandManager();
         commandManager.register(commandManager.metaBuilder("fmcp").build(), getInjector().getInstance(FMCCommand.class));
         commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));

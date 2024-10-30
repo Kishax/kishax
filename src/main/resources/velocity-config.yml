@@ -73,4 +73,4 @@ Terraria:
     ChannelId: 
     Exec_Path: ""
 
-Memory_Limit: 0
+MaxMemory: 0

@@ -1,18 +1,11 @@
 package velocity;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.slf4j.Logger;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.inject.Inject;
@@ -32,30 +25,21 @@ import velocity_command.CommandForwarder;
 
 public class SocketResponse {
 	private final ProxyServer server;
-	private final Logger logger;
 	private final Config config;
 	private final Luckperms lp;
 	private final BroadCast bc;
-	private final Database db;
 	private final ConsoleCommandSource console;
-	private final PlayerUtil pu;
+	private final PlayerUtils pu;
 	private final MessageEditorInterface discordME;
 	private final Provider<SocketSwitch> sswProvider;
 	private String mineName = null;
 	
 	@Inject
-	public SocketResponse (
-		Main plugin, ProxyServer server, Logger logger,
-		Config config, Luckperms lp, BroadCast bc, 
-		Database db, ConsoleCommandSource console, PlayerUtil pu, 
-		MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider
-	) {
+	public SocketResponse (Main plugin, ProxyServer server, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, PlayerUtils pu, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider) {
 		this.server = server;
-        this.logger = logger;
         this.config = config;
         this.lp = lp;
         this.bc = bc;
-        this.db = db;
         this.console = console;
         this.pu = pu;
         this.discordME = discordME;
@@ -117,10 +101,6 @@ public class SocketResponse {
                 }
     		}
     	} else if (res.contains("起動")) {
-    		// /stpで用いるセッションタイム(現在時刻)(sst)をデータベースに
-			LocalDateTime now = LocalDateTime.now();
-	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-	        String formattedDateTime = now.format(formatter);
             String pattern = "(.*?)サーバーが起動しました。";
             Pattern compiledPattern = Pattern.compile(pattern);
             Matcher matcher = compiledPattern.matcher(res);
@@ -142,21 +122,8 @@ public class SocketResponse {
                 
                 for (Player player : server.getAllPlayers()) {
         			if (player.hasPermission("group.new-fmc-user")) {
-						String query = "UPDATE members SET sst=? WHERE uuid=?;";
-        				try (Connection conn = db.getConnection();
-							PreparedStatement ps = conn.prepareStatement(query)) {
-        					ps.setString(1,formattedDateTime);
-        					ps.setString(2,player.getUniqueId().toString());
-        					int rsAffected = ps.executeUpdate();
-							if (rsAffected > 0) {
-								player.sendMessage(component);
-								console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
-							}
-        				} catch (SQLException | ClassNotFoundException e) {
-        					logger.error("A SocketResponse error: ",e);
-        				}
-        			} else {
-        				player.sendMessage(Component.text(res).color(NamedTextColor.AQUA));
+						player.sendMessage(component);
+						console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
         			}
                 }
             }

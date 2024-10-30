@@ -16,6 +16,7 @@ import discord.DiscordInterface;
 import discord.EmojiManager;
 import discord.MessageEditor;
 import discord.MessageEditorInterface;
+import velocity_command.RequestInterface;
 
 public class Module extends AbstractModule {
 	private final Main plugin;
@@ -53,7 +54,7 @@ public class Module extends AbstractModule {
         bind(DatabaseInterface.class).to(Database.class);
         bind(BroadCast.class);
         bind(SocketResponse.class);
-        bind(velocity.PlayerUtil.class);
+        bind(velocity.PlayerUtils.class);
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
         bind(RomajiConversion.class);
@@ -63,5 +64,7 @@ public class Module extends AbstractModule {
         bind(MessageEditorInterface.class).to(MessageEditor.class);
         bind(MineStatus.class);
         bind(ConfigUtils.class);
+        bind(RequestInterface.class).to(velocity_command.Request.class);
+        bind(DatabaseLog.class);
     }
 }

@@ -27,10 +27,10 @@ public class Luckperms {
 	private final Logger logger;
 	private final DatabaseInterface db;
 	private final LuckPerms lpapi = LuckPermsProvider.get();
-	private final PlayerUtil pu;
+	private final PlayerUtils pu;
 	
 	@Inject
-	public Luckperms(Logger logger, DatabaseInterface db, PlayerUtil pu) {
+	public Luckperms(Logger logger, DatabaseInterface db, PlayerUtils pu) {
 		this.logger = logger;
 		this.db = db;
 		this.pu = pu;
@@ -128,7 +128,7 @@ public class Luckperms {
 		for (String groupName : groups) {
             checkGroupPermissionWithMap(groupName, permissionsCopy, hasPermissionBools);
         }
-		logger.info("permMap: " + hasPermissionBools);
+		//logger.info("permMap: " + hasPermissionBools);
 		return hasPermissionBools;
 	}
 	
