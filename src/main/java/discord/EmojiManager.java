@@ -10,12 +10,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -30,21 +30,27 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 import velocity.Config;
-import velocity.Database;
+import velocity.DatabaseInterface;
 
 public class EmojiManager {
+    public static String beDefaultEmojiId = null;
     private JDA jda = null;
     private String emojiId = null;
     private final Logger logger;
     private final Config config;
-    private final Database db;
-    
+    private final DatabaseInterface db;
     @Inject
-    public EmojiManager (Logger logger, Config config, Database db) {
+    public EmojiManager (Logger logger, Config config, DatabaseInterface db) {
         this.logger = logger;
         this.config = config;
         this.db = db;
     }
+
+    public void updateDefaultEmojiId() {
+        CompletableFuture<String> future = createOrgetEmojiId(config.getString("Discord.BEDefaultEmojiName"));
+        future.thenAccept(id -> EmojiManager.beDefaultEmojiId = id);
+    }
+
     public CompletableFuture<Map<String, String>> getEmojiIds(List<String> emojiNames) {
         CompletableFuture<Map<String, String>> future = new CompletableFuture<>();
         if (emojiNames.isEmpty()) {
@@ -64,17 +70,19 @@ public class EmojiManager {
             future.complete(null);
             return future;
         }
+        Map<String, String> emojiMap = new HashMap<>();
         @SuppressWarnings("null")
-        Map<String, String> emojiMap = emojiNames.stream()
-            .collect(Collectors.toMap(
-                emojiName -> emojiName,
-                emojiName -> guild.getEmojis().stream()
-                    .filter(emote -> emote.getName().equals(emojiName))
-                    .findFirst()
-                    .map(RichCustomEmoji::getId)
-                    .orElse(null)
-            ));
-        //logger.info("emojiMap: " + emojiMap);
+        List<RichCustomEmoji> emojis = guild.getEmojis();
+        for (String eachEmojiName : emojiNames) {
+            String eachEmojiId = null;
+            for (RichCustomEmoji emoji : emojis) {
+                if (emoji.getName().equals(eachEmojiName)) {
+                    eachEmojiId = emoji.getId();
+                    break;
+                }
+            }
+            emojiMap.put(eachEmojiName, eachEmojiId);
+        }
         future.complete(emojiMap);
         return future;
     }
@@ -99,13 +107,11 @@ public class EmojiManager {
             future.complete(null);
             return future;
         }
-        
         // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
         @SuppressWarnings("null")
         Optional<RichCustomEmoji> existingEmote = guild.getEmojis().stream()
             .filter(emote -> emote.getName().equals(emojiName))
             .findFirst();
-        
         if (existingEmote.isPresent()) {
             emojiId = existingEmote.get().getId();
             //logger.info(emojiName + "の絵文字はすでに追加されています。");
@@ -155,18 +161,37 @@ public class EmojiManager {
                 for (StackTraceElement element : e.getStackTrace()) {
                     logger.error(element.toString());
                 }
-
                 future.complete(null);
             }
         }
-
         return future;
     }
     
     public String getEmojiString(String emojiName, String emojiId) {
-    	if(Objects.isNull(emojiId)) return null;
-    	if(Objects.isNull(emojiName) || emojiName.isEmpty()) return null;
-    	
+        if (emojiName == null && emojiId == null) return null;
+        // 非同期メソッドMineStatusReflect.updateStatusの中で、
+        // EmojiManager.getEmojiIdsより取得したemojiMapの中に統合版プレイヤーがいた場合、
+        // MineStatusReflect.createStatusEmbedメソッドで、
+        //  ".key100011138" -> nullとなることがあるため
+        if (emojiName != null && emojiId == null) {
+            if (emojiName.startsWith(".")) {
+                if (EmojiManager.beDefaultEmojiId != null) {
+                    // MineStatusReflect.createStatusEmbedメソッドの簡潔なコードの都合上、最後に空白
+                    return "<:" + config.getString("Discord.BEDefaultEmojiName") + ":" + EmojiManager.beDefaultEmojiId + "> "; // steveの絵文字で返す
+                } else {
+                    return "";
+                }
+            }
+        }
+        if (emojiName != null && emojiId != null) {
+            if (emojiName.isEmpty() || emojiId.isEmpty()) return null;
+            // Join時のAddEmbedSomeMessageメソッドで、絵文字が追加されていない場合に通るので必要
+            if (EmojiManager.beDefaultEmojiId instanceof String && emojiId.equals(EmojiManager.beDefaultEmojiId)) {
+                if (emojiName.startsWith(".")) {
+                    return "<:" + config.getString("Discord.BEDefaultEmojiName") + ":" + EmojiManager.beDefaultEmojiId + ">"; // steveの絵文字で返す
+                }
+            }
+        }
     	return "<:" + emojiName + ":" + emojiId + ">";
     }
     

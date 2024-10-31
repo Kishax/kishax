@@ -16,6 +16,7 @@ import discord.DiscordInterface;
 import discord.EmojiManager;
 import discord.MessageEditor;
 import discord.MessageEditorInterface;
+import velocity_command.Maintenance;
 import velocity_command.RequestInterface;
 
 public class Module extends AbstractModule {
@@ -67,5 +68,6 @@ public class Module extends AbstractModule {
         bind(RequestInterface.class).to(velocity_command.Request.class);
         bind(DatabaseLog.class);
         bind(GeyserMC.class);
+        bind(Maintenance.class);
     }
 }

@@ -233,6 +233,20 @@ public class FMCCommand implements SimpleCommand {
                                 }
                                 return ret;
                             }
+                            case "add" -> {
+                                List<String> notAllowList = Main.getInjector().getInstance(Maintenance.class).getMenteNotAllowMembers();
+                                for (String args2 : notAllowList) {
+                                    ret.add(args2);
+                                }
+                                return ret;
+                            }
+                            case "remove" -> {
+                                List<String> allowList = Main.getInjector().getInstance(Maintenance.class).getMenteAllowMembers();
+                                for (String args2 : allowList) {
+                                    ret.add(args2);
+                                }
+                                return ret;
+                            }
                         }
                     }
                 }

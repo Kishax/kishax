@@ -23,9 +23,9 @@ import velocity.PlayerDisconnect;
 public class Maintenance {
 
 	public static boolean isMente;
-	public static List<String> args1 = new ArrayList<>(Arrays.asList("switch","status"));
+	public static List<String> args1 = new ArrayList<>(Arrays.asList("switch", "status", "add", "remove", "list"));
 	public static List<String> args2 = new ArrayList<>(Arrays.asList("discord"));
-	public static List<String> args3 = new ArrayList<>(Arrays.asList("true","false"));
+	public static List<String> args3 = new ArrayList<>(Arrays.asList("true", "false"));
 	private final DatabaseInterface db;
 	private final PlayerDisconnect pd;
 	private final MessageEditorInterface discordME;
@@ -59,7 +59,7 @@ public class Maintenance {
 					superadminUUIDs.add(issuperadmin.getString("uuid"));
 				}
 				switch (args.length) {
-					case 0, 1 -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
+					case 0, 1 -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status|list|add|remove> <player|discord> <true|false>").color(NamedTextColor.GREEN));
 					case 2 -> {
 						switch(args[1].toLowerCase()) {
 							case "status" -> {
@@ -73,75 +73,106 @@ public class Maintenance {
 	
 								source.sendMessage(component);
 							}
-								
-							default -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN));
+							case "switch" -> source.sendMessage(Component.text("usage: /fmcp maintenance switch discord <true|false>").color(NamedTextColor.GREEN));
+							case "add", "remove" -> source.sendMessage(Component.text("usage: /fmcp maintenance <add|remove> <player>").color(NamedTextColor.GREEN));
+							case "list" -> {
+								source.sendMessage(Component.text("スーパーアドミンに加え、サーバー参加許可メンバ一覧(メンテナンス中)").color(NamedTextColor.WHITE));
+								List<String> menteAllowMembers = getMenteAllowMembers(conn);
+								if (menteAllowMembers.isEmpty()) {
+									source.sendMessage(Component.text("メンテナンスモードの許可メンバーはいません。").color(NamedTextColor.RED));
+								} else {
+									menteAllowMembers.forEach(member -> {
+										source.sendMessage(Component.text("- " + member).color(NamedTextColor.GOLD));
+									});
+								}
+							}
+							default -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status|list|add|remove> <player|discord> <true|false>").color(NamedTextColor.GREEN));
 						}
 					}
-						
 					case 3 -> {
-						// 以下はパーミッションが所持していることが確認されている上で、permというコマンドを使っているので、確認の必要なし
-						//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
-						if(!(args1.contains(args[1].toLowerCase()))) {
-							source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
-							break;
+						switch (args[1].toLowerCase()) {
+							case "add" -> {
+								if (getMenteAllowMembers().contains(args[2])) {
+									source.sendMessage(Component.text("既に追加されています。").color(NamedTextColor.RED));
+									break;
+								}
+								updateMenteMembers(args[2], true);
+								source.sendMessage(Component.text("追加しました。").color(NamedTextColor.GREEN));
+							}
+							case "remove" -> {
+								if (!getMenteAllowMembers().contains(args[2])) {
+									source.sendMessage(Component.text("追加されていません。").color(NamedTextColor.RED));
+									break;
+								}
+								updateMenteMembers(args[2], false);
+								source.sendMessage(Component.text("削除しました。").color(NamedTextColor.GREEN));
+							}
+							case "switch" -> {
+								if(!(args1.contains(args[1].toLowerCase()))) {
+									source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									break;
+								}
+								if(!(args2.contains(args[2].toLowerCase()))) {
+									source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									break;
+								}
+								source.sendMessage(Component.text("discord通知をtrueにするかfalseにするかを決定してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+							}
+							default -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status|list|add|remove> <player|discord> <true|false>").color(NamedTextColor.GREEN));
 						}
-						
-						if(!(args2.contains(args[2].toLowerCase()))) {
-							source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
-							break;
-						}
-						
-						source.sendMessage(Component.text("discord通知をtrueにするかfalseにするかを決定してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 					}
-						
 					case 4 -> {
-						if (!(args1.contains(args[1].toLowerCase()))) {
-							source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
-							break;
-						}
-						if (!(args2.contains(args[2].toLowerCase()))) {
-							source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
-							break;
-						}
-						if (!(args3.contains(args[3].toLowerCase()))) {
-							source.sendMessage(Component.text("第4引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
-							break;
-						}
-						if (!(args[3].equals("true") || args[3].equals("false"))) {
-							source.sendMessage(Component.text("trueかfalseを入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
-							break;
-						}
-
-						boolean isDiscord = Boolean.parseBoolean(args[3]);
-						if (ismente.next()) {
-							if (ismente.getBoolean("online")) {
-								Maintenance.isMente = false; // フラグをtrueに
-								if (isDiscord) {
-									discordME.AddEmbedSomeMessage("MenteOff");
+						switch (args[1].toLowerCase()) {
+							case "switch" -> {
+								if (!(args1.contains(args[1].toLowerCase()))) {
+									source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									break;
 								}
-								// メンテナンスモードが有効の場合
-								String query3 = "UPDATE status SET online=? WHERE name=?;";
-								try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
-									ps3.setBoolean(1, false);
-									ps3.setString(2, "maintenance");
-									int rsAffected3 = ps3.executeUpdate();
-									if (rsAffected3 > 0) {
-										source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
-									}
+								if (!(args2.contains(args[2].toLowerCase()))) {
+									source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									break;
 								}
-							} else {
-								Maintenance.isMente = true; // フラグをtrueに
-								if (isDiscord) {
-									discordME.AddEmbedSomeMessage("MenteOn");
+								if (!(args3.contains(args[3].toLowerCase()))) {
+									source.sendMessage(Component.text("第4引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									break;
 								}
-								// メンテナンスモードが無効の場合
-								String query3 = "UPDATE status SET online=? WHERE name=?;";
-								try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
-									ps3.setBoolean(1, true);
-									ps3.setString(2, "maintenance");
-									int rsAffected3 = ps3.executeUpdate();
-									if (rsAffected3 > 0) {
-										pd.menteDisconnect(superadminUUIDs);
+								if (!(args[3].equals("true") || args[3].equals("false"))) {
+									source.sendMessage(Component.text("trueかfalseを入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									break;
+								}
+		
+								boolean isDiscord = Boolean.parseBoolean(args[3]);
+								if (ismente.next()) {
+									if (ismente.getBoolean("online")) {
+										Maintenance.isMente = false; // フラグをtrueに
+										if (isDiscord) {
+											discordME.AddEmbedSomeMessage("MenteOff");
+										}
+										// メンテナンスモードが有効の場合
+										String query3 = "UPDATE status SET online=? WHERE name=?;";
+										try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
+											ps3.setBoolean(1, false);
+											ps3.setString(2, "maintenance");
+											int rsAffected3 = ps3.executeUpdate();
+											if (rsAffected3 > 0) {
+												source.sendMessage(Component.text("メンテナンスモードが無効になりました。").color(NamedTextColor.GREEN));
+											}
+										}
+									} else {
+										Maintenance.isMente = true; // フラグをtrueに
+										if (isDiscord) {
+											discordME.AddEmbedSomeMessage("MenteOn");
+										}
+										// メンテナンスモードが無効の場合
+										String query3 = "UPDATE status SET online=? WHERE name=?;";
+										try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
+											ps3.setBoolean(1, true);
+											ps3.setString(2, "maintenance");
+											int rsAffected3 = ps3.executeUpdate();
+											if (rsAffected3 > 0) {
+												pd.menteDisconnect(superadminUUIDs);
+											}
+										}
 									}
 								}
 							}
@@ -156,5 +187,62 @@ public class Maintenance {
                 logger.error(element.toString());
             }
         }
+	}
+	
+	public List<String> getMenteNotAllowMembers(Connection conn) {
+		return getMenteMembers(conn, false);
+	}
+
+	public List<String> getMenteNotAllowMembers() {
+		return getMenteMembers(null, false);
+	}
+
+	public List<String> getMenteAllowMembers() {
+		return getMenteMembers(null, true);
+	}
+
+	public List<String> getMenteAllowMembers(Connection conn) {
+		return getMenteMembers(conn, true);
+	}
+
+	private List<String> getMenteMembers(Connection conn, boolean mententer) {
+		List<String> members = new ArrayList<>();
+		try (Connection connDefault = conn != null ? conn : db.getConnection();
+			PreparedStatement ps3 = connDefault.prepareStatement("SELECT * FROM members WHERE mententer=?;")) {
+			ps3.setBoolean(1, mententer);
+			try (ResultSet rs = ps3.executeQuery()) {
+				while (rs.next()) {
+					members.add(rs.getString("name"));
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An SQLException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
+		return members;
+	}
+
+	public void updateMenteMembers(String name, boolean mententer) {
+		updateMenteMembers(null, name, mententer);
+	}
+	
+	public void updateMenteMembers(Connection conn, String name, boolean mententer) {
+		String query = "UPDATE members SET mententer=? WHERE name=?;";
+		try (Connection connDefault = conn != null ? conn : db.getConnection();
+			PreparedStatement ps = connDefault.prepareStatement(query)) {
+			ps.setBoolean(1, mententer);
+			ps.setString(2, name);
+			int rsAffected = ps.executeUpdate();
+			if (rsAffected > 0) {
+				logger.info("メンテナンスモードの許可メンバーを更新しました。");
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An SQLException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
 	}
 }

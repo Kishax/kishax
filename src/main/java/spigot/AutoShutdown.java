@@ -56,7 +56,9 @@ public class AutoShutdown {
             @Override
             public void run() {
                 if (countdown <= 0) {
-                    plugin.getServer().broadcastMessage("サーバーを停止します。");
+                    plugin.getServer().broadcastMessage(ChatColor.RED + "サーバーを停止します。");
+					SocketSwitch ssw = sswProvider.get();
+					ssw.sendVelocityServer(shd.getServerName() + "サーバーが停止しました。");
                     plugin.getServer().shutdown();
                     cancel();
                     return;

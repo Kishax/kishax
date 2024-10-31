@@ -101,7 +101,7 @@ public class MessageEditor implements MessageEditorInterface {
             }
 		}
 	    return CompletableFuture.allOf(EmojiFutureId, FaceEmojiFutureId)
-	            .thenCompose((var v) -> {
+				.thenCompose((var _) -> {
 	        try {
 	            if (Objects.nonNull(serverInfo)) {
 	                currentServerName = serverInfo.getName();
@@ -168,7 +168,7 @@ public class MessageEditor implements MessageEditorInterface {
 								});
 								
 								// 編集を行う
-								return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
+								return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
 							} else if (Maintenance.isMente) {
 								// メンテのフラグが立っていたら
 								Maintenance.isMente = false;
@@ -184,7 +184,7 @@ public class MessageEditor implements MessageEditorInterface {
 								if (!player.hasPermission("group.super-admin")) {
 									EventListener.PlayerMessageIds.remove(uuid);
 									// 編集を行う
-									return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
+									return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
 								}
 							} else {
 								addMessage = String.format("""
@@ -197,11 +197,11 @@ public class MessageEditor implements MessageEditorInterface {
 
 								EventListener.PlayerMessageIds.remove(uuid);
 								// 編集を行う
-								return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
+								return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
 							}
 							
 							// 編集を行う
-							return editFuture.thenCompose(v1 -> discord.editBotEmbed(messageId, addMessage));
+							return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
 						}
 
 						return CompletableFuture.completedFuture(null);

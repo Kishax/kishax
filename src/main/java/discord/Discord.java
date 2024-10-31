@@ -138,9 +138,7 @@ public class Discord implements DiscordInterface {
         //.addField(new EmbedField(true, "フィールド1", "値1"))
         WebhookMessage message = builder.build();
         
-        client.send(message).thenAccept(response -> {
-        	//logger.info("Message sent with ID: " + response.getId());
-        }).exceptionally(throwable -> {
+        client.send(message).thenAccept(CompletableFuture::completedFuture).exceptionally(throwable -> {
             logger.error("A sendWebhookMessage error occurred: " + throwable.getMessage());
             for (StackTraceElement element : throwable.getStackTrace()) {
                 logger.error(element.toString());
@@ -187,7 +185,7 @@ public class Discord implements DiscordInterface {
             MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
 
             messageAction.queue(
-                success -> future.complete(null),
+                _ -> future.complete(null),
                 error -> {
                     future.completeExceptionally(error);
                     logger.info("Failed to edit message with ID: " + messageId);
@@ -268,7 +266,7 @@ public class Discord implements DiscordInterface {
         
         MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
         messageAction.queue(
-            success -> {
+            _ -> {
                 //
             }, error -> {
                 logger.error("A editBotEmbedReplacedAll error occurred: " + error.getMessage());
@@ -402,9 +400,7 @@ public class Discord implements DiscordInterface {
     		// 埋め込みメッセージを送信
             MessageCreateAction messageAction = channel.sendMessageEmbeds(embed);
             messageAction.queue(
-                response -> {
-                    //
-                }, failure -> logger.error("Failed to send embedded message: " + failure.getMessage())
+                CompletableFuture::completedFuture, failure -> logger.error("Failed to send embedded message: " + failure.getMessage())
             );
         }
     	
@@ -412,7 +408,7 @@ public class Discord implements DiscordInterface {
     		// テキストメッセージを送信
             MessageCreateAction messageAction = channel.sendMessage(content);
             messageAction.queue(
-                response -> {
+                _ -> {
                     //
                 }, failure -> logger.error("Failed to send text message: " + failure.getMessage())
             );
