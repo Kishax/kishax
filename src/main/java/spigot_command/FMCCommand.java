@@ -28,7 +28,7 @@ public class FMCCommand implements TabExecutor {
 	private final common.Main plugin;
 	private final PortalsConfig psConfig;
 	private final PortalsMenu pm;
-	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal"));
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer"));
 	@Inject
 	public FMCCommand(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm) {
 		this.plugin = plugin;
@@ -76,6 +76,10 @@ public class FMCCommand implements TabExecutor {
 			case "mcvc" -> {
 				Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
 				return true; 
+			}
+			case "hideplayer" -> {
+				Main.getInjector().getInstance(HidePlayer.class).execute(sender, cmd, label, args);
+				return true;
 			}
 			case "portal" -> {
 				if (args.length > 1) {
@@ -181,7 +185,6 @@ public class FMCCommand implements TabExecutor {
 
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
-
 					case "portal" -> {
 						List<String> portalCmds = new ArrayList<>(Arrays.asList("menu","wand","delete","rename"));
 						for (String portalcmd : portalCmds) {
@@ -190,9 +193,14 @@ public class FMCCommand implements TabExecutor {
 						}
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
+					case "hideplayer" -> {
+						for (Player player : plugin.getServer().getOnlinePlayers()) {
+                            ret.add(player.getName());
+                        }
+                        return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
+					}
 				}
             }
-
 			case 3 -> {
 				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
 				switch (args[0].toLowerCase()) {
@@ -227,6 +235,10 @@ public class FMCCommand implements TabExecutor {
 							}
 						}
 					}
+					case "hideplayer" -> {
+                        List<String> actions = new ArrayList<>(Arrays.asList("hide", "show"));
+                        return StringUtil.copyPartialMatches(args[2].toLowerCase(), actions, new ArrayList<>());
+                    }
 				}
 			}
 
