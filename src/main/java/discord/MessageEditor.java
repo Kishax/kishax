@@ -86,11 +86,8 @@ public class MessageEditor implements MessageEditorInterface {
 			uuid = player.getUniqueId().toString();
 			playerName = player.getUsername();
 		}
-		
 	    avatarUrl = "https://minotar.net/avatar/" + uuid;
-	    
 	    String EmojiName = config.getString("Discord." + type + "EmojiName", "");
-
 	    // 第二引数に画像URLが入っていないため、もし、EmojiNameという絵文字がなかったら、追加せずにnullで返る
 	    // createOrgetEmojiIdの第一引数がnull Or Emptyであった場合、nullで返るので、DiscordBotへのリクエスト回数を減らせる
 	    EmojiFutureId = emoji.createOrgetEmojiId(EmojiName);
@@ -103,7 +100,6 @@ public class MessageEditor implements MessageEditorInterface {
                 logger.error(element.toString());
             }
 		}
-
 	    return CompletableFuture.allOf(EmojiFutureId, FaceEmojiFutureId)
 	            .thenCompose((var v) -> {
 	        try {
@@ -118,7 +114,6 @@ public class MessageEditor implements MessageEditorInterface {
 	            } else {
 	            	targetServerName = serverName;
 	            }
-
 	            String EmojiId = EmojiFutureId.get(); // プラスとかマイナスとかの絵文字ID取得
 	            String FaceEmojiId = FaceEmojiFutureId.get(); // minecraftのアバターの顔の絵文字Id取得
 	            Emoji = emoji.getEmojiString(EmojiName, EmojiId);

@@ -112,6 +112,12 @@ public class EmojiManager {
             //logger.info("Existing Emoji ID: " + emojiId);
             future.complete(emojiId);
         } else {
+            // 統合版プレイヤーはスキン情報を取得する方法が現状わからないため
+            // 一旦、統合版プレイヤーの絵文字は追加しない
+            // steveの絵文字で返す
+            if (emojiName.startsWith(".")) {
+                return createOrgetEmojiId(config.getString("Discord.BEDefaultEmojiName", null));
+            }
         	if (Objects.isNull(imageUrl)) {
         		future.complete(null);
                 return future;

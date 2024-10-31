@@ -14,4 +14,5 @@ public interface DatabaseInterface {
     int countPlaceholders(String query);
     void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException;
     Class<?> getTypes(Object value);
+    boolean isMaintenance(Connection conn);
 }

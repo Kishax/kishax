@@ -66,5 +66,6 @@ public class Module extends AbstractModule {
         bind(ConfigUtils.class);
         bind(RequestInterface.class).to(velocity_command.Request.class);
         bind(DatabaseLog.class);
+        bind(GeyserMC.class);
     }
 }

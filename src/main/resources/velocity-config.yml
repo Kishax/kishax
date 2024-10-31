@@ -37,6 +37,7 @@ Discord:
     MenteOnEmojiName: ""
     MenteOffEmojiName: ""
     EndEmojiName: ""
+    BEDefaultEmojiName: ""
     Presence:
         Activity: ""
     Status:

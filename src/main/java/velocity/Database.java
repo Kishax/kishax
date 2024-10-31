@@ -7,15 +7,18 @@ import java.sql.SQLException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+
 import com.google.inject.Inject;
 
 public class Database implements DatabaseInterface {
-
+	private final Logger logger;
 	private final Config config;
     
     @Inject
-    public Database (Config config) {
+    public Database (Logger logger, Config config) {
     	this.config = config;
+		this.logger = logger;
     }
 
     @Override
@@ -124,5 +127,24 @@ public class Database implements DatabaseInterface {
 	@Override
 	public Class<?> getTypes(Object value) {
 		return value.getClass();
+	}
+
+	@Override
+	public boolean isMaintenance(Connection conn) {
+		String query = "SELECT online FROM status WHERE name=?;";
+		try (PreparedStatement ps = conn.prepareStatement(query)) {
+			ps.setString(1, "maintenance");
+			try (var rs = ps.executeQuery()) {
+				if (rs.next()) {
+					return rs.getBoolean("online");
+				}
+			}
+		} catch (SQLException e) {
+			logger.error("A SQLException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
+		return false;
 	}
 }

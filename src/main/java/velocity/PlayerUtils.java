@@ -229,8 +229,8 @@ public class PlayerUtils {
     }
 	
 	public String getPlayerNameFromUUID(UUID uuid) {
-        String uuidString = uuid.toString().replace("-", "");
-        String urlString = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuidString;
+        String uuidString = uuid.toString().replace("-", ""),
+        	urlString = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuidString;
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()

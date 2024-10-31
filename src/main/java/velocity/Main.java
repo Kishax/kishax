@@ -3,6 +3,7 @@ package velocity;
 import java.nio.file.Path;
 import java.util.TimeZone;
 
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.slf4j.Logger;
 
 import com.google.inject.Guice;
@@ -58,15 +59,8 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
-        //
-        /*
-        ConfigUtils cutils = getInjector().getInstance(ConfigUtils.class);
-        Map<String, Map<String, Object>> configMap = cutils.getConfigMap("Servers");
-        cutils.configOutputWithType(configMap);
-        Set<String> configKeySet = cutils.getKeySet(configMap);
-        logger.info("configKeySet: " + configKeySet);
-        */
-        //
+        logger.info(FloodgateApi.getInstance().toString());
+        logger.info("Floodgateと連携しました。");
 	    logger.info("プラグインが有効になりました。");
     }
     
