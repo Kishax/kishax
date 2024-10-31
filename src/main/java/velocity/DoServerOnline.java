@@ -229,7 +229,7 @@ public class DoServerOnline {
 				AtomicBoolean isChanged = new AtomicBoolean(false);
 				dbStatusMap.keySet().stream().forEach(entry -> {
 					Set<String> diffKeySet = new HashSet<>();
-					configMap.keySet().stream().filter(entry2 -> entry2.equals(entry)).forEach(entry3 -> {
+					if (configMap.containsKey(entry)) {
 						Map<String, Object> configServerInfo = configMap.get(entry);
 						Map<String, Object> dbServerInfo = dbStatusMap.get(entry);
 						// ここで、configServerInfoとdbServerInfoの比較を行う
@@ -313,7 +313,7 @@ public class DoServerOnline {
 								}
 							}
 						}
-					});
+					}
 				});
 			} catch (ClassNotFoundException | SQLException e1) {
 				logger.error("A ClassNotFoundException | SQLException error occurred: " + e1.getMessage());

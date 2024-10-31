@@ -17,6 +17,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import discord.Discord;
+import discord.EmojiManager;
 import net.luckperms.api.LuckPermsProvider;
 import velocity_command.CEnd;
 import velocity_command.FMCCommand;
@@ -46,6 +47,7 @@ public class Main {
             if (jda != null) {
                 //getInjector().getInstance(MineStatusReflect.class).sendEmbedMessage(jda);
                 getInjector().getInstance(MineStatusReflect.class).start(jda);
+                getInjector().getInstance(EmojiManager.class).updateDefaultEmojiId();
             }
         }); 		
     	getInjector().getInstance(DoServerOnline.class).updateDatabase();

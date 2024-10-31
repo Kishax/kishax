@@ -69,7 +69,7 @@ public class MineStatusReflect {
         EmbedBuilder embed = new EmbedBuilder().setTitle("後にこれがステータスとなる").setColor(Color.GREEN);
         if (channel != null) {
             channel.sendMessageEmbeds(embed.build()).queue(
-                success -> logger.info("Embed sent successfully!"),
+                _ -> {},// logger.info("Embed sent successfully!")
                 error -> logger.error("Failed to send embed: " + error.getMessage())
             );
         }
@@ -100,7 +100,7 @@ public class MineStatusReflect {
                     if (channel != null) {
                         Message message = channel.retrieveMessageById(messageId).complete();
                         message.editMessageEmbeds(statusEmbed).queue(
-                            success -> {},//logger.info("Embed updated successfully!"),
+                            _ -> {},// logger.info("Embed updated successfully!")
                             error -> logger.error("Failed to update embed: " + error.getMessage())
                         );
                     }
@@ -155,28 +155,28 @@ public class MineStatusReflect {
                 maintenance = true;
                 continue;
             }
+            if (serverName.equals("proxy")) {
+                continue;
+            }
             if (players != null && !players.trim().isEmpty()) {
                 String[] playerArray = players.split(",\\s*");
                 playersList.addAll(Arrays.asList(playerArray));
             }
             int currentPlayers = playersList.size();
+            //if (index != 0) embed.addField("", "", false);
             if (!playersList.isEmpty()) {
                 playersList.sort(String.CASE_INSENSITIVE_ORDER);
                 List<String> playersListWithEmoji = new ArrayList<>();
                 for (int i = 0; i < playersList.size(); i++) {
-                    String playerName = playersList.get(i),
-                        emojiId = emojiMap.get(playerName);
-                    if (emojiId != null) {
-                        String emojiString = emoji.getEmojiString(playerName, emojiId);
-                        playersListWithEmoji.add(emojiString + " " + playerName);
-                    } else {
-                        playersListWithEmoji.add(playersList.get(i));
-                    }
+                    String playerName = playersList.get(i);
+                    String emojiId = emojiMap.get(playerName);
+                    String emojiString = emoji.getEmojiString(playerName, emojiId);
+                    playersListWithEmoji.add(emojiString + playerName);
                 }
-                String playersWithEmoji = String.join("\n   ", playersListWithEmoji);
-                embed.addField(":green_circle: " + serverName, currentPlayers + "/10: " + playersWithEmoji, false);
+                String playersWithEmoji = String.join("\n\n", playersListWithEmoji);
+                embed.addField(":green_circle: " + serverName + "  " +  currentPlayers + "/10", playersWithEmoji, false);
             } else {
-                embed.addField(":green_circle: " + serverName, "0/10: No Player", false);
+                embed.addField(":green_circle: " + serverName + "  0/10", "No Player", false);
             }
         }
         if (maintenance) {

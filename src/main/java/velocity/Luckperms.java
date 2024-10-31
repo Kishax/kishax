@@ -107,14 +107,14 @@ public class Luckperms {
 	public Map<String, Boolean> hasPermissionWithMap(String playerName, List<String> permissions) {
 		User user = lpapi.getUserManager().getUser(playerName);
 		if (user == null) {
-			return permissions.stream().collect(Collectors.toMap(permission -> permission, permission -> false));
+			return permissions.stream().collect(Collectors.toMap(permission -> permission, _ -> false));
 		}
 		List<String> groups = user.getNodes().stream()
 				.filter(node -> node instanceof InheritanceNode)
 				.map(node -> ((InheritanceNode) node).getGroupName())
 				.collect(Collectors.toList());
 		//logger.info("Groups: " + groups);
-		Map<String, Boolean> hasPermissionBools = permissions.stream().collect(Collectors.toMap(permission -> permission, permission -> false));
+		Map<String, Boolean> hasPermissionBools = permissions.stream().collect(Collectors.toMap(permission -> permission, _ -> false));
     	CopyOnWriteArrayList<String> permissionsCopy = new CopyOnWriteArrayList<>(permissions);
 		permissions.stream()
 			.filter(perm -> perm.startsWith("group."))

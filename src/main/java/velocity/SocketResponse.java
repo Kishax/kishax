@@ -92,13 +92,25 @@ public class SocketResponse {
                 	discordME.AddEmbedSomeMessage("AddMember", mineName);
                 }
     		}
-    	} else if (res.contains("起動")) {
+    	} else if (res.contains("停止")) {
+			String pattern = "(.*?)サーバーが停止しました。";
+			Pattern compiledPattern = Pattern.compile(pattern);
+			Matcher matcher = compiledPattern.matcher(res);
+			if (matcher.find()) {
+				String extracted = matcher.group(1);
+				TextComponent component = Component.text(extracted+"サーバーが停止しました。").color(NamedTextColor.RED);
+				for (Player player : server.getAllPlayers()) {
+					if (player.hasPermission("group.new-fmc-user")) {
+						player.sendMessage(component);
+					}
+				}
+			}
+		} else if (res.contains("起動")) {
             String pattern = "(.*?)サーバーが起動しました。";
             Pattern compiledPattern = Pattern.compile(pattern);
             Matcher matcher = compiledPattern.matcher(res);
             if (matcher.find()) {
                 String extracted = matcher.group(1);
-				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
                 TextComponent component = Component.text()
 						.append(Component.text(extracted+"サーバーが起動しました。\n").color(NamedTextColor.AQUA))
     			    	.append(Component.text("サーバーに入りますか？\n").color(NamedTextColor.WHITE))
@@ -111,13 +123,12 @@ public class SocketResponse {
     			    			.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
                                 .hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
     			    	.build();
-                
                 for (Player player : server.getAllPlayers()) {
         			if (player.hasPermission("group.new-fmc-user")) {
 						player.sendMessage(component);
-						console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
         			}
                 }
+				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
             }
     	} else if (res.contains("fv")) {
     		if (res.contains("\\n")) res = res.replace("\\n", "");

@@ -22,7 +22,6 @@ public class CommandForward {
 		for (String arg : args) {
 			allcmd += " " + arg;
 		}
-		
 		if (sender instanceof Player player) {
 			player = (Player) sender;
 			// コマンドを打ったプレイヤー名をallcmdに乗せる

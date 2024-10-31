@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +40,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import velocity_command.Maintenance;
 
 public class EventListener {
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
@@ -60,11 +62,12 @@ public class EventListener {
 	private final MineStatus ms;
 	private final DatabaseLog dbLog;
 	private final GeyserMC gm;
+	private final Maintenance mt;
 	private ServerInfo serverInfo = null;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 	@Inject
-	public EventListener (Main plugin, Logger logger, ProxyServer server, Config config, DatabaseInterface db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, DatabaseLog dbLog, GeyserMC gm) {
+	public EventListener (Main plugin, Logger logger, ProxyServer server, Config config, DatabaseInterface db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, DatabaseLog dbLog, GeyserMC gm, Maintenance mt) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
@@ -80,6 +83,7 @@ public class EventListener {
 		this.ms = ms;
 		this.dbLog = dbLog;
 		this.gm = gm;
+		this.mt = mt;
 	}
 	
 	@Subscribe
@@ -279,12 +283,12 @@ public class EventListener {
         	logger.error("コネクションエラー: 接続サーバー名が不明です。");
         	return;
         }
-		boolean isBedrock = false;
+		final AtomicBoolean isBedrock = new AtomicBoolean(false);
 		if (gm.isGeyserPlayer(player)) {
 			logger.info("GeyserMC player connected: " + playerName);
 			String playerXuid = gm.getGeyserPlayerXuid(player);
 			logger.info("Player XUID: " + playerXuid);
-			isBedrock = true;
+			isBedrock.set(true);
 			//discordME.AddEmbedSomeMessage("Join", player, serverInfo);
 			//return;
 		} else {
@@ -293,7 +297,12 @@ public class EventListener {
 		server.getScheduler().buildTask(plugin, () -> {
 			try (Connection conn = db.getConnection()) {
 				if (db.isMaintenance(conn)) {
-					if (!player.hasPermission("group.super-admin")) {
+					List<String> menteAllowMembers = mt.getMenteAllowMembers();
+					if (player.hasPermission("group.super-admin")) {
+						player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
+					} else if (menteAllowMembers.contains(playerName)) {
+						player.sendMessage(Component.text("メンテメンバー認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
+					} else {
 						pd.playerDisconnect (
 							false,
 							player,
@@ -301,7 +310,6 @@ public class EventListener {
 						);
 						return;
 					}
-					player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
 				}
 				String query2 = "SELECT * FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;";
 				try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
@@ -323,7 +331,6 @@ public class EventListener {
 								if (!joinMessage.isEmpty()) {
 									// \\n を \n に変換
 									joinMessage = joinMessage.replace("\\n", "\n");
-									
 									player.sendMessage(Component.text(joinMessage).color(NamedTextColor.AQUA));
 								}
 								// 2時間経ってたら
@@ -353,7 +360,7 @@ public class EventListener {
 										} else {
 											// 一番最初に登録した名前と一致しなかったら
 											// MOJANG-APIからとってきた名前でレコードを更新させる
-											String current_name = pu.getPlayerNameFromUUID(player.getUniqueId());
+											String current_name = !isBedrock.get() ? pu.getPlayerNameFromUUID(player.getUniqueId()) : playerName;
 											if (Objects.isNull(current_name) || !(current_name.equals(playerName))) {
 												pd.playerDisconnect (
 													true,
@@ -440,8 +447,8 @@ public class EventListener {
 							// DBにデータがなかったら (初参加)
 							// MojangAPIによるUUID-MCIDチェックも行う
 							// データベースに同一の名前がないか確認
-							String current_name = pu.getPlayerNameFromUUID(player.getUniqueId());
-							String query3 = "SELECT * FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
+							String current_name = !isBedrock.get() ? pu.getPlayerNameFromUUID(player.getUniqueId()) : playerName,
+								query3 = "SELECT * FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
 							try (PreparedStatement ps3 = conn.prepareStatement(query3)) {
 								ps3.setString(1, playerName);
 								try (ResultSet yu = ps3.executeQuery()) {
