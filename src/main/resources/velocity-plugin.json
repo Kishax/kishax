@@ -9,7 +9,11 @@
   "dependencies": [
       {
         "id": "luckperms",
-        "optional": false
+        "optional": true
+      },
+      {
+        "id": "floodgate",
+        "optional": true
       }
    ],
    "main": "velocity.Main"
