@@ -14,7 +14,7 @@ public class HidePlayer {
 	
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
 		if (args.length < 3) {
-            sender.sendMessage("使用法: /fmcp hideplayer <プレイヤー名> <hide|show>");
+            sender.sendMessage("使用法: /fmc hideplayer <プレイヤー名> <hide|show>");
 			return;
         }
 		if (sender instanceof Player player) {
@@ -32,7 +32,7 @@ public class HidePlayer {
                 player.showPlayer(plugin, targetPlayer);
                 sender.sendMessage(targetPlayerName + "を表示しました。");
             } else {
-                sender.sendMessage("無効なアクションです。使用法: /fmcp hideplayer <プレイヤー名> <hide|show>");
+                sender.sendMessage("無効なアクションです。使用法: /fmc hideplayer <プレイヤー名> <hide|show>");
             }
         } else {
 			if (sender != null) {
