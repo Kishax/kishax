@@ -39,7 +39,6 @@ public class Rcon {
 			for (StackTraceElement element : e.getStackTrace()) {
 				plugin.getLogger().severe(element.toString());
 			}
-
             return;
         }
 
