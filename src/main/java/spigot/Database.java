@@ -6,9 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
-@Singleton 
 public class Database {
     private final common.Main plugin;
     
@@ -88,7 +86,7 @@ public class Database {
     }
 
     public void insertLog(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
-        Connection connection = (conn != null) ? conn : getConnection();
+        Connection connection = (conn != null && !conn.isClosed()) ? conn : getConnection();
         if (args.length < countPlaceholders(query)) return;
         PreparedStatement ps = connection.prepareStatement(query);
         setPreparedStatementValues(ps, args);

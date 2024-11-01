@@ -1,5 +1,6 @@
 package spigot;
 
+import java.sql.Connection;
 import java.util.TimeZone;
 import java.util.logging.Level;
 
@@ -43,7 +44,15 @@ public class Main {
 		getInjector().getInstance(PlayerUtils.class).loadPlayers();
     	// DoServerOnlineとPortFinderとSocketの処理を統合
 		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
-    	plugin.getLogger().info("プラグインが有効になりました。");
+		try (Connection conn = getInjector().getInstance(Database.class).getConnection()) {
+			//getInjector().getInstance(ImageMap.class).loadAllImages(conn);
+    		plugin.getLogger().info("プラグインが有効になりました。");
+		} catch (Exception e) {
+			plugin.getLogger().log(Level.SEVERE, "An error occurred while loading images: {0}", e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				plugin.getLogger().severe(element.toString());
+			}
+		}
     }
     
 	public static Injector getInjector() {

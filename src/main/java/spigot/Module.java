@@ -21,7 +21,8 @@ public class Module extends AbstractModule {
 		bind(common.Main.class).toInstance(plugin);
 		bind(Main.class).toInstance(main);
 		bind(SocketSwitch.class);
-		bind(Database.class).in(com.google.inject.Scopes.SINGLETON);
+		bind(Database.class);
+		//bind(Database.class).in(com.google.inject.Scopes.SINGLETON);
 		bind(ServerHomeDir.class);
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);

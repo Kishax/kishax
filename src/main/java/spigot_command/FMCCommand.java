@@ -94,10 +94,10 @@ public class FMCCommand implements TabExecutor {
 					} else if (args[1].equalsIgnoreCase("createqr")) {
 						Main.getInjector().getInstance(ImageMap.class).executeQRMap(sender, cmd, label, args);
 						return true;
-					} else {
-						sender.sendMessage("Usage: /fmc im <create|createqr> <title> <comment> <url>");
-						return true;
 					}
+				} else {
+					sender.sendMessage("Usage: /fmc im <create|createqr> <title> <comment> <url>");
+					return true;
 				}
 			}
 			case "portal" -> {
@@ -168,10 +168,10 @@ public class FMCCommand implements TabExecutor {
 							sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
 							return true;
 						}
-					} else {
-						sender.sendMessage("Usage: /fmc portal menu");
-						return true;
 					}
+				} else {
+					sender.sendMessage("Usage: /fmc portal menu");
+					return true;
 				}
 			}
 		}
@@ -224,6 +224,7 @@ public class FMCCommand implements TabExecutor {
 							if (!sender.hasPermission("fmc.im." + args2)) continue;
 							ret.add(args2);
 						}
+						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
 				}
             }

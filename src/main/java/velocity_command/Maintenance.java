@@ -207,8 +207,8 @@ public class Maintenance {
 
 	private List<String> getMenteMembers(Connection conn, boolean mententer) {
 		List<String> members = new ArrayList<>();
-		try (Connection connDefault = conn != null ? conn : db.getConnection();
-			PreparedStatement ps3 = connDefault.prepareStatement("SELECT * FROM members WHERE mententer=?;")) {
+		try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
+			PreparedStatement ps3 = connection.prepareStatement("SELECT * FROM members WHERE mententer=?;")) {
 			ps3.setBoolean(1, mententer);
 			try (ResultSet rs = ps3.executeQuery()) {
 				while (rs.next()) {
@@ -230,8 +230,8 @@ public class Maintenance {
 	
 	public void updateMenteMembers(Connection conn, String name, boolean mententer) {
 		String query = "UPDATE members SET mententer=? WHERE name=?;";
-		try (Connection connDefault = conn != null ? conn : db.getConnection();
-			PreparedStatement ps = connDefault.prepareStatement(query)) {
+		try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
+			PreparedStatement ps = connection.prepareStatement(query)) {
 			ps.setBoolean(1, mententer);
 			ps.setString(2, name);
 			int rsAffected = ps.executeUpdate();
