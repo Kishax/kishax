@@ -21,6 +21,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
+import spigot.ImageMap;
 import spigot.Main;
 import spigot.PortalsConfig;
 
@@ -28,7 +29,7 @@ public class FMCCommand implements TabExecutor {
 	private final common.Main plugin;
 	private final PortalsConfig psConfig;
 	private final PortalsMenu pm;
-	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer"));
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im"));
 	@Inject
 	public FMCCommand(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm) {
 		this.plugin = plugin;
@@ -80,6 +81,24 @@ public class FMCCommand implements TabExecutor {
 			case "hideplayer" -> {
 				Main.getInjector().getInstance(HidePlayer.class).execute(sender, cmd, label, args);
 				return true;
+			}
+			case "im" -> {
+				if (args.length > 1) {
+					if (!sender.hasPermission("fmc." + args[0] + "." + args[1])) {
+						sender.sendMessage(ChatColor.RED + "権限がありません。");
+						return true;
+					}
+					if (args[1].equalsIgnoreCase("create")) {
+						Main.getInjector().getInstance(ImageMap.class).executeImageMap(sender, cmd, label, args);
+						return true;
+					} else if (args[1].equalsIgnoreCase("createqr")) {
+						Main.getInjector().getInstance(ImageMap.class).executeQRMap(sender, cmd, label, args);
+						return true;
+					} else {
+						sender.sendMessage("Usage: /fmc im <create|createqr> <title> <comment> <url>");
+						return true;
+					}
+				}
 			}
 			case "portal" -> {
 				if (args.length > 1) {
@@ -166,6 +185,7 @@ public class FMCCommand implements TabExecutor {
 
     	switch (args.length) {
 	    	case 1 -> {
+				Collections.sort(subcommands);
 				for (String subcmd : subcommands) {
 					if (!sender.hasPermission("fmc." + subcmd)) continue;
 					ret.add(subcmd);
@@ -198,6 +218,12 @@ public class FMCCommand implements TabExecutor {
                             ret.add(player.getName());
                         }
                         return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
+					}
+					case "im" -> {
+						for (String args2 : ImageMap.args2) {
+							if (!sender.hasPermission("fmc.im." + args2)) continue;
+							ret.add(args2);
+						}
 					}
 				}
             }
