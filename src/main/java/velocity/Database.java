@@ -100,6 +100,27 @@ public class Database implements DatabaseInterface {
     }
 	
 	@Override
+    public void insertLog(String query, Object[] args) throws SQLException, ClassNotFoundException {
+        insertLog(null, query, args);
+    }
+
+	@Override
+    public void insertLog(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
+        Connection connection = (conn != null && !conn.isClosed()) ? conn : getConnection();
+        if (args.length < countPlaceholders(query)) return;
+        PreparedStatement ps = connection.prepareStatement(query);
+        setPreparedStatementValues(ps, args);
+        ps.executeUpdate();
+    }
+    
+	@Override
+    public void setPreparedStatementValues(PreparedStatement ps, Object[] args) throws SQLException {
+        for (int i = 0; i < args.length; i++) {
+            ps.setObject(i + 1, args[i]);
+        }
+    }
+
+	@Override
     public void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException {
         if (value == null) {
             ps.setNull(parameterIndex, java.sql.Types.NULL);
