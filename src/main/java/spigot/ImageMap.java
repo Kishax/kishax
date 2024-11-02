@@ -50,8 +50,10 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import net.md_5.bungee.api.ChatColor;
+
 public class ImageMap {
-    public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr"));
+    public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q"));
     private final common.Main plugin;
     private final Database db;
     private final String serverName;
@@ -62,40 +64,46 @@ public class ImageMap {
         this.serverName = shd.getServerName();
     }
 
-    // インベントリからマップを選ぶときに、
-    // このサーバーのmapIdを持っていたら、
-    // そのそのワールドに既存のマップを渡す必要があることに注意
-    // 持っていなかったら、新しくマップを生成する
-    // マップ生成のときに、URLより画像が取得できなかったら、
-    // そのURLは無効であるとして、エラーメッセージを表示する
-    public Map<String, Map<String, String>> getImageInfo(Connection conn) {
-        Map<String, Map<String, String>> imageInfo = new HashMap<>();
-        String query = "SELECT * FROM images;";
-        try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
-            PreparedStatement ps = connection.prepareStatement(query);
-            ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Map<String, String> rowMap = new HashMap<>();
-                Date date = rs.getDate("date");
-                String dateString = formatDate(date.toLocalDate());
-                int columnCount = rs.getMetaData().getColumnCount();
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = rs.getMetaData().getColumnName(i);
-                    if (!columnName.equals("date")) {
-                        rowMap.put(columnName, rs.getString(columnName));
-                    }
+    public void executeQ(CommandSender sender, Command command, String label, String[] args, boolean q) {
+        if (sender instanceof Player player) {
+            int argsLength = args.length;
+            String otp;
+            if (q) {
+                otp = args[0];
+                if (argsLength < 1) {
+                    player.sendMessage("使用法: /q <code>");
+                    return;
                 }
-                imageInfo.computeIfAbsent(dateString, _ -> rowMap);
+            } else {
+                otp = args[1];
+                if (argsLength < 2) {
+                    player.sendMessage("使用法: /fmc q <code>");
+                    return;
+                }
             }
-        } catch (SQLException | ClassNotFoundException e) {
-            plugin.getLogger().log(Level.SEVERE, "An error occurred while loading images: {0}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+            try (Connection conn = db.getConnection()) {
+                if (checkOTPIsCorrect(conn, otp)) {
+                    Map<String, Object> imageInfo = getImageInfoByOTP(conn, otp);
+                    //plugin.getLogger().log(Level.INFO, "Image info: {0}", imageInfo);
+                    
+                } else {
+                    player.sendMessage(ChatColor.RED + "ワンタイムパスワードが間違っています。");
+                }
+
+            } catch (SQLException | ClassNotFoundException e) {
+                player.sendMessage("画像の読み込みに失敗しました。");
+                plugin.getLogger().log(Level.SEVERE, "An SQLException | ClassNotFoundException error occurred: {0}", e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    plugin.getLogger().severe(element.toString());
+                }
+            }
+        } else {
+            if (sender != null) {
+                sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
             }
         }
-        return imageInfo;
     }
-
+    
     public void executeImageMap(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
@@ -232,7 +240,7 @@ public class ImageMap {
         }
     }
 
-    public void loadAllItemFrames(Connection conn) throws SQLException, ClassNotFoundException {
+    public void loadAllItemInThisServerFrames(Connection conn) throws SQLException, ClassNotFoundException {
         Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
         for (World world : Bukkit.getWorlds()) {
             for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
@@ -275,6 +283,85 @@ public class ImageMap {
             }
         }
         plugin.getLogger().info("Loaded all item frames.");
+    }
+
+    private void giveMapToPlayer(Player player, int mapId) {
+        boolean found = false;
+        ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+        for (World world : Bukkit.getWorlds()) {
+            for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
+                ItemStack item = itemFrame.getItem();
+                if (item.getType() == Material.FILLED_MAP) {
+                    MapMeta mapMeta = (MapMeta) item.getItemMeta();
+                    if (mapMeta != null && mapMeta.hasMapView()) {
+                        MapView mapView = mapMeta.getMapView();
+                        if (mapView != null && mapView.getId() == mapId) {
+                            found = true;
+                            mapMeta.setMapView(mapView);
+                            mapItem.setItemMeta(mapMeta);
+                            player.getInventory().addItem(mapItem);
+                            player.sendMessage("地図ID " + mapId + " を渡しました。");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        if (!found) {
+            player.sendMessage("地図ID " + mapId + " が見つかりません。");
+        }
+    }
+
+    private Map<String, Object> getImageInfoByOTP(Connection conn, String otp) throws SQLException, ClassNotFoundException {
+        Map<String, Object> imageInfo = new HashMap<>();
+        String query = "SELECT * FROM images WHERE otp=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, otp);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            int columnCount = rs.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = rs.getMetaData().getColumnName(i);
+                imageInfo.put(columnName, rs.getObject(columnName));
+            }
+        }
+        return imageInfo;
+    }
+
+    private boolean checkOTPIsCorrect(Connection conn, String code) throws SQLException, ClassNotFoundException {
+        String query = "SELECT * FROM images WHERE otp=? LIMIT 1;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, code);
+        ResultSet rs = ps.executeQuery();
+        return rs.next();
+    }
+
+    private Map<String, Map<String, Object>> getImageInfo(Connection conn) {
+        Map<String, Map<String, Object>> imageInfo = new HashMap<>();
+        String query = "SELECT * FROM images;";
+        try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
+            PreparedStatement ps = connection.prepareStatement(query);
+            ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> rowMap = new HashMap<>();
+                Date date = rs.getDate("date");
+                String dateString = formatDate(date.toLocalDate());
+                int columnCount = rs.getMetaData().getColumnCount();
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = rs.getMetaData().getColumnName(i);
+                    if (!columnName.equals("date")) {
+                        rowMap.put(columnName, rs.getObject(columnName));
+                    }
+                }
+                imageInfo.computeIfAbsent(dateString, _ -> rowMap);
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            plugin.getLogger().log(Level.SEVERE, "An error occurred while loading images: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                plugin.getLogger().severe(element.toString());
+            }
+        }
+        return imageInfo;
     }
 
     private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {

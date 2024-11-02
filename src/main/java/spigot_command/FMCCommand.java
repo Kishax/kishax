@@ -94,6 +94,9 @@ public class FMCCommand implements TabExecutor {
 					} else if (args[1].equalsIgnoreCase("createqr")) {
 						Main.getInjector().getInstance(ImageMap.class).executeQRMap(sender, cmd, label, args);
 						return true;
+					} else if (args[1].equalsIgnoreCase("q")) {
+						Main.getInjector().getInstance(ImageMap.class).executeQ(sender, cmd, label, args, false);
+						return true;
 					}
 				} else {
 					sender.sendMessage("Usage: /fmc im <create|createqr> <title> <comment> <url>");
@@ -189,7 +192,6 @@ public class FMCCommand implements TabExecutor {
 					if (!sender.hasPermission("fmc." + subcmd)) continue;
 					ret.add(subcmd);
 				}
-
 				return StringUtil.copyPartialMatches(args[0].toLowerCase(), ret, new ArrayList<>());
 			}
 	    	case 2 -> {
@@ -200,7 +202,6 @@ public class FMCCommand implements TabExecutor {
 							if (!sender.hasPermission("fmc.potion." + potion.getName().toLowerCase())) continue;
 							ret.add(potion.getName());
 						}
-
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
 					case "portal" -> {
@@ -236,7 +237,6 @@ public class FMCCommand implements TabExecutor {
 									if (!sender.hasPermission("fmc.portal.menu.*")) {
 										if (!sender.hasPermission("fmc.portal.menu." + portalMenuCmd)) continue;
 									}
-									
 									ret.add(portalMenuCmd);
 								}
 								return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
@@ -265,7 +265,6 @@ public class FMCCommand implements TabExecutor {
                     }
 				}
 			}
-
 			case 4 -> {
 				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
 				switch (args[0].toLowerCase()) {
@@ -288,7 +287,6 @@ public class FMCCommand implements TabExecutor {
 				}
 			}
     	}
-
     	return Collections.emptyList();
     }
 }

@@ -11,6 +11,7 @@ import com.google.inject.Injector;
 
 import net.luckperms.api.LuckPermsProvider;
 import spigot_command.FMCCommand;
+import spigot_command.Q;
 
 public class Main {
 	private static Injector injector = null;
@@ -30,10 +31,13 @@ public class Main {
 		getInjector().getInstance(PortalsConfig.class).createPortalsConfig();
     	plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(EventListener.class), plugin);
         plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(WandListener.class), plugin);
-		FMCCommand commandFMC = getInjector().getInstance(FMCCommand.class);
-		PluginCommand fmcCmd = plugin.getCommand("fmc");
+		PluginCommand fmcCmd = plugin.getCommand("fmc"),
+			qCmd = plugin.getCommand("q");
 		if (fmcCmd != null) {
-			fmcCmd.setExecutor(commandFMC);
+			fmcCmd.setExecutor(getInjector().getInstance(FMCCommand.class));
+		}
+		if (qCmd != null) {
+			qCmd.setExecutor(getInjector().getInstance(Q.class));
 		}
     	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
@@ -46,7 +50,7 @@ public class Main {
 		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
 		try (Connection conn = getInjector().getInstance(Database.class).getConnection()) {
 			//getInjector().getInstance(ImageMap.class).loadAllImages(conn);
-			getInjector().getInstance(ImageMap.class).loadAllItemFrames(conn);
+			getInjector().getInstance(ImageMap.class).loadAllItemInThisServerFrames(conn);
 		} catch (Exception e) {
 			plugin.getLogger().log(Level.SEVERE, "既存マップの画像置換中にエラーが発生しました: {0}", e.getMessage());
 			plugin.getLogger().log(Level.SEVERE, "An error occurred while loading images: {0}", e.getMessage());
