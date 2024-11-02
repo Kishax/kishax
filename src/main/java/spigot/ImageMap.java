@@ -85,6 +85,12 @@ public class ImageMap {
                 if (checkOTPIsCorrect(conn, otp)) {
                     Map<String, Object> imageInfo = getImageInfoByOTP(conn, otp);
                     //plugin.getLogger().log(Level.INFO, "Image info: {0}", imageInfo);
+                    String title = (String) imageInfo.get("title"),
+                        comment = (String) imageInfo.get("comment"),
+                        url = (String) imageInfo.get("url"),
+                        date = formatDate2(((Date) imageInfo.get("date")).toLocalDate());
+                    boolean isQr = (boolean) imageInfo.get("isqr");
+                    String[] imageArgs = new String[] {title, comment, url, date};
                     
                 } else {
                     player.sendMessage(ChatColor.RED + "ワンタイムパスワードが間違っています。");
@@ -104,6 +110,10 @@ public class ImageMap {
         }
     }
     
+    /*public void executeImageMap(CommandSender sender, Command command, String label, String[] args) {
+        executeImageMap(sender, command, label, args, eArgs);
+    }*/
+
     public void executeImageMap(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
@@ -116,11 +126,14 @@ public class ImageMap {
                 url = args[2],
                 title = (args.length > 4 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
                 comment = (args.length > 5 && !args[4].isEmpty()) ? args[4]: "コメントなし";
+            // 
             if (!isValidURL(url)) {
                 player.sendMessage("無効なURLです。");
                 return;
             }
+            //
             try (Connection conn = db.getConnection()) {
+                LocalDate now = LocalDate.now();
                 URL getUrl = new URI(url).toURL();
                 HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
                 connection.setRequestMethod("GET");
@@ -141,7 +154,6 @@ public class ImageMap {
                     player.sendMessage("指定のURLは規定の拡張子を持ちません。");
                     return;
                 }
-                LocalDate now = LocalDate.now();
                 String fullPath = getImageSaveFolder(conn) + "/" + now.toString().replace("-", "") + "/" + imageUUID + "." + ext;
                 // リサイズ前の画像を保存
                 saveImageToFileSystem(conn, image, imageUUID, ext);
@@ -199,6 +211,8 @@ public class ImageMap {
                 ext = "png";
             try (Connection conn = db.getConnection()) {
                 LocalDate now = LocalDate.now();
+
+
                 String fullPath = getImageSaveFolder(conn) + "/" + now.toString().replace("-", "") + "/" + imageUUID + "." + ext;
                 BufferedImage qrImage = generateQRCodeImage(url);
                 saveImageToFileSystem(conn, qrImage, imageUUID, ext);
@@ -399,6 +413,11 @@ public class ImageMap {
 
     private String formatDate(LocalDate date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return date.format(formatter);
+    }
+
+    private String formatDate2(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
         return date.format(formatter);
     }
 
