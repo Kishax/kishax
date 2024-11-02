@@ -109,9 +109,9 @@ public class DiscordEventListener extends ListenerAdapter {
 					try (Connection conn = db.getConnection()) {
 						int configUploadTimes = config.getInt("Discord.UserUploadTimes", 5),
 							userUploadTimes = getUserTodayTimes(conn, userId);
-							logger.info("userUploadTimes: "+userUploadTimes);
-							logger.info("configUploadTimes: "+configUploadTimes);
-						if (userUploadTimes >= configUploadTimes) {
+							//logger.info("userUploadTimes: "+userUploadTimes+1);
+							//logger.info("configUploadTimes: "+configUploadTimes);
+						if (userUploadTimes + 1 >= configUploadTimes) {
 							e.reply("1日の登録回数は"+configUploadTimes+"回までです。").setEphemeral(true).queue();
 							return;
 						}
@@ -130,6 +130,7 @@ public class DiscordEventListener extends ListenerAdapter {
 						}
 						String ext = null;
 						if (attachment != null && !isQr) {
+							logger.info("(attachment != null && !isQr)ブロックを通りました。");
 							url = attachment.getUrl();
 							String fileName = attachment.getFileName().toLowerCase();
 							ext = fileName.substring(fileName.lastIndexOf(".") + 1);
@@ -144,20 +145,21 @@ public class DiscordEventListener extends ListenerAdapter {
 							}
 						}
 						try {
-							if (isQr) {
+							if (!isQr) {
 								URL getUrl = new URI(url).toURL();
 								HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
 								connection.setRequestMethod("GET");
 								connection.connect();
 								String contentType = connection.getContentType();
+								//logger.error("contentType: "+contentType);
 								switch (contentType) {
 									case "image/png" -> ext = "png";
 									case "image/jpeg" -> ext = "jpeg";
 									case "image/jpg" -> ext = "jpg";
-								}
-								if (ext == null) {
-									e.reply("指定のURLは規定の拡張子を持ちません。").setEphemeral(true).queue();
-									return;
+									default -> {
+										e.reply("指定のURLは規定の拡張子を持ちません。2").setEphemeral(true).queue();
+										return;
+									}
 								}
 							}
 							LocalDate now = LocalDate.now();
@@ -165,6 +167,7 @@ public class DiscordEventListener extends ListenerAdapter {
 								otp = OTPGenerator.generateOTP(6);
 							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, did ,date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {userName, null, null, null, title, imageUUID, ext, url, comment, true, otp, userId, java.sql.Date.valueOf(now)});
 							e.reply("画像メタデータを登録しました。\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
+							logger.info("(Discord)" + userName+" が画像メタデータを登録しました。");
 						} catch (IOException | URISyntaxException e2) {
 							e.reply("指定のURLは無効です。").setEphemeral(true).queue();
 							return;
