@@ -1,5 +1,7 @@
 package spigot;
 
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -60,31 +62,32 @@ public class ImageMap {
         this.serverName = shd.getServerName();
     }
 
-    // 別にimageUUIDをキーにしなくてもいいかもしれない(使わないし)
-    // date -> {playerName -> {imageUUID -> {ext -> {title -> {comment -> {filePath -> image}}}}}
-    public Map<String, Map<String, Map<String, Map<String, String>>>> getImageInfo(Connection conn) {
-        Map<String, Map<String, Map<String, Map<String, String>>>> imageInfo = new HashMap<>();
+    // インベントリからマップを選ぶときに、
+    // このサーバーのmapIdを持っていたら、
+    // そのそのワールドに既存のマップを渡す必要があることに注意
+    // 持っていなかったら、新しくマップを生成する
+    // マップ生成のときに、URLより画像が取得できなかったら、
+    // そのURLは無効であるとして、エラーメッセージを表示する
+    public Map<String, Map<String, String>> getImageInfo(Connection conn) {
+        Map<String, Map<String, String>> imageInfo = new HashMap<>();
         String query = "SELECT * FROM images;";
         try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
             PreparedStatement ps = connection.prepareStatement(query);
             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Map<String, String> rowMap = new HashMap<>();
-                String playerName = rs.getString("name");
                 Date date = rs.getDate("date");
                 String dateString = formatDate(date.toLocalDate());
                 int columnCount = rs.getMetaData().getColumnCount();
                 for (int i = 1; i <= columnCount; i++) {
                     String columnName = rs.getMetaData().getColumnName(i);
-                    if (!columnName.equals("name") || !columnName.equals("date")) {
+                    if (!columnName.equals("date")) {
                         rowMap.put(columnName, rs.getString(columnName));
                     }
                 }
-                imageInfo.computeIfAbsent(dateString, _ -> new HashMap<>())
-                         .computeIfAbsent(playerName, _ -> new HashMap<>())
-                        .put(rs.getString("imuuid"), rowMap);
+                imageInfo.computeIfAbsent(dateString, _ -> rowMap);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException e) {
             plugin.getLogger().log(Level.SEVERE, "An error occurred while loading images: {0}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 plugin.getLogger().severe(element.toString());
@@ -92,35 +95,6 @@ public class ImageMap {
         }
         return imageInfo;
     }
-    /*public void loadAllImages(Connection conn) {
-        String query = "SELECT * FROM images;";
-        try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
-            PreparedStatement ps = connection.prepareStatement(query);
-            ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Date date = rs.getDate("date");
-                String formattedDate = formatDate(date.toLocalDate());
-                String imageUUID = rs.getString("imuuid");
-                String ext = rs.getString("ext");
-                String title = rs.getString("title");
-                String comment = rs.getString("comment");
-                // getImageSaveFolder(conn)
-                String filePath = "/opt/mc/images" + "/" + formattedDate + "/" + imageUUID + "." + ext;
-                BufferedImage image = loadImage(filePath);
-                if (image != null) {
-                    List<String> lores = Arrays.stream(comment.split("\n"))
-                                                .map(String::trim)
-                                                .collect(Collectors.toList());
-                    createMapWithImage(image, title, lores, filePath);
-                }
-            }
-        } catch (SQLException | IOException | ClassNotFoundException e) {
-            plugin.getLogger().log(Level.SEVERE, "An error occurred while loading images: {0}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
-            }
-        }
-    }*/
 
     public void executeImageMap(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
@@ -159,16 +133,30 @@ public class ImageMap {
                     player.sendMessage("指定のURLは規定の拡張子を持ちません。");
                     return;
                 }
-                String fullPath = getFullPath(conn, imageUUID, ext);
+                String fullPath = getImageSaveFolder(conn) + "/" + LocalDate.now().toString().replace("-", "") + "/" + imageUUID + "." + ext;
+                // リサイズ前の画像を保存
                 saveImageToFileSystem(conn, image, imageUUID, ext);
-                db.insertLog(conn, "INSERT INTO images (name, uuid, server, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, serverName, title, imageUUID, ext, url, comment, false, java.sql.Date.valueOf(LocalDate.now())});
+                BufferedImage resizedImage = resizeImage(image, 128, 128);
                 List<String> lores = new ArrayList<>();
-                lores.add("QRコード");
+                lores.add("<イメージマップ>");
                 List<String> commentLines = Arrays.stream(comment.split("\n"))
                                   .map(String::trim)
                                   .collect(Collectors.toList());
                 lores.addAll(commentLines);
-                ItemStack mapItem = createMapWithImage(player, image, title, lores, fullPath);
+                ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+                MapView mapView = Bukkit.createMap(player.getWorld());
+                int mapId = mapView.getId();
+                mapView.getRenderers().clear();
+                mapView.addRenderer(new ImageMapRenderer(plugin, resizedImage, fullPath));
+                var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
+                if (meta != null) {
+                    meta.setDisplayName(title);
+                    meta.setLore(lores);
+                    meta.setMapView(mapView);
+                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING, "true");
+                    mapItem.setItemMeta(meta);
+                }
+                db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, false, java.sql.Date.valueOf(LocalDate.now())});
                 player.getInventory().addItem(mapItem);
                 player.sendMessage("画像地図を渡しました: " + url);
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException e) {
@@ -199,17 +187,29 @@ public class ImageMap {
                 title = args[2],
                 ext = "png";
             try (Connection conn = db.getConnection()) {
-                String fullPath = getFullPath(conn, imageUUID, ext);
+                String fullPath = getImageSaveFolder(conn) + "/" + LocalDate.now().toString().replace("-", "") + "/" + imageUUID + "." + ext;
                 BufferedImage qrImage = generateQRCodeImage(url);
                 saveImageToFileSystem(conn, qrImage, imageUUID, ext);
-                db.insertLog(conn, "INSERT INTO images (name, uuid, server, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, serverName, title, imageUUID, ext, url, comment, true, java.sql.Date.valueOf(LocalDate.now())});
                 List<String> lores = new ArrayList<>();
-                lores.add("QRコード");
+                lores.add("<QRコード>");
                 List<String> commentLines = Arrays.stream(comment.split("\n"))
                                   .map(String::trim)
                                   .collect(Collectors.toList());
                 lores.addAll(commentLines);
-                ItemStack mapItem = createMapWithImage(player, qrImage, title, lores, fullPath);
+                ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+                MapView mapView = Bukkit.createMap(player.getWorld());
+                int mapId = mapView.getId();
+                mapView.getRenderers().clear();
+                mapView.addRenderer(new ImageMapRenderer(plugin, qrImage, fullPath));
+                var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
+                if (meta != null) {
+                    meta.setDisplayName(title);
+                    meta.setLore(lores);
+                    meta.setMapView(mapView);
+                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING, "true");
+                    mapItem.setItemMeta(meta);
+                }
+                db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, true, java.sql.Date.valueOf(LocalDate.now())});
                 player.getInventory().addItem(mapItem);
                 player.sendMessage("QRコード地図を渡しました: " + url);
             } catch (WriterException | IOException | SQLException | ClassNotFoundException e) {
@@ -226,22 +226,8 @@ public class ImageMap {
         }
     }
 
-    private Map<String, String> getThisServerImages(Connection conn) throws SQLException, ClassNotFoundException {
-        Map<String, String> images = new HashMap<>();
-        String query = "SELECT date ,imuuid, ext FROM images WHERE server=?;";
-        try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
-            PreparedStatement ps = connection.prepareStatement(query)) {
-            ps.setString(1, serverName);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    images.put(rs.getString("imuuid"), rs.getString("ext"));
-                }
-            }
-        }
-        return images;
-    }
-
-    private void loadAllItemFrames() {
+    public void loadAllItemFrames(Connection conn) throws SQLException, ClassNotFoundException {
+        Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
         for (World world : Bukkit.getWorlds()) {
             for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
                 ItemStack item = itemFrame.getItem();
@@ -251,14 +237,71 @@ public class ImageMap {
                         if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING)) {
                             MapView mapView = mapMeta.getMapView();
                             if (mapView != null) {
-                                mapView.getRenderers().clear();
-                                mapView.addRenderer(new ImageMapRenderer(plugin, null, getPathFromMapView(mapView)));
+                                int mapId = mapView.getId();
+                                if (serverImageInfo.containsKey(mapId)) {
+                                    Map<String, Object> imageInfo = serverImageInfo.get(mapId);
+                                    boolean isQr = (boolean) imageInfo.get("isqr");
+                                    Date date = (Date) imageInfo.get("date");
+                                    String imageUUID = (String) imageInfo.get("imuuid");
+                                    String ext = (String) imageInfo.get("ext");
+                                    String fullPath = getFullPath(conn, date, imageUUID, ext);
+                                    plugin.getLogger().log(Level.INFO, "Replacing image to the map(No.{0})...", new Object[] {mapId, fullPath});
+                                    try {
+                                        BufferedImage image = loadImage(fullPath);
+                                        if (image != null) {
+                                            // QRコードならリサイズしない
+                                            image = isQr ? image : resizeImage(image, 128, 128);
+                                            mapView.getRenderers().clear();
+                                            mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
+                                        } 
+                                    } catch (IOException e) {
+                                        plugin.getLogger().log(Level.SEVERE, "マップId {0} の画像の読み込みに失敗しました: {1}", new Object[] {mapId, fullPath});
+                                        plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+                                        for (StackTraceElement element : e.getStackTrace()) {
+                                            plugin.getLogger().severe(element.toString());
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        plugin.getLogger().info("Loaded all item frames.");
+    }
+
+    private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
+        Image resultingImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+        BufferedImage outputImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = outputImage.createGraphics();
+        g2d.drawImage(resultingImage, 0, 0, null);
+        g2d.dispose();
+        return outputImage;
+    }
+    
+    private Map<Integer, Map<String, Object>> getThisServerImages(Connection conn) throws SQLException, ClassNotFoundException {
+        Map<Integer, Map<String, Object>> serverImageInfo = new HashMap<>();
+        String query = "SELECT * FROM images WHERE server=?;";
+        try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
+            PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setString(1, serverName);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> rowMap = new HashMap<>();
+                    int mapId = rs.getInt("mapid");
+                    int columnCount = rs.getMetaData().getColumnCount();
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = rs.getMetaData().getColumnName(i);
+                        if (!columnName.equals("mapid")) {
+                            rowMap.put(columnName, rs.getObject(columnName));
+                        }
+                    }
+                    serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
+                }
+            }
+        }
+        return serverImageInfo;
     }
 
     private String formatDate(LocalDate date) {
@@ -275,14 +318,8 @@ public class ImageMap {
         return ImageIO.read(imageFile);
     }
 
-    private String getPathFromMapView(MapView mapView) {
-        // MapViewのIDを使用してファイルパスを生成
-        plugin.getLogger().log(Level.INFO, "MapView ID: {0}", mapView.getId());
-        return "/opt/mc/images/" + mapView.getId() + ".png";
-    }
-
-    private String getFullPath(Connection conn, String imageUUID, String ext) throws SQLException, ClassNotFoundException {
-        return getImageSaveFolder(conn) + "/" + LocalDate.now().toString().replace("-", "") + "/" + imageUUID + "." + ext;
+    private String getFullPath(Connection conn, Date date, String imageUUID, String ext) throws SQLException, ClassNotFoundException {
+        return getImageSaveFolder(conn) + "/" + date.toString().replace("-", "") + "/" + imageUUID + "." + ext;
     }
 
     private boolean isValidURL(String urlString) {
@@ -330,26 +367,5 @@ public class ImageMap {
         } else {
             plugin.getLogger().severe("画像保存フォルダが見つかりません。");
         }
-    }
-
-    private void createMapWithImage(BufferedImage image, String title, List<String> lores, String fullPath) {
-        MapView mapView = Bukkit.createMap(Bukkit.getWorlds().get(0));
-        mapView.getRenderers().clear();
-        mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
-    }
-
-    private ItemStack createMapWithImage(Player player, BufferedImage image, String title, List<String> lores, String fullPath) {
-        ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
-        MapView mapView = Bukkit.createMap(player.getWorld());
-        mapView.getRenderers().clear();
-        mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
-        var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(title);
-            meta.setLore(lores);
-            meta.setMapView(mapView);
-            mapItem.setItemMeta(meta);
-        }
-        return mapItem;
     }
 }

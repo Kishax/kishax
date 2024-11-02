@@ -29,7 +29,7 @@ public class FMCCommand implements TabExecutor {
 	private final common.Main plugin;
 	private final PortalsConfig psConfig;
 	private final PortalsMenu pm;
-	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im"));
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image"));
 	@Inject
 	public FMCCommand(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm) {
 		this.plugin = plugin;
@@ -82,7 +82,7 @@ public class FMCCommand implements TabExecutor {
 				Main.getInjector().getInstance(HidePlayer.class).execute(sender, cmd, label, args);
 				return true;
 			}
-			case "im" -> {
+			case "image","im" -> {
 				if (args.length > 1) {
 					if (!sender.hasPermission("fmc." + args[0] + "." + args[1])) {
 						sender.sendMessage(ChatColor.RED + "権限がありません。");
@@ -182,7 +182,6 @@ public class FMCCommand implements TabExecutor {
 	@Override
 	public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
     	List<String> ret = new ArrayList<>();
-
     	switch (args.length) {
 	    	case 1 -> {
 				Collections.sort(subcommands);
@@ -193,7 +192,6 @@ public class FMCCommand implements TabExecutor {
 
 				return StringUtil.copyPartialMatches(args[0].toLowerCase(), ret, new ArrayList<>());
 			}
-	    	
 	    	case 2 -> {
 				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
 				switch (args[0].toLowerCase()) {
@@ -219,9 +217,8 @@ public class FMCCommand implements TabExecutor {
                         }
                         return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
-					case "im" -> {
+					case "image","im" -> {
 						for (String args2 : ImageMap.args2) {
-							if (!sender.hasPermission("fmc.im." + args2)) continue;
 							ret.add(args2);
 						}
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());

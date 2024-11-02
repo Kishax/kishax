@@ -256,8 +256,7 @@ public class Discord implements DiscordInterface {
     
     @Override
     public void editBotEmbedReplacedAll(String messageId, MessageEmbed newEmbed) {
-    	 if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
-    	 
+    	if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
         // チャンネルIDは適切に設定してください
         channelId = Long.toString(config.getLong("Discord.ChannelId"));
         channel = jda.getTextChannelById(channelId);
@@ -381,21 +380,17 @@ public class Discord implements DiscordInterface {
     @Override
     public void sendBotMessage(String content, MessageEmbed embed) {
     	CompletableFuture<String> future = new CompletableFuture<>();
-    	
         if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) {
         	future.complete(null);
             return;
         }
-        
     	channelId = Long.toString(config.getLong("Discord.ChannelId"));
         channel = jda.getTextChannelById(channelId);
-        
         if (Objects.isNull(channel)) {
         	//logger.error("Channel not found!");
         	future.complete(null);
             return;
         }
-        
     	if (Objects.nonNull(embed)) {
     		// 埋め込みメッセージを送信
             MessageCreateAction messageAction = channel.sendMessageEmbeds(embed);
@@ -403,7 +398,6 @@ public class Discord implements DiscordInterface {
                 CompletableFuture::completedFuture, failure -> logger.error("Failed to send embedded message: " + failure.getMessage())
             );
         }
-    	
     	if (Objects.nonNull(content) && !content.isEmpty()) {
     		// テキストメッセージを送信
             MessageCreateAction messageAction = channel.sendMessage(content);
