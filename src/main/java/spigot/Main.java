@@ -46,13 +46,15 @@ public class Main {
 		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
 		try (Connection conn = getInjector().getInstance(Database.class).getConnection()) {
 			//getInjector().getInstance(ImageMap.class).loadAllImages(conn);
-    		plugin.getLogger().info("プラグインが有効になりました。");
+			getInjector().getInstance(ImageMap.class).loadAllItemFrames(conn);
 		} catch (Exception e) {
+			plugin.getLogger().log(Level.SEVERE, "既存マップの画像置換中にエラーが発生しました: {0}", e.getMessage());
 			plugin.getLogger().log(Level.SEVERE, "An error occurred while loading images: {0}", e.getMessage());
 			for (StackTraceElement element : e.getStackTrace()) {
 				plugin.getLogger().severe(element.toString());
 			}
 		}
+		plugin.getLogger().info("プラグインが有効になりました。");
     }
     
 	public static Injector getInjector() {
