@@ -109,8 +109,6 @@ public class DiscordEventListener extends ListenerAdapter {
 					try (Connection conn = db.getConnection()) {
 						int configUploadTimes = config.getInt("Discord.UserUploadTimes", 5),
 							userUploadTimes = getUserTodayTimes(conn, userId);
-							//logger.info("userUploadTimes: "+userUploadTimes+1);
-							//logger.info("configUploadTimes: "+configUploadTimes);
 						if (userUploadTimes + 1 >= configUploadTimes) {
 							e.reply("1日の登録回数は"+configUploadTimes+"回までです。").setEphemeral(true).queue();
 							return;
@@ -161,11 +159,13 @@ public class DiscordEventListener extends ListenerAdapter {
 										return;
 									}
 								}
+							} else {
+								ext = "png";
 							}
 							LocalDate now = LocalDate.now();
 							String imageUUID = UUID.randomUUID().toString(),
 								otp = OTPGenerator.generateOTP(6);
-							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, did ,date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {userName, null, null, null, title, imageUUID, ext, url, comment, true, otp, userId, java.sql.Date.valueOf(now)});
+							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, did ,date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {userName, null, null, null, title, imageUUID, ext, url, comment, isQr, otp, userId, java.sql.Date.valueOf(now)});
 							e.reply("画像メタデータを登録しました。\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
 							logger.info("(Discord)" + userName+" が画像メタデータを登録しました。");
 						} catch (IOException | URISyntaxException e2) {

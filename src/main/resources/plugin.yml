@@ -8,15 +8,11 @@ description: "§6§lThis plugin is provided by FMC Server!!"
 depend:
   - LuckPerms
 commands:
-  fmcp:
-    usage: /<command>
-    description: You can use FMC Bungeecord server command!
-    executor: bungee_command.FMCCommand
   fmc:
     usage: /<command>
     description: You can use FMC Spigot server command!
     executor: spigot_command.FMCCommand
-  hub:
+  q:
     usage: /<command>
-    description: You can back to Hub server!
-    executor: bungee_command.Hub
+    description: You can confirm image map code generated at discord
+    executor: spigot_command.Q
