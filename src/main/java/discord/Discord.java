@@ -67,19 +67,28 @@ public class Discord implements DiscordInterface {
 
                 // Botが完全に起動するのを待つ
                 jda.awaitReady();
-
-                CommandCreateAction createTeraCommand = jda.upsertCommand("fmc", "FMC commands");
-                createTeraCommand.addSubcommands(
-                    new SubcommandData("tera", "GCP commands")
-                        .addOptions(new OptionData(OptionType.STRING, "action", "Choose an action")
-                            .addChoice("Start", "start")
-                            .addChoice("Stop", "stop")
-                            .addChoice("Status", "status")
-                    )
-                ).queue();
-
+                CommandCreateAction createFMCCommand = jda.upsertCommand("fmc", "FMC commands");
+                SubcommandData teraSubCommand = new SubcommandData("tera", "テラリアコマンド")
+                    .addOptions(new OptionData(OptionType.STRING, "action", "選択してください。")
+                        .addChoice("Start", "start")
+                        .addChoice("Stop", "stop")
+                        .addChoice("Status", "status")
+                    );
+                SubcommandData createImageSubcommand = new SubcommandData("create", "マイクラの画像マップを作成するコマンド(urlか添付ファイルのどっちかを指定可能)")
+                    .addOptions(
+                        new OptionData(OptionType.STRING, "url", "画像リンクの設定項目").setRequired(false),
+                        new OptionData(OptionType.ATTACHMENT, "image", "ファイルの添付項目").setRequired(false),
+                        new OptionData(OptionType.STRING, "title", "画像マップのタイトル設定項目").setRequired(false),
+                        new OptionData(OptionType.STRING, "comment", "画像マップのコメント設定項目").setRequired(false)
+                    );
+                SubcommandData createQRSubcommand = new SubcommandData("createqr", "マイクラのQRコードマップを作成するコマンド(urlを指定してください)")
+                    .addOptions(
+                        new OptionData(OptionType.STRING, "url", "画像リンクの設定項目").setRequired(true),
+                        new OptionData(OptionType.STRING, "title", "画像マップのタイトル設定項目").setRequired(false),
+                        new OptionData(OptionType.STRING, "comment", "画像マップのコメント設定項目").setRequired(false)
+                    );
+                createFMCCommand.addSubcommands(teraSubCommand, createImageSubcommand, createQRSubcommand).queue();
                 jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
-                
                 isDiscord = true;
                 logger.info("Discord-Botがログインしました。");
                 return jda;

@@ -15,4 +15,7 @@ public interface DatabaseInterface {
     void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException;
     Class<?> getTypes(Object value);
     boolean isMaintenance(Connection conn);
+    void insertLog(String query, Object[] args) throws SQLException, ClassNotFoundException;
+    void insertLog(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException;
+    void setPreparedStatementValues(PreparedStatement ps, Object[] args) throws SQLException;
 }

@@ -98,16 +98,16 @@ public class ImageMap {
 
     public void executeImageMap(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
-            if (args.length < 5) {
-                player.sendMessage("使用法: /fmc im create <title> <comment> <url>");
+            if (args.length < 3) {
+                player.sendMessage("使用法: /fmc im create <url> [Optional: <title> <comment>]");
                 return;
             }
             String playerName = player.getName(),
                 playerUUID = player.getUniqueId().toString();
             String imageUUID = UUID.randomUUID().toString(),
-                url = args[4],
-                comment = args[3],
-                title = args[2];
+                url = args[2],
+                title = (args.length > 4 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
+                comment = (args.length > 5 && !args[4].isEmpty()) ? args[4]: "コメントなし";
             if (!isValidURL(url)) {
                 player.sendMessage("無効なURLです。");
                 return;
@@ -133,7 +133,8 @@ public class ImageMap {
                     player.sendMessage("指定のURLは規定の拡張子を持ちません。");
                     return;
                 }
-                String fullPath = getImageSaveFolder(conn) + "/" + LocalDate.now().toString().replace("-", "") + "/" + imageUUID + "." + ext;
+                LocalDate now = LocalDate.now();
+                String fullPath = getImageSaveFolder(conn) + "/" + now.toString().replace("-", "") + "/" + imageUUID + "." + ext;
                 // リサイズ前の画像を保存
                 saveImageToFileSystem(conn, image, imageUUID, ext);
                 BufferedImage resizedImage = resizeImage(image, 128, 128);
@@ -143,6 +144,8 @@ public class ImageMap {
                                   .map(String::trim)
                                   .collect(Collectors.toList());
                 lores.addAll(commentLines);
+                lores.add("created by " + playerName);
+                lores.add("at " + now.toString().replace("-", "/"));
                 ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
                 MapView mapView = Bukkit.createMap(player.getWorld());
                 int mapId = mapView.getId();
@@ -175,19 +178,20 @@ public class ImageMap {
 
     public void executeQRMap(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
-            if (args.length < 5) {
-                player.sendMessage("使用法: /fmc im createqr <title> <comment> <url>");
+            if (args.length < 3) {
+                player.sendMessage("使用法: /fmc im createqr <url> [Optional: <title> <comment>]");
                 return;
             }
             String playerName = player.getName(),
                 playerUUID = player.getUniqueId().toString();
             String imageUUID = UUID.randomUUID().toString(),
-                url = args[4],
-                comment = args[3],
-                title = args[2],
+                url = args[2],
+                title = (args.length > 4 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
+                comment = (args.length > 5 && !args[4].isEmpty()) ? args[4]: "コメントなし",
                 ext = "png";
             try (Connection conn = db.getConnection()) {
-                String fullPath = getImageSaveFolder(conn) + "/" + LocalDate.now().toString().replace("-", "") + "/" + imageUUID + "." + ext;
+                LocalDate now = LocalDate.now();
+                String fullPath = getImageSaveFolder(conn) + "/" + now.toString().replace("-", "") + "/" + imageUUID + "." + ext;
                 BufferedImage qrImage = generateQRCodeImage(url);
                 saveImageToFileSystem(conn, qrImage, imageUUID, ext);
                 List<String> lores = new ArrayList<>();
@@ -196,6 +200,8 @@ public class ImageMap {
                                   .map(String::trim)
                                   .collect(Collectors.toList());
                 lores.addAll(commentLines);
+                lores.add("created by " + playerName);
+                lores.add("at " + now.toString().replace("-", "/"));
                 ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
                 MapView mapView = Bukkit.createMap(player.getWorld());
                 int mapId = mapView.getId();
@@ -209,7 +215,7 @@ public class ImageMap {
                     meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING, "true");
                     mapItem.setItemMeta(meta);
                 }
-                db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, true, java.sql.Date.valueOf(LocalDate.now())});
+                db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, true, java.sql.Date.valueOf(now)});
                 player.getInventory().addItem(mapItem);
                 player.sendMessage("QRコード地図を渡しました: " + url);
             } catch (WriterException | IOException | SQLException | ClassNotFoundException e) {

@@ -5,10 +5,16 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +22,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.OTPGenerator;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.Role;
@@ -27,7 +34,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -36,6 +42,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.BroadCast;
 import velocity.Config;
+import velocity.DatabaseInterface;
 import velocity.DatabaseLog;
 import velocity_command.Request;
 import velocity_command.RequestInterface;
@@ -44,6 +51,7 @@ public class DiscordEventListener extends ListenerAdapter {
 	public static String PlayerChatMessageId = null;
 	private final Logger logger;
 	private final Config config;
+	private final DatabaseInterface db;
 	private final BroadCast bc;
 	private final MessageEditorInterface discordME;
 	private final RequestInterface req;
@@ -54,9 +62,10 @@ public class DiscordEventListener extends ListenerAdapter {
 	private String replyMessage = null, restAPIUrl = null;
 
 	@Inject
-	public DiscordEventListener (Logger logger, Config config, BroadCast bc, MessageEditorInterface discordME, RequestInterface req, DatabaseLog dbLog) {
+	public DiscordEventListener (Logger logger, Config config, DatabaseInterface db, BroadCast bc, MessageEditorInterface discordME, RequestInterface req, DatabaseLog dbLog) {
 		this.logger = logger;
 		this.config = config;
+		this.db = db;
 		this.bc = bc;
 		this.discordME = discordME;
 		this.req = req;
@@ -71,6 +80,176 @@ public class DiscordEventListener extends ListenerAdapter {
 			teraChannelId != 0;
 	}
 	
+	public int getUserTodayTimes(Connection conn, String userId) throws SQLException, ClassNotFoundException {
+        String query = "SELECT COUNT(*) FROM images WHERE did = ? AND DATE(date) = ?";
+		PreparedStatement ps = conn.prepareStatement(query);
+		ps.setString(1, userId);
+		ps.setDate(2, java.sql.Date.valueOf(LocalDate.now()));
+		ResultSet rs = ps.executeQuery();
+		if (rs.next()) {
+			return rs.getInt(1);
+		}
+        return 0;
+    }
+
+	@SuppressWarnings("null")
+	@Override
+    public void onSlashCommandInteraction(SlashCommandInteractionEvent e) {
+		User user = e.getUser();
+		String userMention = user.getAsMention();
+		MessageChannel channel = e.getChannel();
+		String userId = e.getMember().getId(),
+			userName = e.getMember().getNickname(),
+			channelId = channel.getId(),
+			guildId = e.getGuild().getId(),
+			channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId);
+		if (e.getName().equals("fmc")) {
+			switch (e.getSubcommandName()) {
+				case "create", "createqr" -> {
+					try (Connection conn = db.getConnection()) {
+						int configUploadTimes = config.getInt("Discord.UserUploadTimes", 5),
+							userUploadTimes = getUserTodayTimes(conn, userId);
+							logger.info("userUploadTimes: "+userUploadTimes);
+							logger.info("configUploadTimes: "+configUploadTimes);
+						if (userUploadTimes >= configUploadTimes) {
+							e.reply("1日の登録回数は"+configUploadTimes+"回までです。").setEphemeral(true).queue();
+							return;
+						}
+						boolean isQr = e.getSubcommandName().equals("createqr");
+						String url = e.getOption("url") != null ? e.getOption("url").getAsString() : null,
+							title = (e.getOption("title") != null) ? e.getOption("title").getAsString() : "無名のタイトル",
+							comment = (e.getOption("comment") != null) ? e.getOption("comment").getAsString() : "コメントなし";
+						Attachment attachment = e.getOption("image") != null ? e.getOption("image").getAsAttachment() : null;
+						if (url == null && attachment == null) {
+							e.reply("画像URLまたは画像を指定してください。").setEphemeral(true).queue();
+							return;
+						}
+						if (url != null && attachment != null) {
+							e.reply("画像URLと画像の両方を指定することはできません。").setEphemeral(true).queue();
+							return;
+						}
+						String ext = null;
+						if (attachment != null && !isQr) {
+							url = attachment.getUrl();
+							String fileName = attachment.getFileName().toLowerCase();
+							ext = fileName.substring(fileName.lastIndexOf(".") + 1);
+							switch (ext) {
+								case "png" -> ext = "png";
+								case "jpg" -> ext = "jpg";
+								case "jpeg" -> ext = "jpeg";
+								default -> {
+									e.reply("指定のファイルは規定の拡張子を持ちません。").setEphemeral(true).queue();
+									return;
+								}
+							}
+						}
+						try {
+							if (isQr) {
+								URL getUrl = new URI(url).toURL();
+								HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
+								connection.setRequestMethod("GET");
+								connection.connect();
+								String contentType = connection.getContentType();
+								switch (contentType) {
+									case "image/png" -> ext = "png";
+									case "image/jpeg" -> ext = "jpeg";
+									case "image/jpg" -> ext = "jpg";
+								}
+								if (ext == null) {
+									e.reply("指定のURLは規定の拡張子を持ちません。").setEphemeral(true).queue();
+									return;
+								}
+							}
+							LocalDate now = LocalDate.now();
+							String imageUUID = UUID.randomUUID().toString(),
+								otp = OTPGenerator.generateOTP(6);
+							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, did ,date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {userName, null, null, null, title, imageUUID, ext, url, comment, true, otp, userId, java.sql.Date.valueOf(now)});
+							e.reply("画像メタデータを登録しました。\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
+						} catch (IOException | URISyntaxException e2) {
+							e.reply("指定のURLは無効です。").setEphemeral(true).queue();
+							return;
+						}
+					} catch (SQLException | ClassNotFoundException e1) {
+						e.reply("データベースに接続できませんでした。").setEphemeral(true).queue();
+						logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
+						for (StackTraceElement element : e1.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
+					
+				}
+				case "tera" -> {
+					String teraType = e.getOption("action").getAsString();
+					if (!require) {
+						e.reply("コンフィグの設定が不十分なため、コマンドを実行できません。").setEphemeral(true).queue();
+						return;
+					}
+					String teraChannelId2 = Long.toString(teraChannelId);
+					if (!channelId.equals(teraChannelId2)) {
+						e.reply("テラリアのコマンドは " + channelLink + " で実行してください。").setEphemeral(true).queue();
+						return;
+					}
+					switch (teraType.toLowerCase()) {
+						case "start" -> {
+							if (isTera()) {
+								e.reply("Terrariaサーバーは既にオンラインです！").setEphemeral(true).queue();
+							} else {
+								try {
+									ProcessBuilder teraprocessBuilder = new ProcessBuilder(teraExecFilePath);
+									teraprocessBuilder.start();
+									e.reply(userMention + " Terrariaサーバーを起動させました。\nまもなく起動します。").setEphemeral(false).queue();
+								} catch (IOException e1) {
+									e.reply(userMention + " 内部エラーが発生しました。\nサーバーが起動できません。").setEphemeral(false).queue();
+									logger.error("An IOException error occurred: " + e1.getMessage());
+									for (StackTraceElement element : e1.getStackTrace()) {
+										logger.error(element.toString());
+									}
+								}
+							}
+						}
+						case "stop" -> {
+							if (isTera()) {
+								try {
+									String urlString = restAPIUrl + "/v2/server/off?token=" + teraToken + "&confirm=true&nosave=false";
+									URI uri = new URI(urlString);
+									URL url = uri.toURL();
+									HttpURLConnection con = (HttpURLConnection) url.openConnection();
+									con.setRequestMethod("GET");
+									con.setRequestProperty("Content-Type", "application/json; utf-8");
+									int code = con.getResponseCode();
+									switch (code) {
+										case 200 -> {
+											e.reply(userMention + " Terrariaサーバーを正常に停止させました。").setEphemeral(false).queue();
+										}
+										default -> {
+											e.reply(userMention + " 内部エラーが発生しました。\nサーバーが正常に停止できなかった可能性があります。").setEphemeral(false).queue();
+										}
+									}
+								} catch (IOException | URISyntaxException e2) {
+									logger.error("An IOException | URISyntaxException error occurred: " + e2.getMessage());
+									for (StackTraceElement element : e2.getStackTrace()) {
+										logger.error(element.toString());
+									}
+									e.reply(userMention + " 内部エラーが発生しました。\nサーバーが正常に停止できなかった可能性があります。").setEphemeral(false).queue();
+								}
+							} else {
+								e.reply("Terrariaサーバーは現在オフラインです！").setEphemeral(true).queue();
+							}
+						}
+						case "status" -> {
+							if (isTera()) {
+								e.reply("Terrariaサーバーは現在オンラインです。").setEphemeral(true).queue();
+							} else {
+								e.reply("Terrariaサーバーは現在オフラインです。").setEphemeral(true).queue();
+							}
+						}
+						default -> throw new AssertionError();
+					}
+				}
+			}
+		}
+    }
+
 	@SuppressWarnings("null")
 	@Override
 	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
@@ -211,120 +390,14 @@ public class DiscordEventListener extends ListenerAdapter {
         }
     }
 
-	@SuppressWarnings("null")
-	@Override
-    public void onSlashCommandInteraction(SlashCommandInteractionEvent e) {
-		User user = e.getUser();
-		String userMention = user.getAsMention();
-		MessageChannel channel = e.getChannel();
-		String channelId = channel.getId(),
-			guildId = e.getGuild().getId();
-		String channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId);
-		if (e.getName().equals("fmc")) {
-			switch (e.getSubcommandName()) {
-				case "tera" -> {
-					String teraType = e.getOption("action").getAsString();
-					ReplyCallbackAction messageAction;
-
-					if (!require) {
-						messageAction = e.reply("コンフィグの設定が不十分なため、コマンドを実行できません。").setEphemeral(true);
-						messageAction.queue();
-						return;
-					}
-
-					String teraChannelId2 = Long.toString(teraChannelId);
-					if (!channelId.equals(teraChannelId2)) {
-						messageAction = e.reply("テラリアのコマンドは " + channelLink + " で実行してください。").setEphemeral(true);
-						messageAction.queue();
-						return;
-					}
-
-					switch (teraType.toLowerCase()) {
-						case "start" -> {
-							if (isTera()) {
-								messageAction = e.reply("Terrariaサーバーは既にオンラインです！").setEphemeral(true);
-								messageAction.queue();
-							} else {
-								try {
-									ProcessBuilder teraprocessBuilder = new ProcessBuilder(teraExecFilePath);
-									teraprocessBuilder.start();
-									messageAction = e.reply(userMention + " Terrariaサーバーを起動させました。\nまもなく起動します。").setEphemeral(false);
-									messageAction.queue();
-								} catch (IOException e1) {
-									messageAction = e.reply(userMention + " 内部エラーが発生しました。\nサーバーが起動できません。").setEphemeral(false);
-									messageAction.queue();
-									logger.error("An IOException error occurred: " + e1.getMessage());
-									for (StackTraceElement element : e1.getStackTrace()) {
-										logger.error(element.toString());
-									}
-								}
-							}
-						}
-						case "stop" -> {
-							if (isTera()) {
-								try {
-									String urlString = restAPIUrl + "/v2/server/off?token=" + teraToken + "&confirm=true&nosave=false";
-			
-									URI uri = new URI(urlString);
-									URL url = uri.toURL();
-									
-									HttpURLConnection con = (HttpURLConnection) url.openConnection();
-									con.setRequestMethod("GET");
-									con.setRequestProperty("Content-Type", "application/json; utf-8");
-			
-									int code = con.getResponseCode();
-									switch (code) {
-										case 200 -> {
-											messageAction = e.reply(userMention + " Terrariaサーバーを正常に停止させました。").setEphemeral(false);
-											messageAction.queue();
-										}
-										default -> {
-											messageAction = e.reply(userMention + " 内部エラーが発生しました。\nサーバーが正常に停止できなかった可能性があります。").setEphemeral(false);
-											messageAction.queue();
-										}
-									}
-									
-								} catch (IOException | URISyntaxException e2) {
-									logger.error("An IOException | URISyntaxException error occurred: " + e2.getMessage());
-									for (StackTraceElement element : e2.getStackTrace()) {
-										logger.error(element.toString());
-									}
-			
-									messageAction = e.reply(userMention + " 内部エラーが発生しました。\nサーバーが正常に停止できなかった可能性があります。").setEphemeral(false);
-									messageAction.queue();
-								}
-							} else {
-								messageAction = e.reply("Terrariaサーバーは現在オフラインです！").setEphemeral(true);
-								messageAction.queue();
-							}
-						}
-						case "status" -> {
-							if (isTera()) {
-								messageAction = e.reply("Terrariaサーバーは現在オンラインです。").setEphemeral(true);
-								messageAction.queue();
-							} else {
-								messageAction = e.reply("Terrariaサーバーは現在オフラインです。").setEphemeral(true);
-								messageAction.queue();
-							}
-						}
-						default -> throw new AssertionError();
-					}
-				}
-			}
-		}
-    }
-
 	private boolean isTera() {
         try {
             String urlString = restAPIUrl + "/status?token=" + teraToken;
-
             URI uri = new URI(urlString);
             URL url = uri.toURL();
-            
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setRequestProperty("Content-Type", "application/json; utf-8");
-
             int code = con.getResponseCode();
             switch (code) {
                 case 200 -> {
@@ -339,57 +412,36 @@ public class DiscordEventListener extends ListenerAdapter {
 		}
     }
 
-	public void sendMixUrl(String string) {
-    	// 正規表現パターンを定義（URLを見つけるための正規表現）
+	private void sendMixUrl(String string) {
         String urlRegex = "https?://\\S+";
         Pattern patternUrl = Pattern.compile(urlRegex);
         Matcher matcher = patternUrl.matcher(string);
-
-        // URLリストとテキストリストを作成
         List<String> urls = new ArrayList<>();
         List<String> textParts = new ArrayList<>();
-        
         int lastMatchEnd = 0;
-        
         Boolean isUrl = false;
         while (matcher.find()) {
-        	// URLが含まれていたら
         	isUrl = true;
-        	
-            // マッチしたURLをリストに追加
             urls.add(matcher.group());
-            
-            // URLの前のテキスト部分をリストに追加
             textParts.add(string.substring(lastMatchEnd, matcher.start()));
             lastMatchEnd = matcher.end();
         }
-        
-    	// URLが含まれてなかったら
         if (!isUrl) {
         	//if (string.contains("\\n")) string = string.replace("\\n", "\n");
         	bc.broadCastMessage(Component.text(string).color(NamedTextColor.AQUA));
         	return;
         }
-        
-        // 最後のURLの後のテキスト部分を追加
         if (lastMatchEnd < string.length()) {
             textParts.add(string.substring(lastMatchEnd));
         }
-        
-
-        // テキスト部分を結合
         TextComponent component = Component.text().build();
-        
         int textPartsSize = textParts.size();
         int urlsSize = urls.size();
-        
         for (int i = 0; i < textPartsSize; i++) {
         	Boolean isText = false;
         	if (Objects.nonNull(textParts) && textPartsSize != 0) {
         		String text;
         		text = textParts.get(i);
-        		
-        		//if (text.contains("\\n")) text = text.replace("\\n", "\n");
         		TextComponent additionalComponent;
         		additionalComponent = Component.text()
         				.append(Component.text(text))
@@ -399,13 +451,6 @@ public class DiscordEventListener extends ListenerAdapter {
         	} else {
         		isText = true;
         	}
-        	
-        	
-        	// URLが1つなら、textPartsは2つになる。
-        	// URLが2つなら、textPartsは3つになる。
-        	//　ゆえ、最後の番号だけ考えなければ、
-        	// 上で文字列にURLが含まれているかどうかを確認しているので、ぶっちゃけ以下のif文はいらないかも
-        	//if(Objects.nonNull(urls) && urlsSize != 0)
         	if (i < urlsSize) {
         		String getUrl;
         		if (isText) {
@@ -416,7 +461,6 @@ public class DiscordEventListener extends ListenerAdapter {
             	} else {
             		getUrl = "\n"+urls.get(i);
             	}
-            	
         		TextComponent additionalComponent;
         		additionalComponent = Component.text()
             				.append(Component.text(getUrl)
@@ -428,7 +472,6 @@ public class DiscordEventListener extends ListenerAdapter {
                 component = component.append(additionalComponent);
         	}
         }
-        
         bc.broadCastMessage(component);
     }
 }
