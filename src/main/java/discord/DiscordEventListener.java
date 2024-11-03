@@ -108,8 +108,9 @@ public class DiscordEventListener extends ListenerAdapter {
 				case "create", "createqr" -> {
 					try (Connection conn = db.getConnection()) {
 						int configUploadTimes = config.getInt("Discord.UserUploadTimes", 5),
-							userUploadTimes = getUserTodayTimes(conn, userId);
-						if (userUploadTimes + 1 >= configUploadTimes) {
+							userUploadTimes = getUserTodayTimes(conn, userId),
+							thisTimes = userUploadTimes + 1;
+						if (thisTimes + 1 >= configUploadTimes) {
 							e.reply("1日の登録回数は"+configUploadTimes+"回までです。").setEphemeral(true).queue();
 							return;
 						}
@@ -126,20 +127,15 @@ public class DiscordEventListener extends ListenerAdapter {
 							e.reply("画像URLと画像の両方を指定することはできません。").setEphemeral(true).queue();
 							return;
 						}
-						String ext = null;
+						String ext;
 						if (attachment != null && !isQr) {
 							logger.info("(attachment != null && !isQr)ブロックを通りました。");
 							url = attachment.getUrl();
 							String fileName = attachment.getFileName().toLowerCase();
 							ext = fileName.substring(fileName.lastIndexOf(".") + 1);
-							switch (ext) {
-								case "png" -> ext = "png";
-								case "jpg" -> ext = "jpg";
-								case "jpeg" -> ext = "jpeg";
-								default -> {
-									e.reply("指定のファイルは規定の拡張子を持ちません。").setEphemeral(true).queue();
-									return;
-								}
+							if (!ext.equals("jpeg") && !ext.equals("jpg") && !ext.equals("png")) {
+								e.reply("指定のファイルは規定の拡張子を持ちません。").setEphemeral(true).queue();
+								return;
 							}
 						}
 						try {
@@ -165,8 +161,8 @@ public class DiscordEventListener extends ListenerAdapter {
 							LocalDate now = LocalDate.now();
 							String imageUUID = UUID.randomUUID().toString(),
 								otp = OTPGenerator.generateOTP(6);
-							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, did ,date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {userName, null, null, null, title, imageUUID, ext, url, comment, isQr, otp, userId, java.sql.Date.valueOf(now)});
-							e.reply("画像メタデータを登録しました。\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
+							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, d, dname, did, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {userName, null, null, null, title, imageUUID, ext, url, comment, isQr, otp, true, userName, userId, java.sql.Date.valueOf(now)});
+							e.reply("画像メタデータを登録しました。("+thisTimes+"/10)\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
 							logger.info("(Discord)" + userName+" が画像メタデータを登録しました。");
 						} catch (IOException | URISyntaxException e2) {
 							e.reply("指定のURLは無効です。").setEphemeral(true).queue();

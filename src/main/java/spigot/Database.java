@@ -93,6 +93,10 @@ public class Database {
         ps.executeUpdate();
     }
     
+    public void updateLog(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
+        insertLog(conn, query, args);
+    }
+
     private void setPreparedStatementValues(PreparedStatement ps, Object[] args) throws SQLException {
         for (int i = 0; i < args.length; i++) {
             ps.setObject(i + 1, args[i]);
