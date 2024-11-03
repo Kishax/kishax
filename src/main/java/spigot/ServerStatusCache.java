@@ -27,17 +27,19 @@ public class ServerStatusCache {
     private final PortFinder pf;
     private final DoServerOnline dso;
     private final Provider<SocketSwitch> sswProvider;
+    private final ServerHomeDir shd;
     private final AtomicBoolean isFirstRefreshing = new AtomicBoolean(false);
     private Map<String, Map<String, Map<String, Object>>> statusMap = new ConcurrentHashMap<>();
     private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
     @Inject
-    public ServerStatusCache(common.Main plugin, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider) {
+    public ServerStatusCache(common.Main plugin, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
         this.plugin = plugin;
         this.db = db;
         this.pf = pf;
         this.dso = dso;
         this.sswProvider = sswProvider;
+        this.shd = shd;
     }
 
     public void serverStatusCache() {
@@ -91,12 +93,12 @@ public class ServerStatusCache {
     
                     sortedServerStatusMap.put(serverType, sortedServers);
                 }
-    
                 this.statusMap = sortedServerStatusMap;
                 // 初回ループのみ
                 if (isFirstRefreshing.compareAndSet(false, true)) {
                     plugin.getLogger().info("Server status cache has been initialized.");
                     pf.findAvailablePortAsync(statusMap).thenAccept(port -> {
+                        refreshManualOnlineServer(shd.getServerName());
                         dso.UpdateDatabase(port);
                         ssw.startSocketServer(port);
                     }).exceptionally(ex -> {
@@ -115,6 +117,18 @@ public class ServerStatusCache {
                 plugin.getLogger().severe(element.toString());
             }
         }
+    }
+
+    public void refreshManualOnlineServer(String specificServerName) {
+        Map<String, Map<String, Map<String, Object>>> statusMapCopied = getStatusMap();
+        statusMapCopied.values().stream()
+            .flatMap(serverMap -> serverMap.entrySet().stream())
+            .filter(entry -> entry.getValue().get("name") instanceof String serverName && serverName.equals(specificServerName))
+            .forEach(entry -> {
+                entry.getValue().put("online", true);
+                setStatusMap(statusMap);
+                //plugin.getLogger().log(Level.INFO, "Server {0} is now online", extracted);
+            });
     }
 
     public Map<String, Map<String, Map<String, Object>>> getStatusMap() {
