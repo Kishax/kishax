@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
@@ -33,7 +34,8 @@ public class Menu {
     public static String menuInventoryKey = "menu",
         menuInventoryName = "fmc menu",
         serverInventoryKey = "servers",
-        onlineServerInventoryKey = "online",
+        onlineServerInventoryKey = "onlineServers",
+        onlineServerInventoryName = "online servers",
         serverTypeInventoryKey = "serverType",
         serverTypeInventoryName = "server type";
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image"));
@@ -64,7 +66,7 @@ public class Menu {
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
             if (args.length == 1) {
-                generalMenu(player);
+                generalMenu(player, 1);
             } else if (args.length > 1 && args[1].equalsIgnoreCase("server")) {
                 if (plugin.getConfig().getBoolean("Portals.Menu", false)) {
                     if (!(player.hasPermission("group.new-fmc-user") || player.hasPermission("group.sub-admin") || player.hasPermission("group.super-admin"))) {
@@ -122,10 +124,6 @@ public class Menu {
         return this.menuActions.get(player);
     }
 
-    public void generalMenu(Player player) {
-        generalMenu(player, 1);
-    }
-
     public void generalMenu(Player player, int page) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Menu.menuInventoryName);
@@ -162,7 +160,6 @@ public class Menu {
             }
             case 2 -> {
                 playerMenuActions.put(13, () -> {
-                    plugin.getLogger().info("メニューがクリックされました。");
                     player.closeInventory();
                     player.sendMessage("ここにあればいいなと思う機能があればDiscordで教えてね");
                 });
@@ -190,8 +187,9 @@ public class Menu {
         player.openInventory(inv);
     }
 
-    public void openServerOnlineServerInventory(Player player, int page) {
-        Inventory inv = Bukkit.createInventory(null, 54, "Online servers");
+    public void openOnlineServerInventory(Player player, int page) {
+        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Inventory inv = Bukkit.createInventory(null, 54, Menu.onlineServerInventoryName);
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
         if (backMeta != null) {
@@ -199,34 +197,75 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
+        playerMenuActions.put(0, () -> {
+            resetPage(player, Menu.onlineServerInventoryKey);
+            openServerTypeInventory(player);
+        });
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
-        for (Map.Entry<String, Map<String, Map<String, Object>>> entry : serverStatusMap.entrySet()) {
-            //String serverType = entry.getKey();
-            Map<String, Map<String, Object>> serverStatusList = entry.getValue();
-            for (Map.Entry<String, Map<String, Object>> serverEntry : serverStatusList.entrySet()) {
-                String serverName = serverEntry.getKey();
-                Map<String, Object> serverData = serverEntry.getValue();
-                for (Map.Entry<String, Object> dataEntry : serverData.entrySet()) {
-                    String key = dataEntry.getKey();
-                    Object value = dataEntry.getValue();
-                    if (key.equals("online")) {
-                        if (value instanceof Boolean online && online) {
-                            Material oreMaterial = ORE_BLOCKS.get(currentOreIndex);
-                            currentOreIndex = (currentOreIndex + 1) % ORE_BLOCKS.size();
-                            ItemStack serverItem = new ItemStack(oreMaterial);
-                            ItemMeta serverMeta = serverItem.getItemMeta();
-                            if (serverMeta != null) {
-                                serverMeta.setDisplayName(ChatColor.GREEN + serverName);
-                                serverItem.setItemMeta(serverMeta);
-                            }
-                            inv.addItem(serverItem);
-                        }
-                    }
-                }
+        // オンラインサーバーのみを抽出
+        Map<String, Map<String, Object>> serverStatusOnlineMap = serverStatusMap.values().stream()
+            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+            .filter(serverEntry -> serverEntry.getValue().get("online") instanceof Boolean online && online)
+            .filter(serverEntry -> serverEntry.getValue().get("name") instanceof String name && !name.equals("proxy") && !name.equals("maintenance"))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        plugin.getLogger().log(Level.INFO, "serverStatusOnlineMap: {0}", serverStatusOnlineMap);
+        int totalItems = serverStatusOnlineMap.size(),
+            totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length,
+            startIndex = (page - 1) * SLOT_POSITIONS.length,
+            endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
+        plugin.getLogger().log(Level.INFO, "totalItems: {0}, totalPages: {1}, startIndex: {2}, endIndex: {3}", new Object[]{totalItems, totalPages, startIndex, endIndex});
+        List<Map<String, Object>> serverDataList = serverStatusOnlineMap.values().stream().collect(Collectors.toList());
+        for (int i = startIndex; i < endIndex; i++) {
+            plugin.getLogger().log(Level.INFO, "i: {0}", i);
+            Map<String, Object> serverData = serverDataList.get(i);
+            String serverName = (String) serverData.get("name");
+            if (page == 1 && i == 0) {
+                currentOreIndex = 0; // ページが1の場合はインデックスをリセット
             }
+            Material oreMaterial = ORE_BLOCKS.get(currentOreIndex);
+            currentOreIndex = (currentOreIndex + 1) % ORE_BLOCKS.size(); // インデックスを更新
+            ItemStack serverItem = new ItemStack(oreMaterial);
+            ItemMeta serverMeta = serverItem.getItemMeta();
+            if (serverMeta != null) {
+                serverMeta.setDisplayName(ChatColor.GREEN + serverName);
+                serverItem.setItemMeta(serverMeta);
+            }
+            int slot = SLOT_POSITIONS[i - startIndex];
+            inv.setItem(slot, serverItem);
+            plugin.getLogger().log(Level.INFO, "Item set", slot);
+            plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
+            playerMenuActions.put(slot, () -> openServerInventoryFromOnlineServerInventory(player, serverName, 1));
         }
+        if (page > 1) {
+            ItemStack prevPageItem = new ItemStack(Material.ARROW);
+            ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+            if (prevPageMeta != null) {
+                prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+                prevPageItem.setItemMeta(prevPageMeta);
+            }
+            inv.setItem(45, prevPageItem);
+            playerMenuActions.put(45, () -> {
+                setPage(player, Menu.onlineServerInventoryKey, page - 1);
+                openOnlineServerInventory(player, page - 1);
+            });
+        }
+        if (page < totalPages) {
+            ItemStack nextPageItem = new ItemStack(Material.ARROW);
+            ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+            if (nextPageMeta != null) {
+                nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                nextPageItem.setItemMeta(nextPageMeta);
+            }
+            inv.setItem(53, nextPageItem);
+            playerMenuActions.put(53, () -> {
+                setPage(player, Menu.onlineServerInventoryKey, page + 1);
+                openOnlineServerInventory(player, page + 1);
+            });
+        }
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.onlineServerInventoryKey, playerMenuActions);
+        //plugin.getLogger().log(Level.INFO, "menuActions: {0}", menuActions);
         player.openInventory(inv);
-        setPage(player, "online", page);
+        setPage(player, Menu.onlineServerInventoryKey, page);
     }
 
     public void openServerEachInventory(Player player, String serverType, int page) {
@@ -244,12 +283,12 @@ public class Menu {
             openServerTypeInventory(player);
         });
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
-        Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
-        int totalItems = serverStatusList.size(),
+        Map<String, Map<String, Object>> serverStatusTypeMap = serverStatusMap.get(serverType);
+        int totalItems = serverStatusTypeMap.size(),
             totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length,
             startIndex = (page - 1) * SLOT_POSITIONS.length,
             endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
-        List<Map<String, Object>> serverDataList = serverStatusList.values().stream().collect(Collectors.toList());
+        List<Map<String, Object>> serverDataList = serverStatusTypeMap.values().stream().collect(Collectors.toList());
         for (int i = startIndex; i < endIndex; i++) {
             Map<String, Object> serverData = serverDataList.get(i);
             String serverName = (String) serverData.get("name");
@@ -300,6 +339,14 @@ public class Menu {
     }
 
     public void openServerInventory(Player player, String serverName, int page) {
+        openServerInventory(player, serverName, page, false);
+    }
+
+    public void openServerInventoryFromOnlineServerInventory(Player player, String serverName, int page) {
+        openServerInventory(player, serverName, page, true);
+    }
+
+    private void openServerInventory(Player player, String serverName, int page, boolean fromOnlineServerInventory) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         int permLevel = lp.getPermLevel(player.getName());
         Inventory inv = Bukkit.createInventory(null, 54, serverName + " server");
@@ -310,15 +357,6 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        // 自動入室ドグル
-        // サーバーを起動or起動リクエストにより、オンラインになったら自動で入室する
-        // だれかが、サーバーを起動or起動リクエストした場合、そのサーバーにいるプレイヤーたちに、
-        // 「サーバーがまもなく起動します。自動入室エリアにいると、自動で転送されます。」というメッセージを送信する
-        // そのメッセージを受け取ったプレイヤーたちは、自動入室エリアに移動する
-        // もしくは、自動転送エリアをつくって、そこにいるプレイヤーたちは、自動で転送されるようにするか
-        // どちらかの方法で実装する
-        // オンラインサーバーゲートを作る
-        // くぐると、現在オンラインのサーバーが出てくる
         AtomicReference<String> thisServerType = new AtomicReference<>(null);
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         for (Map.Entry<String, Map<String, Map<String, Object>>> entry : serverStatusMap.entrySet()) {
@@ -489,17 +527,24 @@ public class Menu {
                 }
             }
         }
-        playerMenuActions.put(0, () -> openServerEachInventory(player, thisServerType.get(), 1));
+        playerMenuActions.put(0, () -> {
+            if (fromOnlineServerInventory) {
+                openOnlineServerInventory(player, 1);
+            } else {
+                openServerEachInventory(player, thisServerType.get(), 1);
+            }
+        });
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(serverInventoryKey, playerMenuActions);
         player.openInventory(inv);
     }
 
     public void openServerTypeInventory(Player player) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
-        playerMenuActions.put(0, () -> generalMenu(player));
+        playerMenuActions.put(0, () -> generalMenu(player, 1));
         playerMenuActions.put(11, () -> openServerEachInventory(player, "life", 1));
         playerMenuActions.put(13, () -> openServerEachInventory(player, "distributed", 1));
         playerMenuActions.put(15, () -> openServerEachInventory(player, "mod", 1));
+        playerMenuActions.put(18, () -> openOnlineServerInventory(player, 1));
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryKey, playerMenuActions);
         Inventory inv = Bukkit.createInventory(null, 27, "server type");
         ItemStack backItem = new ItemStack(Material.STICK);

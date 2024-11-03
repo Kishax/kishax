@@ -38,7 +38,8 @@ public class DoServerOnline {
 		ssw.sendSpigotServer(serverName+"サーバーが起動しました。");
 		plugin.getLogger().info(String.format("""
 			%sサーバーが起動しました。""", serverName));
-		
+		// ServerStatusCache初回ループと各サーバーのSocketResponseクラスで、
+		// refreshManualOnlineServer()を呼び出しているので、MineStatusSyncは不要
 		String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
 		try (Connection conn = db.getConnection();
 			PreparedStatement ps = conn != null && !conn.isClosed() ? conn.prepareStatement(query) : db.getConnection().prepareStatement(query)) {

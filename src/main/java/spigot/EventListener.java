@@ -48,20 +48,24 @@ public final class EventListener implements Listener {
         Player player = (Player) event.getPlayer();
         String title = event.getView().getTitle();
         // インベントリのタイトルに基づいて処理を行う
-        if (title.equals("FMC Menu")) {
-            menu.resetPage(player, "menu");
+        if (title.equals(Menu.onlineServerInventoryName)) {
+            // 1: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
+            menu.resetPage(player, Menu.onlineServerInventoryName);
+        } else if (title.equals(Menu.menuInventoryName)) {
+            menu.resetPage(player, Menu.menuInventoryKey);
         } else if (title.endsWith(" servers")) {
+            // 2: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
             if (playersOpeningNewInventory.contains(player)) {
-                playersOpeningNewInventory.remove(player); // プレイヤーが新しいインベントリを開いている場合はリセットしない
+                playersOpeningNewInventory.remove(player);
             } else {
                 String serverType = title.split(" ")[0];
                 if (serverType != null) {
-                    menu.resetPage(player, serverType); // インベントリを閉じたときに、プレイヤーのページをリセット
+                    menu.resetPage(player, serverType);
                 }
             }
         } else if (title.endsWith(" server")) {
             if (playersOpeningNewInventory.contains(player)) {
-                playersOpeningNewInventory.remove(player); // プレイヤーが新しいインベントリを開いている場合はリセットしない
+                playersOpeningNewInventory.remove(player);
             } else {
                 String serverName = title.split(" ")[0];
                 if (serverName != null) {
@@ -89,10 +93,17 @@ public final class EventListener implements Listener {
                 if (iskey) {
                     menu.runMenuAction(player, Menu.serverInventoryKey, event.getRawSlot());
                 }
-            } else if (title.endsWith(" servers")) {
+            } else if (title.equals(Menu.serverTypeInventoryName)) {
+                // 1: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
                 event.setCancelled(true);
                 menu.runMenuAction(player, Menu.serverTypeInventoryKey, event.getRawSlot());
-            } else if (title.equals(Menu.serverTypeInventoryName)) {
+            } else if (title.equals(Menu.onlineServerInventoryName)) {
+                //plugin.getLogger().info("ここ通ってるよ");
+                event.setCancelled(true);
+                menu.runMenuAction(player, Menu.onlineServerInventoryKey, event.getRawSlot());
+            } else if (title.endsWith(" servers")) {
+                //plugin.getLogger().info("ここ通ってるよ2");
+                // 2: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
                 event.setCancelled(true);
                 menu.runMenuAction(player, Menu.serverTypeInventoryKey, event.getRawSlot());
             }
