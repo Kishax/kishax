@@ -3,8 +3,8 @@ package spigot;
 
 import com.google.inject.AbstractModule;
 
+import spigot_command.Menu;
 import spigot_command.PortalsDelete;
-import spigot_command.PortalsMenu;
 import spigot_command.ReloadConfig;
 
 public class Module extends AbstractModule {
@@ -27,7 +27,7 @@ public class Module extends AbstractModule {
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);
 		bind(PortalsConfig.class).in(com.google.inject.Scopes.SINGLETON);
-		bind(PortalsMenu.class);
+		bind(Menu.class);
 		bind(PortalsDelete.class);
 		bind(EventListener.class);
 		bind(WandListener.class);

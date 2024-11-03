@@ -26,21 +26,21 @@ import com.google.inject.Inject;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
-import spigot_command.PortalsMenu;
+import spigot_command.Menu;
 
 public final class EventListener implements Listener {
     private final common.Main plugin;
 	private final PortalsConfig psConfig;
-    private final PortalsMenu pm;
+    private final Menu menu;
     private final ServerStatusCache ssc;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, PortalsConfig psConfig, PortalsMenu pm, ServerStatusCache ssc) {
+	public EventListener(common.Main plugin, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc) {
 		this.plugin = plugin;
 		this.psConfig = psConfig;
-        this.pm = pm;
+        this.menu = menu;
         this.ssc = ssc;
 	}
 
@@ -49,7 +49,9 @@ public final class EventListener implements Listener {
         Player player = (Player) event.getPlayer();
         String title = event.getView().getTitle();
         // インベントリのタイトルに基づいて処理を行う
-        if (title.endsWith(" servers")) {
+        if (title.equals("FMC Menu")) {
+            menu.resetPage(player, "menu");
+        } else if (title.endsWith(" servers")) {
             if (playersOpeningNewInventory.contains(player)) {
                 // プレイヤーが新しいインベントリを開いている場合はリセットしない
                 playersOpeningNewInventory.remove(player);
@@ -57,7 +59,7 @@ public final class EventListener implements Listener {
                 // インベントリを閉じたときに、プレイヤーのページをリセット
                 String serverType = title.split(" ")[0];
                 if (serverType != null) {
-                    pm.resetPage(player, serverType);
+                    menu.resetPage(player, serverType);
                 }
             }
         } else if (title.endsWith(" server")) {
@@ -67,7 +69,7 @@ public final class EventListener implements Listener {
             } else {
                 String serverName = title.split(" ")[0];
                 if (serverName != null) {
-                    pm.resetPage(player, serverName);
+                    menu.resetPage(player, serverName);
                 }
             }
         }
@@ -77,11 +79,21 @@ public final class EventListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             playersOpeningNewInventory.add(player);
-            //String playerName = player.getName();
             String title = event.getView().getTitle();
-            Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
-            if (title.endsWith(" server")) {
+            if (title.equals("FMC Menu")) {
                 event.setCancelled(true);
+                int slot = event.getRawSlot();
+                if (menu.getPlayerMenuActions(player).containsKey(slot)) {
+                    Runnable action = menu.getPlayerMenuActions(player).get(slot);
+                    if (action != null) {
+                        action.run();
+                    } else {
+                        player.sendMessage("指定されたスロットにアクションが設定されていません。");
+                    }
+                }
+            } else if (title.endsWith(" server")) {
+                event.setCancelled(true);
+                Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
                 String serverName = title.split(" ")[0];
                 boolean iskey = serverStatusMap.entrySet().stream()
                     .anyMatch(e -> e.getValue().entrySet().stream()
@@ -90,76 +102,77 @@ public final class EventListener implements Listener {
                     int slot = event.getRawSlot();
                     switch (slot) {
                         case 0 -> {
-                            pm.resetPage(player, serverName);
+                            menu.resetPage(player, serverName);
                             String serverType = ssc.getServerType(serverName);
                             if (serverType != null) {
-                                int page = pm.getPage(player, serverType);
-                                pm.openServerEachInventory(player, serverType, page);
+                                int page = menu.getPage(player, serverType);
+                                menu.openServerEachInventory(player, serverType, page);
                             } else {
                                 player.closeInventory();
                                 player.sendMessage("サーバーが見つかりませんでした。");
                             }
                         }
                         case 22 -> {
-                            pm.serverSwitch(player, serverName);
+                            menu.serverSwitch(player, serverName);
                         }
                         case 23 -> {
-                            pm.enterServer(player, serverName);
+                            menu.enterServer(player, serverName);
                         }
                         case 45 -> {
                             // 戻るボタンがあれば
-                            int page = pm.getPage(player, serverName);
+                            int page = menu.getPage(player, serverName);
                             if (page > 1) {
-                                pm.openServerInventory(player, serverName, page - 1);
+                                menu.openServerInventory(player, serverName, page - 1);
                             }
                         }
                         case 53 -> {
                             // 進むボタンがあれば
-                            int page = pm.getPage(player, serverName);
-                            int totalServers = pm.getTotalPlayers(serverName); // 総サーバー数を取得
-                            int totalPages = (int) Math.ceil((double) totalServers / PortalsMenu.FACE_POSITIONS.length); // 総ページ数を計算
+                            int page = menu.getPage(player, serverName);
+                            int totalServers = menu.getTotalPlayers(serverName); // 総サーバー数を取得
+                            int totalPages = (int) Math.ceil((double) totalServers / Menu.FACE_POSITIONS.length); // 総ページ数を計算
                             if (page < totalPages) {
-                                pm.openServerInventory(player, serverName, page + 1);
+                                menu.openServerInventory(player, serverName, page + 1);
                             }
                         }
                     }
                 }
             } else if (title.endsWith(" servers")) {
                 event.setCancelled(true);
+                Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
                 String serverType = title.split(" ")[0];
                 int slot = event.getRawSlot();
                 switch (slot) {
                     case 0 -> {
-                        pm.resetPage(player, serverType);
-                        pm.openServerTypeInventory(player);
+                        menu.resetPage(player, serverType);
+                        menu.openServerTypeInventory(player);
                     }
                     case 11, 13, 15, 29, 31, 33 -> {
                         Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
-                        int page = pm.getPage(player, serverType);
-                        int slotIndex = Arrays.asList(Arrays.stream(PortalsMenu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
-                        int index = PortalsMenu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
+                        int page = menu.getPage(player, serverType);
+                        int slotIndex = Arrays.asList(Arrays.stream(Menu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
+                        int index = Menu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
                         if (index < serverStatusList.size()) {
                             if (serverStatusList.keySet().toArray()[index] instanceof String serverName) {
-                                int facepage = pm.getPage(player, serverName);
-                                pm.setPage(player, serverName, page);
-                                pm.openServerInventory(player, serverName, facepage);
+                                int facepage = menu.getPage(player, serverName);
+                                menu.setPage(player, serverName, page);
+                                menu.openServerInventory(player, serverName, facepage);
                             }
                         }
                     }
                     case 45 -> {
                         // 戻るボタンがあれば
-                        int page = pm.getPage(player, serverType);
+                        int page = menu.getPage(player, serverType);
                         if (page > 1) {
-                            pm.openServerEachInventory(player, serverType, page - 1);
+                            menu.openServerEachInventory(player, serverType, page - 1);
                         }
                     }
                     case 53 -> {
                         // 進むボタンがあれば
-                        int page = pm.getPage(player, serverType);
-                        int totalServers = pm.getTotalServers(serverType); // 総サーバー数を取得
-                        int totalPages = (int) Math.ceil((double) totalServers / PortalsMenu.SLOT_POSITIONS.length); // 総ページ数を計算
+                        int page = menu.getPage(player, serverType);
+                        int totalServers = menu.getTotalServers(serverType); // 総サーバー数を取得
+                        int totalPages = (int) Math.ceil((double) totalServers / Menu.SLOT_POSITIONS.length); // 総ページ数を計算
                         if (page < totalPages) {
-                            pm.openServerEachInventory(player, serverType, page + 1);
+                            menu.openServerEachInventory(player, serverType, page + 1);
                         }
                     }
                 }
@@ -168,16 +181,16 @@ public final class EventListener implements Listener {
                 int slot = event.getRawSlot();
                 switch (slot) {
                     case 11 -> {
-                        int page = pm.getPage(player, "life");
-                        pm.openServerEachInventory(player, "life", page);
+                        int page = menu.getPage(player, "life");
+                        menu.openServerEachInventory(player, "life", page);
                     }
                     case 13 -> {
-                        int page = pm.getPage(player, "distributed");
-                        pm.openServerEachInventory(player, "distributed", page);
+                        int page = menu.getPage(player, "distributed");
+                        menu.openServerEachInventory(player, "distributed", page);
                     }
                     case 15 -> {
-                        int page = pm.getPage(player, "mod");
-                        pm.openServerEachInventory(player, "mod", page);
+                        int page = menu.getPage(player, "mod");
+                        menu.openServerEachInventory(player, "mod", page);
                     }
                 }
             }
@@ -200,15 +213,12 @@ public final class EventListener implements Listener {
                 portalsConfig = psConfig.getPortalsConfig();
                 portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
             }
-            
             boolean isInAnyPortal = false;
-            
             if (portals != null) {
                 for (Map<?, ?> portal : portals) {
                     String name = (String) portal.get("name");
                     List<?> corner1List = (List<?>) portal.get("corner1");
                     List<?> corner2List = (List<?>) portal.get("corner2");
-
                     if (corner1List != null && corner2List != null) {
                         Location corner1 = new Location(player.getWorld(),
                                 ((Number) corner1List.get(0)).doubleValue(),
@@ -233,7 +243,7 @@ public final class EventListener implements Listener {
                                 player.spigot().sendMessage(component);
                                 switch (name) {
                                     case "life","distributed","mod" -> {
-                                        player.performCommand("fmc portal menu server " + name);
+                                        player.performCommand("fmc menu server " + name);
                                     }
                                 }
                             }

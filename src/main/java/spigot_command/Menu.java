@@ -1,5 +1,6 @@
 package spigot_command;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -22,10 +23,13 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import spigot.Luckperms;
+import spigot.Main;
 import spigot.ServerStatusCache;
 
 @Singleton
-public class PortalsMenu {
+public class Menu {
+    public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image"));
+    public static List<String> args2 = new ArrayList<>(Arrays.asList("life","distibuted","mod"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     public static final int[] FACE_POSITIONS = {46, 47, 48, 49, 50, 51, 52};
     private static final List<Material> ORE_BLOCKS = Arrays.asList(
@@ -38,24 +42,91 @@ public class PortalsMenu {
     private final ServerStatusCache ssc;
     private final Luckperms lp;
     private final Map<Player, Map<String, Integer>> playerOpenningInventoryMap = new HashMap<>();
+    private Map<Player, Map<Integer, Runnable>> menuActions = new HashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
-	public PortalsMenu(common.Main plugin, ServerStatusCache ssc, Luckperms lp) {  
+	public Menu(common.Main plugin, ServerStatusCache ssc, Luckperms lp) {  
 		this.plugin = plugin;
         this.ssc = ssc;
         this.lp = lp;
 	}
 
+    // fmc menu <server|image> <server: serverType>
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
-            player.openInventory(plugin.getServer().createInventory(null, 27, "Custom Inventory"));
+            if (args.length == 0) {
+                generalMenu(player);
+            } else if (args.length > 1 && args[1].equalsIgnoreCase("server")) {
+                if (plugin.getConfig().getBoolean("Portals.Menu", false)) {
+                    if (!(player.hasPermission("group.new-fmc-user") || player.hasPermission("group.sub-admin") || player.hasPermission("group.super-admin"))) {
+                        player.sendMessage("先にUUID認証を完了させてください。");
+                        return;
+                    }
+                    if (args.length > 2) {
+                        String serverType = args[2].toLowerCase();
+                        switch (serverType) {
+                            case "life", "distributed", "mod" -> {
+                                int page = getPage(player, serverType);
+                                openServerEachInventory((Player) sender, serverType, page);
+                                return;
+                            }
+                            default -> {
+                                sender.sendMessage("Usage: /fmc menu server <life|distribution|mod>");
+                                return;
+                            }
+                        }
+                    } else {
+                        Main.getInjector().getInstance(Menu.class).openServerTypeInventory((Player) sender);
+                    }
+                } else {
+                    sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
+                }
+            } else {
+                sender.sendMessage("Usage: /fmc menu <server|image> <server: serverType>");
+            }
+        } else {
+            if (sender != null) {
+                sender.sendMessage(ChatColor.RED + "このコマンドはプレイヤーのみ実行可能です。");
+            }
         }
 	}
 
+    public void openImageMenu(Player player) {
+
+    }
+
+    public Map<Integer, Runnable> getPlayerMenuActions(Player player) {
+        return this.menuActions.get(player);
+    }
+
+    public void generalMenu(Player player) {
+        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        playerMenuActions.put(11, () -> openServerTypeInventory(player));
+        playerMenuActions.put(15, () -> openImageMenu(player));
+        this.menuActions.put(player, playerMenuActions);
+        Inventory inv = Bukkit.createInventory(null, 27, "FMC Menu");
+        // サーバーメニューと画像メニューへ誘導するアイテムを追加(クリック時、メニューが開く)
+        ItemStack serverItem = new ItemStack(Material.COMPASS);
+        ItemMeta serverMeta = serverItem.getItemMeta();
+        if (serverMeta != null) {
+            serverMeta.setDisplayName(ChatColor.GREEN + "サーバーメニュー");
+            serverItem.setItemMeta(serverMeta);
+        }
+        inv.setItem(11, serverItem);
+        ItemStack imageItem = new ItemStack(Material.MAP);
+        ItemMeta imageMeta = imageItem.getItemMeta();
+        if (imageMeta != null) {
+            imageMeta.setDisplayName(ChatColor.GREEN + "画像マップメニュー");
+            imageItem.setItemMeta(imageMeta);
+        }
+        inv.setItem(15, imageItem);
+        
+        player.openInventory(inv);
+    }
+
     public void openServerTypeInventory(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, "server type");
-
         ItemStack lifeServerItem = new ItemStack(Material.GRASS_BLOCK);
         ItemMeta lifeMeta = lifeServerItem.getItemMeta();
         if (lifeMeta != null) {
@@ -63,7 +134,6 @@ public class PortalsMenu {
             lifeServerItem.setItemMeta(lifeMeta);
         }
         inv.setItem(11, lifeServerItem);
-
         ItemStack distributionServerItem = new ItemStack(Material.CHEST);
         ItemMeta distributionMeta = distributionServerItem.getItemMeta();
         if (distributionMeta != null) {
@@ -71,7 +141,6 @@ public class PortalsMenu {
             distributionServerItem.setItemMeta(distributionMeta);
         }
         inv.setItem(13, distributionServerItem);
-
         ItemStack modServerItem = new ItemStack(Material.IRON_BLOCK);
         ItemMeta modMeta = modServerItem.getItemMeta();
         if (modMeta != null) {
@@ -79,7 +148,6 @@ public class PortalsMenu {
             modServerItem.setItemMeta(modMeta);
         }
         inv.setItem(15, modServerItem);
-
         player.openInventory(inv);
     }
 

@@ -129,8 +129,8 @@ public class ImageMap {
                 playerUUID = player.getUniqueId().toString(),
                 imageUUID = UUID.randomUUID().toString(),
                 url = args[2],
-                title = (args.length > 4 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
-                comment = (args.length > 5 && !args[4].isEmpty()) ? args[4]: "コメントなし",
+                title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
+                comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
                 ext;
             if (!isValidURL(url) && !isQr) {
                 player.sendMessage("無効なURLです。");
@@ -190,7 +190,7 @@ public class ImageMap {
                     mapItem.setItemMeta(meta);
                 }
                 if (fromDiscord) {
-                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, fromDiscord, (String) dArgs[1], (String) dArgs[2], Date.valueOf(now), (String) dArgs[0]});
+                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], Date.valueOf(now), (String) dArgs[0]});
                 } else {
                     db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, Date.valueOf(LocalDate.now())});
                 }
