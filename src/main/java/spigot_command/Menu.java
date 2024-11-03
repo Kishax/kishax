@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
@@ -208,15 +207,12 @@ public class Menu {
             .filter(serverEntry -> serverEntry.getValue().get("online") instanceof Boolean online && online)
             .filter(serverEntry -> serverEntry.getValue().get("name") instanceof String name && !name.equals("proxy") && !name.equals("maintenance"))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        plugin.getLogger().log(Level.INFO, "serverStatusOnlineMap: {0}", serverStatusOnlineMap);
         int totalItems = serverStatusOnlineMap.size(),
             totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length,
             startIndex = (page - 1) * SLOT_POSITIONS.length,
             endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
-        plugin.getLogger().log(Level.INFO, "totalItems: {0}, totalPages: {1}, startIndex: {2}, endIndex: {3}", new Object[]{totalItems, totalPages, startIndex, endIndex});
         List<Map<String, Object>> serverDataList = serverStatusOnlineMap.values().stream().collect(Collectors.toList());
         for (int i = startIndex; i < endIndex; i++) {
-            plugin.getLogger().log(Level.INFO, "i: {0}", i);
             Map<String, Object> serverData = serverDataList.get(i);
             String serverName = (String) serverData.get("name");
             if (page == 1 && i == 0) {
@@ -232,8 +228,6 @@ public class Menu {
             }
             int slot = SLOT_POSITIONS[i - startIndex];
             inv.setItem(slot, serverItem);
-            plugin.getLogger().log(Level.INFO, "Item set", slot);
-            plugin.getLogger().log(Level.INFO, "slot: {0}", slot);
             playerMenuActions.put(slot, () -> openServerInventoryFromOnlineServerInventory(player, serverName, 1));
         }
         if (page > 1) {
@@ -456,7 +450,6 @@ public class Menu {
                             }
                         }
                         if (key.equals("player_list")) {
-                            //plugin.getLogger().log(Level.INFO, "value: {0}", value);
                             if (value instanceof String playerList) {
                                 String[] playerArray = playerList.split(",\\s*");
                                 List<String> players = Arrays.asList(playerArray);
