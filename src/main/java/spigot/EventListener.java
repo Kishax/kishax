@@ -83,14 +83,14 @@ public final class EventListener implements Listener {
             if (title.equals("FMC Menu")) {
                 event.setCancelled(true);
                 int slot = event.getRawSlot();
-                if (menu.getPlayerMenuActions(player).containsKey(slot)) {
-                    Runnable action = menu.getPlayerMenuActions(player).get(slot);
-                    if (action != null) {
-                        action.run();
-                    } else {
-                        player.sendMessage("指定されたスロットにアクションが設定されていません。");
-                    }
-                }
+                // Map<String, Map<Integer, Runnable>>であるmenu.getPlayerMenuActions(player)のキーが"menu"であれば、
+                // slotに対応するアクションを実行する
+                menu.getPlayerMenuActions(player).entrySet().stream()
+                    .filter(entry -> entry.getKey().equals("menu"))
+                    .map(Map.Entry::getValue)
+                    .filter(actions -> actions.containsKey(slot))
+                    .map(actions -> actions.get(slot))
+                    .forEach(Runnable::run);
             } else if (title.endsWith(" server")) {
                 event.setCancelled(true);
                 Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
@@ -180,6 +180,9 @@ public final class EventListener implements Listener {
                 event.setCancelled(true);
                 int slot = event.getRawSlot();
                 switch (slot) {
+                    case 0 -> {
+                        menu.generalMenu(player);
+                    }
                     case 11 -> {
                         int page = menu.getPage(player, "life");
                         menu.openServerEachInventory(player, "life", page);
