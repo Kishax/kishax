@@ -1,7 +1,6 @@
 package spigot;
 
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,19 +52,16 @@ public final class EventListener implements Listener {
             menu.resetPage(player, "menu");
         } else if (title.endsWith(" servers")) {
             if (playersOpeningNewInventory.contains(player)) {
-                // プレイヤーが新しいインベントリを開いている場合はリセットしない
-                playersOpeningNewInventory.remove(player);
+                playersOpeningNewInventory.remove(player); // プレイヤーが新しいインベントリを開いている場合はリセットしない
             } else {
-                // インベントリを閉じたときに、プレイヤーのページをリセット
                 String serverType = title.split(" ")[0];
                 if (serverType != null) {
-                    menu.resetPage(player, serverType);
+                    menu.resetPage(player, serverType); // インベントリを閉じたときに、プレイヤーのページをリセット
                 }
             }
         } else if (title.endsWith(" server")) {
             if (playersOpeningNewInventory.contains(player)) {
-                // プレイヤーが新しいインベントリを開いている場合はリセットしない
-                playersOpeningNewInventory.remove(player);
+                playersOpeningNewInventory.remove(player); // プレイヤーが新しいインベントリを開いている場合はリセットしない
             } else {
                 String serverName = title.split(" ")[0];
                 if (serverName != null) {
@@ -80,17 +76,9 @@ public final class EventListener implements Listener {
         if (event.getWhoClicked() instanceof Player player) {
             playersOpeningNewInventory.add(player);
             String title = event.getView().getTitle();
-            if (title.equals("FMC Menu")) {
+            if (title.equals(Menu.menuInventoryName)) {
                 event.setCancelled(true);
-                int slot = event.getRawSlot();
-                // Map<String, Map<Integer, Runnable>>であるmenu.getPlayerMenuActions(player)のキーが"menu"であれば、
-                // slotに対応するアクションを実行する
-                menu.getPlayerMenuActions(player).entrySet().stream()
-                    .filter(entry -> entry.getKey().equals("menu"))
-                    .map(Map.Entry::getValue)
-                    .filter(actions -> actions.containsKey(slot))
-                    .map(actions -> actions.get(slot))
-                    .forEach(Runnable::run);
+                menu.runMenuAction(player, Menu.menuInventoryKey, event.getRawSlot());
             } else if (title.endsWith(" server")) {
                 event.setCancelled(true);
                 Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
@@ -99,103 +87,14 @@ public final class EventListener implements Listener {
                     .anyMatch(e -> e.getValue().entrySet().stream()
                     .anyMatch(e2 -> e2.getKey() instanceof String statusServerName && statusServerName.equals(serverName)));
                 if (iskey) {
-                    int slot = event.getRawSlot();
-                    switch (slot) {
-                        case 0 -> {
-                            menu.resetPage(player, serverName);
-                            String serverType = ssc.getServerType(serverName);
-                            if (serverType != null) {
-                                int page = menu.getPage(player, serverType);
-                                menu.openServerEachInventory(player, serverType, page);
-                            } else {
-                                player.closeInventory();
-                                player.sendMessage("サーバーが見つかりませんでした。");
-                            }
-                        }
-                        case 22 -> {
-                            menu.serverSwitch(player, serverName);
-                        }
-                        case 23 -> {
-                            menu.enterServer(player, serverName);
-                        }
-                        case 45 -> {
-                            // 戻るボタンがあれば
-                            int page = menu.getPage(player, serverName);
-                            if (page > 1) {
-                                menu.openServerInventory(player, serverName, page - 1);
-                            }
-                        }
-                        case 53 -> {
-                            // 進むボタンがあれば
-                            int page = menu.getPage(player, serverName);
-                            int totalServers = menu.getTotalPlayers(serverName); // 総サーバー数を取得
-                            int totalPages = (int) Math.ceil((double) totalServers / Menu.FACE_POSITIONS.length); // 総ページ数を計算
-                            if (page < totalPages) {
-                                menu.openServerInventory(player, serverName, page + 1);
-                            }
-                        }
-                    }
+                    menu.runMenuAction(player, Menu.serverInventoryKey, event.getRawSlot());
                 }
             } else if (title.endsWith(" servers")) {
                 event.setCancelled(true);
-                Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
-                String serverType = title.split(" ")[0];
-                int slot = event.getRawSlot();
-                switch (slot) {
-                    case 0 -> {
-                        menu.resetPage(player, serverType);
-                        menu.openServerTypeInventory(player);
-                    }
-                    case 11, 13, 15, 29, 31, 33 -> {
-                        Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
-                        int page = menu.getPage(player, serverType);
-                        int slotIndex = Arrays.asList(Arrays.stream(Menu.SLOT_POSITIONS).boxed().toArray(Integer[]::new)).indexOf(slot);
-                        int index = Menu.SLOT_POSITIONS.length * (page - 1) + slotIndex;
-                        if (index < serverStatusList.size()) {
-                            if (serverStatusList.keySet().toArray()[index] instanceof String serverName) {
-                                int facepage = menu.getPage(player, serverName);
-                                menu.setPage(player, serverName, page);
-                                menu.openServerInventory(player, serverName, facepage);
-                            }
-                        }
-                    }
-                    case 45 -> {
-                        // 戻るボタンがあれば
-                        int page = menu.getPage(player, serverType);
-                        if (page > 1) {
-                            menu.openServerEachInventory(player, serverType, page - 1);
-                        }
-                    }
-                    case 53 -> {
-                        // 進むボタンがあれば
-                        int page = menu.getPage(player, serverType);
-                        int totalServers = menu.getTotalServers(serverType); // 総サーバー数を取得
-                        int totalPages = (int) Math.ceil((double) totalServers / Menu.SLOT_POSITIONS.length); // 総ページ数を計算
-                        if (page < totalPages) {
-                            menu.openServerEachInventory(player, serverType, page + 1);
-                        }
-                    }
-                }
-            } else if (title.equals("server type")) {
+                menu.runMenuAction(player, Menu.serverTypeInventoryKey, event.getRawSlot());
+            } else if (title.equals(Menu.serverTypeInventoryName)) {
                 event.setCancelled(true);
-                int slot = event.getRawSlot();
-                switch (slot) {
-                    case 0 -> {
-                        menu.generalMenu(player);
-                    }
-                    case 11 -> {
-                        int page = menu.getPage(player, "life");
-                        menu.openServerEachInventory(player, "life", page);
-                    }
-                    case 13 -> {
-                        int page = menu.getPage(player, "distributed");
-                        menu.openServerEachInventory(player, "distributed", page);
-                    }
-                    case 15 -> {
-                        int page = menu.getPage(player, "mod");
-                        menu.openServerEachInventory(player, "mod", page);
-                    }
-                }
+                menu.runMenuAction(player, Menu.serverTypeInventoryKey, event.getRawSlot());
             }
         }
     }
