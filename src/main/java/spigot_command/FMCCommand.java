@@ -28,13 +28,11 @@ import spigot.PortalsConfig;
 public class FMCCommand implements TabExecutor {
 	private final common.Main plugin;
 	private final PortalsConfig psConfig;
-	private final Menu menu;
 	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu"));
 	@Inject
-	public FMCCommand(common.Main plugin, PortalsConfig psConfig, Menu menu) {
+	public FMCCommand(common.Main plugin, PortalsConfig psConfig) {
 		this.plugin = plugin;
 		this.psConfig = psConfig;
-		this.menu = menu;
 	}
 	
 	@Override

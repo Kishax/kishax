@@ -42,7 +42,7 @@ public class Menu {
     private final ServerStatusCache ssc;
     private final Luckperms lp;
     private final Map<Player, Map<String, Integer>> playerOpenningInventoryMap = new HashMap<>();
-    private Map<Player, Map<Integer, Runnable>> menuActions = new HashMap<>();
+    private final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new HashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
@@ -55,7 +55,7 @@ public class Menu {
     // fmc menu <server|image> <server: serverType>
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
-            if (args.length == 0) {
+            if (args.length == 1) {
                 generalMenu(player);
             } else if (args.length > 1 && args[1].equalsIgnoreCase("server")) {
                 if (plugin.getConfig().getBoolean("Portals.Menu", false)) {
@@ -96,37 +96,88 @@ public class Menu {
 
     }
 
-    public Map<Integer, Runnable> getPlayerMenuActions(Player player) {
+    public Map<String, Map<Integer, Runnable>> getPlayerMenuActions(Player player) {
         return this.menuActions.get(player);
     }
 
     public void generalMenu(Player player) {
+        generalMenu(player, 1);
+    }
+
+    public void generalMenu(Player player, int page) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
-        playerMenuActions.put(11, () -> openServerTypeInventory(player));
-        playerMenuActions.put(15, () -> openImageMenu(player));
-        this.menuActions.put(player, playerMenuActions);
         Inventory inv = Bukkit.createInventory(null, 27, "FMC Menu");
-        // サーバーメニューと画像メニューへ誘導するアイテムを追加(クリック時、メニューが開く)
-        ItemStack serverItem = new ItemStack(Material.COMPASS);
-        ItemMeta serverMeta = serverItem.getItemMeta();
-        if (serverMeta != null) {
-            serverMeta.setDisplayName(ChatColor.GREEN + "サーバーメニュー");
-            serverItem.setItemMeta(serverMeta);
+        switch (page) {
+            case 1 -> {
+                playerMenuActions.put(11, () -> openServerTypeInventory(player));
+                playerMenuActions.put(15, () -> openImageMenu(player));
+                playerMenuActions.put(26, () -> {
+                    setPage(player, "menu", page + 1);
+                    generalMenu(player, page + 1);
+                });
+                this.menuActions.computeIfAbsent(player, k -> new HashMap<>()).put("menu", playerMenuActions);
+                // サーバーメニューと画像メニューへ誘導するアイテムを追加(クリック時、メニューが開く)
+                ItemStack serverItem = new ItemStack(Material.COMPASS);
+                ItemMeta serverMeta = serverItem.getItemMeta();
+                if (serverMeta != null) {
+                    serverMeta.setDisplayName(ChatColor.GREEN + "サーバーメニュー");
+                    serverItem.setItemMeta(serverMeta);
+                }
+                inv.setItem(11, serverItem);
+                ItemStack imageItem = new ItemStack(Material.MAP);
+                ItemMeta imageMeta = imageItem.getItemMeta();
+                if (imageMeta != null) {
+                    imageMeta.setDisplayName(ChatColor.GREEN + "画像マップメニュー");
+                    imageItem.setItemMeta(imageMeta);
+                }
+                inv.setItem(15, imageItem);
+                ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                if (nextPageMeta != null) {
+                    nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                    nextPageItem.setItemMeta(nextPageMeta);
+                }
+                inv.setItem(26, nextPageItem);
+            }
+            case 2 -> {
+                playerMenuActions.put(13, () -> {
+                    plugin.getLogger().info("メニューがクリックされました。");
+                    player.closeInventory();
+                    player.sendMessage("ここにあればいいなと思う機能があればDiscordで教えてね");
+                });
+                playerMenuActions.put(18, () -> {
+                    setPage(player, "menu", page - 1);
+                    generalMenu(player, page - 1);
+                });
+                this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put("menu", playerMenuActions);
+                ItemStack anyItem = new ItemStack(Material.COOKIE);
+                ItemMeta anyMeta = anyItem.getItemMeta();
+                if (anyMeta != null) {
+                    anyMeta.setDisplayName(ChatColor.GREEN + "未定");
+                    anyItem.setItemMeta(anyMeta);
+                }
+                inv.setItem(13, anyItem);
+                ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                if (prevPageMeta != null) {
+                    prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+                    prevPageItem.setItemMeta(prevPageMeta);
+                }
+                inv.setItem(18, prevPageItem);
+            }
         }
-        inv.setItem(11, serverItem);
-        ItemStack imageItem = new ItemStack(Material.MAP);
-        ItemMeta imageMeta = imageItem.getItemMeta();
-        if (imageMeta != null) {
-            imageMeta.setDisplayName(ChatColor.GREEN + "画像マップメニュー");
-            imageItem.setItemMeta(imageMeta);
-        }
-        inv.setItem(15, imageItem);
-        
         player.openInventory(inv);
     }
 
     public void openServerTypeInventory(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, "server type");
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
         ItemStack lifeServerItem = new ItemStack(Material.GRASS_BLOCK);
         ItemMeta lifeMeta = lifeServerItem.getItemMeta();
         if (lifeMeta != null) {
@@ -148,11 +199,65 @@ public class Menu {
             modServerItem.setItemMeta(modMeta);
         }
         inv.setItem(15, modServerItem);
+        // 現在オンラインのサーバーを表示する
+        ItemStack onlineServerItem = new ItemStack(Material.GREEN_WOOL);
+        ItemMeta onlineMeta = onlineServerItem.getItemMeta();
+        if (onlineMeta != null) {
+            onlineMeta.setDisplayName(ChatColor.GREEN + "オンラインサーバー");
+            onlineServerItem.setItemMeta(onlineMeta);
+        }
+        inv.setItem(18, onlineServerItem);
         player.openInventory(inv);
+    }
+
+    public void openServerOnlineServerInventory(Player player, int page) {
+        Inventory inv = Bukkit.createInventory(null, 54, "Online servers");
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+        Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
+        for (Map.Entry<String, Map<String, Map<String, Object>>> entry : serverStatusMap.entrySet()) {
+            //String serverType = entry.getKey();
+            Map<String, Map<String, Object>> serverStatusList = entry.getValue();
+            for (Map.Entry<String, Map<String, Object>> serverEntry : serverStatusList.entrySet()) {
+                String serverName = serverEntry.getKey();
+                Map<String, Object> serverData = serverEntry.getValue();
+                for (Map.Entry<String, Object> dataEntry : serverData.entrySet()) {
+                    String key = dataEntry.getKey();
+                    Object value = dataEntry.getValue();
+                    if (key.equals("online")) {
+                        if (value instanceof Boolean online && online) {
+                            Material oreMaterial = ORE_BLOCKS.get(currentOreIndex);
+                            currentOreIndex = (currentOreIndex + 1) % ORE_BLOCKS.size();
+                            ItemStack serverItem = new ItemStack(oreMaterial);
+                            ItemMeta serverMeta = serverItem.getItemMeta();
+                            if (serverMeta != null) {
+                                serverMeta.setDisplayName(ChatColor.GREEN + serverName);
+                                serverItem.setItemMeta(serverMeta);
+                            }
+                            inv.addItem(serverItem);
+                        }
+                    }
+                }
+            }
+        }
+        player.openInventory(inv);
+        setPage(player, "online", page);
     }
 
     public void openServerEachInventory(Player player, String serverType, int page) {
         Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
         int totalItems = serverStatusList.size(),
@@ -194,13 +299,6 @@ public class Menu {
             }
             inv.setItem(53, nextPageItem);
         }
-        ItemStack backItem = new ItemStack(Material.BARRIER);
-        ItemMeta backMeta = backItem.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.RED + "戻る");
-            backItem.setItemMeta(backMeta);
-        }
-        inv.setItem(0, backItem);
         player.openInventory(inv);
         setPage(player, serverType, page);
     }
@@ -242,10 +340,10 @@ public class Menu {
     public void openServerInventory(Player player, String serverName, int page) {
         int permLevel = lp.getPermLevel(player.getName());
         Inventory inv = Bukkit.createInventory(null, 54, serverName + " server");
-        ItemStack backItem = new ItemStack(Material.BARRIER);
+        ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
         if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.RED + "戻る");
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
