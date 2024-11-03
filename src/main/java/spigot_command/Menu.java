@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
@@ -28,6 +30,12 @@ import spigot.ServerStatusCache;
 
 @Singleton
 public class Menu {
+    public static String menuInventoryKey = "menu",
+        menuInventoryName = "fmc menu",
+        serverInventoryKey = "servers",
+        onlineServerInventoryKey = "online",
+        serverTypeInventoryKey = "serverType",
+        serverTypeInventoryName = "server type";
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image"));
     public static List<String> args2 = new ArrayList<>(Arrays.asList("life","distibuted","mod"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
@@ -42,7 +50,7 @@ public class Menu {
     private final ServerStatusCache ssc;
     private final Luckperms lp;
     private final Map<Player, Map<String, Integer>> playerOpenningInventoryMap = new HashMap<>();
-    private final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new HashMap<>();
+    private final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new ConcurrentHashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
@@ -92,6 +100,20 @@ public class Menu {
         }
 	}
 
+    public void runMenuAction(Player player, String menuType, int slot) {
+        Map<String, Map<Integer, Runnable>> playerMenuActions = getPlayerMenuActions(player);
+        if (playerMenuActions != null) {
+            // コレクションをコピーしてから反復処理を行う
+            Map<String, Map<Integer, Runnable>> copiedMenuActions = new HashMap<>(playerMenuActions);
+            copiedMenuActions.entrySet().stream()
+                .filter(entry -> entry.getKey().equals(menuType))
+                .map(Map.Entry::getValue)
+                .filter(actions -> actions.containsKey(slot))
+                .map(actions -> actions.get(slot))
+                .forEach(Runnable::run);
+        }
+    }
+
     public void openImageMenu(Player player) {
 
     }
@@ -106,16 +128,15 @@ public class Menu {
 
     public void generalMenu(Player player, int page) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
-        Inventory inv = Bukkit.createInventory(null, 27, "FMC Menu");
+        Inventory inv = Bukkit.createInventory(null, 27, Menu.menuInventoryName);
         switch (page) {
             case 1 -> {
                 playerMenuActions.put(11, () -> openServerTypeInventory(player));
                 playerMenuActions.put(15, () -> openImageMenu(player));
                 playerMenuActions.put(26, () -> {
-                    setPage(player, "menu", page + 1);
+                    setPage(player, menuInventoryKey, page + 1);
                     generalMenu(player, page + 1);
                 });
-                this.menuActions.computeIfAbsent(player, k -> new HashMap<>()).put("menu", playerMenuActions);
                 // サーバーメニューと画像メニューへ誘導するアイテムを追加(クリック時、メニューが開く)
                 ItemStack serverItem = new ItemStack(Material.COMPASS);
                 ItemMeta serverMeta = serverItem.getItemMeta();
@@ -146,10 +167,9 @@ public class Menu {
                     player.sendMessage("ここにあればいいなと思う機能があればDiscordで教えてね");
                 });
                 playerMenuActions.put(18, () -> {
-                    setPage(player, "menu", page - 1);
+                    setPage(player, Menu.menuInventoryKey, page - 1);
                     generalMenu(player, page - 1);
                 });
-                this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put("menu", playerMenuActions);
                 ItemStack anyItem = new ItemStack(Material.COOKIE);
                 ItemMeta anyMeta = anyItem.getItemMeta();
                 if (anyMeta != null) {
@@ -166,47 +186,7 @@ public class Menu {
                 inv.setItem(18, prevPageItem);
             }
         }
-        player.openInventory(inv);
-    }
-
-    public void openServerTypeInventory(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, "server type");
-        ItemStack backItem = new ItemStack(Material.STICK);
-        ItemMeta backMeta = backItem.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
-            backItem.setItemMeta(backMeta);
-        }
-        inv.setItem(0, backItem);
-        ItemStack lifeServerItem = new ItemStack(Material.GRASS_BLOCK);
-        ItemMeta lifeMeta = lifeServerItem.getItemMeta();
-        if (lifeMeta != null) {
-            lifeMeta.setDisplayName(ChatColor.GREEN + "生活鯖");
-            lifeServerItem.setItemMeta(lifeMeta);
-        }
-        inv.setItem(11, lifeServerItem);
-        ItemStack distributionServerItem = new ItemStack(Material.CHEST);
-        ItemMeta distributionMeta = distributionServerItem.getItemMeta();
-        if (distributionMeta != null) {
-            distributionMeta.setDisplayName(ChatColor.YELLOW + "配布鯖");
-            distributionServerItem.setItemMeta(distributionMeta);
-        }
-        inv.setItem(13, distributionServerItem);
-        ItemStack modServerItem = new ItemStack(Material.IRON_BLOCK);
-        ItemMeta modMeta = modServerItem.getItemMeta();
-        if (modMeta != null) {
-            modMeta.setDisplayName(ChatColor.BLUE + "モッド鯖");
-            modServerItem.setItemMeta(modMeta);
-        }
-        inv.setItem(15, modServerItem);
-        // 現在オンラインのサーバーを表示する
-        ItemStack onlineServerItem = new ItemStack(Material.GREEN_WOOL);
-        ItemMeta onlineMeta = onlineServerItem.getItemMeta();
-        if (onlineMeta != null) {
-            onlineMeta.setDisplayName(ChatColor.GREEN + "オンラインサーバー");
-            onlineServerItem.setItemMeta(onlineMeta);
-        }
-        inv.setItem(18, onlineServerItem);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryKey, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -250,6 +230,7 @@ public class Menu {
     }
 
     public void openServerEachInventory(Player player, String serverType, int page) {
+        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -258,6 +239,10 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
+        playerMenuActions.put(0, () -> {
+            resetPage(player, serverType);
+            openServerTypeInventory(player);
+        });
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
         int totalItems = serverStatusList.size(),
@@ -279,7 +264,9 @@ public class Menu {
                 serverMeta.setDisplayName(ChatColor.GREEN + serverName);
                 serverItem.setItemMeta(serverMeta);
             }
-            inv.setItem(SLOT_POSITIONS[i - startIndex], serverItem);
+            int slot = SLOT_POSITIONS[i - startIndex];
+            playerMenuActions.put(slot, () -> openServerInventory(player, serverName, 1));
+            inv.setItem(slot, serverItem);
         }
         if (page > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -289,6 +276,10 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
+            playerMenuActions.put(45, () -> {
+                setPage(player, serverType, page - 1);
+                openServerEachInventory(player, serverType, page - 1);
+            });
         }
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
@@ -298,46 +289,18 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
+            playerMenuActions.put(53, () -> {
+                setPage(player, serverType, page + 1);
+                openServerEachInventory(player, serverType, page + 1);
+            });
         }
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryKey, playerMenuActions);
         player.openInventory(inv);
         setPage(player, serverType, page);
     }
 
-    public void enterServer(Player player, String serverName) {
-        String playerName = player.getName();
-        player.performCommand("fmc fv " + playerName + " fmcp stp " + serverName);
-    }
-
-    private boolean checkServerOnline(String serverName) {
-        return ssc.getStatusMap().values().stream()
-            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
-            .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
-            .map(serverDataEntry -> serverDataEntry.getValue().get("online"))
-            .filter(online -> online instanceof Boolean)
-            .map(online -> (Boolean) online)
-            .findFirst()
-            .orElse(false);
-    }
-
-    public void serverSwitch(Player player, String serverName) {
-        String playerName = player.getName();
-        int permLevel = lp.getPermLevel(player.getName());
-        if (checkServerOnline(serverName)) {
-            if (permLevel >= 2) {
-                player.performCommand("fmc fv " + playerName + " fmcp stop " + serverName);
-                player.closeInventory();
-            }
-        } else {
-            if (permLevel == 1) {
-                player.performCommand("fmc fv " + playerName + " fmcp req " + serverName);
-            } else if (permLevel >= 2) {
-                player.performCommand("fmc fv " + playerName + " fmcp start " + serverName);
-            }
-            player.closeInventory();
-        }
-    }
-
     public void openServerInventory(Player player, String serverName, int page) {
+        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         int permLevel = lp.getPermLevel(player.getName());
         Inventory inv = Bukkit.createInventory(null, 54, serverName + " server");
         ItemStack backItem = new ItemStack(Material.STICK);
@@ -356,13 +319,15 @@ public class Menu {
         // どちらかの方法で実装する
         // オンラインサーバーゲートを作る
         // くぐると、現在オンラインのサーバーが出てくる
+        AtomicReference<String> thisServerType = new AtomicReference<>(null);
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         for (Map.Entry<String, Map<String, Map<String, Object>>> entry : serverStatusMap.entrySet()) {
-            //String serverType = entry.getKey();
+            String serverType = entry.getKey();
             Map<String, Map<String, Object>> serverStatusList = entry.getValue();
             for (Map.Entry<String, Map<String, Object>> serverEntry : serverStatusList.entrySet()) {
                 String name = serverEntry.getKey();
                 if (name.equals(serverName)) {
+                    thisServerType.set(serverType);
                     Map<String, Object> serverData = serverEntry.getValue();
                     for (Map.Entry<String, Object> dataEntry : serverData.entrySet()) {
                         String key = dataEntry.getKey();
@@ -385,6 +350,7 @@ public class Menu {
                                             //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
                                         } else if (permLevel >= 2) {
                                             leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーを停止する");
+                                            playerMenuActions.put(22, () -> serverSwitch(player, serverName));
                                             //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + ""));
                                         }
                                         leverItem.setItemMeta(leverMeta);
@@ -395,6 +361,7 @@ public class Menu {
                                     if (doorMeta != null) {
                                         doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーに入る");
                                         doorItem.setItemMeta(doorMeta);
+                                        playerMenuActions.put(23, () -> enterServer(player, serverName));
                                     }
                                     inv.setItem(23, doorItem);
                                 } else {
@@ -422,9 +389,11 @@ public class Menu {
                                         if (permLevel == 1) {
                                             leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動リクエスト");
                                             leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
+                                            playerMenuActions.put(22, () -> serverSwitch(player, serverName));
                                         } else if (permLevel >= 2) {
                                             leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動");
                                             leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "アドミン権限より起動する。"));
+                                            playerMenuActions.put(22, () -> serverSwitch(player, serverName));
                                         }
                                         leverItem.setItemMeta(leverMeta);
                                     }
@@ -487,6 +456,10 @@ public class Menu {
                                         prevPageItem.setItemMeta(prevPageMeta);
                                     }
                                     inv.setItem(45, prevPageItem);
+                                    playerMenuActions.put(45, () -> {
+                                        setPage(player, serverName, page - 1);
+                                        openServerInventory(player, serverName, page - 1);
+                                    });
                                 }
                                 // ページ進むブロックを配置
                                 if (page < totalPages) {
@@ -497,6 +470,10 @@ public class Menu {
                                         nextPageItem.setItemMeta(nextPageMeta);
                                     }
                                     inv.setItem(53, nextPageItem);
+                                    playerMenuActions.put(53, () -> {
+                                        setPage(player, serverName, page + 1);
+                                        openServerInventory(player, serverName, page + 1);
+                                    });
                                 }
                             } else {
                                 ItemStack noPlayerItem = new ItemStack(Material.BARRIER);
@@ -512,7 +489,91 @@ public class Menu {
                 }
             }
         }
+        playerMenuActions.put(0, () -> openServerEachInventory(player, thisServerType.get(), 1));
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(serverInventoryKey, playerMenuActions);
         player.openInventory(inv);
+    }
+
+    public void openServerTypeInventory(Player player) {
+        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        playerMenuActions.put(0, () -> generalMenu(player));
+        playerMenuActions.put(11, () -> openServerEachInventory(player, "life", 1));
+        playerMenuActions.put(13, () -> openServerEachInventory(player, "distributed", 1));
+        playerMenuActions.put(15, () -> openServerEachInventory(player, "mod", 1));
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryKey, playerMenuActions);
+        Inventory inv = Bukkit.createInventory(null, 27, "server type");
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+        ItemStack lifeServerItem = new ItemStack(Material.GRASS_BLOCK);
+        ItemMeta lifeMeta = lifeServerItem.getItemMeta();
+        if (lifeMeta != null) {
+            lifeMeta.setDisplayName(ChatColor.GREEN + "生活鯖");
+            lifeServerItem.setItemMeta(lifeMeta);
+        }
+        inv.setItem(11, lifeServerItem);
+        ItemStack distributionServerItem = new ItemStack(Material.CHEST);
+        ItemMeta distributionMeta = distributionServerItem.getItemMeta();
+        if (distributionMeta != null) {
+            distributionMeta.setDisplayName(ChatColor.YELLOW + "配布鯖");
+            distributionServerItem.setItemMeta(distributionMeta);
+        }
+        inv.setItem(13, distributionServerItem);
+        ItemStack modServerItem = new ItemStack(Material.IRON_BLOCK);
+        ItemMeta modMeta = modServerItem.getItemMeta();
+        if (modMeta != null) {
+            modMeta.setDisplayName(ChatColor.BLUE + "モッド鯖");
+            modServerItem.setItemMeta(modMeta);
+        }
+        inv.setItem(15, modServerItem);
+        // 現在オンラインのサーバーを表示する
+        ItemStack onlineServerItem = new ItemStack(Material.GREEN_WOOL);
+        ItemMeta onlineMeta = onlineServerItem.getItemMeta();
+        if (onlineMeta != null) {
+            onlineMeta.setDisplayName(ChatColor.GREEN + "オンラインサーバー");
+            onlineServerItem.setItemMeta(onlineMeta);
+        }
+        inv.setItem(18, onlineServerItem);
+        player.openInventory(inv);
+    }
+
+    public void enterServer(Player player, String serverName) {
+        String playerName = player.getName();
+        player.closeInventory();
+        player.performCommand("fmc fv " + playerName + " fmcp stp " + serverName);
+    }
+
+    private boolean checkServerOnline(String serverName) {
+        return ssc.getStatusMap().values().stream()
+            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+            .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
+            .map(serverDataEntry -> serverDataEntry.getValue().get("online"))
+            .filter(online -> online instanceof Boolean)
+            .map(online -> (Boolean) online)
+            .findFirst()
+            .orElse(false);
+    }
+
+    public void serverSwitch(Player player, String serverName) {
+        String playerName = player.getName();
+        int permLevel = lp.getPermLevel(player.getName());
+        if (checkServerOnline(serverName)) {
+            if (permLevel >= 2) {
+                player.performCommand("fmc fv " + playerName + " fmcp stop " + serverName);
+                player.closeInventory();
+            }
+        } else {
+            if (permLevel == 1) {
+                player.performCommand("fmc fv " + playerName + " fmcp req " + serverName);
+            } else if (permLevel >= 2) {
+                player.performCommand("fmc fv " + playerName + " fmcp start " + serverName);
+            }
+            player.closeInventory();
+        }
     }
 
     public boolean isAllowedToEnter(String serverName) {
