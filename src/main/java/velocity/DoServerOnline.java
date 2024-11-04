@@ -49,43 +49,39 @@ public class DoServerOnline {
 	public Map<String, Map<String, Object>> loadStatusTable(Connection conn) throws SQLException {
         Map<String, Map<String, Object>> resultMap = new HashMap<>();
         String query = "SELECT * FROM status WHERE exception2!=?;";//SELECT * FROM status WHERE exception!=? AND exception2!=?;
-        try (PreparedStatement ps = conn.prepareStatement(query)) {
-			ps.setBoolean(1, true);
-			//ps.setBoolean(2, true);
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					String name = rs.getString("name");
-					Map<String, Object> columnMap = new HashMap<>();
-					int columnCount = rs.getMetaData().getColumnCount();
-					for (int i = 1; i <= columnCount; i++) {
-						String columnName = rs.getMetaData().getColumnName(i);
-						if (!"name".equals(columnName)) {
-							columnMap.put(columnName, rs.getObject(columnName));
-						}
-					}
-					resultMap.put(name, columnMap);
+        PreparedStatement ps = conn.prepareStatement(query);
+		ps.setBoolean(1, true);
+		//ps.setBoolean(2, true);
+		ResultSet rs = ps.executeQuery();
+		while (rs.next()) {
+			String name = rs.getString("name");
+			Map<String, Object> columnMap = new HashMap<>();
+			int columnCount = rs.getMetaData().getColumnCount();
+			for (int i = 1; i <= columnCount; i++) {
+				String columnName = rs.getMetaData().getColumnName(i);
+				if (!"name".equals(columnName)) {
+					columnMap.put(columnName, rs.getObject(columnName));
 				}
 			}
-        }
+			resultMap.put(name, columnMap);
+		}
         return resultMap;
     }
 
 	public Map<String, Object> loadStatusTable(Connection conn, String serverName) throws SQLException {
 		Map<String, Object> resultMap = new HashMap<>();
 		String query = "SELECT * FROM status WHERE name=? AND exception2!=?;";//SELECT * FROM status WHERE name=? AND exception!=? AND exception2!=?;
-		try (PreparedStatement ps = conn.prepareStatement(query)) {
-			ps.setString(1, serverName);
-			ps.setBoolean(2, true);
-			//ps.setBoolean(3, true);
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					int columnCount = rs.getMetaData().getColumnCount();
-					for (int i = 1; i <= columnCount; i++) {
-						String columnName = rs.getMetaData().getColumnName(i);
-						if (!columnName.equals("name")) {
-							resultMap.put(columnName, rs.getObject(columnName));
-						}
-					}
+		PreparedStatement ps = conn.prepareStatement(query);
+		ps.setString(1, serverName);
+		ps.setBoolean(2, true);
+		//ps.setBoolean(3, true);
+		ResultSet rs = ps.executeQuery();
+		if (rs.next()) {
+			int columnCount = rs.getMetaData().getColumnCount();
+			for (int i = 1; i <= columnCount; i++) {
+				String columnName = rs.getMetaData().getColumnName(i);
+				if (!columnName.equals("name")) {
+					resultMap.put(columnName, rs.getObject(columnName));
 				}
 			}
 		}
@@ -114,43 +110,39 @@ public class DoServerOnline {
 
 	private void resetDBPlayerList(Connection conn) throws SQLException {
 		String query = "UPDATE status SET player_list=?, current_players=?;";
-		try (PreparedStatement ps0 = conn.prepareStatement(query)) {
-			ps0.setString(1, null);
-			ps0.setInt(2, 0);
-			int rsAffected0 = ps0.executeUpdate();
-			if (rsAffected0 > 0) {
-				console.sendMessage(Component.text("プレイヤーリストを初期化しました。").color(NamedTextColor.GREEN));
-			}
+		PreparedStatement ps0 = conn.prepareStatement(query);
+		ps0.setString(1, null);
+		ps0.setInt(2, 0);
+		int rsAffected0 = ps0.executeUpdate();
+		if (rsAffected0 > 0) {
+			console.sendMessage(Component.text("プレイヤーリストを初期化しました。").color(NamedTextColor.GREEN));
 		}
 	}
 
 	private void makeProxyOnline(Connection conn) throws SQLException {
 		String query = "UPDATE status SET online=? WHERE name=?;";
-		try (PreparedStatement ps = conn.prepareStatement(query)) {
-			ps.setBoolean(1, true);
-			ps.setString(2, "proxy");
-			ps.executeUpdate();
-		}
+		PreparedStatement ps = conn.prepareStatement(query);
+		ps.setBoolean(1, true);
+		ps.setString(2, "proxy");
+		ps.executeUpdate();
 	}
 
 	private void deleteDBServer(Connection conn, String serverName) throws SQLException {
 		String query = "DELETE FROM status WHERE name = ?;";
-		try (PreparedStatement ps1 = conn.prepareStatement(query)) {
-			ps1.setString(1, serverName);
-			ps1.executeUpdate();
-			console.sendMessage(Component.text(serverName+"サーバーはTomlに記載されていないため、データベースから削除しました。").color(NamedTextColor.GREEN));
-		}
+		PreparedStatement ps1 = conn.prepareStatement(query);
+		ps1.setString(1, serverName);
+		ps1.executeUpdate();
+		console.sendMessage(Component.text(serverName+"サーバーはTomlに記載されていないため、データベースから削除しました。").color(NamedTextColor.GREEN));
 	}
 
 	private void addDBServer(Connection conn, String serverName, int serverPort) throws SQLException {
 		String query = "INSERT INTO status (name, port) VALUES (?, ?);";
-		try (PreparedStatement ps = conn.prepareStatement(query)) {
-			ps.setString(1, serverName);
-			ps.setInt(2, serverPort);
-			int rsAffected = ps.executeUpdate();
-			if (rsAffected > 0) {
-				console.sendMessage(Component.text(serverName+"サーバーはデータベースに存在していないため、追加しました。").color(NamedTextColor.GREEN));
-			}
+		PreparedStatement ps = conn.prepareStatement(query);
+		ps.setString(1, serverName);
+		ps.setInt(2, serverPort);
+		int rsAffected = ps.executeUpdate();
+		if (rsAffected > 0) {
+			console.sendMessage(Component.text(serverName+"サーバーはデータベースに存在していないため、追加しました。").color(NamedTextColor.GREEN));
 		}
 	}
 	

@@ -97,7 +97,7 @@ public class ImageMap {
                     String[] imageArgs = new String[] {"im", isQr ? "createqr" : "create", url, title, comment};
                     // dateを使うので、player.performCommandメソッドを使わず、直接実行させる
                     //player.performCommand("fmc " + String.join(" ", imageArgs));
-                    executeImageMap(sender, command, label, imageArgs, new Object[] {otp, dName, dId, date});
+                    executeImageMap(sender, command, label, imageArgs, new Object[] {otp, dName, dId, date}, null);
                     //deleteImageInfoByOTP(conn, otp);
                 } else {
                     player.sendMessage(ChatColor.RED + "ワンタイムパスワードが間違っています。");
@@ -117,31 +117,48 @@ public class ImageMap {
     }
     
     @SuppressWarnings("null")
-    public void executeImageMap(CommandSender sender, Command command, String label, String[] args, Object[] dArgs) {
+    // 未認証マップをクリックしたときの動作は、discordで発行したワンタイムパスワードをつかうよう、促す
+    // ワンタイムパスワードを再取得するコマンドが必要？優先度は低いか
+    // あるプレイヤーがマップを生成した特定のサーバーとは異なる別のサーバーで、誰かが新たに生成する場合、
+    // そのサーバーには、そのマップは存在しないので、新たに生成するが、
+    // そのマップのcreated by は最初に生成したプレイヤーの名前になることを留意する
+    public void executeImageMap(CommandSender sender, Command command, String label, String[] args, Object[] dArgs, Object[] mArgs) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
                 player.sendMessage("使用法: /fmc im <create|createqr> <url> [Optional: <title> <comment>]");
                 return;
             }
             boolean isQr = args[1].equalsIgnoreCase("createqr"),
-                fromDiscord = (dArgs != null);
-            String playerName = player.getName(),
-                playerUUID = player.getUniqueId().toString(),
-                imageUUID = UUID.randomUUID().toString(),
+                fromDiscord = (dArgs != null),
+                fromMenu = (mArgs != null);
+            String playerName = !fromMenu ? player.getName() : (String) mArgs[2],
+                playerUUID = !fromMenu ? player.getUniqueId().toString() : (String) mArgs[4],
+                imageUUID = !fromMenu ? UUID.randomUUID().toString() : (String) mArgs[0],
                 url = args[2],
                 title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
                 comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
-                ext;
-            if (!isValidURL(url) && !isQr) {
+                ext,
+                fullPath;
+            if (!isQr && !fromMenu && !isValidURL(url)) {
                 player.sendMessage("無効なURLです。");
                 return;
             }
             try (Connection conn = db.getConnection()) {
-                LocalDate now = fromDiscord ? ((Date) dArgs[3]).toLocalDate() : LocalDate.now();
+                LocalDate localDate = LocalDate.now();
+                String now = fromMenu ? (String) mArgs[1] : fromDiscord ? ((Date) dArgs[3]).toString() : localDate.toString();
                 BufferedImage image;
-                if (isQr) {
+                if (fromMenu) {
+                    ext = (String) mArgs[3];
+                    fullPath = getImageSaveFolder(conn) + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
+                    image = loadImage(fullPath);
+                    if (!isQr) {
+                        image = resizeImage(image, 128, 128);
+                    }
+                } else if (isQr) {
                     ext = "png";
+                    fullPath = getImageSaveFolder(conn) + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
                     image = generateQRCodeImage(url);
+                    saveImageToFileSystem(conn, image, imageUUID, ext);
                 } else {
                     URL getUrl = new URI(url).toURL();
                     HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
@@ -157,16 +174,14 @@ public class ImageMap {
                             return;
                         }
                     }
+                    fullPath = getImageSaveFolder(conn) + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
                     image =  ImageIO.read(getUrl);
+                    saveImageToFileSystem(conn, image, imageUUID, ext); // リサイズ前の画像を保存
+                    image = resizeImage(image, 128, 128);
                     if (image == null) {
                         player.sendMessage("指定のURLは規定の拡張子を持ちません。");
                         return;
                     }
-                }
-                String fullPath = getImageSaveFolder(conn) + "/" + now.toString().replace("-", "") + "/" + imageUUID + "." + ext;
-                saveImageToFileSystem(conn, image, imageUUID, ext); // リサイズ前の画像を保存
-                if (!isQr) {
-                    image = resizeImage(image, 128, 128);
                 }
                 List<String> lores = new ArrayList<>();
                 lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
@@ -175,7 +190,7 @@ public class ImageMap {
                                   .collect(Collectors.toList());
                 lores.addAll(commentLines);
                 lores.add("created by " + playerName);
-                lores.add("at " + now.toString().replace("-", "/"));
+                lores.add("at " + now.replace("-", "/"));
                 ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
                 MapView mapView = Bukkit.createMap(player.getWorld());
                 int mapId = mapView.getId(); // 一意のmapIdを取得
@@ -189,13 +204,17 @@ public class ImageMap {
                     meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING, "true");
                     mapItem.setItemMeta(meta);
                 }
-                if (fromDiscord) {
-                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], Date.valueOf(now), (String) dArgs[0]});
+                if (!fromMenu) {
+                    if (fromDiscord) {
+                        db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], now, (String) dArgs[0]});
+                    } else {
+                        db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, Date.valueOf(LocalDate.now())});
+                    }
                 } else {
-                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, Date.valueOf(LocalDate.now())});
+                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, menu, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, true, Date.valueOf(LocalDate.now())});
                 }
                 player.getInventory().addItem(mapItem);
-                player.sendMessage("画像マップを渡しました: " + url);
+                player.sendMessage("画像マップを渡しました。");
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {
                 player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
                 plugin.getLogger().log(Level.SEVERE, "An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {0}", e.getMessage());
@@ -218,7 +237,7 @@ public class ImageMap {
                 if (item.getType() == Material.FILLED_MAP) {
                     MapMeta mapMeta = (MapMeta) item.getItemMeta();
                     if (mapMeta != null && mapMeta.hasMapView()) {
-                        if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING)) {
+                        //if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING)) {
                             MapView mapView = mapMeta.getMapView();
                             if (mapView != null) {
                                 int mapId = mapView.getId();
@@ -247,7 +266,7 @@ public class ImageMap {
                                     }
                                 }
                             }
-                        }
+                        //}
                     }
                 }
             }
@@ -255,10 +274,49 @@ public class ImageMap {
         plugin.getLogger().info("Loaded all item frames.");
     }
 
-    @SuppressWarnings("unused")
-    private void giveMapToPlayer(Player player, int mapId) {
+    public Map<Integer, Map<String, Object>> getImageMap(Connection conn) throws SQLException, ClassNotFoundException {
+        Map<Integer, Map<String, Object>> imageInfo = new HashMap<>();
+        String query = "SELECT * FROM images WHERE menu!=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setBoolean(1, true);
+        ResultSet rs = ps.executeQuery();
+        int index = 0;
+        while (rs.next()) {
+            Map<String, Object> rowMap = new HashMap<>();
+            int columnCount = rs.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = rs.getMetaData().getColumnName(i);
+                rowMap.put(columnName, rs.getObject(columnName));
+            }
+            imageInfo.computeIfAbsent(index, _ -> rowMap);
+            index++;
+        }
+        return imageInfo;
+    }
+
+    public Map<Integer, Map<String, Object>> getThisServerImages(Connection conn) throws SQLException, ClassNotFoundException {
+        Map<Integer, Map<String, Object>> serverImageInfo = new HashMap<>();
+        String query = "SELECT * FROM images WHERE server=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, serverName);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Map<String, Object> rowMap = new HashMap<>();
+            int mapId = rs.getInt("mapid");
+            int columnCount = rs.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = rs.getMetaData().getColumnName(i);
+                if (!columnName.equals("mapid")) {
+                    rowMap.put(columnName, rs.getObject(columnName));
+                }
+            }
+            serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
+        }
+        return serverImageInfo;
+    }
+
+    public void giveMapToPlayer(Player player, int mapId) {
         AtomicBoolean found = new AtomicBoolean(false);
-        ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
         for (World world : Bukkit.getWorlds()) {
             for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
                 ItemStack item = itemFrame.getItem();
@@ -268,10 +326,11 @@ public class ImageMap {
                         MapView mapView = mapMeta.getMapView();
                         if (mapView != null && mapView.getId() == mapId) {
                             found.set(true);
+                            ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
                             mapMeta.setMapView(mapView);
                             mapItem.setItemMeta(mapMeta);
                             player.getInventory().addItem(mapItem);
-                            player.sendMessage("地図ID " + mapId + " を渡しました。");
+                            player.sendMessage("画像マップを渡しました。");
                             return;
                         }
                     }
@@ -281,6 +340,11 @@ public class ImageMap {
         if (!found.get()) {
             player.sendMessage("地図ID " + mapId + " が見つかりません。");
         }
+    }
+
+    public String formatDate2(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        return date.format(formatter);
     }
 
     private Map<String, Object> getImageInfoByOTP(Connection conn, String otp) throws SQLException, ClassNotFoundException {
@@ -307,35 +371,6 @@ public class ImageMap {
         return rs.next();
     }
 
-    @SuppressWarnings("unused")
-    private Map<String, Map<String, Object>> getImageInfo(Connection conn) {
-        Map<String, Map<String, Object>> imageInfo = new HashMap<>();
-        String query = "SELECT * FROM images;";
-        try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
-            PreparedStatement ps = connection.prepareStatement(query);
-            ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Map<String, Object> rowMap = new HashMap<>();
-                Date date = rs.getDate("date");
-                String dateString = formatDate(date.toLocalDate());
-                int columnCount = rs.getMetaData().getColumnCount();
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = rs.getMetaData().getColumnName(i);
-                    if (!columnName.equals("date")) {
-                        rowMap.put(columnName, rs.getObject(columnName));
-                    }
-                }
-                imageInfo.computeIfAbsent(dateString, _ -> rowMap);
-            }
-        } catch (SQLException | ClassNotFoundException e) {
-            plugin.getLogger().log(Level.SEVERE, "An error occurred while loading images: {0}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
-            }
-        }
-        return imageInfo;
-    }
-
     private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
         Image resultingImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
         BufferedImage outputImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
@@ -345,38 +380,9 @@ public class ImageMap {
         return outputImage;
     }
     
-    private Map<Integer, Map<String, Object>> getThisServerImages(Connection conn) throws SQLException, ClassNotFoundException {
-        Map<Integer, Map<String, Object>> serverImageInfo = new HashMap<>();
-        String query = "SELECT * FROM images WHERE server=?;";
-        try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();
-            PreparedStatement ps = connection.prepareStatement(query)) {
-            ps.setString(1, serverName);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, Object> rowMap = new HashMap<>();
-                    int mapId = rs.getInt("mapid");
-                    int columnCount = rs.getMetaData().getColumnCount();
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = rs.getMetaData().getColumnName(i);
-                        if (!columnName.equals("mapid")) {
-                            rowMap.put(columnName, rs.getObject(columnName));
-                        }
-                    }
-                    serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
-                }
-            }
-        }
-        return serverImageInfo;
-    }
-
+    @SuppressWarnings("unused")
     private String formatDate(LocalDate date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return date.format(formatter);
-    }
-
-    @SuppressWarnings("unused")
-    private String formatDate2(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
         return date.format(formatter);
     }
 
@@ -404,16 +410,12 @@ public class ImageMap {
     }
     
     private String getImageSaveFolder(Connection conn) throws SQLException, ClassNotFoundException {
-        try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection();) {
-            String query = "SELECT value FROM settings WHERE name=?;";
-            try (PreparedStatement ps = connection.prepareStatement(query)) {
-                ps.setString(1, "image_folder");
-                try (ResultSet rs2 = ps.executeQuery()) {
-                    if (rs2.next()) {
-                        return rs2.getString("value");
-                    }
-                }
-            }
+        String query = "SELECT value FROM settings WHERE name=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, "image_folder");
+        ResultSet rs2 = ps.executeQuery();
+        if (rs2.next()) {
+            return rs2.getString("value");
         }
         return null;
     }
