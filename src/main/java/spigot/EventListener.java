@@ -33,7 +33,7 @@ public final class EventListener implements Listener {
     private final Menu menu;
     private final ServerStatusCache ssc;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
-    private final Set<Player> playersOpeningNewInventory = new HashSet<>();
+    //private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
 	public EventListener(common.Main plugin, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc) {
@@ -47,9 +47,11 @@ public final class EventListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
         String title = event.getView().getTitle();
-        if (title.equals(Menu.onlineServerInventoryName)) {
+        if (title.equals(Menu.imageInventoryName)) {
+            menu.resetPage(player, Menu.imageInventoryKey);
+        } else if (title.equals(Menu.onlineServerInventoryName)) {
             // 1: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
-            menu.resetPage(player, Menu.onlineServerInventoryName);
+            menu.resetPage(player, Menu.onlineServerInventoryKey);
         } else if (title.equals(Menu.menuInventoryName)) {
             menu.resetPage(player, Menu.menuInventoryKey);
         } else if (title.endsWith(" servers")) {
@@ -69,9 +71,12 @@ public final class EventListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
-            playersOpeningNewInventory.add(player);
+            //playersOpeningNewInventory.add(player);
             String title = event.getView().getTitle();
-            if (title.equals(Menu.menuInventoryName)) {
+            if (title.equals(Menu.imageInventoryName)) {
+                event.setCancelled(true);
+                menu.runMenuAction(player, Menu.imageInventoryKey, event.getRawSlot());
+            } else if (title.equals(Menu.menuInventoryName)) {
                 event.setCancelled(true);
                 menu.runMenuAction(player, Menu.menuInventoryKey, event.getRawSlot());
             } else if (title.endsWith(" server")) {

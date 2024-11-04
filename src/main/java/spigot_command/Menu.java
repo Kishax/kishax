@@ -1,18 +1,24 @@
 package spigot_command;
 
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -20,12 +26,16 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import spigot.Database;
+import spigot.ImageMap;
 import spigot.Luckperms;
 import spigot.Main;
+import spigot.ServerHomeDir;
 import spigot.ServerStatusCache;
 
 @Singleton
@@ -36,7 +46,9 @@ public class Menu {
         onlineServerInventoryKey = "onlineServers",
         onlineServerInventoryName = "online servers",
         serverTypeInventoryKey = "serverType",
-        serverTypeInventoryName = "server type";
+        serverTypeInventoryName = "server type",
+        imageInventoryKey = "image",
+        imageInventoryName = "image maps";
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image"));
     public static List<String> args2 = new ArrayList<>(Arrays.asList("life","distibuted","mod"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
@@ -48,17 +60,23 @@ public class Menu {
         Material.COPPER_BLOCK
     );
     private final common.Main plugin;
+    private final Database db;
     private final ServerStatusCache ssc;
     private final Luckperms lp;
+    private final ImageMap im;
+    private final ServerHomeDir shd;
     private final Map<Player, Map<String, Integer>> playerOpenningInventoryMap = new HashMap<>();
     private final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new ConcurrentHashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
-	public Menu(common.Main plugin, ServerStatusCache ssc, Luckperms lp) {  
+	public Menu(common.Main plugin, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd) {  
 		this.plugin = plugin;
+        this.db = db;
         this.ssc = ssc;
         this.lp = lp;
+        this.im = im;
+        this.shd = shd;
 	}
 
     // fmc menu <server|image> <server: serverType>
@@ -66,30 +84,41 @@ public class Menu {
         if (sender instanceof Player player) {
             if (args.length == 1) {
                 generalMenu(player, 1);
-            } else if (args.length > 1 && args[1].equalsIgnoreCase("server")) {
-                if (plugin.getConfig().getBoolean("Portals.Menu", false)) {
-                    if (!(player.hasPermission("group.new-fmc-user") || player.hasPermission("group.sub-admin") || player.hasPermission("group.super-admin"))) {
-                        player.sendMessage("先にUUID認証を完了させてください。");
-                        return;
-                    }
-                    if (args.length > 2) {
-                        String serverType = args[2].toLowerCase();
-                        switch (serverType) {
-                            case "life", "distributed", "mod" -> {
-                                int page = getPage(player, serverType);
-                                openServerEachInventory((Player) sender, serverType, page);
+            } else if (args.length > 1) {
+                switch (args[1].toLowerCase()) {
+                    case "server" -> {
+                        if (plugin.getConfig().getBoolean("Menu.Server", false)) {
+                            if (!(player.hasPermission("group.new-fmc-user") || player.hasPermission("group.sub-admin") || player.hasPermission("group.super-admin"))) {
+                                player.sendMessage("先にUUID認証を完了させてください。");
                                 return;
                             }
-                            default -> {
-                                sender.sendMessage("Usage: /fmc menu server <life|distribution|mod>");
-                                return;
+                            if (args.length > 2) {
+                                String serverType = args[2].toLowerCase();
+                                switch (serverType) {
+                                    case "life", "distributed", "mod" -> {
+                                        int page = getPage(player, serverType);
+                                        openServerEachInventory((Player) sender, serverType, page);
+                                        return;
+                                    }
+                                    default -> {
+                                        sender.sendMessage("Usage: /fmc menu server <life|distribution|mod>");
+                                        return;
+                                    }
+                                }
+                            } else {
+                                Main.getInjector().getInstance(Menu.class).openServerTypeInventory((Player) sender);
                             }
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
                         }
-                    } else {
-                        Main.getInjector().getInstance(Menu.class).openServerTypeInventory((Player) sender);
                     }
-                } else {
-                    sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
+                    case "image" -> {
+                        if (plugin.getConfig().getBoolean("Menu.ImageMap", false)) {
+                            openImageMenu(player, 1);
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
+                        }
+                    }
                 }
             } else {
                 sender.sendMessage("Usage: /fmc menu <server|image> <server: serverType>");
@@ -115,10 +144,6 @@ public class Menu {
         }
     }
 
-    public void openImageMenu(Player player) {
-
-    }
-
     public Map<String, Map<Integer, Runnable>> getPlayerMenuActions(Player player) {
         return this.menuActions.get(player);
     }
@@ -129,7 +154,7 @@ public class Menu {
         switch (page) {
             case 1 -> {
                 playerMenuActions.put(11, () -> openServerTypeInventory(player));
-                playerMenuActions.put(15, () -> openImageMenu(player));
+                playerMenuActions.put(15, () -> openImageMenu(player, 1));
                 playerMenuActions.put(26, () -> {
                     setPage(player, menuInventoryKey, page + 1);
                     generalMenu(player, page + 1);
@@ -184,6 +209,136 @@ public class Menu {
         }
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryKey, playerMenuActions);
         player.openInventory(inv);
+    }
+
+    public void openImageMenu(Player player, int page) {
+        int inventorySize = 54;
+        int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
+        Inventory inv = Bukkit.createInventory(null, inventorySize, Menu.imageInventoryName);
+        try (Connection conn = db.getConnection()) {
+            Map<Integer, Map<String, Object>> thisServerImageInfo = im.getThisServerImages(conn);
+            Map<Integer, Map<String, Object>> imageMap = im.getImageMap(conn);
+            int totalItems = imageMap.size();
+            int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
+            int startIndex = (page - 1) * itemsPerPage;
+            int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+            ItemStack backItem = new ItemStack(Material.STICK);
+            ItemMeta backMeta = backItem.getItemMeta();
+            if (backMeta != null) {
+                backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+                backItem.setItemMeta(backMeta);
+            }
+            inv.setItem(0, backItem);
+            playerMenuActions.put(0, () -> {
+                resetPage(player, Menu.imageInventoryKey);
+                generalMenu(player, 1);
+            });
+            if (page < totalPages) {
+                ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                if (nextPageMeta != null) {
+                    nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                    nextPageItem.setItemMeta(nextPageMeta);
+                }
+                inv.setItem(53, nextPageItem);
+                playerMenuActions.put(53, () -> {
+                    setPage(player, Menu.imageInventoryKey, page + 1);
+                    openImageMenu(player, page + 1);
+                });
+            }
+            if (page > 1) {
+                ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                if (prevPageMeta != null) {
+                    prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
+                    prevPageItem.setItemMeta(prevPageMeta);
+                }
+                inv.setItem(45, prevPageItem);
+                playerMenuActions.put(45, () -> {
+                    setPage(player, Menu.imageInventoryKey, page - 1);
+                    openImageMenu(player, page - 1);
+                });
+            }
+            //int slot = 0;
+            for (int i = startIndex; i < endIndex; i++) {
+                Map<String, Object> imageInfo = imageMap.get(i);
+                if (imageInfo != null) {
+                    String server = imageInfo.get("server") instanceof String authorServer ? authorServer : null, 
+                        thisServer = shd.getServerName(),
+                        url = (String) imageInfo.get("url"),
+                        title = (String) imageInfo.get("title"),
+                        author = (String) imageInfo.get("name"),
+                        authorUUID = (String) imageInfo.get("uuid"),
+                        comment = (String) imageInfo.get("comment"),
+                        imuuid = (String) imageInfo.get("imuuid"),
+                        ext = (String) imageInfo.get("ext"),
+                        date = ((Date) imageInfo.get("date")).toString();
+                        boolean fromDiscord = Optional.ofNullable(imageInfo.get("d"))
+                            .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
+                            .orElse(false),
+                            isQr = Optional.ofNullable(imageInfo.get("isqr"))
+                                .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
+                                .orElse(false),
+                            locked = imageInfo.get("otp") != null;
+                        //isQr = imageInfo.get("isqr") != null && (imageInfo.get("isqr") instanceof Boolean ? (Boolean) imageInfo.get("isqr") : (Integer) imageInfo.get("isqr") != 0);
+                    List<String> lores = new ArrayList<>();
+                    lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
+                    List<String> commentLines = Arrays.stream(comment.split("\n"))
+                                        .map(String::trim)
+                                        .collect(Collectors.toList());
+                    lores.addAll(commentLines);
+                    lores.add("created by " + author);
+                    lores.add("at " + date.replace("-", "/"));
+                    if (fromDiscord) {
+                        lores.add("from " + ChatColor.BLUE + "Discord");
+                    }
+                    if (locked) {
+                        lores.add(ChatColor.RED + "ロックされています");
+                    }
+                    ItemStack item = new ItemStack(Material.MAP);
+                    ItemMeta meta = item.getItemMeta();
+                    if (meta != null) {
+                        meta.setDisplayName(ChatColor.GREEN + title);
+                        meta.setLore(lores);
+                        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, imuuid), PersistentDataType.STRING, "true");
+                        item.setItemMeta(meta);
+                    }
+                    inv.addItem(item);
+                    //inv.setItem(slot, item);
+                    if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
+                        //Map<String, Object> thisServerImage = thisServerImageInfo.get(mapId);
+                        playerMenuActions.put(inv.first(item), () -> {
+                            im.giveMapToPlayer(player, mapId);
+                        });
+                    } else if (locked) {
+                        playerMenuActions.put(inv.first(item), () -> {
+                            player.closeInventory();
+                            player.sendMessage(ChatColor.RED + "この画像はロックされています。\n"
+                                + ChatColor.GRAY + "この画像を取得するには、/qコマンドにて、OTPを入力してください。");
+                        });
+                    } else {
+                        playerMenuActions.put(inv.first(item), () -> {
+                            player.closeInventory();
+                            CommandSender sender = (CommandSender) player;
+                            im.executeImageMap(sender, null, null, new String[] {"im", isQr ? "createqr" : "create", url, title, comment}, null, new Object[] {imuuid, date, author, ext, authorUUID, thisServer, url});
+                        });
+                    }
+                    //slot++;
+                }
+            }
+            this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.imageInventoryKey, playerMenuActions);
+            player.openInventory(inv);
+        } catch (SQLException | ClassNotFoundException e) {
+            player.openInventory(inv);
+            player.closeInventory();
+            player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+            plugin.getLogger().log(Level.SEVERE, "An error occurred while communicating with the database: {0}", e.getMessage());
+            for (StackTraceElement ste : e.getStackTrace()) {
+                plugin.getLogger().log(Level.SEVERE, ste.toString());
+            }
+        }
     }
 
     public void openOnlineServerInventory(Player player, int page) {

@@ -1,8 +1,11 @@
 # FMC Configuration File
+Menu:
+    Server: false
+    ImageMap: false
+
 Portals:
     Move: false
     Wand: false
-    Menu: false
 
 MySQL:
     Host: ""

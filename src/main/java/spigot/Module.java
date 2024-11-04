@@ -38,5 +38,6 @@ public class Module extends AbstractModule {
 		bind(AutoShutdown.class);
 		bind(Rcon.class);
 		bind(Luckperms.class);
+		bind(ImageMap.class);
     }
 }
