@@ -40,7 +40,7 @@ public class Main {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent e) {
-    	logger.info("Detected Velocity platform.");
+    	logger.info("detected velocity platform.");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
         injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory));
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
@@ -53,7 +53,7 @@ public class Main {
     	getInjector().getInstance(DoServerOnline.class).updateDatabase();
     	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
     	getInjector().getInstance(Luckperms.class).triggerNetworkSync();
- 		logger.info("luckpermsと連携しました。");
+ 		logger.info("linking with LuckPerms...");
         logger.info(LuckPermsProvider.get().getPlatform().toString());
  		getInjector().getInstance(PlayerUtils.class).loadPlayers();
     	CommandManager commandManager = server.getCommandManager();
@@ -62,8 +62,8 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
         logger.info(FloodgateApi.getInstance().toString());
-        logger.info("Floodgateと連携しました。");
-	    logger.info("プラグインが有効になりました。");
+        logger.info("linking with Floodgate...");
+	    logger.info("fmc plugin has been enabled.");
     }
     
     public static Injector getInjector() {

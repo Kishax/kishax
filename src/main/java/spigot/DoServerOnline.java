@@ -4,23 +4,25 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Objects;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import common.Database;
+
 public class DoServerOnline {
 	private final common.Main plugin;
+	private final Logger logger;
 	private final Provider<SocketSwitch> sswProvider;
 	private final ServerHomeDir shd;
 	private final Database db;
 	
 	@Inject
-	public DoServerOnline (
-		common.Main plugin, Provider<SocketSwitch> sswProvider, ServerHomeDir shd,
-		Database db
-	) {
+	public DoServerOnline (common.Main plugin, Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
 		this.plugin = plugin;
+		this.logger = logger;
 		this.sswProvider = sswProvider;
 		this.shd = shd;
 		this.db = db;
@@ -36,8 +38,6 @@ public class DoServerOnline {
 		// 他のサーバーに通知
 		ssw.sendVelocityServer(serverName+"サーバーが起動しました。");
 		ssw.sendSpigotServer(serverName+"サーバーが起動しました。");
-		plugin.getLogger().info(String.format("""
-			%sサーバーが起動しました。""", serverName));
 		// ServerStatusCache初回ループと各サーバーのSocketResponseクラスで、
 		// refreshManualOnlineServer()を呼び出しているので、MineStatusSyncは不要
 		String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
@@ -48,10 +48,10 @@ public class DoServerOnline {
 			ps.setString(3, serverName);
 			int rsAffected = ps.executeUpdate();
 			if (rsAffected > 0) {
-				plugin.getLogger().info("MySQL Server is connected!");
+				logger.info("MySQL Server is connected!");
 			}
 		} catch (SQLException | ClassNotFoundException e) {
-			plugin.getLogger().log(Level.SEVERE, "An error occurred while updating the database: " + e.getMessage(), e);
+			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
 			for (StackTraceElement element : e.getStackTrace()) {
 				plugin.getLogger().severe(element.toString());
 			}

@@ -44,6 +44,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 import org.bukkit.persistence.PersistentDataType;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.zxing.BarcodeFormat;
@@ -51,6 +52,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import common.Database;
 import net.md_5.bungee.api.ChatColor;
 
 public class ImageMap {
@@ -59,11 +61,13 @@ public class ImageMap {
     public static List<Integer> thisServerMapIds = new ArrayList<>();
     public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q"));
     private final common.Main plugin;
+    private final Logger logger;
     private final Database db;
     private final String serverName;
     @Inject
-    public ImageMap(common.Main plugin, Database db, ServerHomeDir shd) {
+    public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd) {
         this.plugin = plugin;
+        this.logger = logger;
         this.db = db;
         this.serverName = shd.getServerName();
     }
@@ -105,7 +109,7 @@ public class ImageMap {
                 }
             } catch (SQLException | ClassNotFoundException e) {
                 player.sendMessage("画像の読み込みに失敗しました。");
-                plugin.getLogger().log(Level.SEVERE, "An SQLException | ClassNotFoundException error occurred: {0}", e.getMessage());
+                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
                     plugin.getLogger().severe(element.toString());
                 }
@@ -167,7 +171,7 @@ public class ImageMap {
             MapView mapView = Bukkit.createMap(player.getWorld());
             int mapId = mapView.getId(); // 一意のmapIdを取得
             mapView.getRenderers().clear();
-            mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
+            mapView.addRenderer(new ImageMapRenderer(plugin, logger, image, fullPath));
             var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName(title);
@@ -186,7 +190,7 @@ public class ImageMap {
             player.sendMessage("画像マップを渡しました。");
         } catch (IOException | SQLException | ClassNotFoundException e) {
             player.sendMessage("画像の読み取りに失敗しました。");
-            plugin.getLogger().log(Level.SEVERE, "An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {0}", e.getMessage());
+            logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 plugin.getLogger().severe(element.toString());
             }
@@ -267,7 +271,7 @@ public class ImageMap {
                 MapView mapView = Bukkit.createMap(player.getWorld());
                 int mapId = mapView.getId(); // 一意のmapIdを取得
                 mapView.getRenderers().clear();
-                mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
+                mapView.addRenderer(new ImageMapRenderer(plugin, logger, image, fullPath));
                 var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
                 if (meta != null) {
                     meta.setDisplayName(title);
@@ -285,7 +289,7 @@ public class ImageMap {
                 player.sendMessage("画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {
                 player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
-                plugin.getLogger().log(Level.SEVERE, "An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {0}", e.getMessage());
+                logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
                     plugin.getLogger().severe(element.toString());
                 }
@@ -316,22 +320,22 @@ public class ImageMap {
                                 String ext = (String) imageInfo.get("ext");
                                 try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection()) {
                                     String fullPath = getFullPath(connection, date, imageUUID, ext); // Connectionが必要ない場合はnullを渡す
-                                    plugin.getLogger().log(Level.INFO, "Replacing image to the map(No.{0})...", new Object[] {mapId, fullPath});
+                                    logger.info("Replacing image to the map(No.{})...", new Object[] {mapId, fullPath});
                                         BufferedImage image = loadImage(fullPath);
                                         if (image != null) {
                                             // QRコードならリサイズしない
                                             image = isQr ? image : resizeImage(image, 128, 128);
                                             mapView.getRenderers().clear();
-                                            mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
+                                            mapView.addRenderer(new ImageMapRenderer(plugin, logger, image, fullPath));
                                             mapMeta.setMapView(mapView);
                                             item.setItemMeta(mapMeta);
                                         } else {
-                                            plugin.getLogger().log(Level.WARNING, "Failed to load image from path: {0}", fullPath);
+                                            plugin.getLogger().log(Level.WARNING, "Failed to load image from path: {}", fullPath);
                                         }
                                 } catch (IOException e) {
-                                    plugin.getLogger().log(Level.SEVERE, "Error loading image: {0}" , e);
+                                    logger.error("Error loading image: {}" , e);
                                 } catch (SQLException | ClassNotFoundException e) {
-                                    plugin.getLogger().log(Level.SEVERE, "Error getting full path: " + date + ", " + imageUUID + ", " + ext, e);
+                                    logger.error("Error getting full path: " + date + ", " + imageUUID + ", " + ext, e);
                                 }
                             }
                         }
@@ -342,18 +346,18 @@ public class ImageMap {
     }
 
     public void loadAllItemInThisServerFrames(Connection conn) throws SQLException, ClassNotFoundException {
-        plugin.getLogger().info("Loading all item frames...");
+        logger.info("Loading all item frames...");
         Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
         for (World world : Bukkit.getWorlds()) {
-            plugin.getLogger().log(Level.INFO, "Loading item frames in the world: {0}", world.getName());
+            logger.info("Loading item frames in the world: {}", world.getName());
             for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
                 ItemStack item = itemFrame.getItem();
                 if (item.getType() == Material.FILLED_MAP) {
-                    plugin.getLogger().info("Found a map item.");
+                    logger.info("Found a map item.");
                     MapMeta mapMeta = (MapMeta) item.getItemMeta();
                     if (mapMeta != null && mapMeta.hasMapView()) {
                         /*mapMeta.getPersistentDataContainer().getKeys().forEach(key -> {
-                            plugin.getLogger().info(key.toString());
+                            logger.info(key.toString());
                         });*/
                         if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING)) {
                             MapView mapView = mapMeta.getMapView();
@@ -367,18 +371,18 @@ public class ImageMap {
                                     String imageUUID = (String) imageInfo.get("imuuid");
                                     String ext = (String) imageInfo.get("ext");
                                     String fullPath = getFullPath(conn, date, imageUUID, ext);
-                                    plugin.getLogger().log(Level.INFO, "Replacing image to the map(No.{0})...", new Object[] {mapId, fullPath});
+                                    logger.info("Replacing image to the map(No.{})...", new Object[] {mapId, fullPath});
                                     try {
                                         BufferedImage image = loadImage(fullPath);
                                         if (image != null) {
                                             // QRコードならリサイズしない
                                             image = isQr ? image : resizeImage(image, 128, 128);
                                             mapView.getRenderers().clear();
-                                            mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
+                                            mapView.addRenderer(new ImageMapRenderer(plugin, logger, image, fullPath));
                                         } 
                                     } catch (IOException e) {
-                                        plugin.getLogger().log(Level.SEVERE, "マップId {0} の画像の読み込みに失敗しました: {1}", new Object[] {mapId, fullPath});
-                                        plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+                                        logger.error("マップId {} の画像の読み込みに失敗しました: {}", new Object[] {mapId, fullPath});
+                                        logger.error("An IOException error occurred: {}", e.getMessage());
                                         for (StackTraceElement element : e.getStackTrace()) {
                                             plugin.getLogger().severe(element.toString());
                                         }
@@ -390,7 +394,7 @@ public class ImageMap {
                 }
             }
         }
-        plugin.getLogger().info("Loaded all item frames.");
+        logger.info("Loaded all item frames.");
     }
 
     public Map<Integer, Map<String, Object>> getImageMap(Connection conn) throws SQLException, ClassNotFoundException {
@@ -536,7 +540,7 @@ public class ImageMap {
     private BufferedImage loadImage(String filePath) throws IOException {
         File imageFile = new File(filePath);
         if (!imageFile.exists()) {
-            plugin.getLogger().log(Level.SEVERE, "Image file does not exist: {0}", filePath);
+            logger.error("Image file does not exist: {}", filePath);
             return null;
         }
         return ImageIO.read(imageFile);

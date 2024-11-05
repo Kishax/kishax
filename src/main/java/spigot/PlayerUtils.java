@@ -16,22 +16,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 
+import common.Database;
+
 public class PlayerUtils {
-	private final common.Main plugin;
 	private final Database db;
+	private final Logger logger;
 	private final List<String> Players = new CopyOnWriteArrayList<>();
 	private boolean isLoaded = false;
 	
 	@Inject
-	public PlayerUtils(common.Main plugin, Database db) {
-		this.plugin = plugin;
+	public PlayerUtils(Database db, Logger logger) {
+		this.logger = logger;
 		this.db = db;
 	}
 	
@@ -47,9 +50,9 @@ public class PlayerUtils {
 				isLoaded = true;
 			}
 		} catch (ClassNotFoundException | SQLException e) {
-			plugin.getLogger().log(Level.SEVERE, "A ClassNotFoundException | SQLException error occurred: {0}", e.getMessage());
+			logger.error("A ClassNotFoundException | SQLException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, element.toString());
+                logger.error(element.toString());
             }
 		}
  	}
@@ -66,9 +69,9 @@ public class PlayerUtils {
 				}
 			}
 		} catch (ClassNotFoundException | SQLException e) {
-			plugin.getLogger().log(Level.SEVERE, "A ClassNotFoundException | SQLException error occurred: {0}", e.getMessage());
+			logger.error("A ClassNotFoundException | SQLException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, element.toString());
+                logger.error(element.toString());
             }
 		}
  	}
@@ -88,9 +91,9 @@ public class PlayerUtils {
 				}
 			}
 		} catch (ClassNotFoundException | SQLException e) {
-			plugin.getLogger().log(Level.SEVERE, "A ClassNotFoundException | SQLException error occurred: {0}", e.getMessage());
+			logger.error("A ClassNotFoundException | SQLException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, element.toString());
+                logger.error(element.toString());
             }
 		}
 		return null;
@@ -110,9 +113,9 @@ public class PlayerUtils {
 				playerNames.add(playerUUIDToNameMap.get(playerUUID));
 			}
 		} catch (SQLException | ClassNotFoundException e) {
-			plugin.getLogger().log(Level.SEVERE, "A ClassNotFoundException | SQLException error occurred: {0}", e.getMessage());
+			logger.error("A ClassNotFoundException | SQLException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, element.toString());
+                logger.error(element.toString());
             }
 		}
 		return playerNames;
@@ -128,9 +131,9 @@ public class PlayerUtils {
 				}
 			}
 		} catch (SQLException | ClassNotFoundException e) {
-			plugin.getLogger().log(Level.SEVERE, "A ClassNotFoundException | SQLException error occurred: {0}", e.getMessage());
+			logger.error("A ClassNotFoundException | SQLException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, element.toString());
+                logger.error(element.toString());
             }
 		}
 		return null;
@@ -146,9 +149,9 @@ public class PlayerUtils {
 				}
 			}
 		} catch (SQLException | ClassNotFoundException e) {
-			plugin.getLogger().log(Level.SEVERE, "A ClassNotFoundException | SQLException error occurred: {0}", e.getMessage());
+			logger.error("A ClassNotFoundException | SQLException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, element.toString());
+                logger.error(element.toString());
             }
 		}
 		return null;
@@ -171,13 +174,13 @@ public class PlayerUtils {
                 JsonObject jsonResponse = gson.fromJson(response.body(), JsonObject.class);
                 return jsonResponse.get("name").getAsString();
             } else {
-            	plugin.getLogger().log(Level.SEVERE, "GETリクエストに失敗しました。HTTPエラーコード: {0}", response.statusCode());
+            	logger.error("GETリクエストに失敗しました。HTTPエラーコード: {}", response.statusCode());
                 return null;
             }
         } catch (JsonSyntaxException | IOException | InterruptedException | URISyntaxException e) {
-            plugin.getLogger().log(Level.SEVERE, "A JsonSyntaxException | IOException | InterruptedException | URISyntaxException error occurred: {0}", e.getMessage());
+            logger.error("A JsonSyntaxException | IOException | InterruptedException | URISyntaxException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, element.toString());
+                logger.error(element.toString());
             }
             return null;
         }

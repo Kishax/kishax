@@ -1,10 +1,10 @@
 package spigot;
 
 import java.util.Objects;
-import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -12,20 +12,22 @@ import com.google.inject.Provider;
 public class AutoShutdown {
 
 	private final common.Main plugin;
+	private final Logger logger;
 	private final Provider<SocketSwitch> sswProvider;
 	private final ServerHomeDir shd;
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown (common.Main plugin, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+	public AutoShutdown (common.Main plugin, Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
 		this.plugin = plugin;
+		this.logger = logger;
 		this.sswProvider = sswProvider;
 		this.shd = shd;
 	}
 	
 	public void startCheckForPlayers() {
 		if (!plugin.getConfig().getBoolean("AutoStop.Mode", false)) {	
-			plugin.getLogger().log(Level.INFO, "{0}Auto-Stopはキャンセルされました。", ChatColor.GREEN);
+			logger.info("auto-stop is disabled.");
 			return;
 		}
 		

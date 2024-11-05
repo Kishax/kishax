@@ -28,7 +28,7 @@ import spigot.PortalsConfig;
 public class FMCCommand implements TabExecutor {
 	private final common.Main plugin;
 	private final PortalsConfig psConfig;
-	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu"));
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu", "button"));
 	@Inject
 	public FMCCommand(common.Main plugin, PortalsConfig psConfig) {
 		this.plugin = plugin;
@@ -82,6 +82,10 @@ public class FMCCommand implements TabExecutor {
 			}
 			case "menu" -> {
 				Main.getInjector().getInstance(Menu.class).execute(sender, cmd, label, args);
+				return true;
+			}
+			case "button" -> {
+				Main.getInjector().getInstance(Button.class).execute(sender, cmd, label, args);
 				return true;
 			}
 			case "image","im" -> {

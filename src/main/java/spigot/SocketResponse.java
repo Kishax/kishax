@@ -1,23 +1,25 @@
 package spigot;
 
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bukkit.ChatColor;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 public class SocketResponse {
     private final common.Main plugin;
+    private final Logger logger;
     private final ServerStatusCache ssc;
     private final ServerHomeDir shd;
     private final Provider<SocketSwitch> sswProvider;
     private final AutoShutdown asd;
     @Inject
-    public SocketResponse(common.Main plugin, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd) {
+    public SocketResponse(common.Main plugin, Logger logger, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd) {
         this.plugin = plugin;
+        this.logger = logger;
         this.ssc = ssc;
         this.shd = shd;
         this.sswProvider = sswProvider;
@@ -36,7 +38,7 @@ public class SocketResponse {
 	                asd.countdownAndShutdown(5);
                 }
             } else if (res.contains("起動")) {
-                plugin.getLogger().log(Level.INFO, "{0}", res);
+                logger.info("{}", res);
                 String pattern = "(.*?)サーバーが起動しました。";
                 Pattern compiledPattern = Pattern.compile(pattern);
                 Matcher matcher = compiledPattern.matcher(res);

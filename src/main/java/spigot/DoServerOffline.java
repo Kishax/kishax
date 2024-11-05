@@ -3,20 +3,23 @@ package spigot;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import common.Database;
+
 public class DoServerOffline {
-	private final common.Main plugin;
+	private final Logger logger;
 	private final Provider<SocketSwitch> sswProvider;
 	private final ServerHomeDir shd;
 	private final Database db;
 	
 	@Inject
-	public DoServerOffline (common.Main plugin, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
-		this.plugin = plugin;
+	public DoServerOffline (Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
+		this.logger = logger;
 		this.sswProvider = sswProvider;
 		this.shd = shd;
 		this.db = db;
@@ -38,9 +41,9 @@ public class DoServerOffline {
 				ssw.stopSocketServer();
 			}
 		} catch (SQLException | ClassNotFoundException e2) {
-			plugin.getLogger().log(Level.SEVERE, "A SQLException | ClassNotFoundException error occurred: {0}", e2.getMessage());
+			logger.error( "A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
             for (StackTraceElement element : e2.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+                logger.error(element.toString());
             }
 		}
 	}

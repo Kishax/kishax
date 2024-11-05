@@ -90,7 +90,7 @@ public class Discord implements DiscordInterface {
                 createFMCCommand.addSubcommands(teraSubCommand, createImageSubcommand, createQRSubcommand).queue();
                 jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
                 isDiscord = true;
-                logger.info("Discord-Botがログインしました。");
+                logger.info("discord bot has been logged in.");
                 return jda;
             } catch (InterruptedException e) {
                 // スタックトレースをログに出力

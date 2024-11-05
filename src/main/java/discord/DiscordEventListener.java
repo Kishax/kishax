@@ -257,7 +257,7 @@ public class DiscordEventListener extends ListenerAdapter {
 		}
 		AudioChannel channel = e.getChannelJoined();
 		if (channel == null) {
-            logger.error("チャンネルがnullです。");
+            logger.error("chennel is null");
             return;
         }
         String message = "(discord) " + member.getEffectiveName() + " がボイスチャットチャンネル " + channel.getName() + " に参加しました。";

@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -16,13 +16,15 @@ import com.google.inject.Singleton;
 @Singleton
 public final class PortalsConfig {
     private final common.Main plugin;
+    private final Logger logger;
     private File portalsFile;
     private YamlConfiguration portalsConfig;
     private List<Map<?, ?>> portals;
 
     @Inject
-    public PortalsConfig(common.Main plugin) {
+    public PortalsConfig(common.Main plugin, Logger logger) {
         this.plugin = plugin;
+        this.logger = logger;
         if (Objects.isNull(portalsConfig)) {
             createPortalsConfig();
         }
@@ -32,7 +34,7 @@ public final class PortalsConfig {
     public void createPortalsConfig() {
         this.portalsFile = new File(plugin.getDataFolder(), "portals.yml");
         if (!portalsFile.exists()) {
-            plugin.getLogger().info("portals.yml not found, creating!");
+            logger.info("portals.yml not found, creating!");
             portalsFile.getParentFile().mkdirs();
             plugin.saveResource("portals.yml", false);
         }
@@ -54,7 +56,7 @@ public final class PortalsConfig {
             portalsConfig.save(portalsFile);
             reloadPortalsConfig();
         } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+            logger.error("An IOException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 plugin.getLogger().severe(element.toString());
             }
@@ -67,7 +69,7 @@ public final class PortalsConfig {
     
         this.portalsConfig = YamlConfiguration.loadConfiguration(portalsFile);
         // portalsConfigの内容をログに出力
-        //plugin.getLogger().log(Level.INFO, "portals.yml contents: {0}", portalsConfig.saveToString());
+        //logger.info("portals.yml contents: {}", portalsConfig.saveToString());
         
         this.portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
     }

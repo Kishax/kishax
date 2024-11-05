@@ -11,18 +11,22 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import common.Database;
+
+import org.slf4j.Logger;
+
 @Singleton
 public class ServerStatusCache {
 
     private static final long CACHE_REFRESH_INTERVAL = 60000;
     private final common.Main plugin;
+    private final Logger logger;
     private final Database db;
     private final PortFinder pf;
     private final DoServerOnline dso;
@@ -33,8 +37,9 @@ public class ServerStatusCache {
     private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
     @Inject
-    public ServerStatusCache(common.Main plugin, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+    public ServerStatusCache(common.Main plugin, Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
         this.plugin = plugin;
+        this.logger = logger;
         this.db = db;
         this.pf = pf;
         this.dso = dso;
@@ -96,15 +101,17 @@ public class ServerStatusCache {
                 this.statusMap = sortedServerStatusMap;
                 // 初回ループのみ
                 if (isFirstRefreshing.compareAndSet(false, true)) {
-                    plugin.getLogger().info("Server status cache has been initialized.");
+                    logger.info("Server status cache has been initialized.");
                     pf.findAvailablePortAsync(statusMap).thenAccept(port -> {
-                        refreshManualOnlineServer(shd.getServerName());
+                        String serverName = shd.getServerName();
+                        refreshManualOnlineServer(serverName);
                         dso.UpdateDatabase(port);
                         ssw.startSocketServer(port);
+                        logger.info(serverName + " server is online!");
                     }).exceptionally(ex -> {
-                        plugin.getLogger().log(Level.SEVERE, "ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
+                        logger.error("ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
                         for (StackTraceElement element : ex.getStackTrace()) {
-                            plugin.getLogger().log(Level.SEVERE, element.toString());
+                            logger.error(element.toString());
                         }
                         return null;
                     });
@@ -112,7 +119,7 @@ public class ServerStatusCache {
             }
         } catch (SQLException | ClassNotFoundException e) {
             this.statusMap = null;
-            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 plugin.getLogger().severe(element.toString());
             }
@@ -127,7 +134,7 @@ public class ServerStatusCache {
             .forEach(entry -> {
                 entry.getValue().put("online", true);
                 setStatusMap(statusMap);
-                //plugin.getLogger().log(Level.INFO, "Server {0} is now online", extracted);
+                //logger.info("Server {} is now online", extracted);
             });
     }
 
@@ -162,7 +169,7 @@ public class ServerStatusCache {
                 this.memberMap = newMemberMap;
             }
         } catch (SQLException | ClassNotFoundException e) {
-            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 plugin.getLogger().severe(element.toString());
             }

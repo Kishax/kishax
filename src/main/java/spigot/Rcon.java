@@ -11,21 +11,22 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
 public class Rcon {
-
 	public static boolean isMCVC = false;
-	
 	private final common.Main plugin;
+	private final Logger logger;
 	private volatile boolean isRconActive = false;
 	private Thread rconMonitorThread;
 	
 	@Inject
-	public Rcon(common.Main plugin) {
+	public Rcon(common.Main plugin, Logger logger) {
 		this.plugin = plugin;
+		this.logger = logger;
 	}
 	
 	public void startMCVC() {
@@ -35,7 +36,7 @@ public class Rcon {
         try (FileInputStream fis = new FileInputStream(propertiesFile)) {
             properties.load(fis);
         } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+            logger.error("An IOException error occurred: {}", e.getMessage());
 			for (StackTraceElement element : e.getStackTrace()) {
 				plugin.getLogger().severe(element.toString());
 			}
@@ -46,13 +47,13 @@ public class Rcon {
         String rconPassword = properties.getProperty("rcon.password", "");
         int rconPort = Integer.parseInt(properties.getProperty("rcon.port", "0"));
 
-        /*plugin.getLogger().info("RCON Enabled: " + isRconEnabled);
-        plugin.getLogger().info("RCON Password: " + rconPassword);
-        plugin.getLogger().info("RCON Port: " + rconPort);*/
+        /*logger.info("RCON Enabled: " + isRconEnabled);
+        logger.info("RCON Password: " + rconPassword);
+        logger.info("RCON Port: " + rconPort);*/
         
         if (isRconEnabled) {
         	if(rconPassword.isEmpty() || rconPort == 0) {
-        		plugin.getLogger().info("Server.Properties.Rconの設定が不十分のため、MCVCを開始できません。");
+        		logger.info("Server.Properties.Rconの設定が不十分のため、MCVCを開始できません。");
         	} else {
         		// RCONの状態を監視するスレッドを開始
                 rconMonitorThread = new Thread(() -> monitorRcon("localhost", rconPort, rconPassword));
@@ -60,15 +61,15 @@ public class Rcon {
                 isMCVC = true;
         	}
         } else {
-        	plugin.getLogger().info("Server.Properties.Rconの設定が不十分のため、MCVCを開始できません。");
+        	logger.info("Server.Properties.Rconの設定が不十分のため、MCVCを開始できません。");
         }
 	}
 	
 	private void onRconActivated(int RCON_PORT, String RCON_PASS) {
         // RCONが有効になった後の処理
-        plugin.getLogger().info("RCON is active. Performing specific actions...");
+        logger.info("RCON is active. Performing specific actions...");
         // ここにRCONが有効になった後の特定の処理を記述
-        plugin.getLogger().info("RCON is active.");
+        logger.info("RCON is active.");
         // RCONが有効な場合の処理
 		String mcvcExePath = plugin.getConfig().getString("MCVC.EXE_Path","");
         if (mcvcExePath != null && !mcvcExePath.isEmpty()) {
@@ -90,13 +91,13 @@ public class Rcon {
 	        try {
 				processBuilder.start();
 			} catch (IOException e) {
-				plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+				logger.error("An IOException error occurred: {}", e.getMessage());
 				for (StackTraceElement element : e.getStackTrace()) {
 					plugin.getLogger().severe(element.toString());
 				}
 			}
 		} else {
-			plugin.getLogger().info("MCVCを有効にするには、mcvc.exeの絶対パスをconfigに書く必要があります。");
+			logger.info("MCVCを有効にするには、mcvc.exeの絶対パスをconfigに書く必要があります。");
 		}
     }
 	
@@ -110,7 +111,7 @@ public class Rcon {
 				plugin.getServer().getScheduler().runTask(plugin, () -> {
 					// RCONが有効になった後の処理をメインスレッドで実行
 					if (isRconActive) { // メインスレッドでチェック
-						plugin.getLogger().info("Running onRconActivated method.");
+						logger.info("Running onRconActivated method.");
 						onRconActivated(RCON_PORT, RCON_PASS);
 						isRconActive = false; // フラグをリセット
 					}
@@ -127,7 +128,7 @@ public class Rcon {
 		// スレッド終了時の処理を追加するために、スケジューラを監視する
 		scheduler.schedule(() -> {
 			if (scheduler.isShutdown()) {
-				plugin.getLogger().info("RCON monitor thread stopping.");
+				logger.info("RCON monitor thread stopping.");
 			}
 		}, 5, TimeUnit.SECONDS);
 	}
