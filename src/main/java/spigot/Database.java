@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.logging.Level;
 
 import com.google.inject.Inject;
 
@@ -15,7 +16,7 @@ public class Database {
     	this.plugin = plugin;
     }
     
-    public Connection getConnection() throws SQLException, ClassNotFoundException {
+    public synchronized Connection getConnection() throws SQLException, ClassNotFoundException {
 		return getConnection(null);
 	}
     
@@ -24,50 +25,26 @@ public class Database {
         int port = plugin.getConfig().getInt("MySQL.Port", 0);
         String user = plugin.getConfig().getString("MySQL.User", "");
         String password = plugin.getConfig().getString("MySQL.Password", "");
-        if (customDatabase != null && !customDatabase.isEmpty()) {
-            if ((host != null && host.isEmpty()) || 
-                port == 0 || 
-                (user != null && user.isEmpty()) || 
-                (password != null && password.isEmpty())) {
-                return null;
-            }
-            
+        String database = customDatabase != null && !customDatabase.isEmpty() ? customDatabase : plugin.getConfig().getString("MySQL.Database", "");
+        if ((host != null && host.isEmpty()) || 
+            port == 0 || 
+            (database != null && database.isEmpty()) || 
+            (user != null && user.isEmpty()) || 
+            (password != null && password.isEmpty())) {
+            return null;
+        }
+        try {
             synchronized (Database.class) {
                 //if (Objects.nonNull(conn2) && !conn2.isClosed()) return conn2;
-                
                 Class.forName("com.mysql.cj.jdbc.Driver");
-                return  DriverManager.getConnection (
-                            "jdbc:mysql://" + host + ":" + 
-                            port + "/" + 
-                            customDatabase +
-                            "?autoReconnect=true&useSSL=false", 
-                            user, 
-                            password
-                );
+                return DriverManager.getConnection ("jdbc:mysql://" + host + ":" + port + "/" + database +"?autoReconnect=true&useSSL=false", user, password);
             }
-        } else {
-            String database = plugin.getConfig().getString("MySQL.Database", "");
-            if ((host != null && host.isEmpty()) || 
-                port == 0 || 
-                (database != null && database.isEmpty()) || 
-                (user != null && user.isEmpty()) || 
-                (password != null && password.isEmpty())) {
-                return null;
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to establish database connection.", e);
+            for (StackTraceElement element : e.getStackTrace()) {
+                plugin.getLogger().severe(element.toString());
             }
-            
-            synchronized (Database.class) {
-                //if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
-                
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                return DriverManager.getConnection (
-                            "jdbc:mysql://" + host + ":" + 
-                            port + "/" + 
-                            database +
-                            "?autoReconnect=true&useSSL=false", 
-                            user, 
-                            password
-                        );
-            }
+            throw e;
         }
     }
 

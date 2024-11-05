@@ -54,6 +54,9 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import net.md_5.bungee.api.ChatColor;
 
 public class ImageMap {
+    public static List<String> imagesColumnsList = new ArrayList<>();
+    public static AtomicBoolean isGetColumnInfo = new AtomicBoolean(false);
+    public static List<Integer> thisServerMapIds = new ArrayList<>();
     public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q"));
     private final common.Main plugin;
     private final Database db;
@@ -116,6 +119,82 @@ public class ImageMap {
         }
     }
     
+    private void copyLineFromMenu(Connection conn, int id, Map<String, String> modifyMap) throws SQLException, ClassNotFoundException {
+        List<String> modifiedImageColumnsList = new ArrayList<>(imagesColumnsList),
+            imagesColumnsListCopied = new ArrayList<>(imagesColumnsList);
+        for (Map.Entry<String, String> entry : modifyMap.entrySet()) {
+            String key = entry.getKey(),
+                newValue = entry.getValue();
+                modifiedImageColumnsList = modifiedImageColumnsList.stream()
+                .map(s -> s.equals(key) ? newValue : s)
+                .collect(Collectors.toList());
+        }
+        // idカラムを除外
+        imagesColumnsListCopied.remove("id");
+        modifiedImageColumnsList.remove("id");
+        String query = "INSERT INTO images (" + String.join(", ", imagesColumnsListCopied) + ") " +
+                    "SELECT " + String.join(", ", modifiedImageColumnsList) + " " +
+                    "FROM images " +
+                    "WHERE id = ?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setInt(1, id);
+        ps.executeUpdate();
+    }
+
+    public void executeImageMapFromMenu(Player player, Object[] mArgs) {
+        // このサーバーにはないマップを生成する
+        try (Connection conn = db.getConnection()) {
+            int id = (int) mArgs[0];
+            boolean isQr = (boolean) mArgs[1];
+            String authorName = (String) mArgs[2],
+                imageUUID = (String) mArgs[3],
+                title = (String) mArgs[4],
+                comment = (String) mArgs[5],
+                ext = (String) mArgs[6],
+                date = (String) mArgs[7],
+                fullPath = getImageSaveFolder(conn) + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
+                playerName = player.getName();
+            BufferedImage image;
+            image = loadImage(fullPath);
+            image = !isQr ? resizeImage(image, 128, 128) : image;
+            List<String> lores = new ArrayList<>();
+            lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
+            List<String> commentLines = Arrays.stream(comment.split("\n"))
+                                .map(String::trim)
+                                .collect(Collectors.toList());
+            lores.addAll(commentLines);
+            lores.add("created by " + authorName);
+            lores.add("at " + date.replace("-", "/"));
+            ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+            MapView mapView = Bukkit.createMap(player.getWorld());
+            int mapId = mapView.getId(); // 一意のmapIdを取得
+            mapView.getRenderers().clear();
+            mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
+            var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName(title);
+                meta.setLore(lores);
+                meta.setMapView(mapView);
+                meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING, "true");
+                mapItem.setItemMeta(meta);
+            }
+            Map<String, String> modifyMap = new HashMap<>();
+            modifyMap.put("menu", "true");
+            modifyMap.put("menuer", "\"" + playerName + "\"");
+            modifyMap.put("server", "\"" + serverName + "\"");
+            modifyMap.put("mapid", String.valueOf(mapId));
+            copyLineFromMenu(conn, id, modifyMap);
+            player.getInventory().addItem(mapItem);
+            player.sendMessage("画像マップを渡しました。");
+        } catch (IOException | SQLException | ClassNotFoundException e) {
+            player.sendMessage("画像の読み取りに失敗しました。");
+            plugin.getLogger().log(Level.SEVERE, "An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {0}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                plugin.getLogger().severe(element.toString());
+            }
+        }
+    }
+
     @SuppressWarnings("null")
     // 未認証マップをクリックしたときの動作は、discordで発行したワンタイムパスワードをつかうよう、促す
     // ワンタイムパスワードを再取得するコマンドが必要？優先度は低いか
@@ -229,19 +308,72 @@ public class ImageMap {
         }
     }
 
+    public void checkPlayerInventory(Connection conn, Player player) throws SQLException, ClassNotFoundException {
+        plugin.getLogger().log(Level.INFO, "Checking {0}'s Inventory...", player.getName());
+        Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for (ItemStack item : player.getInventory().getContents()) {
+                if (item != null && item.getType() == Material.FILLED_MAP) {
+                    MapMeta mapMeta = (MapMeta) item.getItemMeta();
+                    if (mapMeta != null && mapMeta.hasMapView()) {
+                        MapView mapView = mapMeta.getMapView();
+                        if (mapView != null) {
+                            int mapId = mapView.getId();
+                            // このサーバーのワールド内のどこかに配置されているマップはloadAllItemInThisServerFramesメソッドで処理済み
+                            if (serverImageInfo.containsKey(mapId) && !thisServerMapIds.contains(mapId)) {
+                                plugin.getLogger().log(Level.INFO, "Found a map item(No.{0}) in {1}'s Inventory", new Object[] {mapId, player.getName()});
+                                Map<String, Object> imageInfo = serverImageInfo.get(mapId);
+                                boolean isQr = (boolean) imageInfo.get("isqr");
+                                Date date = (Date) imageInfo.get("date");
+                                String imageUUID = (String) imageInfo.get("imuuid");
+                                String ext = (String) imageInfo.get("ext");
+                                try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection()) {
+                                    String fullPath = getFullPath(connection, date, imageUUID, ext); // Connectionが必要ない場合はnullを渡す
+                                    plugin.getLogger().log(Level.INFO, "Replacing image to the map(No.{0})...", new Object[] {mapId, fullPath});
+                                        BufferedImage image = loadImage(fullPath);
+                                        if (image != null) {
+                                            // QRコードならリサイズしない
+                                            image = isQr ? image : resizeImage(image, 128, 128);
+                                            mapView.getRenderers().clear();
+                                            mapView.addRenderer(new ImageMapRenderer(plugin, image, fullPath));
+                                            mapMeta.setMapView(mapView);
+                                            item.setItemMeta(mapMeta);
+                                        } else {
+                                            plugin.getLogger().log(Level.WARNING, "Failed to load image from path: {0}", fullPath);
+                                        }
+                                } catch (IOException e) {
+                                    plugin.getLogger().log(Level.SEVERE, "Error loading image: {0}" , e);
+                                } catch (SQLException | ClassNotFoundException e) {
+                                    plugin.getLogger().log(Level.SEVERE, "Error getting full path: " + date + ", " + imageUUID + ", " + ext, e);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     public void loadAllItemInThisServerFrames(Connection conn) throws SQLException, ClassNotFoundException {
+        plugin.getLogger().info("Loading all item frames...");
         Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
         for (World world : Bukkit.getWorlds()) {
+            plugin.getLogger().log(Level.INFO, "Loading item frames in the world: {0}", world.getName());
             for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
                 ItemStack item = itemFrame.getItem();
                 if (item.getType() == Material.FILLED_MAP) {
+                    plugin.getLogger().info("Found a map item.");
                     MapMeta mapMeta = (MapMeta) item.getItemMeta();
                     if (mapMeta != null && mapMeta.hasMapView()) {
-                        //if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING)) {
+                        /*mapMeta.getPersistentDataContainer().getKeys().forEach(key -> {
+                            plugin.getLogger().info(key.toString());
+                        });*/
+                        if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING)) {
                             MapView mapView = mapMeta.getMapView();
                             if (mapView != null) {
                                 int mapId = mapView.getId();
                                 if (serverImageInfo.containsKey(mapId)) {
+                                    thisServerMapIds.add(mapId);
                                     Map<String, Object> imageInfo = serverImageInfo.get(mapId);
                                     boolean isQr = (boolean) imageInfo.get("isqr");
                                     Date date = (Date) imageInfo.get("date");
@@ -266,7 +398,7 @@ public class ImageMap {
                                     }
                                 }
                             }
-                        //}
+                        }
                     }
                 }
             }
@@ -306,10 +438,14 @@ public class ImageMap {
             int columnCount = rs.getMetaData().getColumnCount();
             for (int i = 1; i <= columnCount; i++) {
                 String columnName = rs.getMetaData().getColumnName(i);
+                if (!ImageMap.isGetColumnInfo.get()) {
+                    imagesColumnsList.add(columnName);
+                }
                 if (!columnName.equals("mapid")) {
                     rowMap.put(columnName, rs.getObject(columnName));
                 }
             }
+            ImageMap.isGetColumnInfo.set(true);
             serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
         }
         return serverImageInfo;

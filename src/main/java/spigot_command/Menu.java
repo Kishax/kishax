@@ -265,23 +265,22 @@ public class Menu {
             for (int i = startIndex; i < endIndex; i++) {
                 Map<String, Object> imageInfo = imageMap.get(i);
                 if (imageInfo != null) {
+                    int id = (int) imageInfo.get("id");
                     String server = imageInfo.get("server") instanceof String authorServer ? authorServer : null, 
                         thisServer = shd.getServerName(),
-                        url = (String) imageInfo.get("url"),
                         title = (String) imageInfo.get("title"),
-                        author = (String) imageInfo.get("name"),
-                        authorUUID = (String) imageInfo.get("uuid"),
+                        authorName = (String) imageInfo.get("name"),
                         comment = (String) imageInfo.get("comment"),
-                        imuuid = (String) imageInfo.get("imuuid"),
+                        imageUUID = (String) imageInfo.get("imuuid"),
                         ext = (String) imageInfo.get("ext"),
                         date = ((Date) imageInfo.get("date")).toString();
-                        boolean fromDiscord = Optional.ofNullable(imageInfo.get("d"))
+                    boolean fromDiscord = Optional.ofNullable(imageInfo.get("d"))
+                        .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
+                        .orElse(false),
+                        isQr = Optional.ofNullable(imageInfo.get("isqr"))
                             .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
                             .orElse(false),
-                            isQr = Optional.ofNullable(imageInfo.get("isqr"))
-                                .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
-                                .orElse(false),
-                            locked = imageInfo.get("otp") != null;
+                        locked = imageInfo.get("otp") != null;
                         //isQr = imageInfo.get("isqr") != null && (imageInfo.get("isqr") instanceof Boolean ? (Boolean) imageInfo.get("isqr") : (Integer) imageInfo.get("isqr") != 0);
                     List<String> lores = new ArrayList<>();
                     lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
@@ -289,7 +288,7 @@ public class Menu {
                                         .map(String::trim)
                                         .collect(Collectors.toList());
                     lores.addAll(commentLines);
-                    lores.add("created by " + author);
+                    lores.add("created by " + authorName);
                     lores.add("at " + date.replace("-", "/"));
                     if (fromDiscord) {
                         lores.add("from " + ChatColor.BLUE + "Discord");
@@ -302,7 +301,7 @@ public class Menu {
                     if (meta != null) {
                         meta.setDisplayName(ChatColor.GREEN + title);
                         meta.setLore(lores);
-                        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, imuuid), PersistentDataType.STRING, "true");
+                        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, imageUUID), PersistentDataType.STRING, "true");
                         item.setItemMeta(meta);
                     }
                     inv.addItem(item);
@@ -321,8 +320,7 @@ public class Menu {
                     } else {
                         playerMenuActions.put(inv.first(item), () -> {
                             player.closeInventory();
-                            CommandSender sender = (CommandSender) player;
-                            im.executeImageMap(sender, null, null, new String[] {"im", isQr ? "createqr" : "create", url, title, comment}, null, new Object[] {imuuid, date, author, ext, authorUUID, thisServer, url});
+                            im.executeImageMapFromMenu(player, new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date});
                         });
                     }
                     //slot++;

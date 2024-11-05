@@ -1,5 +1,6 @@
 package spigot;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -18,6 +20,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 import com.google.inject.Inject;
@@ -29,19 +32,43 @@ import spigot_command.Menu;
 
 public final class EventListener implements Listener {
     private final common.Main plugin;
+    private final Database db;
 	private final PortalsConfig psConfig;
     private final Menu menu;
     private final ServerStatusCache ssc;
+    private final ImageMap im;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     //private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc) {
+	public EventListener(common.Main plugin, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, ImageMap im) {
 		this.plugin = plugin;
+        this.db = db;
 		this.psConfig = psConfig;
         this.menu = menu;
         this.ssc = ssc;
+        this.im = im;
 	}
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        // 非同期タスクを実行
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            // 非同期タスク内で同期タスクを実行して、プレイヤーのインベントリを更新
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                try (Connection conn = db.getConnection()) {
+                    im.checkPlayerInventory(conn, player);
+                } catch (SQLException | ClassNotFoundException e) {
+                    player.sendMessage(ChatColor.RED + "画像マップの読み込みに失敗しました。管理者にお問い合わせください。");
+                    plugin.getLogger().log(Level.SEVERE, "An SQLException | ClassNotFoundException error occurred: {0}", e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) {
+                        plugin.getLogger().log(Level.SEVERE, element.toString());
+                    }
+                }
+            });
+        });
+    }
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
@@ -103,7 +130,7 @@ public final class EventListener implements Listener {
             }
         }
     }
-
+    
 	@EventHandler
     @SuppressWarnings("unchecked")
     public void onPlayerMove(PlayerMoveEvent e) {
