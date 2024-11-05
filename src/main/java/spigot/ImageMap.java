@@ -99,9 +99,7 @@ public class ImageMap {
                     boolean isQr = (boolean) imageInfo.get("isqr");
                     String[] imageArgs = new String[] {"im", isQr ? "createqr" : "create", url, title, comment};
                     // dateを使うので、player.performCommandメソッドを使わず、直接実行させる
-                    //player.performCommand("fmc " + String.join(" ", imageArgs));
-                    executeImageMap(sender, command, label, imageArgs, new Object[] {otp, dName, dId, date}, null);
-                    //deleteImageInfoByOTP(conn, otp);
+                    executeImageMap(sender, command, label, imageArgs, new Object[] {otp, dName, dId, date});
                 } else {
                     player.sendMessage(ChatColor.RED + "ワンタイムパスワードが間違っています。");
                 }
@@ -201,39 +199,31 @@ public class ImageMap {
     // あるプレイヤーがマップを生成した特定のサーバーとは異なる別のサーバーで、誰かが新たに生成する場合、
     // そのサーバーには、そのマップは存在しないので、新たに生成するが、
     // そのマップのcreated by は最初に生成したプレイヤーの名前になることを留意する
-    public void executeImageMap(CommandSender sender, Command command, String label, String[] args, Object[] dArgs, Object[] mArgs) {
+    public void executeImageMap(CommandSender sender, Command command, String label, String[] args, Object[] dArgs) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
                 player.sendMessage("使用法: /fmc im <create|createqr> <url> [Optional: <title> <comment>]");
                 return;
             }
             boolean isQr = args[1].equalsIgnoreCase("createqr"),
-                fromDiscord = (dArgs != null),
-                fromMenu = (mArgs != null);
-            String playerName = !fromMenu ? player.getName() : (String) mArgs[2],
-                playerUUID = !fromMenu ? player.getUniqueId().toString() : (String) mArgs[4],
-                imageUUID = !fromMenu ? UUID.randomUUID().toString() : (String) mArgs[0],
+                fromDiscord = (dArgs != null);
+            String playerName = player.getName(),
+                playerUUID = player.getUniqueId().toString(),
+                imageUUID = UUID.randomUUID().toString(),
                 url = args[2],
                 title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
                 comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
                 ext,
                 fullPath;
-            if (!isQr && !fromMenu && !isValidURL(url)) {
+            if (!isQr && !isValidURL(url)) {
                 player.sendMessage("無効なURLです。");
                 return;
             }
             try (Connection conn = db.getConnection()) {
                 LocalDate localDate = LocalDate.now();
-                String now = fromMenu ? (String) mArgs[1] : fromDiscord ? ((Date) dArgs[3]).toString() : localDate.toString();
+                String now = fromDiscord ? ((Date) dArgs[3]).toString() : localDate.toString();
                 BufferedImage image;
-                if (fromMenu) {
-                    ext = (String) mArgs[3];
-                    fullPath = getImageSaveFolder(conn) + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
-                    image = loadImage(fullPath);
-                    if (!isQr) {
-                        image = resizeImage(image, 128, 128);
-                    }
-                } else if (isQr) {
+                if (isQr) {
                     ext = "png";
                     fullPath = getImageSaveFolder(conn) + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
                     image = generateQRCodeImage(url);
@@ -283,14 +273,10 @@ public class ImageMap {
                     meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING, "true");
                     mapItem.setItemMeta(meta);
                 }
-                if (!fromMenu) {
-                    if (fromDiscord) {
-                        db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], now, (String) dArgs[0]});
-                    } else {
-                        db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, Date.valueOf(LocalDate.now())});
-                    }
+                if (fromDiscord) {
+                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], now, (String) dArgs[0]});
                 } else {
-                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, menu, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, true, Date.valueOf(LocalDate.now())});
+                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, Date.valueOf(LocalDate.now())});
                 }
                 player.getInventory().addItem(mapItem);
                 player.sendMessage("画像マップを渡しました。");
@@ -309,7 +295,6 @@ public class ImageMap {
     }
 
     public void checkPlayerInventory(Connection conn, Player player) throws SQLException, ClassNotFoundException {
-        plugin.getLogger().log(Level.INFO, "Checking {0}'s Inventory...", player.getName());
         Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
         Bukkit.getScheduler().runTask(plugin, () -> {
             for (ItemStack item : player.getInventory().getContents()) {
@@ -321,7 +306,6 @@ public class ImageMap {
                             int mapId = mapView.getId();
                             // このサーバーのワールド内のどこかに配置されているマップはloadAllItemInThisServerFramesメソッドで処理済み
                             if (serverImageInfo.containsKey(mapId) && !thisServerMapIds.contains(mapId)) {
-                                plugin.getLogger().log(Level.INFO, "Found a map item(No.{0}) in {1}'s Inventory", new Object[] {mapId, player.getName()});
                                 Map<String, Object> imageInfo = serverImageInfo.get(mapId);
                                 boolean isQr = (boolean) imageInfo.get("isqr");
                                 Date date = (Date) imageInfo.get("date");
