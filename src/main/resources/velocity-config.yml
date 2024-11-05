@@ -43,6 +43,9 @@ Discord:
     Status:
         ChannelId: 
         MessageId: 
+    Rule:
+        ChannelId: 
+        MessageId:
 
 Interval:
     Login: 

@@ -13,15 +13,13 @@ import com.google.inject.Provider;
 import common.Database;
 
 public class DoServerOnline {
-	private final common.Main plugin;
 	private final Logger logger;
 	private final Provider<SocketSwitch> sswProvider;
 	private final ServerHomeDir shd;
 	private final Database db;
 	
 	@Inject
-	public DoServerOnline (common.Main plugin, Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
-		this.plugin = plugin;
+	public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
 		this.logger = logger;
 		this.sswProvider = sswProvider;
 		this.shd = shd;
@@ -53,7 +51,7 @@ public class DoServerOnline {
 		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
 			for (StackTraceElement element : e.getStackTrace()) {
-				plugin.getLogger().severe(element.toString());
+				logger.error(element.toString());
 			}
 		}
 	}

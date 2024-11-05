@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import common.Database;
 import common.FMCSettings;
@@ -44,6 +45,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.BroadCast;
 import velocity.Config;
+import velocity.SocketSwitch;
 import velocity_command.Request;
 import velocity_command.RequestInterface;
 
@@ -55,19 +57,23 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final BroadCast bc;
 	private final MessageEditorInterface discordME;
 	private final RequestInterface req;
+	private final DiscordInterface discord;
+	private final Provider<SocketSwitch> sswProvider;
 	private final String teraToken, teraExecFilePath;
 	private final Long teraChannelId;
 	private final boolean require;
 	private String replyMessage = null, restAPIUrl = null;
 
 	@Inject
-	public DiscordEventListener(Logger logger, Config config, Database db, BroadCast bc, MessageEditorInterface discordME, RequestInterface req) {
+	public DiscordEventListener(Logger logger, Config config, Database db, BroadCast bc, MessageEditorInterface discordME, RequestInterface req, DiscordInterface discord, Provider<SocketSwitch> sswProvider) {
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
 		this.bc = bc;
 		this.discordME = discordME;
 		this.req = req;
+		this.discord = discord;
+		this.sswProvider = sswProvider;
 		this.teraToken = config.getString("Terraria.Token", "");
 		this.teraExecFilePath = config.getString("Terraria.Exec_Path", "");
 		this.teraChannelId = config.getLong("Terraria.ChannelId", 0);
@@ -103,6 +109,32 @@ public class DiscordEventListener extends ListenerAdapter {
 			channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId);
 		if (e.getName().equals("fmc")) {
 			switch (e.getSubcommandName()) {
+				case "syncrulebook" -> {
+					discord.getMessageContent().thenAccept(content -> {
+						logger.info("メッセージの内容: {}", content);
+						if (content != null) {
+							try (Connection conn = db.getConnection()) {
+								db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {content, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
+								e.reply("ルールブックを更新しました。").setEphemeral(true).queue();
+								e.reply("同期のため、ソケット通信を行います。").setEphemeral(true).queue();
+								SocketSwitch ssw = sswProvider.get();
+								ssw.sendSpigotServer("RulebookSync");
+							} catch (SQLException | ClassNotFoundException e1) {
+								e.reply("データベースに接続できませんでした。").setEphemeral(true).queue();
+								logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
+								for (StackTraceElement element : e1.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
+						} else {
+							e.reply("メッセージの内容が取得できませんでした。").setEphemeral(true).queue();
+						}
+					}).exceptionally(throwable -> {
+						e.reply("エラーが発生しました。").setEphemeral(true).queue();
+						logger.error("エラーが発生しました: {}", throwable.getMessage());
+						return null;
+					});
+				}
 				case "create", "createqr" -> {
 					try (Connection conn = db.getConnection()) {
 						int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),

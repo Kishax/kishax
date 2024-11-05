@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 public class SocketSwitch {
-    private final common.Main plugin;
     private final Logger logger;
     private final SocketResponse sr;
     private final ServerStatusCache ssc;
@@ -21,8 +20,7 @@ public class SocketSwitch {
     private volatile boolean running = true;
     
     @Inject
-	public SocketSwitch(common.Main plugin, Logger logger, SocketResponse sr, PortFinder pf, ServerStatusCache ssc) {
-        this.plugin = plugin;
+	public SocketSwitch(Logger logger, SocketResponse sr, PortFinder pf, ServerStatusCache ssc) {
         this.logger = logger;
         this.ssc = ssc;
         this.sr = sr;
@@ -42,7 +40,7 @@ public class SocketSwitch {
                             break;
                         }
                         // logger.info("New client connected()");
-                        new SocketServerThread(plugin, logger, sr, socket2).start();
+                        new SocketServerThread(logger, sr, socket2).start();
                     } catch (IOException e) {
                         if (running) {
                             logger.error("An IOException error occurred: {}", e.getMessage());
@@ -90,7 +88,7 @@ public class SocketSwitch {
 	    } catch (Exception e) {
 	        logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+                logger.error(element.toString());
             }
 	    }
 	}
@@ -125,7 +123,7 @@ public class SocketSwitch {
         } catch (InterruptedException e) {
             logger.error("An InterruptedException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+                logger.error(element.toString());
             }
         }
     }

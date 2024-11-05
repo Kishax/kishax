@@ -58,7 +58,7 @@ public final class PortalsConfig {
         } catch (IOException e) {
             logger.error("An IOException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+                logger.error(element.toString());
             }
         }
     }

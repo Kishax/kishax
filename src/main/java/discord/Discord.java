@@ -22,7 +22,9 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
@@ -87,7 +89,8 @@ public class Discord implements DiscordInterface {
                         new OptionData(OptionType.STRING, "title", "画像マップのタイトル設定項目").setRequired(false),
                         new OptionData(OptionType.STRING, "comment", "画像マップのコメント設定項目").setRequired(false)
                     );
-                createFMCCommand.addSubcommands(teraSubCommand, createImageSubcommand, createQRSubcommand).queue();
+                SubcommandData syncRuleBookSubcommand = new SubcommandData("syncrulebook", "ルールブックの同期を行うコマンド");
+                createFMCCommand.addSubcommands(teraSubCommand, createImageSubcommand, createQRSubcommand, syncRuleBookSubcommand).queue();
                 jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
                 isDiscord = true;
                 logger.info("discord bot has been logged in.");
@@ -114,6 +117,34 @@ public class Discord implements DiscordInterface {
     	});
     }
     
+    @Override
+    public CompletableFuture<String> getMessageContent() {
+        String ruleChannelId = config.getString("Discord.Rule.ChannelId", "");
+        String ruleMessageId = config.getString("Discord.Rule.MessageId", "");
+        CompletableFuture<String> future = new CompletableFuture<>();
+        TextChannel ruleChannel = jda.getTextChannelById(ruleChannelId);
+        if (ruleChannel == null) {
+            future.completeExceptionally(new IllegalArgumentException("チャンネルが見つかりませんでした。"));
+            return future;
+        }
+
+        ruleChannel.retrieveMessageById(ruleMessageId).queue(
+            message -> {
+                // メッセージの内容を取得してCompletableFutureに設定
+                String content = message.getContentDisplay();
+                future.complete(content);
+            },
+            throwable -> {
+                if (throwable instanceof ErrorResponseException e) {
+                    future.completeExceptionally(new RuntimeException("エラーが発生しました: " + e.getErrorResponse().getMeaning()));
+                } else {
+                    future.completeExceptionally(throwable);
+                }
+            }
+        );
+        return future;
+    }
+
     @Override
     public void sendRequestButtonWithMessage(String buttonMessage) {
     	if (config.getLong("Discord.AdminChannelId", 0) == 0 || !isDiscord) return;
