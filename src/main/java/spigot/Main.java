@@ -25,13 +25,7 @@ public class Main {
 	
 	public void onEnable() {
 		logger.info("detected spigot platform.");
-		String host = plugin.getConfig().getString("MySQL.Host", ""),
-        	user = plugin.getConfig().getString("MySQL.User", ""),
-        	password = plugin.getConfig().getString("MySQL.Password", ""),
-			defaultDatabase = plugin.getConfig().getString("MySQL.Database", "");
-		int port = plugin.getConfig().getInt("MySQL.Port", 0);
-		Database db = new Database(logger, host, user, defaultDatabase, password, port);
-        injector = Guice.createInjector(new spigot.Module(plugin, logger, db));
+        injector = Guice.createInjector(new spigot.Module(plugin, logger));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
 	    plugin.saveDefaultConfig();

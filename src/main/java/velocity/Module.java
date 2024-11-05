@@ -31,9 +31,6 @@ public class Module extends AbstractModule {
         this.server = server;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
-        // Config インスタンスの作成とバインド
-        // Configをロードする前に、Guiceによってインスタンスが開始されてしまうために、Config not given状態になる。
-    	// ゆえ、それよりも前にconfigを手動でインスタンス開始する。
         this.config = new Config(server, logger, dataDirectory);
     	try {
             config.loadConfig(); // 一度だけロードする

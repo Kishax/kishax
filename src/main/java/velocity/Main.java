@@ -42,6 +42,7 @@ public class Main {
     public void onProxyInitialization(ProxyInitializeEvent e) {
     	logger.info("detected velocity platform.");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
+        
         injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory));
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
             if (jda != null) {

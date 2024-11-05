@@ -15,10 +15,15 @@ public class Module extends AbstractModule {
 	private final Logger logger;
 	private final Database db;
 	
-	public Module(common.Main plugin, Logger logger, Database db) {
+	public Module(common.Main plugin, Logger logger) {
 		this.plugin = plugin;
 		this.logger = logger;
-		this.db = db;
+		String host = plugin.getConfig().getString("MySQL.Host", ""),
+        	user = plugin.getConfig().getString("MySQL.User", ""),
+        	password = plugin.getConfig().getString("MySQL.Password", ""),
+			defaultDatabase = plugin.getConfig().getString("MySQL.Database", "");
+		int port = plugin.getConfig().getInt("MySQL.Port", 0);
+		this.db = new Database(logger, host, user, defaultDatabase, password, port);
     }
 	
 	@Override
