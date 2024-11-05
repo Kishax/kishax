@@ -107,11 +107,11 @@ public class DiscordEventListener extends ListenerAdapter {
 			switch (e.getSubcommandName()) {
 				case "create", "createqr" -> {
 					try (Connection conn = db.getConnection()) {
-						int configUploadTimes = config.getInt("Discord.UserUploadTimes", 5),
+						int limitUploadTimes = getLimitUploadTimes(conn),
 							userUploadTimes = getUserTodayTimes(conn, userId),
 							thisTimes = userUploadTimes + 1;
-						if (thisTimes + 1 >= configUploadTimes) {
-							e.reply("1日の登録回数は"+configUploadTimes+"回までです。").setEphemeral(true).queue();
+						if (thisTimes >= limitUploadTimes) {
+							e.reply("1日の登録回数は"+limitUploadTimes+"回までです。").setEphemeral(true).queue();
 							return;
 						}
 						boolean isQr = e.getSubcommandName().equals("createqr");
@@ -386,6 +386,17 @@ public class DiscordEventListener extends ListenerAdapter {
             
             bc.broadCastMessage(component);
         }
+    }
+
+	private int getLimitUploadTimes(Connection conn) throws SQLException, ClassNotFoundException {
+        String query = "SELECT value FROM settings WHERE name=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, "imageuploadlimittimes");
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            return Integer.parseInt(rs.getString("value"));
+        }
+        return 0;
     }
 
 	private boolean isTera() {
