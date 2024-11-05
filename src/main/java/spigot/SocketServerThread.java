@@ -5,16 +5,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Objects;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
 
 public class SocketServerThread extends Thread {
-    
     public common.Main plugin;
+    public Logger logger;
     public SocketResponse sr;
     private final Socket socket;
     
-    public SocketServerThread (common.Main plugin, SocketResponse sr, Socket socket) {
+    public SocketServerThread (common.Main plugin, Logger logger, SocketResponse sr, Socket socket) {
         this.plugin = plugin;
+        this.logger = logger;
         this.sr = sr;
         this.socket = socket;
     }
@@ -32,9 +34,9 @@ public class SocketServerThread extends Thread {
             
             sr.resaction(receivedMessage);
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "An Exception error occurred: {0}", e.getMessage());
+            logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, element.toString());
+                logger.error(element.toString());
             }
         } finally {
             try {
@@ -42,9 +44,9 @@ public class SocketServerThread extends Thread {
                 	socket.close();
                 }
             } catch (IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "An IOException error occurred: {0}", e.getMessage());
+                logger.error("An IOException error occurred: {}", e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
-                    plugin.getLogger().log(Level.SEVERE, element.toString());
+                    logger.error(element.toString());
                 }
             }
         }

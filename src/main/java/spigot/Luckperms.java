@@ -9,11 +9,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.Database;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.messaging.MessagingService;
@@ -23,14 +25,14 @@ import net.luckperms.api.node.Node;
 import net.luckperms.api.node.types.InheritanceNode;
 
 public class Luckperms {
-	private final common.Main plugin;
+	private final Logger logger;
 	private final Database db;
 	private final LuckPerms lpapi = LuckPermsProvider.get();
 	private final PlayerUtils pu;
 	
 	@Inject
-	public Luckperms(common.Main plugin, Database db, PlayerUtils pu) {
-		this.plugin = plugin;
+	public Luckperms(Logger logger, Database db, PlayerUtils pu) {
+		this.logger = logger;
 		this.db = db;
 		this.pu = pu;
 	}
@@ -39,9 +41,9 @@ public class Luckperms {
         MessagingService messagingService = lpapi.getMessagingService().orElse(null);
         if (messagingService != null) {
             messagingService.pushUpdate();
-            plugin.getLogger().log(Level.INFO, "LuckPerms network sync triggered.");
+            logger.info("LuckPerms network sync triggered.");
         } else {
-        	plugin.getLogger().log(Level.SEVERE, "Failed to get LuckPerms MessagingService.");
+        	logger.error("Failed to get LuckPerms MessagingService.");
         }
     }
 
@@ -70,9 +72,9 @@ public class Luckperms {
 				return pu.getPlayerNamesListFromUUIDs(playersWithPermission);
 			}
 		} catch (SQLException | ClassNotFoundException e) {
-			plugin.getLogger().log(Level.SEVERE, "An error occurred while updating the database: {0}", e.getMessage());
+			logger.error("An error occurred while updating the database: {}", e.getMessage());
 			for (StackTraceElement element : e.getStackTrace()) {
-				plugin.getLogger().log(Level.SEVERE, element.toString());
+				logger.error(element.toString());
 			}
 			return null;
 		}
@@ -112,7 +114,7 @@ public class Luckperms {
 				.filter(node -> node instanceof InheritanceNode)
 				.map(node -> ((InheritanceNode) node).getGroupName())
 				.collect(Collectors.toList());
-		//plugin.getLogger().log(Level.INFO, "Groups: {0}", groups);
+		//logger.info("Groups: {}", groups);
 		Map<String, Boolean> hasPermissionBools = permissions.stream().collect(Collectors.toMap(permission -> permission, _ -> false));
     	CopyOnWriteArrayList<String> permissionsCopy = new CopyOnWriteArrayList<>(permissions);
 		permissions.stream()
@@ -127,7 +129,7 @@ public class Luckperms {
 		for (String groupName : groups) {
             checkGroupPermissionWithMap(groupName, permissionsCopy, hasPermissionBools);
         }
-		//plugin.getLogger().log(Level.INFO, "permMap: {0}", hasPermissionBools);
+		//logger.info("permMap: {}", hasPermissionBools);
 		return hasPermissionBools;
 	}
 	

@@ -12,7 +12,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
@@ -27,11 +26,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import spigot.Database;
+import common.Database;
 import spigot.ImageMap;
 import spigot.Luckperms;
 import spigot.Main;
@@ -50,7 +50,7 @@ public class Menu {
         imageInventoryKey = "image",
         imageInventoryName = "image maps";
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image"));
-    public static List<String> args2 = new ArrayList<>(Arrays.asList("life","distibuted","mod"));
+    public static List<String> args2 = new ArrayList<>(Arrays.asList("online","life","distibuted","mod"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     public static final int[] FACE_POSITIONS = {46, 47, 48, 49, 50, 51, 52};
     private static final List<Material> ORE_BLOCKS = Arrays.asList(
@@ -60,6 +60,7 @@ public class Menu {
         Material.COPPER_BLOCK
     );
     private final common.Main plugin;
+    private final Logger logger;
     private final Database db;
     private final ServerStatusCache ssc;
     private final Luckperms lp;
@@ -70,8 +71,9 @@ public class Menu {
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
-	public Menu(common.Main plugin, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd) {  
+	public Menu(common.Main plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd) {  
 		this.plugin = plugin;
+        this.logger = logger;
         this.db = db;
         this.ssc = ssc;
         this.lp = lp;
@@ -95,6 +97,10 @@ public class Menu {
                             if (args.length > 2) {
                                 String serverType = args[2].toLowerCase();
                                 switch (serverType) {
+                                    case "online" -> {
+                                        openOnlineServerInventory(player, 1);
+                                        return;
+                                    }
                                     case "life", "distributed", "mod" -> {
                                         int page = getPage(player, serverType);
                                         openServerEachInventory((Player) sender, serverType, page);
@@ -332,9 +338,9 @@ public class Menu {
             player.openInventory(inv);
             player.closeInventory();
             player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
-            plugin.getLogger().log(Level.SEVERE, "An error occurred while communicating with the database: {0}", e.getMessage());
+            logger.error("An error occurred while communicating with the database: {}", e.getMessage());
             for (StackTraceElement ste : e.getStackTrace()) {
-                plugin.getLogger().log(Level.SEVERE, ste.toString());
+                logger.error(ste.toString());
             }
         }
     }
@@ -410,7 +416,7 @@ public class Menu {
             });
         }
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.onlineServerInventoryKey, playerMenuActions);
-        //plugin.getLogger().log(Level.INFO, "menuActions: {0}", menuActions);
+        //logger.info("menuActions: {}", menuActions);
         player.openInventory(inv);
         setPage(player, Menu.onlineServerInventoryKey, page);
     }

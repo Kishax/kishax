@@ -6,25 +6,34 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.Database;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -32,6 +41,7 @@ import spigot_command.Menu;
 
 public final class EventListener implements Listener {
     private final common.Main plugin;
+    private final Logger logger;
     private final Database db;
 	private final PortalsConfig psConfig;
     private final Menu menu;
@@ -41,8 +51,9 @@ public final class EventListener implements Listener {
     //private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, ImageMap im) {
+	public EventListener(common.Main plugin, Logger logger, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, ImageMap im) {
 		this.plugin = plugin;
+        this.logger = logger;
         this.db = db;
 		this.psConfig = psConfig;
         this.menu = menu;
@@ -50,6 +61,22 @@ public final class EventListener implements Listener {
         this.im = im;
 	}
 
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        Action action = event.getAction();
+        Block clickedBlock = event.getClickedBlock();
+        if (action == Action.RIGHT_CLICK_BLOCK && clickedBlock != null) {
+            ItemStack itemInHand = player.getInventory().getItemInMainHand();
+            if (itemInHand.getType() != Material.AIR) {
+                ItemMeta meta = itemInHand.getItemMeta();
+                if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_button"), PersistentDataType.STRING)) {
+                    player.sendMessage(ChatColor.GREEN + "特定のボタンが右クリックされました！");
+                }
+            }
+        }
+    }
+    
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -61,9 +88,9 @@ public final class EventListener implements Listener {
                     im.checkPlayerInventory(conn, player);
                 } catch (SQLException | ClassNotFoundException e) {
                     player.sendMessage(ChatColor.RED + "画像マップの読み込みに失敗しました。管理者にお問い合わせください。");
-                    plugin.getLogger().log(Level.SEVERE, "An SQLException | ClassNotFoundException error occurred: {0}", e.getMessage());
+                    logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
                     for (StackTraceElement element : e.getStackTrace()) {
-                        plugin.getLogger().log(Level.SEVERE, element.toString());
+                        logger.error(element.toString());
                     }
                 }
             });
@@ -166,7 +193,7 @@ public final class EventListener implements Listener {
                             isInAnyPortal = true;
                             if (!playersInPortal.contains(player)) {
                                 playersInPortal.add(player);
-                                plugin.getLogger().log(Level.INFO, "Player {0} entered the {1}!", new Object[]{player.getName(), name});
+                                logger.info("Player {} entered the {}!", new Object[]{player.getName(), name});
                                 BaseComponent[] component = new ComponentBuilder()
                                     .append(ChatColor.WHITE + "ゲート: ")
                                     .append(ChatColor.AQUA + name)
@@ -200,19 +227,6 @@ public final class EventListener implements Listener {
         }
     }
     
-    private boolean isWithinBounds(Location loc, Location corner1, Location corner2) {
-        double x1 = Math.min(corner1.getX(), corner2.getX());
-        double x2 = Math.max(corner1.getX(), corner2.getX());
-        double y1 = Math.min(corner1.getY(), corner2.getY());
-        double y2 = Math.max(corner1.getY(), corner2.getY());
-        double z1 = Math.min(corner1.getZ(), corner2.getZ());
-        double z2 = Math.max(corner1.getZ(), corner2.getZ());
-
-        return loc.getX() >= x1 && loc.getX() < x2+1 &&
-               loc.getY() >= y1 && loc.getY() < y2+1 &&
-               loc.getZ() >= z1 && loc.getZ() < z2+1;
-    }
-
 	// MCVCをONにすると、ベッドで寝れなくなるため、必要なメソッド
 	@EventHandler
     public void onPlayerBedEnter(PlayerBedEnterEvent e) {
@@ -225,5 +239,18 @@ public final class EventListener implements Listener {
 	            e.getPlayer().sendMessage("おはようございます！時間を朝にしました。");
 	        }
 		}
+    }
+
+    private boolean isWithinBounds(Location loc, Location corner1, Location corner2) {
+        double x1 = Math.min(corner1.getX(), corner2.getX());
+        double x2 = Math.max(corner1.getX(), corner2.getX());
+        double y1 = Math.min(corner1.getY(), corner2.getY());
+        double y2 = Math.max(corner1.getY(), corner2.getY());
+        double z1 = Math.min(corner1.getZ(), corner2.getZ());
+        double z2 = Math.max(corner1.getZ(), corner2.getZ());
+
+        return loc.getX() >= x1 && loc.getX() < x2+1 &&
+               loc.getY() >= y1 && loc.getY() < y2+1 &&
+               loc.getZ() >= z1 && loc.getZ() < z2+1;
     }
 }
