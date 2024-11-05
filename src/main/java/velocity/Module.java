@@ -50,6 +50,7 @@ public class Module extends AbstractModule {
             logger.error("Error loading config", e1);
         }
         this.db = host != null && port != 0 && defaultDatabase != null && user != null && password != null ? new Database(logger, host, user, defaultDatabase, password, port) : null;
+        Database.staticInstance = db;
     }
 
     @Override

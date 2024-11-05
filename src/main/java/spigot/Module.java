@@ -24,6 +24,7 @@ public class Module extends AbstractModule {
 			defaultDatabase = plugin.getConfig().getString("MySQL.Database", null);
 		int port = plugin.getConfig().getInt("MySQL.Port", 0);
 		this.db = host != null && port != 0 && defaultDatabase != null && user != null && password != null ? new Database(logger, host, user, defaultDatabase, password, port) : null;
+		Database.staticInstance = db;
     }
 	
 	@Override
@@ -32,7 +33,6 @@ public class Module extends AbstractModule {
 		bind(org.slf4j.Logger.class).toInstance(logger);
 		bind(common.Main.class).toInstance(plugin);
 		bind(SocketSwitch.class);
-		//bind(Database.class).in(com.google.inject.Scopes.SINGLETON);
 		bind(ServerHomeDir.class);
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);

@@ -1,37 +1,39 @@
 package common;
 
-public enum FMCSettings {
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-	RED(255, 0, 0), 
-    BLUE(0, 0, 255), 
-    GREEN(0, 255, 0),
-    LIGHTGREEN(144, 238, 144),
-    BLACK(0, 0, 0),
-    WHITE(255, 255, 255),
-    YELLOW(255, 255, 0),
-	ORANGE(255, 165, 0),
-	PINK(255, 0, 127),
-	AQUA(0, 255, 255)
-	;
-    /**
-     * RGBの各成分から16進数の色コードを生成します。
-     * @param red   赤の成分 (0-255)
-     * @param green 緑の成分 (0-255)
-     * @param blue  青の成分 (0-255)
-     * @return 16進数の色コード
-     */
-	private final int rgb;
+public enum FMCSettings {
+	IMAGE_LIMIT_TIMES("imageuploadlimittimes"),
+    IMAGE_FOLDER("image_folder");
+    private final Database db = Database.getInstance();
+	private final String value;
 	
-	FMCSettings(int r, int g, int b) {
-		// 各成分が0から255の範囲であることを確認
-        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
-            throw new IllegalArgumentException("Color components must be between 0 and 255.");
+	FMCSettings(String key) {
+        String dbValue;
+        try (Connection connForSettings = db.getConnection()) {
+            String query = "SELECT value FROM settings WHERE name = ?";
+            PreparedStatement ps = connForSettings.prepareStatement(query);
+            ps.setString(1, key);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) { 
+                dbValue = rs.getString("value");
+            } else {
+                dbValue = null;
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            dbValue = null;
         }
-        
-        this.rgb = (r << 16) | (g << 8) | b;
+        this.value = dbValue;
     }
 	
-    public int getRGB() {
-    	return this.rgb;
+    public String getValue() {
+    	return this.value;
+    }
+
+    public int getIntValue() {
+        return this.value != null ? Integer.parseInt(this.value) : 0;
     }
 }

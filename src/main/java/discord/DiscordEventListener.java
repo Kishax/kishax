@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import common.Database;
+import common.FMCSettings;
 import common.OTPGenerator;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
@@ -104,7 +105,7 @@ public class DiscordEventListener extends ListenerAdapter {
 			switch (e.getSubcommandName()) {
 				case "create", "createqr" -> {
 					try (Connection conn = db.getConnection()) {
-						int limitUploadTimes = getLimitUploadTimes(conn),
+						int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
 							userUploadTimes = getUserTodayTimes(conn, userId),
 							thisTimes = userUploadTimes + 1;
 						if (thisTimes >= limitUploadTimes) {
@@ -397,17 +398,6 @@ public class DiscordEventListener extends ListenerAdapter {
             
             bc.broadCastMessage(component);
         }
-    }
-
-	private int getLimitUploadTimes(Connection conn) throws SQLException, ClassNotFoundException {
-        String query = "SELECT value FROM settings WHERE name=?;";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setString(1, "imageuploadlimittimes");
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            return Integer.parseInt(rs.getString("value"));
-        }
-        return 0;
     }
 
 	private boolean isTera() {

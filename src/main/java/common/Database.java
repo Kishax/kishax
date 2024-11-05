@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 
 public class Database {
+    public static Database staticInstance;
     private final String host, user, defaultDatabase, password;
     private final int port;
     private final Logger logger;
@@ -22,6 +23,11 @@ public class Database {
         this.port = port;
     }
     
+    // guiceでバインドしないクラスからDBにアクセスするため、staticメソッドに変更
+    public static synchronized Database getInstance() {
+        return staticInstance;
+    }
+
     public synchronized Connection getConnection() throws SQLException, ClassNotFoundException {
 		return getConnection(null);
 	}

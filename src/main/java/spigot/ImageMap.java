@@ -53,6 +53,7 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 import common.Database;
+import common.FMCSettings;
 import net.md_5.bungee.api.ChatColor;
 
 public class ImageMap {
@@ -154,7 +155,7 @@ public class ImageMap {
                 comment = (String) mArgs[5],
                 ext = (String) mArgs[6],
                 date = (String) mArgs[7],
-                fullPath = getImageSaveFolder(conn) + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
+                fullPath = FMCSettings.IMAGE_FOLDER + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
                 playerName = player.getName();
             BufferedImage image;
             image = loadImage(fullPath);
@@ -198,7 +199,6 @@ public class ImageMap {
     }
 
     @SuppressWarnings("null")
-    // ワンタイムパスワードを再取得するコマンドが必要？優先度は低いか
     public void executeImageMap(CommandSender sender, Command command, String label, String[] args, Object[] dArgs) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
@@ -216,7 +216,7 @@ public class ImageMap {
                 ext,
                 fullPath;
             try (Connection conn = db.getConnection()) {
-                int limitUploadTimes = getLimitUploadTimes(conn),
+                int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
                     playerUploadTimes = getPlayerTodayTimes(conn, playerName),
                     thisTimes = playerUploadTimes + 1;
                 if (thisTimes >= limitUploadTimes) {
@@ -232,9 +232,9 @@ public class ImageMap {
                 BufferedImage image;
                 if (isQr) {
                     ext = "png";
-                    fullPath = getImageSaveFolder(conn) + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
+                    fullPath = FMCSettings.IMAGE_FOLDER + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
                     image = generateQRCodeImage(url);
-                    saveImageToFileSystem(conn, image, imageUUID, ext);
+                    saveImageToFileSystem(image, imageUUID, ext);
                 } else {
                     URL getUrl = new URI(url).toURL();
                     HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
@@ -250,9 +250,9 @@ public class ImageMap {
                             return;
                         }
                     }
-                    fullPath = getImageSaveFolder(conn) + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
+                    fullPath = FMCSettings.IMAGE_FOLDER + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
                     image =  ImageIO.read(getUrl);
-                    saveImageToFileSystem(conn, image, imageUUID, ext); // リサイズ前の画像を保存
+                    saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
                     image = resizeImage(image, 128, 128);
                     if (image == null) {
                         player.sendMessage("指定のURLは規定の拡張子を持ちません。");
@@ -318,8 +318,8 @@ public class ImageMap {
                                 Date date = (Date) imageInfo.get("date");
                                 String imageUUID = (String) imageInfo.get("imuuid");
                                 String ext = (String) imageInfo.get("ext");
-                                try (Connection connection = (conn != null && !conn.isClosed()) ? conn : db.getConnection()) {
-                                    String fullPath = getFullPath(connection, date, imageUUID, ext); // Connectionが必要ない場合はnullを渡す
+                                try {
+                                    String fullPath = getFullPath(date, imageUUID, ext); // Connectionが必要ない場合はnullを渡す
                                     logger.info("Replacing image to the map(No.{})...", new Object[] {mapId, fullPath});
                                         BufferedImage image = loadImage(fullPath);
                                         if (image != null) {
@@ -334,8 +334,6 @@ public class ImageMap {
                                         }
                                 } catch (IOException e) {
                                     logger.error("Error loading image: {}" , e);
-                                } catch (SQLException | ClassNotFoundException e) {
-                                    logger.error("Error getting full path: " + date + ", " + imageUUID + ", " + ext, e);
                                 }
                             }
                         }
@@ -370,7 +368,7 @@ public class ImageMap {
                                     Date date = (Date) imageInfo.get("date");
                                     String imageUUID = (String) imageInfo.get("imuuid");
                                     String ext = (String) imageInfo.get("ext");
-                                    String fullPath = getFullPath(conn, date, imageUUID, ext);
+                                    String fullPath = getFullPath(date, imageUUID, ext);
                                     logger.info("Replacing image to the map(No.{})...", new Object[] {mapId, fullPath});
                                     try {
                                         BufferedImage image = loadImage(fullPath);
@@ -474,17 +472,6 @@ public class ImageMap {
         return date.format(formatter);
     }
 
-    private int getLimitUploadTimes(Connection conn) throws SQLException, ClassNotFoundException {
-        String query = "SELECT value FROM settings WHERE name=?;";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setString(1, "imageuploadlimittimes");
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            return Integer.parseInt(rs.getString("value"));
-        }
-        return 0;
-    }
-
     private Map<String, Object> getImageInfoByOTP(Connection conn, String otp) throws SQLException, ClassNotFoundException {
         Map<String, Object> imageInfo = new HashMap<>();
         String query = "SELECT * FROM images WHERE otp=?;";
@@ -546,8 +533,8 @@ public class ImageMap {
         return ImageIO.read(imageFile);
     }
 
-    private String getFullPath(Connection conn, Date date, String imageUUID, String ext) throws SQLException, ClassNotFoundException {
-        return getImageSaveFolder(conn) + "/" + date.toString().replace("-", "") + "/" + imageUUID + "." + ext;
+    private String getFullPath(Date date, String imageUUID, String ext) {
+        return FMCSettings.IMAGE_FOLDER.getValue() + "/" + date.toString().replace("-", "") + "/" + imageUUID + "." + ext;
     }
 
     private boolean isValidURL(String urlString) {
@@ -560,17 +547,6 @@ public class ImageMap {
         }
     }
     
-    private String getImageSaveFolder(Connection conn) throws SQLException, ClassNotFoundException {
-        String query = "SELECT value FROM settings WHERE name=?;";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setString(1, "image_folder");
-        ResultSet rs2 = ps.executeQuery();
-        if (rs2.next()) {
-            return rs2.getString("value");
-        }
-        return null;
-    }
-
     private BufferedImage generateQRCodeImage(String text) throws WriterException, IOException {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         int width = 128;
@@ -579,17 +555,13 @@ public class ImageMap {
         return MatrixToImageWriter.toBufferedImage(bitMatrix);
     }
 
-    private void saveImageToFileSystem(Connection conn, BufferedImage image, String imageUUID, String ext) throws IOException, SQLException, ClassNotFoundException {
-        if (getImageSaveFolder(conn) instanceof String folder) {
-            Path dirPath = Paths.get(folder, LocalDate.now().toString().replace("-", ""));
-            if (!Files.exists(dirPath)) {
-                Files.createDirectories(dirPath);
-            }
-            String fileName = imageUUID + "." + ext;
-            Path filePath = dirPath.resolve(fileName);
-            ImageIO.write(image, ext, filePath.toFile());
-        } else {
-            plugin.getLogger().severe("画像保存フォルダが見つかりません。");
+    private void saveImageToFileSystem(BufferedImage image, String imageUUID, String ext) throws IOException, SQLException, ClassNotFoundException {
+        Path dirPath = Paths.get(FMCSettings.IMAGE_FOLDER.getValue(), LocalDate.now().toString().replace("-", ""));
+        if (!Files.exists(dirPath)) {
+            Files.createDirectories(dirPath);
         }
+        String fileName = imageUUID + "." + ext;
+        Path filePath = dirPath.resolve(fileName);
+        ImageIO.write(image, ext, filePath.toFile());
     }
 }
