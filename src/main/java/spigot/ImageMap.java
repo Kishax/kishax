@@ -194,11 +194,7 @@ public class ImageMap {
     }
 
     @SuppressWarnings("null")
-    // 未認証マップをクリックしたときの動作は、discordで発行したワンタイムパスワードをつかうよう、促す
     // ワンタイムパスワードを再取得するコマンドが必要？優先度は低いか
-    // あるプレイヤーがマップを生成した特定のサーバーとは異なる別のサーバーで、誰かが新たに生成する場合、
-    // そのサーバーには、そのマップは存在しないので、新たに生成するが、
-    // そのマップのcreated by は最初に生成したプレイヤーの名前になることを留意する
     public void executeImageMap(CommandSender sender, Command command, String label, String[] args, Object[] dArgs) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
@@ -215,11 +211,18 @@ public class ImageMap {
                 comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
                 ext,
                 fullPath;
-            if (!isQr && !isValidURL(url)) {
-                player.sendMessage("無効なURLです。");
-                return;
-            }
             try (Connection conn = db.getConnection()) {
+                int limitUploadTimes = getLimitUploadTimes(conn),
+                    playerUploadTimes = getPlayerTodayTimes(conn, playerName),
+                    thisTimes = playerUploadTimes + 1;
+                if (thisTimes >= limitUploadTimes) {
+                    player.sendMessage(ChatColor.RED + "1日の登録回数は"+limitUploadTimes+"回までです。");
+                    return;
+                }
+                if (!isQr && !isValidURL(url)) {
+                    player.sendMessage("無効なURLです。");
+                    return;
+                }
                 LocalDate localDate = LocalDate.now();
                 String now = fromDiscord ? ((Date) dArgs[3]).toString() : localDate.toString();
                 BufferedImage image;
@@ -279,7 +282,7 @@ public class ImageMap {
                     db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, Date.valueOf(LocalDate.now())});
                 }
                 player.getInventory().addItem(mapItem);
-                player.sendMessage("画像マップを渡しました。");
+                player.sendMessage("画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {
                 player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
                 plugin.getLogger().log(Level.SEVERE, "An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {0}", e.getMessage());
@@ -467,6 +470,17 @@ public class ImageMap {
         return date.format(formatter);
     }
 
+    private int getLimitUploadTimes(Connection conn) throws SQLException, ClassNotFoundException {
+        String query = "SELECT value FROM settings WHERE name=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, "imageuploadlimittimes");
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            return Integer.parseInt(rs.getString("value"));
+        }
+        return 0;
+    }
+
     private Map<String, Object> getImageInfoByOTP(Connection conn, String otp) throws SQLException, ClassNotFoundException {
         Map<String, Object> imageInfo = new HashMap<>();
         String query = "SELECT * FROM images WHERE otp=?;";
@@ -481,6 +495,19 @@ public class ImageMap {
             }
         }
         return imageInfo;
+    }
+
+    public int getPlayerTodayTimes(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
+        String query = "SELECT COUNT(*) FROM images WHERE menu != ? AND name = ? AND DATE(date) = ?";
+		PreparedStatement ps = conn.prepareStatement(query);
+        ps.setBoolean(1, true);
+		ps.setString(2, playerName);
+		ps.setDate(3, java.sql.Date.valueOf(LocalDate.now()));
+		ResultSet rs = ps.executeQuery();
+		if (rs.next()) {
+			return rs.getInt(1);
+		}
+        return 0;
     }
 
     private boolean checkOTPIsCorrect(Connection conn, String code) throws SQLException, ClassNotFoundException {
