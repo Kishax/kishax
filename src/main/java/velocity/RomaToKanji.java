@@ -300,7 +300,6 @@ public class RomaToKanji {
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }
-
             return "";
         }
     }
@@ -319,8 +318,6 @@ public class RomaToKanji {
                 }
             }
         } catch (org.json.JSONException e) {
-        	// URLを含むとエラーが出るが無視
-            //e.printStackTrace();
         }
 
         return kanji.toString();

@@ -27,47 +27,26 @@ public class Database implements DatabaseInterface {
 		int port = config.getInt("MySQL.Port", 0);
 		String user = config.getString("MySQL.User", "");
 		String password = config.getString("MySQL.Password", "");
-		if (customDatabase != null && !customDatabase.isEmpty()) {
-			//logger.info("customDatabase: " + customDatabase);
-			if ((host != null && host.isEmpty()) || 
-				port == 0 || 
-				(user != null && user.isEmpty()) || 
-				(password != null && password.isEmpty())) {
-				return null;
-			}
+		String database = customDatabase != null && !customDatabase.isEmpty() ? customDatabase : config.getString("MySQL.Database", "");
+		if ((host != null && host.isEmpty()) || 
+			port == 0 || 
+			(database != null && database.isEmpty()) || 
+			(user != null && user.isEmpty()) || 
+			(password != null && password.isEmpty())) {
+			return null;
+		}
+		try {
 			synchronized (Database.class) {
 				//if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
 				Class.forName("com.mysql.cj.jdbc.Driver");
-				return DriverManager.getConnection (
-							"jdbc:mysql://" + host + ":" + 
-							port + "/" + 
-							customDatabase +
-							"?autoReconnect=true&useSSL=false", 
-							user, 
-							password
-				);
+				return DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database +"?autoReconnect=true&useSSL=false", user, password);
 			}
-		} else {
-			String database = config.getString("MySQL.Database", "");
-			if ((host != null && host.isEmpty()) || 
-				port == 0 || 
-				(database != null && database.isEmpty()) || 
-				(user != null && user.isEmpty()) || 
-				(password != null && password.isEmpty())) {
-				return null;
+		} catch (SQLException e) {
+			logger.error("Failed to establish database connection.");
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
 			}
-			synchronized (Database.class) {
-				//if (Objects.nonNull(conn) && !conn.isClosed()) return conn;
-				Class.forName("com.mysql.cj.jdbc.Driver");
-				return DriverManager.getConnection (
-							"jdbc:mysql://" + host + ":" + 
-							port + "/" + 
-							database +
-							"?autoReconnect=true&useSSL=false", 
-							user, 
-							password
-						);
-			}
+			throw e;
 		}
     }
 	
