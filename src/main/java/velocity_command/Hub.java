@@ -14,18 +14,18 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.Database;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.DatabaseInterface;
 
 public class Hub implements SimpleCommand {
 
 	private final ProxyServer server;
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	
 	@Inject
-    public Hub(ProxyServer server, Logger logger, DatabaseInterface db) {
+    public Hub(ProxyServer server, Logger logger, Database db) {
 		this.server = server;
 		this.logger = logger;
 		this.db = db;

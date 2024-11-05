@@ -12,20 +12,20 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 
+import common.Database;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.DatabaseInterface;
 
 public class Retry {
 
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	
 	@Inject
-	public Retry(Logger logger, DatabaseInterface db) {
+	public Retry(Logger logger, Database db) {
 		this.logger = logger;
 		this.db = db;
 	}

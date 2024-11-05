@@ -20,6 +20,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
+import common.Database;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -32,8 +33,6 @@ public class DoServerOnline {
     private final Database db;
 	private final Provider<SocketSwitch> sswProvider;
 	private final Set<String> addedColumnSet = new HashSet<>();
-    //private final Map<String, Integer> serverDBInfo = new HashMap<>();
-	//private final Map<String, String> serverDBTypeInfo = new HashMap<>();
     
     @Inject
     public DoServerOnline(Main plugin, ConfigUtils cutils, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, Provider<SocketSwitch> sswProvider) {

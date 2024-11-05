@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.Database;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -22,16 +23,12 @@ public class PlayerDisconnect {
 	public final Main plugin;
 	private final ProxyServer server;
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final ConsoleCommandSource console;
 	private final MessageEditorInterface discordME;
 	
 	@Inject
-	public PlayerDisconnect (
-		Main plugin, Logger logger, ProxyServer server,
-		DatabaseInterface db, BroadCast bc, ConsoleCommandSource console,
-		RomaToKanji conv, MessageEditorInterface discordME
-	) {
+	public PlayerDisconnect (Main plugin, Logger logger, ProxyServer server, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, MessageEditorInterface discordME) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;

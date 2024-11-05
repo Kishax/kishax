@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.Database;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.messaging.MessagingService;
@@ -25,12 +26,12 @@ import net.luckperms.api.node.types.InheritanceNode;
 
 public class Luckperms {
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final LuckPerms lpapi = LuckPermsProvider.get();
 	private final PlayerUtils pu;
 	
 	@Inject
-	public Luckperms(Logger logger, DatabaseInterface db, PlayerUtils pu) {
+	public Luckperms(Logger logger, Database db, PlayerUtils pu) {
 		this.logger = logger;
 		this.db = db;
 		this.pu = pu;

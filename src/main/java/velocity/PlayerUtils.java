@@ -30,15 +30,17 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
+import common.Database;
+
 public class PlayerUtils {
 	private final ProxyServer server;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final Logger logger;
 	private final List<String> Players = new CopyOnWriteArrayList<>();
 	private boolean isLoaded = false;
 	
 	@Inject
-	public PlayerUtils(ProxyServer server, Logger logger, DatabaseInterface db) {
+	public PlayerUtils(ProxyServer server, Logger logger, Database db) {
 		this.server = server;
 		this.logger = logger;
 		this.db = db;

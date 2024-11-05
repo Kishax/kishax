@@ -19,14 +19,13 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import common.Database;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
 import velocity.Config;
-import velocity.DatabaseInterface;
-import velocity.DatabaseLog;
 import velocity.DoServerOnline;
 import velocity.Luckperms;
 
@@ -35,17 +34,16 @@ public class StartServer {
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final ConsoleCommandSource console;
 	private final BroadCast bc;
 	private final DoServerOnline dso;
 	private final MessageEditorInterface discordME;
 	private final Luckperms lp;
-	private final DatabaseLog dbLog;
 	private String currentServerName = null;
 	
 	@Inject
-	public StartServer (ProxyServer server, Logger logger, Config config, DatabaseInterface db, ConsoleCommandSource console, MessageEditorInterface discordME, BroadCast bc, DoServerOnline dso, Luckperms lp, DatabaseLog dbLog) {
+	public StartServer (ProxyServer server, Logger logger, Config config, Database db, ConsoleCommandSource console, MessageEditorInterface discordME, BroadCast bc, DoServerOnline dso, Luckperms lp) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
@@ -55,7 +53,6 @@ public class StartServer {
 		this.discordME = discordME;
 		this.dso = dso;
 		this.lp = lp;
-		this.dbLog = dbLog;
 	}
 	
 	public void execute(@NotNull CommandSource source, String[] args) {
@@ -146,7 +143,14 @@ public class StartServer {
 													ps4.setString(2, targetServerName);
 													int rsAffected4 = ps4.executeUpdate();
 													if (rsAffected4 > 0) {
-														dbLog.insertLog(conn, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true, "start"});
+														try (Connection connection = db.getConnection()) {
+															db.insertLog(connection, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true, "start"});
+														} catch (SQLException | ClassNotFoundException e) {
+															logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+															for (StackTraceElement element : e.getStackTrace()) {
+																logger.error(element.toString());
+															}
+														}
 														discordME.AddEmbedSomeMessage("Start", player, targetServerName);
 														TextComponent component = Component.text()
 																	.append(Component.text("UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))

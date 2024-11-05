@@ -14,9 +14,11 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.Database;
+
 public class SocketSwitch {
     private final Logger logger;
-    private final DatabaseInterface db;
+    private final Database db;
 	private final Config config;
 	private final SocketResponse sr;
     private final String hostname = "localhost";
@@ -27,7 +29,7 @@ public class SocketSwitch {
 	private volatile boolean running = true;
 	
 	@Inject
-	public SocketSwitch(Logger logger, Config config, DatabaseInterface db, SocketResponse sr) {
+	public SocketSwitch(Logger logger, Config config, Database db, SocketResponse sr) {
 		this.logger = logger;
 		this.config = config;
         this.db = db;

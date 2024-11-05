@@ -18,6 +18,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import common.Database;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentBuilder;
 import net.kyori.adventure.text.TextComponent;
@@ -26,7 +27,6 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
-import velocity.DatabaseInterface;
 import velocity.Luckperms;
 
 public class SetServer {
@@ -34,11 +34,11 @@ public class SetServer {
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final Luckperms lp;
 
 	@Inject
-	public SetServer(ProxyServer server, Logger logger, Config config, DatabaseInterface db, Luckperms lp) {
+	public SetServer(ProxyServer server, Logger logger, Config config, Database db, Luckperms lp) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;

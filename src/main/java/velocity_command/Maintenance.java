@@ -14,29 +14,25 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
+import common.Database;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.DatabaseInterface;
 import velocity.PlayerDisconnect;
 
 public class Maintenance {
-
 	public static boolean isMente;
 	public static List<String> args1 = new ArrayList<>(Arrays.asList("switch", "status", "add", "remove", "list"));
 	public static List<String> args2 = new ArrayList<>(Arrays.asList("discord"));
 	public static List<String> args3 = new ArrayList<>(Arrays.asList("true", "false"));
-	private final DatabaseInterface db;
+	private final Database db;
 	private final PlayerDisconnect pd;
 	private final MessageEditorInterface discordME;
 	private final Logger logger;
 	private Component component = null;
 	
 	@Inject
-	public Maintenance (
-		Logger logger, DatabaseInterface db, PlayerDisconnect pd, 
-		MessageEditorInterface discordME
-	) {
+	public Maintenance (Logger logger, Database db, PlayerDisconnect pd, MessageEditorInterface discordME) {
 		this.logger = logger;
 		this.db = db;
 		this.pd = pd;

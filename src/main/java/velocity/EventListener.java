@@ -33,6 +33,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
+import common.Database;
 import discord.DiscordEventListener;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
@@ -49,7 +50,7 @@ public class EventListener {
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final BroadCast bc;
 	private final ConsoleCommandSource console;
 	private final RomaToKanji conv;
@@ -60,14 +61,13 @@ public class EventListener {
 	private final RomajiConversion rc;
 	private final MessageEditorInterface discordME;
 	private final MineStatus ms;
-	private final DatabaseLog dbLog;
 	private final GeyserMC gm;
 	private final Maintenance mt;
 	private ServerInfo serverInfo = null;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 	@Inject
-	public EventListener (Main plugin, Logger logger, ProxyServer server, Config config, DatabaseInterface db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, DatabaseLog dbLog, GeyserMC gm, Maintenance mt) {
+	public EventListener (Main plugin, Logger logger, ProxyServer server, Config config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, GeyserMC gm, Maintenance mt) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
@@ -81,7 +81,6 @@ public class EventListener {
 		this.rc = rc;
 		this.discordME = discordME;
 		this.ms = ms;
-		this.dbLog = dbLog;
 		this.gm = gm;
 		this.mt = mt;
 	}
@@ -356,7 +355,7 @@ public class EventListener {
 											beforejoin_sa_minute = Math.max(beforejoin_sa / 60, 0); // マイナス値を防ぐためにMath.maxを使用
 										}
 										if (playerName.equals(yuyu.getString("name"))) {
-											dbLog.insertLog(conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
+											db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
 										} else {
 											// 一番最初に登録した名前と一致しなかったら
 											// MOJANG-APIからとってきた名前でレコードを更新させる
@@ -559,7 +558,14 @@ public class EventListener {
     	            console.sendMessage(Component.text("Player " + playerName + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
     	            int playTime = pu.getPlayerTime(player, serverInfo);
     	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo, playTime);
-					dbLog.insertLog("INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);", new Object[] {playerName, playerUUID, serverInfo.getName(), true, playTime});
+					try (Connection conn = db.getConnection()) {
+						db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);", new Object[] {playerName, playerUUID, serverInfo.getName(), true, playTime});
+					} catch (SQLException | ClassNotFoundException e2) {
+						logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
+						for (StackTraceElement element : e2.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
     	        });
         	}).schedule();
         };

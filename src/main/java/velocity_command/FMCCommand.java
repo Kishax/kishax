@@ -18,6 +18,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 
+import common.Database;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -25,7 +26,6 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
-import velocity.DatabaseInterface;
 import velocity.Luckperms;
 import velocity.Main;
 import velocity.PlayerUtils;
@@ -34,14 +34,14 @@ import velocity.RomajiConversion;
 public class FMCCommand implements SimpleCommand {
     private final Logger logger;
     private final Config config;
-    private final DatabaseInterface db;
+    private final Database db;
     private final PlayerUtils pu;
     private final Luckperms lp;
     public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stop", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend"));
     public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
-    public FMCCommand(Logger logger, Config config, DatabaseInterface db, PlayerUtils pu, Luckperms lp) {
+    public FMCCommand(Logger logger, Config config, Database db, PlayerUtils pu, Luckperms lp) {
         this.logger = logger;
         this.config = config;
         this.db = db;

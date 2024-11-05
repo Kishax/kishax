@@ -10,6 +10,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.Database;
 import discord.Discord;
 import discord.DiscordEventListener;
 import discord.DiscordInterface;
@@ -25,6 +26,7 @@ public class Module extends AbstractModule {
     private final Logger logger;
     private final Path dataDirectory;
     private final Config config;
+    private final Database db;
     
     public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory) {
     	this.plugin = plugin;
@@ -32,16 +34,27 @@ public class Module extends AbstractModule {
         this.logger = logger;
         this.dataDirectory = dataDirectory;
         this.config = new Config(server, logger, dataDirectory);
+        String host = null,
+            user = null,
+            password = null, 
+            defaultDatabase = null;
+        int port = 0;
     	try {
             config.loadConfig(); // 一度だけロードする
+            host = config.getString("MySQL.Host", null);
+            user = config.getString("MySQL.User", null);
+            password = config.getString("MySQL.Password", null);
+            defaultDatabase = config.getString("MySQL.Database", null);
+		    port = config.getInt("MySQL.Port", 0);
         } catch (IOException e1) {
             logger.error("Error loading config", e1);
         }
+        this.db = host != null && port != 0 && defaultDatabase != null && user != null && password != null ? new Database(logger, host, user, defaultDatabase, password, port) : null;
     }
 
     @Override
     protected void configure() {
-    	// 以下、Guiceが、クラス同士の依存性を自動判別するため、bindを書く順番はインジェクションの依存関係に関係しない。
+        bind(Database.class).toInstance(db);
     	bind(Main.class).toInstance(plugin);
         bind(ProxyServer.class).toInstance(server);
         bind(Logger.class).toInstance(logger);
@@ -49,7 +62,6 @@ public class Module extends AbstractModule {
         bind(ConsoleCommandSource.class).toInstance(server.getConsoleCommandSource());
         bind(Config.class).toInstance(config);
         bind(SocketSwitch.class);
-        bind(DatabaseInterface.class).to(Database.class);
         bind(BroadCast.class);
         bind(SocketResponse.class);
         bind(velocity.PlayerUtils.class);
@@ -63,7 +75,6 @@ public class Module extends AbstractModule {
         bind(MineStatus.class);
         bind(ConfigUtils.class);
         bind(RequestInterface.class).to(velocity_command.Request.class);
-        bind(DatabaseLog.class);
         bind(GeyserMC.class);
         bind(Maintenance.class);
     }
