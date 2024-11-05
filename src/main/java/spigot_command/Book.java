@@ -85,29 +85,30 @@ public class Book {
             List<String> pages = new ArrayList<>(List.of(rulebook.split("%%")));
             String title = "ルールガイド";
             String author = "サーバー管理者";
-            for (int k = 0; k < pages.size(); k++) {
-                List<String> eachLine = new ArrayList<>(List.of(rulebook.split("\n")));
-                for (int i = 0; i < eachLine.size(); i++) {
-                    String line = eachLine.get(i);
+            for (int i = 0; i < pages.size(); i++) {
+                List<String> lines = new ArrayList<>(List.of(rulebook.split("\n")));
+                for (int j = 0; j < lines.size(); j++) {
+                    String line = lines.get(j);
                     if (line.startsWith("##")) {
                         title = line.substring(2).trim();
-                        eachLine.remove(i);
-                        i--; // インデックスを調整
+                        lines.remove(j);
+                        j--; // インデックスを調整
                     } else if (line.startsWith("By ")) {
                         author = line.substring(3).trim();
-                        eachLine.remove(i);
-                        i--; // インデックスを調整
+                        lines.remove(j);
+                        j--; // インデックスを調整
                     } else {
-                        eachLine.set(i, formatText(line));
+                        lines.set(j, formatText(line));
                     }
                 }
                 //pages.set(k + 1, String.join("\n", eachLine));
                 //meta.setPage(k + 1, String.join("\n", eachLine));
-                if (k < pages.size()) {
+                /*if (k < pages.size()) {
                     pages.set(k, String.join("\n", eachLine));
                 } else {
                     pages.add(String.join("\n", eachLine));
-                }
+                }*/
+                pages.set(i, String.join("\n", lines));
             }
             meta.getPersistentDataContainer().set(new NamespacedKey(plugin, PERSISTANT_KEY), PersistentDataType.STRING, "true");
             meta.setPages(pages);
