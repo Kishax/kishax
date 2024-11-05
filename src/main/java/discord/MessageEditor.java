@@ -23,9 +23,9 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import common.ColorUtil;
+import common.Database;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import velocity.Config;
-import velocity.Database;
 import velocity.EventListener;
 import velocity.Main;
 import velocity.PlayerUtils;

@@ -9,12 +9,14 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import common.Database;
+
 public class DoServerOffline {
     private final Logger logger;
-    private final DatabaseInterface db;
+    private final Database db;
     private final Provider<SocketSwitch> sswProvider;
     @Inject
-    public DoServerOffline(Logger logger, DatabaseInterface db, Provider<SocketSwitch> sswProvider) {
+    public DoServerOffline(Logger logger, Database db, Provider<SocketSwitch> sswProvider) {
         this.logger = logger;
         this.db = db;
         this.sswProvider = sswProvider;

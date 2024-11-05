@@ -21,6 +21,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import common.Database;
 import discord.DiscordInterface;
 import discord.EmojiManager;
 import discord.MessageEditorInterface;
@@ -29,8 +30,6 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
 import velocity.Config;
-import velocity.DatabaseInterface;
-import velocity.DatabaseLog;
 import velocity.DoServerOnline;
 import velocity.Luckperms;
 import velocity.PlayerUtils;
@@ -40,7 +39,7 @@ public class Request implements RequestInterface {
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final BroadCast bc;
 	private final DiscordInterface discord;
 	private final MessageEditorInterface discordME;
@@ -48,11 +47,10 @@ public class Request implements RequestInterface {
 	private final Luckperms lp;
 	private final PlayerUtils pu;
 	private final DoServerOnline dso;
-	private final DatabaseLog dbLog;
 	private String currentServerName = null;
 	
 	@Inject
-	public Request (ProxyServer server, Logger logger, Config config, DatabaseInterface db, BroadCast bc, DiscordInterface discord, MessageEditorInterface discordME, EmojiManager emoji, Luckperms lp, PlayerUtils pu, DoServerOnline dso, DatabaseLog dbLog) {
+	public Request (ProxyServer server, Logger logger, Config config, Database db, BroadCast bc, DiscordInterface discord, MessageEditorInterface discordME, EmojiManager emoji, Luckperms lp, PlayerUtils pu, DoServerOnline dso) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
@@ -64,7 +62,6 @@ public class Request implements RequestInterface {
 		this.lp = lp;
 		this.pu = pu;
 		this.dso = dso;
-		this.dbLog = dbLog;
 	}
 
 	@Override
@@ -160,7 +157,14 @@ public class Request implements RequestInterface {
 												.build();
 											bc.sendExceptPlayerMessage(notifyComponent, playerName);
 											discordME.AddEmbedSomeMessage("Request", player, targetServerName);
-											dbLog.insertLog(conn, "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);" , new Object[] {playerName, playerUUID, currentServerName, true, targetServerName});
+											try (Connection connection = db.getConnection()) {
+												db.insertLog(connection, "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);" , new Object[] {playerName, playerUUID, currentServerName, true, targetServerName});
+											} catch (SQLException | ClassNotFoundException e) {
+												logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+												for (StackTraceElement element : e.getStackTrace()) {
+													logger.error(element.toString());
+												}
+											}											
 											return true;
 										} else {
 											return false;

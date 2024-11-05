@@ -18,12 +18,12 @@ public class Module extends AbstractModule {
 	public Module(common.Main plugin, Logger logger) {
 		this.plugin = plugin;
 		this.logger = logger;
-		String host = plugin.getConfig().getString("MySQL.Host", ""),
-        	user = plugin.getConfig().getString("MySQL.User", ""),
-        	password = plugin.getConfig().getString("MySQL.Password", ""),
-			defaultDatabase = plugin.getConfig().getString("MySQL.Database", "");
+		String host = plugin.getConfig().getString("MySQL.Host", null),
+        	user = plugin.getConfig().getString("MySQL.User", null),
+        	password = plugin.getConfig().getString("MySQL.Password", null),
+			defaultDatabase = plugin.getConfig().getString("MySQL.Database", null);
 		int port = plugin.getConfig().getInt("MySQL.Port", 0);
-		this.db = new Database(logger, host, user, defaultDatabase, password, port);
+		this.db = host != null && port != 0 && defaultDatabase != null && user != null && password != null ? new Database(logger, host, user, defaultDatabase, password, port) : null;
     }
 	
 	@Override

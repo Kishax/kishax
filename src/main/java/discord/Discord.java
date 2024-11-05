@@ -1,5 +1,7 @@
 package discord;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,6 +16,7 @@ import com.google.inject.Inject;
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessage;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
+import common.Database;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -28,29 +31,26 @@ import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import velocity.Config;
-import velocity.DatabaseLog;
 import velocity.Main;
 import velocity_command.Request;
 import velocity_command.RequestInterface;
 
 public class Discord implements DiscordInterface {
-
 	public static JDA jda = null;
 	public static boolean isDiscord = false;
-	
     private final Logger logger;
     private final Config config;
+    private final Database db;
     private final RequestInterface req;
-    private final DatabaseLog dbLog;
     private String channelId = null;
     private MessageChannel channel= null;
 	
     @Inject
-    public Discord (Logger logger, Config config, RequestInterface req, DatabaseLog dbLog) {
+    public Discord (Logger logger, Config config, Database db, RequestInterface req) {
     	this.logger = logger;
     	this.config = config;
+        this.db = db;
         this.req = req;
-        this.dbLog = dbLog;
     }
     
     @Override
@@ -130,7 +130,14 @@ public class Discord implements DiscordInterface {
             		String buttonMessage2 = message.getContentRaw();
                     Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage2);
 				    if (!reqMap.isEmpty()) {
-                        dbLog.insertLog("INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqMap.get("playerName"), reqMap.get("playerUUID"), true, reqMap.get("serverName"), "nores"});
+                        try (Connection conn = db.getConnection()) {
+                            db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqMap.get("playerName"), reqMap.get("playerUUID"), true, reqMap.get("serverName"), "nores"});
+                        } catch (SQLException | ClassNotFoundException e) {
+                            logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace()) {
+                                logger.error(element.toString());
+                            }
+                        }
                     }
             	}
             });

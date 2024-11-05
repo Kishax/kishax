@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.Database;
 import common.OTPGenerator;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
@@ -42,8 +43,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.BroadCast;
 import velocity.Config;
-import velocity.DatabaseInterface;
-import velocity.DatabaseLog;
 import velocity_command.Request;
 import velocity_command.RequestInterface;
 
@@ -51,25 +50,23 @@ public class DiscordEventListener extends ListenerAdapter {
 	public static String PlayerChatMessageId = null;
 	private final Logger logger;
 	private final Config config;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final BroadCast bc;
 	private final MessageEditorInterface discordME;
 	private final RequestInterface req;
-	private final DatabaseLog dbLog;
 	private final String teraToken, teraExecFilePath;
 	private final Long teraChannelId;
 	private final boolean require;
 	private String replyMessage = null, restAPIUrl = null;
 
 	@Inject
-	public DiscordEventListener (Logger logger, Config config, DatabaseInterface db, BroadCast bc, MessageEditorInterface discordME, RequestInterface req, DatabaseLog dbLog) {
+	public DiscordEventListener(Logger logger, Config config, Database db, BroadCast bc, MessageEditorInterface discordME, RequestInterface req) {
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
 		this.bc = bc;
 		this.discordME = discordME;
 		this.req = req;
-		this.dbLog = dbLog;
 		this.teraToken = config.getString("Terraria.Token", "");
 		this.teraExecFilePath = config.getString("Terraria.Exec_Path", "");
 		this.teraChannelId = config.getLong("Terraria.ChannelId", 0);
@@ -287,7 +284,14 @@ public class DiscordEventListener extends ListenerAdapter {
 					String reqPlayerName = reqMap.get("playerName"),
 						reqServerName = reqMap.get("serverName"),
 						reqPlayerUUID = reqMap.get("playerUUID");
-					dbLog.insertLog("INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "ok"});
+					try (Connection conn = db.getConnection()) {
+						db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "ok"});
+					} catch (SQLException | ClassNotFoundException e2) {
+						logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
+						for (StackTraceElement element : e2.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
 					String execPath = req.getExecPath(reqServerName);
 					ProcessBuilder processBuilder = new ProcessBuilder(execPath);
 					try {
@@ -318,7 +322,14 @@ public class DiscordEventListener extends ListenerAdapter {
 					String reqPlayerName = reqMap.get("playerName"),
 					reqServerName = reqMap.get("serverName"),
 					reqPlayerUUID = reqMap.get("playerUUID");
-					dbLog.insertLog("INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "cancel"});
+					try (Connection conn = db.getConnection()) {
+						db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "cancel"});
+					} catch (SQLException | ClassNotFoundException e2) {
+						logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
+						for (StackTraceElement element : e2.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
 					discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
 					bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
 					Request.PlayerReqFlags.remove(reqPlayerUUID);

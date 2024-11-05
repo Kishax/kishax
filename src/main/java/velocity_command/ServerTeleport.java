@@ -12,21 +12,21 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.Database;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
-import velocity.DatabaseInterface;
 import velocity.DoServerOnline;
 import velocity.Luckperms;
 
 public class ServerTeleport {
     private final Logger logger;
     private final ProxyServer server;
-    private final DatabaseInterface db;
+    private final Database db;
     private final Luckperms lp;
     private final DoServerOnline dso;
     @Inject
-    public ServerTeleport(Logger logger, ProxyServer server, Config config, DatabaseInterface db, Luckperms lp, DoServerOnline dso) {
+    public ServerTeleport(Logger logger, ProxyServer server, Config config, Database db, Luckperms lp, DoServerOnline dso) {
         this.logger = logger;
 		this.server = server;
 		this.db = db;

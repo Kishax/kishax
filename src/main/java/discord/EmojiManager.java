@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.Database;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
@@ -30,7 +31,6 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 import velocity.Config;
-import velocity.DatabaseInterface;
 
 public class EmojiManager {
     public static String beDefaultEmojiId = null;
@@ -38,9 +38,9 @@ public class EmojiManager {
     private String emojiId = null;
     private final Logger logger;
     private final Config config;
-    private final DatabaseInterface db;
+    private final Database db;
     @Inject
-    public EmojiManager (Logger logger, Config config, DatabaseInterface db) {
+    public EmojiManager (Logger logger, Config config, Database db) {
         this.logger = logger;
         this.config = config;
         this.db = db;

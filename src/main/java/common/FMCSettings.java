@@ -1,4 +1,4 @@
-package spigot;
+package common;
 
 public enum FMCSettings {
 

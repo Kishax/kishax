@@ -28,13 +28,6 @@ public class Database {
     
 	public synchronized Connection getConnection(String customDatabase) throws SQLException, ClassNotFoundException {
         String database = customDatabase != null && !customDatabase.isEmpty() ? customDatabase : defaultDatabase;
-        if ((host != null && host.isEmpty()) || 
-            port == 0 || 
-            (database != null && database.isEmpty()) || 
-            (user != null && user.isEmpty()) || 
-            (password != null && password.isEmpty())) {
-            return null;
-        }
         try {
             synchronized (Database.class) {
                 //if (Objects.nonNull(conn2) && !conn2.isClosed()) return conn2;
@@ -114,7 +107,7 @@ public class Database {
 		return false;
 	}
 
-    private int countPlaceholders(String query) {
+    public int countPlaceholders(String query) {
         int count = 0;
         for (char c : query.toCharArray()) {
             if (c == '?') {

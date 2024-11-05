@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.Database;
 import discord.EmojiManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -33,13 +34,13 @@ public class MineStatusReflect {
 
     private final Logger logger;
     private final Config config;
-    private final DatabaseInterface db;
+    private final Database db;
     private final EmojiManager emoji;
     private final Long channelId, messageId;
     private final boolean require;
 
     @Inject
-    public MineStatusReflect(Logger logger, Config config, DatabaseInterface db, EmojiManager emoji) {
+    public MineStatusReflect(Logger logger, Config config, Database db, EmojiManager emoji) {
         this.logger = logger;
         this.config = config;
         this.db = db;

@@ -15,13 +15,12 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
+import common.Database;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
-import velocity.DatabaseInterface;
-import velocity.DatabaseLog;
 import velocity.DoServerOnline;
 import velocity.Luckperms;
 import velocity.SocketSwitch;
@@ -29,18 +28,17 @@ import velocity.SocketSwitch;
 public class StopServer {
 	private final ProxyServer server;
 	private final Logger logger;
-	private final DatabaseInterface db;
+	private final Database db;
 	private final ConsoleCommandSource console;
 	private final BroadCast bc;
 	private final DoServerOnline dso;
 	private final MessageEditorInterface discordME;
 	private final Luckperms lp;
-	private final DatabaseLog dbLog;
     private final Provider<SocketSwitch> sswProvider;
 	private String currentServerName = null;
 	
 	@Inject
-	public StopServer (ProxyServer server, Logger logger, DatabaseInterface db, ConsoleCommandSource console, MessageEditorInterface discordME, BroadCast bc, DoServerOnline dso, Luckperms lp, DatabaseLog dbLog, Provider<SocketSwitch> sswProvider) {
+	public StopServer (ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, MessageEditorInterface discordME, BroadCast bc, DoServerOnline dso, Luckperms lp, Provider<SocketSwitch> sswProvider) {
 		this.server = server;
 		this.logger = logger;
 		this.db = db;
@@ -49,7 +47,6 @@ public class StopServer {
 		this.discordME = discordME;
 		this.dso = dso;
 		this.lp = lp;
-		this.dbLog = dbLog;
         this.sswProvider = sswProvider;
 	}
 	
@@ -98,7 +95,14 @@ public class StopServer {
                     }
                     SocketSwitch ssw = sswProvider.get();
                     if (ssw.sendSpecificServer(targetServerName, "proxy->stop")) {
-                        dbLog.insertLog(conn, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true, "stop"});
+						try (Connection connection = db.getConnection()) {
+							db.insertLog(connection, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true, "stop"});
+                        } catch (SQLException | ClassNotFoundException e) {
+                            logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace()) {
+                                logger.error(element.toString());
+                            }
+                        }
                         discordME.AddEmbedSomeMessage("Stop", player, targetServerName);
                         TextComponent component = Component.text()
                                 .append(Component.text("UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
