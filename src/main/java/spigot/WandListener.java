@@ -19,6 +19,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
@@ -31,12 +32,14 @@ import net.md_5.bungee.api.chat.hover.content.Text;
 public class WandListener implements Listener {
     public static boolean isMakePortal = false;
     private final common.Main plugin;
+    private final Logger logger;
     private final Map<Player, Location> firstCorner = new HashMap<>();
     private final PortalsConfig psConfig;
 
     @Inject
-    public WandListener(common.Main plugin, PortalsConfig psConfig) {
+    public WandListener(common.Main plugin, Logger logger, PortalsConfig psConfig) {
         this.plugin = plugin;
+        this.logger = logger;
         this.psConfig = psConfig;
     }
 
@@ -52,7 +55,7 @@ public class WandListener implements Listener {
                 if (meta != null && meta.hasDisplayName() && meta.getDisplayName().equals(ChatColor.GREEN + "Portal Wand")) {
                     Block block = event.getClickedBlock();
                     if (block == null) {
-                        plugin.getLogger().warning("Block is null");
+                        logger.error("Block is null");
                         return;
                     }
                     Location clickedBlock = block.getLocation();

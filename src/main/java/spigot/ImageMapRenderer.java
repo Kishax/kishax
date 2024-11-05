@@ -13,14 +13,12 @@ import org.bukkit.map.MapView;
 import org.slf4j.Logger;
 
 public class ImageMapRenderer extends MapRenderer {
-    private final common.Main plugin;
     private final Logger logger;
     private BufferedImage image;
     private final String pathToImageFile;
     private boolean rendered = false;
 
-    public ImageMapRenderer(common.Main plugin, Logger logger, BufferedImage image, String pathToImageFile) {
-        this.plugin = plugin;
+    public ImageMapRenderer(Logger logger, BufferedImage image, String pathToImageFile) {
         this.logger = logger;
         this.image = image;
         this.pathToImageFile = pathToImageFile;
@@ -36,7 +34,7 @@ public class ImageMapRenderer extends MapRenderer {
             } catch (IOException e) {
                 logger.error("An IOException error occurred: {}", e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
-                    plugin.getLogger().severe(element.toString());
+                    logger.error(element.toString());
                 }
                 return;
             }

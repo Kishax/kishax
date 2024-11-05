@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 public interface DiscordInterface {
 	CompletableFuture<JDA> loginDiscordBotAsync();
 	CompletableFuture<Void> logoutDiscordBot();
+	CompletableFuture<String> getMessageContent();
 	void sendRequestButtonWithMessage(String buttonMessage);
 	void sendWebhookMessage(WebhookMessageBuilder builder);
 	CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat);

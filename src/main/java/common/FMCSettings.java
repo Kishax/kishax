@@ -7,11 +7,14 @@ import java.sql.SQLException;
 
 public enum FMCSettings {
 	IMAGE_LIMIT_TIMES("imageuploadlimittimes"),
-    IMAGE_FOLDER("image_folder");
+    IMAGE_FOLDER("image_folder"),
+    RULEBOOK_CONTENT("rulebook");
     private final Database db = Database.getInstance();
+    private final String columnKey;
 	private final String value;
 	
 	FMCSettings(String key) {
+        this.columnKey = key;
         String dbValue;
         try (Connection connForSettings = db.getConnection()) {
             String query = "SELECT value FROM settings WHERE name = ?";
@@ -35,5 +38,9 @@ public enum FMCSettings {
 
     public int getIntValue() {
         return this.value != null ? Integer.parseInt(this.value) : 0;
+    }
+
+    public String getColumnKey() {
+        return this.columnKey;
     }
 }

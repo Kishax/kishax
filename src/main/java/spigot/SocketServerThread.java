@@ -9,13 +9,11 @@ import java.util.Objects;
 import org.slf4j.Logger;
 
 public class SocketServerThread extends Thread {
-    public common.Main plugin;
     public Logger logger;
     public SocketResponse sr;
     private final Socket socket;
     
-    public SocketServerThread (common.Main plugin, Logger logger, SocketResponse sr, Socket socket) {
-        this.plugin = plugin;
+    public SocketServerThread (Logger logger, SocketResponse sr, Socket socket) {
         this.logger = logger;
         this.sr = sr;
         this.socket = socket;
@@ -29,9 +27,7 @@ public class SocketServerThread extends Thread {
             while (Objects.nonNull(line = reader.readLine())) {
                 receivedMessageBuilder.append(line).append("\n");
             }
-            
             String receivedMessage = receivedMessageBuilder.toString();
-            
             sr.resaction(receivedMessage);
         } catch (Exception e) {
             logger.error("An Exception error occurred: {}", e.getMessage());

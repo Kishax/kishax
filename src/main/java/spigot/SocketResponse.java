@@ -52,6 +52,8 @@ public class SocketResponse {
                 }
             } else if (res.contains("MineStatusSync")) {
                 ssc.refreshCache();
+            } else if (res.contains("RulebookSync")) {
+                
             }
         }
     }

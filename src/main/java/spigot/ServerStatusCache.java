@@ -13,19 +13,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import common.Database;
 
-import org.slf4j.Logger;
-
 @Singleton
 public class ServerStatusCache {
-
     private static final long CACHE_REFRESH_INTERVAL = 60000;
-    private final common.Main plugin;
     private final Logger logger;
     private final Database db;
     private final PortFinder pf;
@@ -37,8 +35,7 @@ public class ServerStatusCache {
     private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
     @Inject
-    public ServerStatusCache(common.Main plugin, Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
-        this.plugin = plugin;
+    public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
         this.logger = logger;
         this.db = db;
         this.pf = pf;
@@ -121,7 +118,7 @@ public class ServerStatusCache {
             this.statusMap = null;
             logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+                logger.error(element.toString());
             }
         }
     }
@@ -171,7 +168,7 @@ public class ServerStatusCache {
         } catch (SQLException | ClassNotFoundException e) {
             logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
-                plugin.getLogger().severe(element.toString());
+                logger.error(element.toString());
             }
         }
     }
