@@ -29,6 +29,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
@@ -65,6 +66,8 @@ public class Discord implements DiscordInterface {
             try {
                 jda = JDABuilder.createDefault(config.getString("Discord.Token"))
                         .addEventListeners(Main.getInjector().getInstance(DiscordEventListener.class))
+                        .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+                        // .enableCache(CacheFlag.MESSAGE_CONTENT)
                         .build();
 
                 // Botが完全に起動するのを待つ
@@ -119,15 +122,14 @@ public class Discord implements DiscordInterface {
     
     @Override
     public CompletableFuture<String> getMessageContent() {
-        String ruleChannelId = config.getString("Discord.Rule.ChannelId", "");
-        String ruleMessageId = config.getString("Discord.Rule.MessageId", "");
+        String ruleChannelId = Long.toString(config.getLong("Discord.Rule.ChannelId", 0));
+        String ruleMessageId = Long.toString(config.getLong("Discord.Rule.MessageId", 0));
         CompletableFuture<String> future = new CompletableFuture<>();
         TextChannel ruleChannel = jda.getTextChannelById(ruleChannelId);
         if (ruleChannel == null) {
             future.completeExceptionally(new IllegalArgumentException("チャンネルが見つかりませんでした。"));
             return future;
         }
-
         ruleChannel.retrieveMessageById(ruleMessageId).queue(
             message -> {
                 // メッセージの内容を取得してCompletableFutureに設定

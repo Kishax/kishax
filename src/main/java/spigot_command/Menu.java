@@ -66,12 +66,13 @@ public class Menu {
     private final Luckperms lp;
     private final ImageMap im;
     private final ServerHomeDir shd;
+    private final Book book;
     private final Map<Player, Map<String, Integer>> playerOpenningInventoryMap = new HashMap<>();
     private final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new ConcurrentHashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
-	public Menu(common.Main plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd) {  
+	public Menu(common.Main plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book) {  
 		this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -79,6 +80,7 @@ public class Menu {
         this.lp = lp;
         this.im = im;
         this.shd = shd;
+        this.book = book;
 	}
 
     // fmc menu <server|image> <server: serverType>
@@ -160,6 +162,7 @@ public class Menu {
         switch (page) {
             case 1 -> {
                 playerMenuActions.put(11, () -> openServerTypeInventory(player));
+                playerMenuActions.put(13, () -> book.giveRuleBook(player));
                 playerMenuActions.put(15, () -> openImageMenu(player, 1));
                 playerMenuActions.put(26, () -> {
                     setPage(player, menuInventoryKey, page + 1);
@@ -170,6 +173,7 @@ public class Menu {
                 ItemMeta serverMeta = serverItem.getItemMeta();
                 if (serverMeta != null) {
                     serverMeta.setDisplayName(ChatColor.GREEN + "サーバーメニュー");
+                    serverMeta.setLore(Arrays.asList(ChatColor.GRAY + "各サーバーの情報を確認できるよ。"));
                     serverItem.setItemMeta(serverMeta);
                 }
                 inv.setItem(11, serverItem);
@@ -177,9 +181,18 @@ public class Menu {
                 ItemMeta imageMeta = imageItem.getItemMeta();
                 if (imageMeta != null) {
                     imageMeta.setDisplayName(ChatColor.GREEN + "画像マップメニュー");
+                    imageMeta.setLore(Arrays.asList(ChatColor.GRAY + "今までアップされた画像マップを確認できるよ。"));
                     imageItem.setItemMeta(imageMeta);
                 }
                 inv.setItem(15, imageItem);
+                ItemStack ruleBookItem = new ItemStack(Material.WRITTEN_BOOK);
+                ItemMeta ruleBookMeta = ruleBookItem.getItemMeta();
+                if (ruleBookMeta != null) {
+                    ruleBookMeta.setDisplayName(ChatColor.GREEN + "ルールブック");
+                    ruleBookMeta.setLore(Arrays.asList(ChatColor.GRAY + "サーバーのルールを確認できるよ。"));
+                    ruleBookItem.setItemMeta(ruleBookMeta);
+                }
+                inv.setItem(13, ruleBookItem);
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                 if (nextPageMeta != null) {
