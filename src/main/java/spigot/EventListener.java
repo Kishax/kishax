@@ -37,6 +37,8 @@ import common.Database;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
+import spigot_command.Book;
+import spigot_command.Button;
 import spigot_command.Menu;
 
 public final class EventListener implements Listener {
@@ -47,11 +49,12 @@ public final class EventListener implements Listener {
     private final Menu menu;
     private final ServerStatusCache ssc;
     private final ImageMap im;
+    private final Book book;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     //private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, Logger logger, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, ImageMap im) {
+	public EventListener(common.Main plugin, Logger logger, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, ImageMap im, Book book) {
 		this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -59,6 +62,7 @@ public final class EventListener implements Listener {
         this.menu = menu;
         this.ssc = ssc;
         this.im = im;
+        this.book = book;
 	}
 
     @EventHandler
@@ -70,7 +74,7 @@ public final class EventListener implements Listener {
             ItemStack itemInHand = player.getInventory().getItemInMainHand();
             if (itemInHand.getType() != Material.AIR) {
                 ItemMeta meta = itemInHand.getItemMeta();
-                if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_button"), PersistentDataType.STRING)) {
+                if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Button.PERSISTANT_KEY), PersistentDataType.STRING)) {
                     player.sendMessage(ChatColor.GREEN + "特定のボタンが右クリックされました！");
                 }
             }
@@ -94,6 +98,9 @@ public final class EventListener implements Listener {
                     }
                 }
             });
+        });
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            book.checkPlayerInventory(player);
         });
     }
 

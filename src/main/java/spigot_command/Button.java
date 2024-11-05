@@ -17,6 +17,7 @@ import com.google.inject.Inject;
 import net.md_5.bungee.api.ChatColor;
 
 public class Button {
+    public static final String PERSISTANT_KEY = "custom_button";
     private final common.Main plugin;
     private final List<String> buttonLores = new ArrayList<>(Arrays.asList("押せば、自動で何かが起こるボタンです。"));
     @Inject
@@ -42,7 +43,7 @@ public class Button {
         if (meta != null) {
             meta.setDisplayName(ChatColor.GREEN + "特定のボタン");
             meta.setLore(buttonLores);
-            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_button"), PersistentDataType.STRING, "true");
+            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, Button.PERSISTANT_KEY), PersistentDataType.STRING, "true");
             button.setItemMeta(meta);
         }
         player.getInventory().addItem(button);

@@ -60,6 +60,7 @@ public class ImageMap {
     public static AtomicBoolean isGetColumnInfo = new AtomicBoolean(false);
     public static List<Integer> thisServerMapIds = new ArrayList<>();
     public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q"));
+    private static final String PERSISTANT_KEY = "custom_image";
     private final common.Main plugin;
     private final Logger logger;
     private final Database db;
@@ -121,28 +122,6 @@ public class ImageMap {
         }
     }
     
-    private void copyLineFromMenu(Connection conn, int id, Map<String, String> modifyMap) throws SQLException, ClassNotFoundException {
-        List<String> modifiedImageColumnsList = new ArrayList<>(imagesColumnsList),
-            imagesColumnsListCopied = new ArrayList<>(imagesColumnsList);
-        for (Map.Entry<String, String> entry : modifyMap.entrySet()) {
-            String key = entry.getKey(),
-                newValue = entry.getValue();
-                modifiedImageColumnsList = modifiedImageColumnsList.stream()
-                .map(s -> s.equals(key) ? newValue : s)
-                .collect(Collectors.toList());
-        }
-        // idカラムを除外
-        imagesColumnsListCopied.remove("id");
-        modifiedImageColumnsList.remove("id");
-        String query = "INSERT INTO images (" + String.join(", ", imagesColumnsListCopied) + ") " +
-                    "SELECT " + String.join(", ", modifiedImageColumnsList) + " " +
-                    "FROM images " +
-                    "WHERE id = ?;";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setInt(1, id);
-        ps.executeUpdate();
-    }
-
     public void executeImageMapFromMenu(Player player, Object[] mArgs) {
         // このサーバーにはないマップを生成する
         try (Connection conn = db.getConnection()) {
@@ -177,7 +156,7 @@ public class ImageMap {
                 meta.setDisplayName(title);
                 meta.setLore(lores);
                 meta.setMapView(mapView);
-                meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING, "true");
+                meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
                 mapItem.setItemMeta(meta);
             }
             Map<String, String> modifyMap = new HashMap<>();
@@ -276,7 +255,7 @@ public class ImageMap {
                     meta.setDisplayName(title);
                     meta.setLore(lores);
                     meta.setMapView(mapView);
-                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING, "true");
+                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
                     mapItem.setItemMeta(meta);
                 }
                 if (fromDiscord) {
@@ -310,7 +289,6 @@ public class ImageMap {
                         MapView mapView = mapMeta.getMapView();
                         if (mapView != null) {
                             int mapId = mapView.getId();
-                            // このサーバーのワールド内のどこかに配置されているマップはloadAllItemInThisServerFramesメソッドで処理済み
                             if (serverImageInfo.containsKey(mapId) && !thisServerMapIds.contains(mapId)) {
                                 Map<String, Object> imageInfo = serverImageInfo.get(mapId);
                                 boolean isQr = (boolean) imageInfo.get("isqr");
@@ -343,17 +321,15 @@ public class ImageMap {
     }
 
     public void loadAllItemInThisServerFrames(Connection conn) throws SQLException, ClassNotFoundException {
-        logger.info("Loading all item frames...");
         Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
         for (World world : Bukkit.getWorlds()) {
             logger.info("Loading item frames in the world: {}", world.getName());
             for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
                 ItemStack item = itemFrame.getItem();
                 if (item.getType() == Material.FILLED_MAP) {
-                    logger.info("Found a map item.");
                     MapMeta mapMeta = (MapMeta) item.getItemMeta();
                     if (mapMeta != null && mapMeta.hasMapView()) {
-                        if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, "custom_image"), PersistentDataType.STRING)) {
+                        if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
                             MapView mapView = mapMeta.getMapView();
                             if (mapView != null) {
                                 int mapId = mapView.getId();
@@ -468,6 +444,28 @@ public class ImageMap {
         return date.format(formatter);
     }
 
+    private void copyLineFromMenu(Connection conn, int id, Map<String, String> modifyMap) throws SQLException, ClassNotFoundException {
+        List<String> modifiedImageColumnsList = new ArrayList<>(imagesColumnsList),
+            imagesColumnsListCopied = new ArrayList<>(imagesColumnsList);
+        for (Map.Entry<String, String> entry : modifyMap.entrySet()) {
+            String key = entry.getKey(),
+                newValue = entry.getValue();
+                modifiedImageColumnsList = modifiedImageColumnsList.stream()
+                .map(s -> s.equals(key) ? newValue : s)
+                .collect(Collectors.toList());
+        }
+        // idカラムを除外
+        imagesColumnsListCopied.remove("id");
+        modifiedImageColumnsList.remove("id");
+        String query = "INSERT INTO images (" + String.join(", ", imagesColumnsListCopied) + ") " +
+                    "SELECT " + String.join(", ", modifiedImageColumnsList) + " " +
+                    "FROM images " +
+                    "WHERE id = ?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setInt(1, id);
+        ps.executeUpdate();
+    }
+    
     private Map<String, Object> getImageInfoByOTP(Connection conn, String otp) throws SQLException, ClassNotFoundException {
         Map<String, Object> imageInfo = new HashMap<>();
         String query = "SELECT * FROM images WHERE otp=?;";

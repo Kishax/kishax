@@ -18,6 +18,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -36,6 +38,7 @@ import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -84,22 +87,32 @@ public class DiscordEventListener extends ListenerAdapter {
 			teraChannelId != 0;
 	}
 	
-	public int getUserTodayTimes(Connection conn, String userId) throws SQLException, ClassNotFoundException {
-        String query = "SELECT COUNT(*) FROM images WHERE did = ? AND DATE(date) = ?";
-		PreparedStatement ps = conn.prepareStatement(query);
-		ps.setString(1, userId);
-		ps.setDate(2, java.sql.Date.valueOf(LocalDate.now()));
-		ResultSet rs = ps.executeQuery();
-		if (rs.next()) {
-			return rs.getInt(1);
+	@Override
+	public void onMessageUpdate(@Nonnull MessageUpdateEvent event) {
+        String ruleChannelId = Long.toString(config.getLong("Discord.Rule.ChannelId", 0));
+        String ruleMessageId = Long.toString(config.getLong("Discord.Rule.MessageId", 0));
+        if (event.getChannel().getId().equals(ruleChannelId) && event.getMessageId().equals(ruleMessageId)) {
+            String newContent = event.getMessage().getContentDisplay();
+			try (Connection conn = db.getConnection()) {
+				db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {newContent, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
+				SocketSwitch ssw = sswProvider.get();
+				ssw.sendSpigotServer("RulebookSync");
+				logger.info("detecting rulebook update.");
+				logger.info("updated rulebook content: {}", newContent);
+			} catch (SQLException | ClassNotFoundException e) {
+				logger.error("An SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+				for (StackTraceElement element : e.getStackTrace()) {
+					logger.error(element.toString());
+				}
+			}
 		}
-        return 0;
     }
-
+	
 	@SuppressWarnings("null")
 	@Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent e) {
 		User user = e.getUser();
+		Member member = e.getMember();
 		String userMention = user.getAsMention();
 		MessageChannel channel = e.getChannel();
 		String userId = e.getMember().getId(),
@@ -107,16 +120,21 @@ public class DiscordEventListener extends ListenerAdapter {
 			channelId = channel.getId(),
 			guildId = e.getGuild().getId(),
 			channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId);
+		List<Role> roles = member.getRoles();
 		if (e.getName().equals("fmc")) {
 			switch (e.getSubcommandName()) {
 				case "syncrulebook" -> {
 					discord.getMessageContent().thenAccept(content -> {
+						if (!roles.contains(e.getGuild().getRoleById(config.getLong("Discord.AdCraRoleId")))) {
+							replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
+							e.reply(replyMessage).setEphemeral(true).queue();
+							return;
+						}
 						logger.info("メッセージの内容: {}", content);
 						if (content != null) {
 							try (Connection conn = db.getConnection()) {
 								db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {content, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
 								e.reply("ルールブックを更新しました。").setEphemeral(true).queue();
-								e.reply("同期のため、ソケット通信を行います。").setEphemeral(true).queue();
 								SocketSwitch ssw = sswProvider.get();
 								ssw.sendSpigotServer("RulebookSync");
 							} catch (SQLException | ClassNotFoundException e1) {
@@ -430,6 +448,18 @@ public class DiscordEventListener extends ListenerAdapter {
             
             bc.broadCastMessage(component);
         }
+    }
+
+	private int getUserTodayTimes(Connection conn, String userId) throws SQLException, ClassNotFoundException {
+        String query = "SELECT COUNT(*) FROM images WHERE did = ? AND DATE(date) = ?";
+		PreparedStatement ps = conn.prepareStatement(query);
+		ps.setString(1, userId);
+		ps.setDate(2, java.sql.Date.valueOf(LocalDate.now()));
+		ResultSet rs = ps.executeQuery();
+		if (rs.next()) {
+			return rs.getInt(1);
+		}
+        return 0;
     }
 
 	private boolean isTera() {

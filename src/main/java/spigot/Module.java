@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import com.google.inject.AbstractModule;
 
 import common.Database;
+import spigot_command.Book;
 import spigot_command.Menu;
 import spigot_command.PortalsDelete;
 import spigot_command.ReloadConfig;
@@ -49,5 +50,6 @@ public class Module extends AbstractModule {
 		bind(Rcon.class);
 		bind(Luckperms.class);
 		bind(ImageMap.class);
+		bind(Book.class);
     }
 }

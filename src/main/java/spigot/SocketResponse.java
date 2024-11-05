@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import spigot_command.Book;
+
 public class SocketResponse {
     private final common.Main plugin;
     private final Logger logger;
@@ -16,14 +18,16 @@ public class SocketResponse {
     private final ServerHomeDir shd;
     private final Provider<SocketSwitch> sswProvider;
     private final AutoShutdown asd;
+    private final Book book;
     @Inject
-    public SocketResponse(common.Main plugin, Logger logger, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd) {
+    public SocketResponse(common.Main plugin, Logger logger, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Book book) {
         this.plugin = plugin;
         this.logger = logger;
         this.ssc = ssc;
         this.shd = shd;
         this.sswProvider = sswProvider;
         this.asd = asd;
+        this.book = book;
     }
 
     public void resaction(String res) {
@@ -53,7 +57,8 @@ public class SocketResponse {
             } else if (res.contains("MineStatusSync")) {
                 ssc.refreshCache();
             } else if (res.contains("RulebookSync")) {
-                
+                book.loadAllBooks();
+                book.loadAllPlayersBooks();
             }
         }
     }

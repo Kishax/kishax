@@ -10,8 +10,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import common.Database;
-import common.FMCSettings;
 import net.luckperms.api.LuckPermsProvider;
+import spigot_command.Book;
 import spigot_command.FMCCommand;
 import spigot_command.Q;
 
@@ -28,7 +28,6 @@ public class Main {
 		logger.info("detected spigot platform.");
         injector = Guice.createInjector(new spigot.Module(plugin, logger));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
-		logger.info("imageuploadlimittimes: " + FMCSettings.IMAGE_LIMIT_TIMES.getValue());
 		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
 	    plugin.saveDefaultConfig();
 		getInjector().getInstance(PortalsConfig.class).createPortalsConfig();
@@ -61,6 +60,7 @@ public class Main {
 				logger.error(element.toString());
 			}
 		}
+		getInjector().getInstance(Book.class).loadAllBooks();
 		logger.info("fmc plugin has been enabled.");
     }
     
