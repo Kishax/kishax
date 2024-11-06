@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -88,27 +87,6 @@ public class PlayerUtils {
 		return Players;
 	}
 	
-	public Optional<Player> getPlayerByName(String playerName) {
-        return server.getAllPlayers().stream()
-                .filter(player -> player.getUsername().equalsIgnoreCase(playerName))
-                .findFirst();
-    }
-	
-	public Player getPlayerFromUUID(String uuidString) {
-		try {
-            // StringをUUIDに変換
-            UUID uuid = UUID.fromString(uuidString);
-            
-            // UUIDからプレイヤーを取得
-            Optional<Player> player = server.getPlayer(uuid);
-            return player.orElse(null); // プレイヤーが見つからない場合はnullを返す
-        } catch (IllegalArgumentException e) {
-            // UUIDの形式が正しくない場合の処理
-            System.out.println("UUIDの形式が無効です: " + uuidString);
-            return null;
-        }
-    }
-	
 	public String getPlayerUUIDByNameFromDB(String playerName) {
 		String query = "SELECT uuid FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
 		try (Connection conn = db.getConnection();
@@ -120,7 +98,7 @@ public class PlayerUtils {
 				}
 			}
 		} catch (ClassNotFoundException | SQLException e) {
-			logger.error("A ClassNotFoundException | SQLException error occurred: " + e.getMessage());
+			logger.error("A ClassNotFoundException | SQLException error occurred: {}" + e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }

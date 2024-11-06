@@ -151,6 +151,7 @@ public class MessageEditor implements MessageEditorInterface {
                     }
 	            	case "Exit" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
+							
 							String convStringTime = pu.secondsToStr(playTime);
 							// すべての処理が完了するまで待つ
 							CompletableFuture<Void> editFuture = CompletableFuture.completedFuture(null);

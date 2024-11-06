@@ -14,6 +14,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.PermSettings;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -29,19 +30,17 @@ public class SocketResponse {
 	private final Luckperms lp;
 	private final BroadCast bc;
 	private final ConsoleCommandSource console;
-	private final PlayerUtils pu;
 	private final MessageEditorInterface discordME;
 	private final Provider<SocketSwitch> sswProvider;
 	private String mineName = null;
 	
 	@Inject
-	public SocketResponse (Main plugin, ProxyServer server, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, PlayerUtils pu, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider) {
+	public SocketResponse (Main plugin, ProxyServer server, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider) {
 		this.server = server;
         this.config = config;
         this.lp = lp;
         this.bc = bc;
         this.console = console;
-        this.pu = pu;
         this.discordME = discordME;
 		this.sswProvider = sswProvider;
 	}
@@ -56,11 +55,13 @@ public class SocketResponse {
                 Matcher matcher = compiledPattern.matcher(res);
                 if (matcher.find()) {
                 	mineName = matcher.group(1);
-					lp.addPermission(mineName, "group.new-fmc-user");
+					lp.addPermission(mineName, PermSettings.NEW_FMC_USER.get());
 					// spigotsに通知し、serverCacheを更新させる
 					SocketSwitch ssw = sswProvider.get();
 					ssw.sendSpigotServer(res);
-                	Optional<Player> playerOptional = pu.getPlayerByName(mineName);
+                	Optional<Player> playerOptional = server.getAllPlayers().stream()
+						.filter(player -> player.getUsername().equalsIgnoreCase(mineName))
+						.findFirst();
                 	if (playerOptional.isPresent()) {
                 	    Player player = playerOptional.get();
                 	    TextComponent component;

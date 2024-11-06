@@ -38,6 +38,7 @@ public class PlayerUtils {
 		this.db = db;
 	}
 	
+	// 
 	public synchronized void loadPlayers() {
 		if (isLoaded) return;
 		String query = "SELECT * FROM members;";
@@ -57,6 +58,7 @@ public class PlayerUtils {
 		}
  	}
 	
+	//
 	public void updatePlayers() {
 		String query = "SELECT * FROM members;";
 		try (Connection conn = db.getConnection();
@@ -76,10 +78,12 @@ public class PlayerUtils {
 		}
  	}
 	
+	//
 	public List<String> getPlayerList() {
 		return Players;
 	}
 	
+	//
 	public String getPlayerUUIDByNameFromDB(String playerName) {
 		String query = "SELECT uuid FROM members WHERE name=? ORDER BY id DESC LIMIT 1;";
 		try (Connection conn = db.getConnection();
@@ -99,6 +103,7 @@ public class PlayerUtils {
 		return null;
 	}
 	
+	//
 	public List<String> getPlayerNamesListFromUUIDs(List<String> playerUUIDs) {
 		List<String> playerNames = new ArrayList<>();
 		Map<String, String> playerUUIDToNameMap = new HashMap<>();
@@ -121,6 +126,7 @@ public class PlayerUtils {
 		return playerNames;
 	}
 
+	//
 	public String getPlayerNameByUUIDFromDB(String playerUUID) {
 		try (Connection conn = db.getConnection();
 			 PreparedStatement ps = conn.prepareStatement("SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;")) {
@@ -139,6 +145,7 @@ public class PlayerUtils {
 		return null;
 	}
 	
+	//
 	public UUID getPlayerNameByUUIDFromDB(UUID playerUUID) {
 		try (Connection conn = db.getConnection();
 			 PreparedStatement ps = conn.prepareStatement("SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;")) {
