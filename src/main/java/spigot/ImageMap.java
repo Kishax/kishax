@@ -133,7 +133,7 @@ public class ImageMap {
                 comment = (String) mArgs[5],
                 ext = (String) mArgs[6],
                 date = (String) mArgs[7],
-                fullPath = FMCSettings.IMAGE_FOLDER + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
+                fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
                 playerName = player.getName();
             BufferedImage image;
             image = loadImage(fullPath);
@@ -210,7 +210,7 @@ public class ImageMap {
                 BufferedImage image;
                 if (isQr) {
                     ext = "png";
-                    fullPath = FMCSettings.IMAGE_FOLDER + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
+                    fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
                     image = generateQRCodeImage(url);
                     saveImageToFileSystem(image, imageUUID, ext);
                 } else {
@@ -228,7 +228,7 @@ public class ImageMap {
                             return;
                         }
                     }
-                    fullPath = FMCSettings.IMAGE_FOLDER + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
+                    fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
                     image =  ImageIO.read(getUrl);
                     saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
                     image = resizeImage(image, 128, 128);
