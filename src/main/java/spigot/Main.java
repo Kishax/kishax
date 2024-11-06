@@ -1,5 +1,9 @@
 package spigot;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.TimeZone;
 
 import org.bukkit.command.PluginCommand;
@@ -8,6 +12,7 @@ import org.slf4j.Logger;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+import common.Database;
 import net.luckperms.api.LuckPermsProvider;
 import spigot_command.FMCCommand;
 import spigot_command.Q;
@@ -25,6 +30,11 @@ public class Main {
 		logger.info("detected spigot platform.");
         injector = Guice.createInjector(new spigot.Module(plugin, logger));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
+		try (Connection conn = getInjector().getInstance(Database.class).getConnection()) {
+			ifHubThenUpdate(conn);
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An error occurred while updating the database: {}", e.getMessage());
+		}
 		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
 	    plugin.saveDefaultConfig();
 		getInjector().getInstance(PortalsConfig.class).createPortalsConfig();
@@ -67,5 +77,18 @@ public class Main {
     	getInjector().getInstance(AutoShutdown.class).stopCheckForPlayers();
     	logger.info("Socket Server stopping...");
     	logger.info("プラグインが無効になりました。");
+    }
+
+	private void ifHubThenUpdate(Connection conn) throws SQLException, ClassNotFoundException {
+		String thisServerName = getInjector().getInstance(ServerHomeDir.class).getServerName();
+        String query = "SELECT hub FROM status WHERE name=? LIMIT 1;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, thisServerName);
+		ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+			if (rs.getBoolean("hub")) {
+				EventListener.isHub.set(true);
+			}
+        }
     }
 }

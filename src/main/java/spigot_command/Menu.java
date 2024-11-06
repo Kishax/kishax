@@ -92,8 +92,9 @@ public class Menu {
                 switch (args[1].toLowerCase()) {
                     case "server" -> {
                         if (plugin.getConfig().getBoolean("Menu.Server", false)) {
-                            if (!(player.hasPermission("group.new-fmc-user") || player.hasPermission("group.sub-admin") || player.hasPermission("group.super-admin"))) {
-                                player.sendMessage("先にUUID認証を完了させてください。");
+                            int permLevel = lp.getPermLevel(player.getName());
+                            if (permLevel < 1) {
+                                player.sendMessage("先にWEB認証を完了させてください。");
                                 return;
                             }
                             if (args.length > 2) {

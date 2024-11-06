@@ -105,7 +105,7 @@ public class StopServer {
                         }
                         discordME.AddEmbedSomeMessage("Stop", player, targetServerName);
                         TextComponent component = Component.text()
-                                .append(Component.text("UUID認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
+                                .append(Component.text("WEB認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
                                 .append(Component.text(targetServerName+"サーバーがまもなく停止します。").color(NamedTextColor.RED))
                                 .build();
                         player.sendMessage(component);

@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import common.Database;
+import common.PermSettings;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.messaging.MessagingService;
@@ -93,13 +94,13 @@ public class Luckperms {
 
 	public int getPermLevel(String playerName) {
         int permLevel = 0;
-        List<String> groups = new ArrayList<>(Arrays.asList("group.new-fmc-user", "group.sub-admin", "group.super-admin"));
+        List<String> groups = new ArrayList<>(Arrays.asList(PermSettings.NEW_FMC_USER.get(), PermSettings.SUB_ADMIN.get(), PermSettings.SUPER_ADMIN.get()));
         Map<String, Boolean> permMap = hasPermissionWithMap(playerName, groups);
-        if (permMap.get("group.super-admin")) {
+        if (permMap.get(PermSettings.SUPER_ADMIN.get())) {
             permLevel = 3;
-        } else if (permMap.get("group.sub-admin")) {
+        } else if (permMap.get(PermSettings.SUB_ADMIN.get())) {
             permLevel = 2;
-        } else if (permMap.get("group.new-fmc-user")) {
+        } else if (permMap.get(PermSettings.NEW_FMC_USER.get())) {
             permLevel = 1;
         }
         return permLevel;

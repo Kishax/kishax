@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -38,6 +39,7 @@ import spigot_command.Button;
 import spigot_command.Menu;
 
 public final class EventListener implements Listener {
+    public static final AtomicBoolean isHub = new AtomicBoolean(false);
     private final common.Main plugin;
     private final Logger logger;
 	private final PortalsConfig psConfig;
@@ -79,7 +81,8 @@ public final class EventListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getName();
-        if (!lp.hasPermission(playerName, "new-fmc-user")) {
+        int permLevel = lp.getPermLevel(playerName);
+        if (permLevel < 1) {
             player.teleport(FMCCoords.LOAD_POINT.getLocation());
         } else {
             player.teleport(FMCCoords.HUB_POINT.getLocation());

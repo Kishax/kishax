@@ -2,25 +2,50 @@ package spigot_command;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import com.google.inject.Inject;
 
+import net.md_5.bungee.api.ChatColor;
 import spigot.FMCCoords;
 import spigot.Luckperms;
 
 public class Check {
+    private final common.Main plugin;
     private final Luckperms lp;
     @Inject
-    public Check(Luckperms lp) {
+    public Check(common.Main plugin, Luckperms lp) {
+        this.plugin = plugin;
         this.lp = lp;
     }
+
     public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
             String playerName = player.getName();
-            if (lp.hasPermission(playerName, "new-fmc-user")) {
+            int permLevel = lp.getPermLevel(playerName);
+            if (permLevel < 1) {
+                player.sendMessage(ChatColor.RED + "まだFMCのWEB認証が完了していません。");
                 player.teleport(FMCCoords.ROOM_POINT.getLocation());
             } else {
-                player.teleport(FMCCoords.HUB_POINT.getLocation());
+                player.sendMessage(ChatColor.GREEN + "WEB認証...PASS\n\nALL CORRECT");
+                // 5秒後にハブに移動
+                player.sendMessage(ChatColor.GREEN + "5秒後にハブに移動します。");
+                new BukkitRunnable() {
+                    int countdown = 5;
+                    @Override
+                    public void run() {
+                        if (countdown <= 1) {
+                            player.sendMessage(ChatColor.AQUA + "ハブエリアに移動します。");
+                        }
+                        if (countdown <= 0) {
+                            player.teleport(FMCCoords.HUB_POINT.getLocation());
+                            cancel();
+                            return;
+                        }
+                        player.sendMessage(ChatColor.AQUA + String.valueOf(countdown));
+                        countdown--;
+                    }
+                }.runTaskTimer(plugin, 0, 20);
             }
         } else {
             if (sender != null) {

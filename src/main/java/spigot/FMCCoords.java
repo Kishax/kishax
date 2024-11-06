@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 
 import common.Database;
 
@@ -25,10 +26,12 @@ public enum FMCCoords {
             PreparedStatement ps = connForCoords.prepareStatement(query);
             ps.setString(1, key);
             ResultSet rs = ps.executeQuery();
-            int columnCount = rs.getMetaData().getColumnCount();
-            for (int i = 1; i <= columnCount; i++) {
-                String columnName = rs.getMetaData().getColumnName(i);
-                rowMap.put(columnName, rs.getObject(columnName));
+            if (rs.next()) {
+                int columnCount = rs.getMetaData().getColumnCount();
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = rs.getMetaData().getColumnName(i);
+                    rowMap.put(columnName, rs.getObject(columnName));
+                }
             }
         } catch (SQLException | ClassNotFoundException e) {
             this.maps = null;
@@ -37,7 +40,11 @@ public enum FMCCoords {
     }
 	
     public Location getLocation() {
-        return new Location(Bukkit.getWorld(getWorld()), getX(), getY(), getZ(), getYaw(), getPitch());
+        World world = Bukkit.getWorld(getWorld());
+        if (world == null) {
+            throw new IllegalArgumentException("World not found: " + getWorld());
+        }
+        return new Location(world, getX(), getY(), getZ(), getYaw(), getPitch());
     }
 
     public Map<String, Object> get() {
