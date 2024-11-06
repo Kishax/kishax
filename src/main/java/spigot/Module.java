@@ -51,5 +51,7 @@ public class Module extends AbstractModule {
 		bind(Luckperms.class);
 		bind(ImageMap.class);
 		bind(Book.class);
+		bind(Inventory.class);
+		bind(FMCItemFrame.class);
     }
 }

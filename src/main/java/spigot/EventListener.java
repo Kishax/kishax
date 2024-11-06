@@ -1,13 +1,11 @@
 package spigot;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -33,38 +31,32 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import common.Database;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
-import spigot_command.Book;
 import spigot_command.Button;
 import spigot_command.Menu;
 
 public final class EventListener implements Listener {
     private final common.Main plugin;
     private final Logger logger;
-    private final Database db;
 	private final PortalsConfig psConfig;
     private final Menu menu;
     private final ServerStatusCache ssc;
-    private final ImageMap im;
-    private final Book book;
     private final Luckperms lp;
+    private final Inventory inv;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     //private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, Logger logger, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, ImageMap im, Book book, Luckperms lp) {
+	public EventListener(common.Main plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv) {
 		this.plugin = plugin;
         this.logger = logger;
-        this.db = db;
 		this.psConfig = psConfig;
         this.menu = menu;
         this.ssc = ssc;
-        this.im = im;
-        this.book = book;
         this.lp = lp;
+        this.inv = inv;
 	}
 
     @EventHandler
@@ -92,24 +84,7 @@ public final class EventListener implements Listener {
         } else {
             player.teleport(FMCCoords.HUB_POINT.getLocation());
         }
-        // 非同期タスクを実行
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            // 非同期タスク内で同期タスクを実行して、プレイヤーのインベントリを更新
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                try (Connection conn = db.getConnection()) {
-                    im.checkPlayerInventory(conn, player);
-                } catch (SQLException | ClassNotFoundException e) {
-                    player.sendMessage(ChatColor.RED + "画像マップの読み込みに失敗しました。管理者にお問い合わせください。");
-                    logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                    for (StackTraceElement element : e.getStackTrace()) {
-                        logger.error(element.toString());
-                    }
-                }
-            });
-        });
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            book.checkPlayerInventory(player);
-        });
+        inv.updatePlayerInventory(player);
     }
 
     @EventHandler
