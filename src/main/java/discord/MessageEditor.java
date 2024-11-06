@@ -3,7 +3,10 @@ package discord;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,11 +27,11 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import common.ColorUtil;
 import common.Database;
+import common.PlayerUtils;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import velocity.Config;
 import velocity.EventListener;
 import velocity.Main;
-import velocity.PlayerUtils;
 import velocity_command.Maintenance;
 
 public class MessageEditor implements MessageEditorInterface {
@@ -63,13 +66,48 @@ public class MessageEditor implements MessageEditorInterface {
 		this.pu = pu;
 	}
 	
-	@SuppressWarnings("null")
 	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage (
-		String type, Player player, ServerInfo serverInfo, 
-		String serverName, String alternativePlayerName, int playTime,
-		String chatMessage, UUID playerUUID
-	) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, String serverName) {
+		return AddEmbedSomeMessage(type, player, null, serverName, null, null, null);
+	}
+	
+	@Override
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo) {
+		return AddEmbedSomeMessage(type, player, serverInfo, null, null, null, null);
+	}
+	
+	@Override
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player) {
+		return AddEmbedSomeMessage(type, player, null, null, null, null, null);
+	}
+	
+	@Override
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName) {
+		return AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, null, null);
+	}
+	
+	@Override
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName) {
+		return AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, null, null);
+	}
+	
+	@Override
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage) {
+		return AddEmbedSomeMessage(type, player, serverInfo, null, null, chatMessage, null);
+	}
+	
+	@Override
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type) {
+		return AddEmbedSomeMessage(type, null, null, null, null, null, null);
+	}
+	
+	@Override
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, UUID playerUUID) {
+		return AddEmbedSomeMessage(type, null, null, null, null, null, playerUUID);
+	}
+
+	@SuppressWarnings("null")
+	private CompletableFuture<Void> AddEmbedSomeMessage (String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName, String chatMessage, UUID playerUUID) {
 		if (Objects.isNull(player)) {
 			// player変数がnullかつalternativePlayerNameが与えられていたとき
 			if (Objects.nonNull(alternativePlayerName)) {
@@ -132,9 +170,8 @@ public class MessageEditor implements MessageEditorInterface {
 									.map(serverConnection -> {
 										RegisteredServer registerServer = serverConnection.getServer();
 										ServerInfo playerServerInfo = registerServer.getServerInfo();
-										int playTime2 = pu.getPlayerTime(eachPlayer, playerServerInfo);
 										// AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
-										return AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo, playTime2);
+										return AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo);
 									}).orElse(CompletableFuture.completedFuture(null)); // サーバーが取得できない場合は即完了するFuture
 							
 							futures.add(future);
@@ -151,8 +188,16 @@ public class MessageEditor implements MessageEditorInterface {
                     }
 	            	case "Exit" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
-							
-							String convStringTime = pu.secondsToStr(playTime);
+							int playTime = getPlayerTime(player);
+							try (Connection conn = db.getConnection()) {
+								db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);", new Object[] {playerName, playerUUID, serverInfo.getName(), true, playTime});
+							} catch (SQLException | ClassNotFoundException e2) {
+								logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
+								for (StackTraceElement element : e2.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
+							String convStringTime = secondsToStr(playTime);
 							// すべての処理が完了するまで待つ
 							CompletableFuture<Void> editFuture = CompletableFuture.completedFuture(null);
 							
@@ -228,9 +273,8 @@ public class MessageEditor implements MessageEditorInterface {
 								ServerConnection serverConnection = optionalServerConnection.get();
 								RegisteredServer registerServer = serverConnection.getServer();
 								ServerInfo playerServerInfo = registerServer.getServerInfo();
-								int playTime2 = pu.getPlayerTime(eachPlayer, playerServerInfo);
 								// AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
-								AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo, playTime2);
+								AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo);
 							}
 						}
 						
@@ -348,7 +392,7 @@ public class MessageEditor implements MessageEditorInterface {
 	
 	                case "Move" -> {
 						//int playTime3 = pu.getPlayerTime(player, serverInfo);
-						//String convStringTime = pu.secondsToStr(playTime3);
+						//String convStringTime = secondsToStr(playTime3);
 						
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
 							addMessage = "\n\n" + Emoji + FaceEmoji + playerName + "が" +
@@ -502,49 +546,48 @@ public class MessageEditor implements MessageEditorInterface {
 	        }
 	    });
 	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, String serverName) {
-		return AddEmbedSomeMessage(type, player, null, serverName, null, 0, null, null);
+
+	private int getPlayerTime(Player player) {
+		String query = "SELECT * FROM log WHERE uuid=? AND `join`=? ORDER BY id DESC LIMIT 1;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
+    		// calc playtime
+    		ps.setString(1, player.getUniqueId().toString());
+    		ps.setBoolean(2, true);
+    		try (ResultSet bj_logs = ps.executeQuery()) {
+				if (bj_logs.next()) {
+					long now_timestamp = Instant.now().getEpochSecond();
+					Timestamp bj_time = bj_logs.getTimestamp("time");
+					long bj_timestamp = bj_time.getTime() / 1000L;
+					long bj_sa = now_timestamp-bj_timestamp;
+					return (int) bj_sa;
+				}
+			}
+    	} catch (SQLException | ClassNotFoundException e1) {
+            logger.error("A ClassNotFoundException | SQLException error occurred: " + e1.getMessage());
+            for (StackTraceElement element : e1.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+		return 0;
 	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo) {
-		return AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, null, null);
-	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player) {
-		return AddEmbedSomeMessage(type, player, null, null, null, 0, null, null);
-	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName) {
-		return AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, 0, null, null);
-	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName) {
-		return AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, 0, null, null);
-	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, int playTime) {
-		return AddEmbedSomeMessage(type, player, serverInfo, null, null, playTime, null, null);
-	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage) {
-		return AddEmbedSomeMessage(type, player, serverInfo, null, null, 0, chatMessage, null);
-	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type) {
-		return AddEmbedSomeMessage(type, null, null, null, null, 0, null, null);
-	}
-	
-	@Override
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, UUID playerUUID) {
-		return AddEmbedSomeMessage(type, null, null, null, null, 0, null, playerUUID);
-	}
+
+	private String secondsToStr(int seconds) {
+        if (seconds < 60) {
+            if (seconds < 10) {
+                return String.format("00:00:0%d", seconds);
+            }
+            return String.format("00:00:%d", seconds);
+        } else if (seconds < 3600) {
+            int minutes = seconds / 60;
+            seconds = seconds % 60;
+            return String.format("00:%02d:%02d", minutes, seconds);
+        } else {
+            int hours = seconds / 3600;
+            int remainingSeconds = seconds % 3600;
+            int minutes = remainingSeconds / 60;
+            seconds = remainingSeconds % 60;
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        }
+    }
 }

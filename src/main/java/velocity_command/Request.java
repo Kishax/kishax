@@ -22,6 +22,8 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import common.Database;
+import common.Luckperms;
+import common.PlayerUtils;
 import discord.DiscordInterface;
 import discord.EmojiManager;
 import discord.MessageEditorInterface;
@@ -31,8 +33,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
 import velocity.Config;
 import velocity.DoServerOnline;
-import velocity.Luckperms;
-import velocity.PlayerUtils;
 
 public class Request implements RequestInterface {
 	public static Map<String, Boolean> PlayerReqFlags = new HashMap<>();

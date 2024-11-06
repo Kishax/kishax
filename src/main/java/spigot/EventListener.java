@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import common.Luckperms;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;

@@ -19,6 +19,8 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 
 import common.Database;
+import common.Luckperms;
+import common.PlayerUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -26,9 +28,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
-import velocity.Luckperms;
 import velocity.Main;
-import velocity.PlayerUtils;
 import velocity.RomajiConversion;
 
 public class FMCCommand implements SimpleCommand {

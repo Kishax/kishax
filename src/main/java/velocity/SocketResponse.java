@@ -14,6 +14,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.Luckperms;
 import common.PermSettings;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;

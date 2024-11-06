@@ -16,6 +16,8 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.Luckperms;
+import common.PlayerUtils;
 import discord.Discord;
 import discord.EmojiManager;
 import net.luckperms.api.LuckPermsProvider;

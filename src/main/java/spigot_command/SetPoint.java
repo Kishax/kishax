@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import common.Database;
+import common.Luckperms;
 import net.md_5.bungee.api.ChatColor;
-import spigot.Luckperms;
 import spigot.ServerHomeDir;
 
 public class SetPoint {

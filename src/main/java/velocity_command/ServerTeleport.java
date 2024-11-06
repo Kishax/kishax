@@ -13,11 +13,11 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import common.Database;
+import common.Luckperms;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.Config;
 import velocity.DoServerOnline;
-import velocity.Luckperms;
 
 public class ServerTeleport {
     private final Logger logger;

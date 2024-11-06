@@ -1,4 +1,4 @@
-package spigot;
+package common;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,8 +15,6 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import common.Database;
-import common.PermSettings;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.messaging.MessagingService;
