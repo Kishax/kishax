@@ -16,13 +16,13 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import common.Database;
+import common.Luckperms;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import velocity.BroadCast;
 import velocity.DoServerOnline;
-import velocity.Luckperms;
 import velocity.SocketSwitch;
 
 public class StopServer {

@@ -13,6 +13,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import common.Database;
+import common.Luckperms;
+import common.PlayerUtils;
 import net.luckperms.api.LuckPermsProvider;
 import spigot_command.FMCCommand;
 import spigot_command.Q;

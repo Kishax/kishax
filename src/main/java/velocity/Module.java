@@ -11,6 +11,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import common.Database;
+import common.PlayerUtils;
 import discord.Discord;
 import discord.DiscordEventListener;
 import discord.DiscordInterface;
@@ -27,7 +28,7 @@ public class Module extends AbstractModule {
     private final Path dataDirectory;
     private final Config config;
     private final Database db;
-    
+    private final PlayerUtils pu;
     public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory) {
     	this.plugin = plugin;
         this.server = server;
@@ -51,6 +52,7 @@ public class Module extends AbstractModule {
         }
         this.db = host != null && port != 0 && defaultDatabase != null && user != null && password != null ? new Database(logger, host, user, defaultDatabase, password, port) : null;
         Database.staticInstance = db;
+        this.pu = db != null ? new PlayerUtils(db, logger) : null;
     }
 
     @Override
@@ -65,7 +67,7 @@ public class Module extends AbstractModule {
         bind(SocketSwitch.class);
         bind(BroadCast.class);
         bind(SocketResponse.class);
-        bind(velocity.PlayerUtils.class);
+        bind(PlayerUtils.class).toInstance(pu);
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
         bind(RomajiConversion.class);

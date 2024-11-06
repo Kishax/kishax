@@ -32,8 +32,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import common.Database;
+import common.Luckperms;
 import spigot.ImageMap;
-import spigot.Luckperms;
 import spigot.Main;
 import spigot.ServerHomeDir;
 import spigot.ServerStatusCache;

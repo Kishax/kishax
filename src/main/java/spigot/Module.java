@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import com.google.inject.AbstractModule;
 
 import common.Database;
+import common.Luckperms;
+import common.PlayerUtils;
 import spigot_command.Book;
 import spigot_command.Menu;
 import spigot_command.PortalsDelete;
@@ -15,7 +17,7 @@ public class Module extends AbstractModule {
 	private final common.Main plugin;
 	private final Logger logger;
 	private final Database db;
-	
+	private final PlayerUtils pu;
 	public Module(common.Main plugin, Logger logger) {
 		this.plugin = plugin;
 		this.logger = logger;
@@ -26,6 +28,7 @@ public class Module extends AbstractModule {
 		int port = plugin.getConfig().getInt("MySQL.Port", 0);
 		this.db = host != null && port != 0 && defaultDatabase != null && user != null && password != null ? new Database(logger, host, user, defaultDatabase, password, port) : null;
 		Database.staticInstance = db;
+		this.pu = db != null ? new PlayerUtils(db, logger) : null;
     }
 	
 	@Override
@@ -45,7 +48,7 @@ public class Module extends AbstractModule {
 		bind(ReloadConfig.class);
 		bind(ServerStatusCache.class).in(com.google.inject.Scopes.SINGLETON);
 		bind(PortFinder.class);
-		bind(PlayerUtils.class);
+		bind(PlayerUtils.class).toInstance(pu);
 		bind(AutoShutdown.class);
 		bind(Rcon.class);
 		bind(Luckperms.class);

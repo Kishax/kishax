@@ -34,6 +34,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import common.Database;
+import common.PlayerUtils;
 import discord.DiscordEventListener;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
@@ -533,7 +534,6 @@ public class EventListener {
 		} else {
 			logger.info("Java player connected: " + playerName);
 		}
-		String playerUUID = player.getUniqueId().toString();
 		player.getCurrentServer().ifPresent(serverConnection -> {
 			RegisteredServer registeredServer = serverConnection.getServer();
 			serverInfo = registeredServer.getServerInfo();
@@ -547,16 +547,7 @@ public class EventListener {
     	            RegisteredServer registeredServer = currentServer.getServer();
     	            serverInfo = registeredServer.getServerInfo();
     	            console.sendMessage(Component.text("Player " + playerName + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
-    	            int playTime = pu.getPlayerTime(player, serverInfo);
-    	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo, playTime);
-					try (Connection conn = db.getConnection()) {
-						db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);", new Object[] {playerName, playerUUID, serverInfo.getName(), true, playTime});
-					} catch (SQLException | ClassNotFoundException e2) {
-						logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
-						for (StackTraceElement element : e2.getStackTrace()) {
-							logger.error(element.toString());
-						}
-					}
+    	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo);
     	        });
         	}).schedule();
         };

@@ -6,9 +6,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import com.google.inject.Inject;
 
+import common.Luckperms;
 import net.md_5.bungee.api.ChatColor;
 import spigot.FMCCoords;
-import spigot.Luckperms;
 
 public class Check {
     private final common.Main plugin;
