@@ -9,6 +9,7 @@ public enum FMCSettings {
 	IMAGE_LIMIT_TIMES("imageuploadlimittimes"),
     IMAGE_FOLDER("image_folder"),
     RULEBOOK_CONTENT("rulebook");
+
     private final Database db = Database.getInstance();
     private final String columnKey;
 	private final String value;

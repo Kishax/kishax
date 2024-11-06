@@ -472,24 +472,15 @@ public class EventListener {
 										component = Component.text(playerName+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
 												.append(Component.text("\nFMCサーバー").color(NamedTextColor.AQUA).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
 												.append(Component.text("へようこそ！\n当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成と、それをマイクラアカウントと紐づける").color(NamedTextColor.AQUA))
-												.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+												.append(Component.text("WEB認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
 												.append(Component.text("を必須としています。\n").color(NamedTextColor.AQUA))
 												.append(Component.text("FMCユーザーは、サーバーを起動するためのリクエストを管理者へ送ることができます。今後色々なコンテンツを追加していく予定です！").color(NamedTextColor.AQUA))
-												.append(Component.text("\n正面にいるNPCをクリックして、UUID認証手続きへ移ります。").color(NamedTextColor.AQUA))
+												.append(Component.text("\nここを進んでください！").color(NamedTextColor.AQUA))
 												.append(Component.text("\nなにかわからないことがあったら、当サーバーの").color(NamedTextColor.AQUA))
 												.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
 														.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
 														.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscordへいこう！"))))
 												.append(Component.text("にて質問してください！参加するには、上の「Discord」をクリックしてね。").color(NamedTextColor.AQUA));
-										player.sendMessage(component);
-									} else {
-										component = Component.text(playerName+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
-												.append(Component.text("\nFMCサーバー").color(NamedTextColor.AQUA).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-												.append(Component.text("へようこそ！\n当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成と、それをマイクラアカウントと紐づける").color(NamedTextColor.AQUA))
-												.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-												.append(Component.text("を必須としています。\n").color(NamedTextColor.AQUA))
-												.append(Component.text("FMCユーザーは、サーバーを起動するためのリクエストを管理者へ送ることができます。今後色々なコンテンツを追加していく予定です！").color(NamedTextColor.AQUA))
-												.append(Component.text("\n正面にいるNPCをクリックして、UUID認証手続きへ移ります。").color(NamedTextColor.AQUA));
 										player.sendMessage(component);
 									}
 									ms.updateJoinPlayers(playerName, currentServerName);

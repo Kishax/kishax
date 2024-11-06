@@ -67,8 +67,8 @@ public class SocketResponse {
                     	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
                     	if (!DiscordInviteUrl.isEmpty()) {
                     		component = Component.text()
-                    				.append(Component.text("\nUUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-            	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
+                    				.append(Component.text("\nWEB認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+            	        			.append(Component.text("が完了しました。\n池に飛び込もう！").color(NamedTextColor.AQUA))
             	        			.append(Component.text("\n\nFMCサーバーの").color(NamedTextColor.AQUA))
             	        			.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
             	        					.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
@@ -76,19 +76,9 @@ public class SocketResponse {
             	        			.append(Component.text("には参加しましたか？").color(NamedTextColor.AQUA))
             			    		.append(Component.text("\nここでは、個性豊かな色々なメンバーと交流ができます！\nなお、マイクラとDiscord間のチャットは同期しているので、誰かが反応してくれるはずです...！").color(NamedTextColor.AQUA))
             			    		.build();
-                    		//bc.sendSpecificPlayerMessage(component, mineName);
-                    	} else {
-                    		component = Component.text()
-                    				.append(Component.text("UUID認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-            	        			.append(Component.text("が完了しました。\nもう一度、NPCをクリックしてサーバーへ入ろう！").color(NamedTextColor.AQUA))
-            			    		.build();
-                    			//bc.sendSpecificPlayerMessage(component, mineName);
+							player.sendMessage(component);
                     	}
-                    	
-                    	player.sendMessage(component);
-                	    
                 	}
-                	
                 	discordME.AddEmbedSomeMessage("AddMember", mineName);
                 }
     		}

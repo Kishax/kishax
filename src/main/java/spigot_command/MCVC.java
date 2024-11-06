@@ -20,7 +20,6 @@ public class MCVC {
 			sender.sendMessage(ChatColor.RED+"コンフィグの設定が不十分です。");
 			return;
 		}
-		
 		if (plugin.getConfig().getBoolean("MCVC.Mode")) {
 			sender.sendMessage(ChatColor.GREEN+"MCVCモードがOFFになりました。");
 			plugin.getConfig().set("MCVC.Mode", false);
