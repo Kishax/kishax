@@ -50,11 +50,12 @@ public final class EventListener implements Listener {
     private final ServerStatusCache ssc;
     private final ImageMap im;
     private final Book book;
+    private final Luckperms lp;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
     //private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
-	public EventListener(common.Main plugin, Logger logger, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, ImageMap im, Book book) {
+	public EventListener(common.Main plugin, Logger logger, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, ImageMap im, Book book, Luckperms lp) {
 		this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -63,6 +64,7 @@ public final class EventListener implements Listener {
         this.ssc = ssc;
         this.im = im;
         this.book = book;
+        this.lp = lp;
 	}
 
     @EventHandler
@@ -84,6 +86,12 @@ public final class EventListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        String playerName = player.getName();
+        if (!lp.hasPermission(playerName, "new-fmc-user")) {
+            player.teleport(FMCCoords.LOAD_POINT.getLocation());
+        } else {
+            player.teleport(FMCCoords.HUB_POINT.getLocation());
+        }
         // 非同期タスクを実行
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             // 非同期タスク内で同期タスクを実行して、プレイヤーのインベントリを更新
@@ -212,6 +220,13 @@ public final class EventListener implements Listener {
                                 switch (name) {
                                     case "life","distributed","mod" -> {
                                         player.performCommand("fmc menu server " + name);
+                                    }
+                                    case "waterGate" -> {
+                                        // ここで触れているブロックが水源ブロックかどうかを判定
+                                        Block block = loc != null ? loc.getBlock() : null;
+                                        if (block != null && block.getType() == Material.WATER) {
+                                            player.performCommand("fmc check");
+                                        }
                                     }
                                 }
                             }

@@ -28,7 +28,7 @@ import spigot.PortalsConfig;
 public class FMCCommand implements TabExecutor {
 	private final common.Main plugin;
 	private final PortalsConfig psConfig;
-	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu", "button"));
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu", "button", "check", "setpoint"));
 	@Inject
 	public FMCCommand(common.Main plugin, PortalsConfig psConfig) {
 		this.plugin = plugin;
@@ -86,6 +86,14 @@ public class FMCCommand implements TabExecutor {
 			}
 			case "button" -> {
 				Main.getInjector().getInstance(Button.class).execute(sender, cmd, label, args);
+				return true;
+			}
+			case "check" -> {
+				Main.getInjector().getInstance(Check.class).execute(sender, cmd, label, args);
+				return true;
+			}
+			case "setpoint" -> {
+				Main.getInjector().getInstance(SetPoint.class).execute(sender, cmd, label, args);
 				return true;
 			}
 			case "image","im" -> {
@@ -151,6 +159,10 @@ public class FMCCommand implements TabExecutor {
 	    	case 2 -> {
 				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
 				switch (args[0].toLowerCase()) {
+					case "setpoint" -> {
+						List<String> types = new ArrayList<>(Arrays.asList("load", "room", "hub"));
+						return StringUtil.copyPartialMatches(args[1].toLowerCase(), types, new ArrayList<>());
+					}
 					case "potion" -> {
 						for (PotionEffectType potion : PotionEffectType.values()) {
 							if (!sender.hasPermission("fmc.potion." + potion.getName().toLowerCase())) continue;

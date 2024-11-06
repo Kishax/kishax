@@ -48,5 +48,6 @@ public class Button {
         }
         player.getInventory().addItem(button);
         player.sendMessage(ChatColor.GREEN + "特定のボタンを渡しました！");
+        
     }
 }
