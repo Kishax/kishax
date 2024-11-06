@@ -1,6 +1,5 @@
 package spigot;
 
-import java.sql.Connection;
 import java.util.TimeZone;
 
 import org.bukkit.command.PluginCommand;
@@ -9,9 +8,7 @@ import org.slf4j.Logger;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import common.Database;
 import net.luckperms.api.LuckPermsProvider;
-import spigot_command.Book;
 import spigot_command.FMCCommand;
 import spigot_command.Q;
 
@@ -50,17 +47,7 @@ public class Main {
 		getInjector().getInstance(PlayerUtils.class).loadPlayers();
     	// DoServerOnlineとPortFinderとSocketの処理を統合
 		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
-		try (Connection conn = getInjector().getInstance(Database.class).getConnection()) {
-			//getInjector().getInstance(ImageMap.class).loadAllImages(conn);
-			getInjector().getInstance(ImageMap.class).loadAllItemInThisServerFrames(conn);
-		} catch (Exception e) {
-			logger.error( "既存マップの画像置換中にエラーが発生しました: {}", e.getMessage());
-			logger.error( "An error occurred while loading images: {}", e.getMessage());
-			for (StackTraceElement element : e.getStackTrace()) {
-				logger.error(element.toString());
-			}
-		}
-		getInjector().getInstance(Book.class).loadAllBooks();
+		getInjector().getInstance(FMCItemFrame.class).loadWorldsItemFrames();
 		logger.info("fmc plugin has been enabled.");
     }
     

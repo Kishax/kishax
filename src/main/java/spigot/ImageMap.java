@@ -56,11 +56,11 @@ import common.FMCSettings;
 import net.md_5.bungee.api.ChatColor;
 
 public class ImageMap {
+    public static final String PERSISTANT_KEY = "custom_image";
     public static List<String> imagesColumnsList = new ArrayList<>();
     public static AtomicBoolean isGetColumnInfo = new AtomicBoolean(false);
     public static List<Integer> thisServerMapIds = new ArrayList<>();
     public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q"));
-    private static final String PERSISTANT_KEY = "custom_image";
     private final common.Main plugin;
     private final Logger logger;
     private final Database db;
@@ -279,94 +279,6 @@ public class ImageMap {
         }
     }
 
-    public void checkPlayerInventory(Connection conn, Player player) throws SQLException, ClassNotFoundException {
-        Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            for (ItemStack item : player.getInventory().getContents()) {
-                if (item != null && item.getType() == Material.FILLED_MAP) {
-                    MapMeta mapMeta = (MapMeta) item.getItemMeta();
-                    if (mapMeta != null && mapMeta.hasMapView()) {
-                        MapView mapView = mapMeta.getMapView();
-                        if (mapView != null) {
-                            int mapId = mapView.getId();
-                            if (serverImageInfo.containsKey(mapId) && !thisServerMapIds.contains(mapId)) {
-                                Map<String, Object> imageInfo = serverImageInfo.get(mapId);
-                                boolean isQr = (boolean) imageInfo.get("isqr");
-                                Date date = (Date) imageInfo.get("date");
-                                String imageUUID = (String) imageInfo.get("imuuid");
-                                String ext = (String) imageInfo.get("ext");
-                                try {
-                                    String fullPath = getFullPath(date, imageUUID, ext); // Connectionが必要ない場合はnullを渡す
-                                    logger.info("Replacing image to the map(No.{})...", new Object[] {mapId, fullPath});
-                                        BufferedImage image = loadImage(fullPath);
-                                        if (image != null) {
-                                            // QRコードならリサイズしない
-                                            image = isQr ? image : resizeImage(image, 128, 128);
-                                            mapView.getRenderers().clear();
-                                            mapView.addRenderer(new ImageMapRenderer(logger, image, fullPath));
-                                            mapMeta.setMapView(mapView);
-                                            item.setItemMeta(mapMeta);
-                                        } else {
-                                            logger.error("Failed to load image from path: {}", fullPath);
-                                        }
-                                } catch (IOException e) {
-                                    logger.error("Error loading image: {}" , e);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    public void loadAllItemInThisServerFrames(Connection conn) throws SQLException, ClassNotFoundException {
-        Map<Integer, Map<String, Object>> serverImageInfo = getThisServerImages(conn);
-        for (World world : Bukkit.getWorlds()) {
-            logger.info("Loading item frames in the world: {}", world.getName());
-            for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
-                ItemStack item = itemFrame.getItem();
-                if (item.getType() == Material.FILLED_MAP) {
-                    MapMeta mapMeta = (MapMeta) item.getItemMeta();
-                    if (mapMeta != null && mapMeta.hasMapView()) {
-                        if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                            MapView mapView = mapMeta.getMapView();
-                            if (mapView != null) {
-                                int mapId = mapView.getId();
-                                if (serverImageInfo.containsKey(mapId)) {
-                                    thisServerMapIds.add(mapId);
-                                    Map<String, Object> imageInfo = serverImageInfo.get(mapId);
-                                    boolean isQr = (boolean) imageInfo.get("isqr");
-                                    Date date = (Date) imageInfo.get("date");
-                                    String imageUUID = (String) imageInfo.get("imuuid");
-                                    String ext = (String) imageInfo.get("ext");
-                                    String fullPath = getFullPath(date, imageUUID, ext);
-                                    logger.info("Replacing image to the map(No.{})...", new Object[] {mapId, fullPath});
-                                    try {
-                                        BufferedImage image = loadImage(fullPath);
-                                        if (image != null) {
-                                            // QRコードならリサイズしない
-                                            image = isQr ? image : resizeImage(image, 128, 128);
-                                            mapView.getRenderers().clear();
-                                            mapView.addRenderer(new ImageMapRenderer(logger, image, fullPath));
-                                        } 
-                                    } catch (IOException e) {
-                                        logger.error("マップId {} の画像の読み込みに失敗しました: {}", new Object[] {mapId, fullPath});
-                                        logger.error("An IOException error occurred: {}", e.getMessage());
-                                        for (StackTraceElement element : e.getStackTrace()) {
-                                            logger.error(element.toString());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        logger.info("Loaded all item frames.");
-    }
-
     public Map<Integer, Map<String, Object>> getImageMap(Connection conn) throws SQLException, ClassNotFoundException {
         Map<Integer, Map<String, Object>> imageInfo = new HashMap<>();
         String query = "SELECT * FROM images WHERE menu!=?;";
@@ -495,30 +407,11 @@ public class ImageMap {
         return 0;
     }
 
-    private boolean checkOTPIsCorrect(Connection conn, String code) throws SQLException, ClassNotFoundException {
-        String query = "SELECT * FROM images WHERE otp=? LIMIT 1;";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setString(1, code);
-        ResultSet rs = ps.executeQuery();
-        return rs.next();
+    public String getFullPath(Date date, String imageUUID, String ext) {
+        return FMCSettings.IMAGE_FOLDER.getValue() + "/" + date.toString().replace("-", "") + "/" + imageUUID + "." + ext;
     }
 
-    private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
-        Image resultingImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
-        BufferedImage outputImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = outputImage.createGraphics();
-        g2d.drawImage(resultingImage, 0, 0, null);
-        g2d.dispose();
-        return outputImage;
-    }
-    
-    @SuppressWarnings("unused")
-    private String formatDate(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return date.format(formatter);
-    }
-
-    private BufferedImage loadImage(String filePath) throws IOException {
+    public BufferedImage loadImage(String filePath) throws IOException {
         File imageFile = new File(filePath);
         if (!imageFile.exists()) {
             logger.error("Image file does not exist: {}", filePath);
@@ -527,8 +420,27 @@ public class ImageMap {
         return ImageIO.read(imageFile);
     }
 
-    private String getFullPath(Date date, String imageUUID, String ext) {
-        return FMCSettings.IMAGE_FOLDER.getValue() + "/" + date.toString().replace("-", "") + "/" + imageUUID + "." + ext;
+    public BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
+        Image resultingImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+        BufferedImage outputImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = outputImage.createGraphics();
+        g2d.drawImage(resultingImage, 0, 0, null);
+        g2d.dispose();
+        return outputImage;
+    }
+
+    private boolean checkOTPIsCorrect(Connection conn, String code) throws SQLException, ClassNotFoundException {
+        String query = "SELECT * FROM images WHERE otp=? LIMIT 1;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, code);
+        ResultSet rs = ps.executeQuery();
+        return rs.next();
+    }
+
+    @SuppressWarnings("unused")
+    private String formatDate(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return date.format(formatter);
     }
 
     private boolean isValidURL(String urlString) {
