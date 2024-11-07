@@ -1,19 +1,30 @@
 package common;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
+
+import spigot.ImageMap;
 
 public class Database {
     public static Database staticInstance;
     private final String host, user, defaultDatabase, password;
     private final int port;
     private final Logger logger;
+    private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+
     public Database(Logger logger, String host, String user, String defaultDatabase, String password, int port) {
         this.logger = logger;
         this.host = host;
@@ -121,6 +132,47 @@ public class Database {
             }
         }
         return count;
+    }
+
+    public void defineImageColumnNamesList(Connection conn, String tableName) throws SQLException {
+        List<String> columnNames = new ArrayList<>();
+        DatabaseMetaData metaData = conn.getMetaData();
+        try (ResultSet rs = metaData.getColumns(null, null, tableName, null)) {
+            while (rs.next()) {
+                String columnName = rs.getString("COLUMN_NAME");
+                columnNames.add(columnName);
+            }
+        }
+        switch (tableName) {
+            case "images" -> {
+                ImageMap.imagesColumnsList = columnNames;
+            }
+        }
+    }
+    
+    public Map<String, Object> getMemberMap(Connection conn, String key) throws SQLException {
+        Map<String, Object> rowMap = new HashMap<>();
+        String query = "SELECT * FROM members WHERE ";
+        if (isUUID(key)) {
+            query += "uuid = ?";
+        } else {
+            query += "name = ?";
+        }
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, key);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            int columnCount = rs.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = rs.getMetaData().getColumnName(i);
+                rowMap.put(columnName, rs.getObject(columnName));
+            }
+        }
+        return rowMap;
+    }
+
+    private boolean isUUID(String str) {
+        return UUID_PATTERN.matcher(str).matches();
     }
 
     private void setPreparedStatementValues(PreparedStatement ps, Object[] args) throws SQLException {

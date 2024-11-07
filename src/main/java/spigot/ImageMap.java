@@ -1,7 +1,5 @@
 package spigot;
 
-import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -53,12 +51,12 @@ import com.google.zxing.qrcode.QRCodeWriter;
 
 import common.Database;
 import common.FMCSettings;
+import net.coobird.thumbnailator.Thumbnails;
 import net.md_5.bungee.api.ChatColor;
 
 public class ImageMap {
     public static final String PERSISTANT_KEY = "custom_image";
     public static List<String> imagesColumnsList = new ArrayList<>();
-    public static AtomicBoolean isGetColumnInfo = new AtomicBoolean(false);
     public static List<Integer> thisServerMapIds = new ArrayList<>();
     public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q"));
     private final common.Main plugin;
@@ -176,8 +174,16 @@ public class ImageMap {
         }
     }
 
-    @SuppressWarnings("null")
     public void executeImageMap(CommandSender sender, Command command, String label, String[] args, Object[] dArgs) {
+        executeImageMap(sender, args, dArgs, false);
+    }
+
+    public void executeImageMapForConfirm(CommandSender sender, String[] args) {
+        executeImageMap(sender, args, null, true);
+    }
+
+    @SuppressWarnings("null")
+    private void executeImageMap(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
                 player.sendMessage("使用法: /fmc im <create|createqr> <url> [Optional: <title> <comment>]");
@@ -261,7 +267,7 @@ public class ImageMap {
                 if (fromDiscord) {
                     db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], now, (String) dArgs[0]});
                 } else {
-                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, Date.valueOf(LocalDate.now())});
+                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
                 }
                 player.getInventory().addItem(mapItem);
                 player.sendMessage("画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
@@ -311,14 +317,10 @@ public class ImageMap {
             int columnCount = rs.getMetaData().getColumnCount();
             for (int i = 1; i <= columnCount; i++) {
                 String columnName = rs.getMetaData().getColumnName(i);
-                if (!ImageMap.isGetColumnInfo.get()) {
-                    imagesColumnsList.add(columnName);
-                }
                 if (!columnName.equals("mapid")) {
                     rowMap.put(columnName, rs.getObject(columnName));
                 }
             }
-            ImageMap.isGetColumnInfo.set(true);
             serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
         }
         return serverImageInfo;
@@ -347,7 +349,16 @@ public class ImageMap {
             }
         }
         if (!found.get()) {
-            player.sendMessage("地図ID " + mapId + " が見つかりません。");
+            //player.sendMessage("地図ID " + mapId + " が見つかりません。");
+            // このメソッドは、このサーバーにあるマップをプレイヤーに渡すメソッドである。
+            // すなわち、このサーバーに過去あった、もしくは現在あることは確定
+            // このサーバーというのは確定してる
+            // このサーバーにはないマップを生成する
+            // ロードして、プレイヤーに上げて、もとのデータベースのmapIDを更新すればいい
+            // このサーバーとmapIdで一致するデータを取得
+            // そのデータを使って、マップを生成
+            // プレイヤーに渡す
+            // そのデータベースのmapIdを更新
         }
     }
 
@@ -357,12 +368,12 @@ public class ImageMap {
     }
 
     private void copyLineFromMenu(Connection conn, int id, Map<String, String> modifyMap) throws SQLException, ClassNotFoundException {
-        List<String> modifiedImageColumnsList = new ArrayList<>(imagesColumnsList),
-            imagesColumnsListCopied = new ArrayList<>(imagesColumnsList);
+        List<String> modifiedImageColumnsList = new ArrayList<>(ImageMap.imagesColumnsList),
+            imagesColumnsListCopied = new ArrayList<>(ImageMap.imagesColumnsList);
         for (Map.Entry<String, String> entry : modifyMap.entrySet()) {
             String key = entry.getKey(),
                 newValue = entry.getValue();
-                modifiedImageColumnsList = modifiedImageColumnsList.stream()
+            modifiedImageColumnsList = modifiedImageColumnsList.stream()
                 .map(s -> s.equals(key) ? newValue : s)
                 .collect(Collectors.toList());
         }
@@ -370,9 +381,10 @@ public class ImageMap {
         imagesColumnsListCopied.remove("id");
         modifiedImageColumnsList.remove("id");
         String query = "INSERT INTO images (" + String.join(", ", imagesColumnsListCopied) + ") " +
-                    "SELECT " + String.join(", ", modifiedImageColumnsList) + " " +
-                    "FROM images " +
-                    "WHERE id = ?;";
+                       "SELECT " + String.join(", ", modifiedImageColumnsList) + " " +
+                       "FROM images " +
+                       "WHERE id = ?;";
+        logger.info(query);
         PreparedStatement ps = conn.prepareStatement(query);
         ps.setInt(1, id);
         ps.executeUpdate();
@@ -420,13 +432,22 @@ public class ImageMap {
         return ImageIO.read(imageFile);
     }
 
-    public BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
+    /*public BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
         Image resultingImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
         BufferedImage outputImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = outputImage.createGraphics();
         g2d.drawImage(resultingImage, 0, 0, null);
         g2d.dispose();
         return outputImage;
+        BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+        resizedImage.getGraphics().drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
+        return resizedImage;
+    }*/
+
+    public BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) throws IOException {
+        return Thumbnails.of(originalImage)
+            .size(targetWidth, targetHeight)
+            .asBufferedImage();
     }
 
     private boolean checkOTPIsCorrect(Connection conn, String code) throws SQLException, ClassNotFoundException {

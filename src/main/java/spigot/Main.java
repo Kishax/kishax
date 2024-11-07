@@ -32,8 +32,10 @@ public class Main {
 		logger.info("detected spigot platform.");
         injector = Guice.createInjector(new spigot.Module(plugin, logger));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
-		try (Connection conn = getInjector().getInstance(Database.class).getConnection()) {
+		Database db = getInjector().getInstance(Database.class);
+		try (Connection conn = db.getConnection()) {
 			ifHubThenUpdate(conn);
+			db.defineImageColumnNamesList(conn, "images");
 		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("An error occurred while updating the database: {}", e.getMessage());
 		}

@@ -28,16 +28,13 @@ public class Check {
                 player.teleport(FMCCoords.ROOM_POINT.getLocation());
             } else {
                 player.sendMessage(ChatColor.GREEN + "WEB認証...PASS\n\nALL CORRECT");
-                // 5秒後にハブに移動
                 player.sendMessage(ChatColor.GREEN + "5秒後にハブに移動します。");
                 new BukkitRunnable() {
                     int countdown = 5;
                     @Override
                     public void run() {
-                        if (countdown <= 1) {
-                            player.sendMessage(ChatColor.AQUA + "ハブエリアに移動します。");
-                        }
                         if (countdown <= 0) {
+                            player.sendMessage(ChatColor.AQUA + "ハブエリアに移動します。");
                             player.teleport(FMCCoords.HUB_POINT.getLocation());
                             cancel();
                             return;

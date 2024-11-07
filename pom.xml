@@ -34,6 +34,12 @@
       </repository>
    </repositories>
    <dependencies>
+      <!-- https://mvnrepository.com/artifact/net.coobird/thumbnailator -->
+      <dependency>
+         <groupId>net.coobird</groupId>
+         <artifactId>thumbnailator</artifactId>
+         <version>0.4.20</version>
+      </dependency>
       <dependency>
          <groupId>com.google.zxing</groupId>
          <artifactId>core</artifactId>
@@ -104,11 +110,10 @@
          <version>20180813</version>
       </dependency>
       <!-- https://mvnrepository.com/artifact/net.dv8tion/JDA -->
-      <!-- https://mvnrepository.com/artifact/net.dv8tion/JDA -->
       <dependency>
          <groupId>net.dv8tion</groupId>
          <artifactId>JDA</artifactId>
-         <version>5.1.2</version>
+         <version>5.2.0</version>
       </dependency>
       <dependency>
          <groupId>com.google.code.gson</groupId>

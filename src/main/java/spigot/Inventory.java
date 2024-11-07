@@ -65,7 +65,7 @@ public class Inventory {
                                                 String ext = (String) imageInfo.get("ext");
                                                 try {
                                                     String fullPath = im.getFullPath(date, imageUUID, ext); // Connectionが必要ない場合はnullを渡す
-                                                    logger.info("Replacing image to the No.{} map in {}\\'s inventory...", new Object[] {mapId, playerName});
+                                                    logger.info("Replacing image to the No.{} map in {}\'s inventory...", new Object[] {mapId, playerName});
                                                         BufferedImage image = im.loadImage(fullPath);
                                                         if (image != null) {
                                                             // QRコードならリサイズしない

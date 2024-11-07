@@ -327,6 +327,8 @@ public class Menu {
                     inv.addItem(item);
                     //inv.setItem(slot, item);
                     if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
+                        // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
+                        // 
                         //Map<String, Object> thisServerImage = thisServerImageInfo.get(mapId);
                         playerMenuActions.put(inv.first(item), () -> {
                             im.giveMapToPlayer(player, mapId);
