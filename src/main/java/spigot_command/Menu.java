@@ -328,19 +328,22 @@ public class Menu {
                     //inv.setItem(slot, item);
                     if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
                         // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
-                        // 
                         //Map<String, Object> thisServerImage = thisServerImageInfo.get(mapId);
                         playerMenuActions.put(inv.first(item), () -> {
+                            //logger.info("through into giveMap");
+                            player.closeInventory();
                             im.giveMapToPlayer(player, mapId);
                         });
                     } else if (locked) {
                         playerMenuActions.put(inv.first(item), () -> {
+                            //logger.info("through into lockedMap");
                             player.closeInventory();
                             player.sendMessage(ChatColor.RED + "この画像はロックされています。\n"
                                 + ChatColor.GRAY + "この画像を取得するには、/qコマンドにて、OTPを入力してください。");
                         });
                     } else {
                         playerMenuActions.put(inv.first(item), () -> {
+                            //logger.info("through into executeImageMapFromMenu");
                             player.closeInventory();
                             im.executeImageMapFromMenu(player, new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date});
                         });

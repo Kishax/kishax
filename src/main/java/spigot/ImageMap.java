@@ -120,7 +120,15 @@ public class ImageMap {
         }
     }
     
+    public void executeImageMapFromGivingMap(Player player, Object[] mArgs) {
+        executeImageMapFromMenu(player, mArgs, true);
+    }
+
     public void executeImageMapFromMenu(Player player, Object[] mArgs) {
+        executeImageMapFromMenu(player, mArgs, false);
+    }
+
+    private void executeImageMapFromMenu(Player player, Object[] mArgs, boolean isGiveMap) {
         // このサーバーにはないマップを生成する
         try (Connection conn = db.getConnection()) {
             int id = (int) mArgs[0];
@@ -163,6 +171,12 @@ public class ImageMap {
             modifyMap.put("server", "\"" + serverName + "\"");
             modifyMap.put("mapid", String.valueOf(mapId));
             copyLineFromMenu(conn, id, modifyMap);
+            if (isGiveMap) {
+                // mapIdを更新する必要がある
+                // なぜなら、このサーバーにはないマップを生成するため
+                // giveMapメソッドで、そのワールド内にないことは確認済みなので
+                db.updateLog(conn, "UPDATE images SET mapid=? WHERE id=?;", new Object[] {mapId, id});
+            }
             player.getInventory().addItem(mapItem);
             player.sendMessage("画像マップを渡しました。");
         } catch (IOException | SQLException | ClassNotFoundException e) {
@@ -359,7 +373,45 @@ public class ImageMap {
             // そのデータを使って、マップを生成
             // プレイヤーに渡す
             // そのデータベースのmapIdを更新
+            try (Connection conn = db.getConnection()) {
+                Map<String, Object> mapInfo = getMapInfoForThisServerByMapId(conn, mapId);
+                if (!mapInfo.isEmpty()) {
+                    int id = (Integer) mapInfo.get("id");
+                    boolean isQr = (boolean) mapInfo.get("isqr");
+                    String authorName = (String) mapInfo.get("name"),
+                        imageUUID = (String) mapInfo.get("imuuid"),
+                        title = (String) mapInfo.get("title"),
+                        comment = (String) mapInfo.get("comment"),
+                        ext = (String) mapInfo.get("ext"),
+                        date = ((Date) mapInfo.get("date")).toString();
+                    Object[] mArgs = new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date, mapId};
+                    executeImageMapFromGivingMap(player, mArgs);
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                player.sendMessage("画像の読み取りに失敗しました。");
+                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.error(element.toString());
+                }
+            }
         }
+    }
+
+    private Map<String, Object> getMapInfoForThisServerByMapId(Connection conn, int mapId) throws SQLException, ClassNotFoundException {
+        Map<String, Object> mapInfo = new HashMap<>();
+        String query = "SELECT * FROM images WHERE mapid=? AND server=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setInt(1, mapId);
+        ps.setString(2, serverName);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            int columnCount = rs.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = rs.getMetaData().getColumnName(i);
+                mapInfo.put(columnName, rs.getObject(columnName));
+            }
+        }
+        return mapInfo;
     }
 
     public String formatDate2(LocalDate date) {
@@ -384,7 +436,7 @@ public class ImageMap {
                        "SELECT " + String.join(", ", modifiedImageColumnsList) + " " +
                        "FROM images " +
                        "WHERE id = ?;";
-        logger.info(query);
+        //logger.info(query);
         PreparedStatement ps = conn.prepareStatement(query);
         ps.setInt(1, id);
         ps.executeUpdate();
