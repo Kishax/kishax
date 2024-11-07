@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -38,6 +39,7 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import spigot_command.Button;
+import spigot_command.Confirm;
 import spigot_command.Menu;
 
 public final class EventListener implements Listener {
@@ -61,6 +63,12 @@ public final class EventListener implements Listener {
         this.lp = lp;
         this.inv = inv;
 	}
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        Confirm.confirmMap.remove(player);
+    }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
