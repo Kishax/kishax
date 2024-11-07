@@ -26,13 +26,13 @@ public class DoServerOffline {
 	}
 	
 	public void UpdateDatabase() {
+		String serverName = shd.getServerName();
 		SocketSwitch ssw = sswProvider.get();
 		ssw.sendSpigotServer("MineStatusSync");
 		String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
 		try (Connection conn = db.getConnection();
 			PreparedStatement ps = conn.prepareStatement(query)) {
 			// "plugins"ディレクトリの親ディレクトリを取得
-            String serverName = shd.getServerName();
 			ps.setBoolean(1,false);
 			ps.setInt(2, 0);
 			ps.setString(3, serverName);

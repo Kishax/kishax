@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -49,7 +50,6 @@ public final class EventListener implements Listener {
     private final Luckperms lp;
     private final Inventory inv;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
-    //private final Set<Player> playersOpeningNewInventory = new HashSet<>();
 
     @Inject
 	public EventListener(common.Main plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv) {
@@ -80,6 +80,7 @@ public final class EventListener implements Listener {
     
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        event.setJoinMessage(null);
         Player player = event.getPlayer();
         String playerName = player.getName();
         int permLevel = lp.getPermLevel(playerName);
@@ -87,6 +88,12 @@ public final class EventListener implements Listener {
             player.teleport(FMCCoords.LOAD_POINT.getLocation());
         } else {
             player.teleport(FMCCoords.HUB_POINT.getLocation());
+            if (EventListener.isHub.get()) {
+                if (player.getGameMode() != GameMode.CREATIVE) {
+                    player.setGameMode(GameMode.CREATIVE);
+                    player.sendMessage(ChatColor.GREEN + "クリエイティブモードに変更しました。");
+                }
+            }
         }
         inv.updatePlayerInventory(player);
     }
@@ -197,7 +204,7 @@ public final class EventListener implements Listener {
                                     .create();
                                 player.spigot().sendMessage(component);
                                 switch (name) {
-                                    case "life","distributed","mod" -> {
+                                    case "life","distributed","mod","online" -> {
                                         player.performCommand("fmc menu server " + name);
                                     }
                                     case "waterGate" -> {
@@ -206,6 +213,9 @@ public final class EventListener implements Listener {
                                         if (block != null && block.getType() == Material.WATER) {
                                             player.performCommand("fmc check");
                                         }
+                                    }
+                                    case "confirm" -> {
+                                        player.performCommand("fmc confirm");
                                     }
                                 }
                             }

@@ -34,6 +34,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import common.Database;
+import common.PermSettings;
 import common.PlayerUtils;
 import discord.DiscordEventListener;
 import discord.MessageEditorInterface;
@@ -247,17 +248,6 @@ public class EventListener {
         }).schedule();
 	}
 	
-	public boolean detectMatches(String input, String pattern) {
-        Pattern regex = Pattern.compile(pattern);
-        Matcher matcher = regex.matcher(input);
-        while (matcher.find()) {
-            //String found = matcher.group();
-            //System.out.println(message + ": " + found);
-        	return true;
-        }
-        return false;
-    }
-	
 	@Subscribe
 	public void onServerSwitch(ServerConnectedEvent e) {
 		Player player = e.getPlayer();
@@ -298,7 +288,7 @@ public class EventListener {
 			try (Connection conn = db.getConnection()) {
 				if (db.isMaintenance(conn)) {
 					List<String> menteAllowMembers = mt.getMenteAllowMembers();
-					if (player.hasPermission("group.super-admin")) {
+					if (player.hasPermission(PermSettings.SUPER_ADMIN.get())) {
 						player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
 					} else if (menteAllowMembers.contains(playerName)) {
 						player.sendMessage(Component.text("メンテメンバー認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
@@ -529,10 +519,10 @@ public class EventListener {
     	Player player = e.getPlayer();
 		String playerName = player.getUsername();
 		if (gm.isGeyserPlayer(player)) {
-			logger.info("GeyserMC player connected: " + playerName);
+			logger.info("GeyserMC player disconnected: " + playerName);
 			return;
 		} else {
-			logger.info("Java player connected: " + playerName);
+			logger.info("Java player disconnected: " + playerName);
 		}
 		player.getCurrentServer().ifPresent(serverConnection -> {
 			RegisteredServer registeredServer = serverConnection.getServer();
@@ -559,5 +549,16 @@ public class EventListener {
                 disconnectTasks.remove(player);
             }
         }, 10, TimeUnit.SECONDS);  // 10秒の遅延
+    }
+
+	private boolean detectMatches(String input, String pattern) {
+        Pattern regex = Pattern.compile(pattern);
+        Matcher matcher = regex.matcher(input);
+        while (matcher.find()) {
+            //String found = matcher.group();
+            //System.out.println(message + ": " + found);
+        	return true;
+        }
+        return false;
     }
 }
