@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
@@ -146,6 +147,25 @@ public final class EventListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
+            ClickType click = event.getClick();
+            ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem != null) {
+                logger.info("Player {} clicked the item {}!", player.getName(), clickedItem.getType());
+                switch (clickedItem.getType()) {
+                    case ENCHANTED_BOOK -> {
+                        EnchantmentStorageMeta meta = (EnchantmentStorageMeta) clickedItem.getItemMeta();
+                        if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Menu.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                            if (click.isRightClick() || click == ClickType.CREATIVE) {
+                                player.closeInventory();
+                                player.performCommand("fmc menu");
+                                return;
+                            }
+                        }
+                    }
+                    default -> {
+                    }
+                }
+            }
             String title = event.getView().getTitle();
             if (Menu.menuNames.contains(title)) {
                 event.setCancelled(true);
