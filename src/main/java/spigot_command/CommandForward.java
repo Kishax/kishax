@@ -9,9 +9,7 @@ import com.google.inject.Provider;
 import spigot.SocketSwitch;
 
 public class CommandForward {
-
 	private final Provider<SocketSwitch> sswProvider;
-	
 	@Inject
 	public CommandForward(Provider<SocketSwitch> sswProvider) {
 		this.sswProvider = sswProvider;

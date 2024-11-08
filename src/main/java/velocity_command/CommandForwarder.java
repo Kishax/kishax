@@ -2,6 +2,8 @@ package velocity_command;
 
 import java.util.Objects;
 
+import org.slf4j.Logger;
+
 import com.google.inject.Inject;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
@@ -13,11 +15,12 @@ import net.kyori.adventure.text.format.NamedTextColor;
 public class CommandForwarder {
     private final ProxyServer server;
     private final ConsoleCommandSource console;
-    
+    private final Logger logger;
     @Inject
-    public CommandForwarder (ProxyServer server, ConsoleCommandSource console) {
+    public CommandForwarder (ProxyServer server, ConsoleCommandSource console, Logger logger) {
         this.server = server;
         this.console = console;
+        this.logger = logger;
     }
 
     public void forwardCommand(String execPlayer, String command, String targetPlayer) {
@@ -25,6 +28,7 @@ public class CommandForwarder {
         Player player = server.getPlayer(targetPlayer).orElse(null);
         if (Objects.nonNull(player)) {
             // プレイヤーが存在すればコマンドを実行
+            logger.info("Forwarding command to " + targetPlayer + ": " + command);
             server.getCommandManager().executeAsync(player, command);
         } else {
         	Component errorMessage = Component.text("プレイヤー " + targetPlayer + " は見つかりませんでした。").color(NamedTextColor.RED); 

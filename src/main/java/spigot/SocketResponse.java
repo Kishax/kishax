@@ -69,7 +69,7 @@ public class SocketResponse {
                                 message.setBold(true);
                                 message.setUnderlined(true);
                                 message.setColor(ChatColor.GOLD);
-                                message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/inv"));
+                                message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fmc menu server then"));
                                 message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("直近で起動したサーバーインベントリを開きます。")));
                                 TextComponent asterisk = new TextComponent("\n※\s");
                                 asterisk.setColor(ChatColor.GRAY);
