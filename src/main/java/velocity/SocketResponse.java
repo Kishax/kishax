@@ -123,12 +123,10 @@ public class SocketResponse {
     		String pattern = "(\\S+) fv (\\S+) (.+)";
             java.util.regex.Pattern r = java.util.regex.Pattern.compile(pattern);
             java.util.regex.Matcher m = r.matcher(res);
-            
             if (m.find()) {
             	String execplayerName = m.group(1);
                 String playerName = m.group(2);
                 String command = m.group(3);
-				logger.info("resaction: "+execplayerName+" "+playerName+" "+command);
                 Main.getInjector().getInstance(CommandForwarder.class).forwardCommand(execplayerName, command, playerName);
             }
     	} else if (res.contains("プレイヤー不在")) {

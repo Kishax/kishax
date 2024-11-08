@@ -150,7 +150,6 @@ public final class EventListener implements Listener {
             ClickType click = event.getClick();
             ItemStack clickedItem = event.getCurrentItem();
             if (clickedItem != null) {
-                logger.info("Player {} clicked the item {}!", player.getName(), clickedItem.getType());
                 switch (clickedItem.getType()) {
                     case ENCHANTED_BOOK -> {
                         EnchantmentStorageMeta meta = (EnchantmentStorageMeta) clickedItem.getItemMeta();
