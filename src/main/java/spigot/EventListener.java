@@ -188,62 +188,67 @@ public final class EventListener implements Listener {
     
 	@EventHandler
     @SuppressWarnings("unchecked")
-    public void onPlayerMove(PlayerMoveEvent e) {
+    public void onPlayerMove(PlayerMoveEvent event) {
         if (plugin.getConfig().getBoolean("Portals.Move", false)) {
-            Player player = e.getPlayer();
+            Player player = event.getPlayer();
             Location loc = player.getLocation();
-            FileConfiguration portalsConfig;
-            List<Map<?, ?>> portals;
-            if (WandListener.isMakePortal) {
-                WandListener.isMakePortal = false;
-                portalsConfig = psConfig.getPortalsConfig();
-                portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
-            } else {
-                portalsConfig = psConfig.getPortalsConfig();
-                portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
-            }
-            boolean isInAnyPortal = false;
-            if (portals != null) {
-                for (Map<?, ?> portal : portals) {
-                    String name = (String) portal.get("name");
-                    List<?> corner1List = (List<?>) portal.get("corner1");
-                    List<?> corner2List = (List<?>) portal.get("corner2");
-                    if (corner1List != null && corner2List != null) {
-                        Location corner1 = new Location(player.getWorld(),
-                                ((Number) corner1List.get(0)).doubleValue(),
-                                ((Number) corner1List.get(1)).doubleValue(),
-                                ((Number) corner1List.get(2)).doubleValue());
-                        Location corner2 = new Location(player.getWorld(),
-                                ((Number) corner2List.get(0)).doubleValue(),
-                                ((Number) corner2List.get(1)).doubleValue(),
-                                ((Number) corner2List.get(2)).doubleValue());
-                        if (isWithinBounds(loc, corner1, corner2)) {
-                            isInAnyPortal = true;
-                            if (!playersInPortal.contains(player)) {
-                                playersInPortal.add(player);
-                                logger.info("Player {} entered the {}!", new Object[]{player.getName(), name});
-                                switch (name) {
-                                    case "life","distributed","mod","online" -> {
-                                        player.performCommand("fmc menu server " + name);
+            if (loc != null) {
+                Block block = loc.getBlock();
+                FileConfiguration portalsConfig;
+                List<Map<?, ?>> portals;
+                if (WandListener.isMakePortal) {
+                    WandListener.isMakePortal = false;
+                    portalsConfig = psConfig.getPortalsConfig();
+                    portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
+                } else {
+                    portalsConfig = psConfig.getPortalsConfig();
+                    portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
+                }
+                boolean isInAnyPortal = false;
+                if (portals != null) {
+                    for (Map<?, ?> portal : portals) {
+                        String name = (String) portal.get("name");
+                        List<?> corner1List = (List<?>) portal.get("corner1");
+                        List<?> corner2List = (List<?>) portal.get("corner2");
+                        if (corner1List != null && corner2List != null) {
+                            Location corner1 = new Location(player.getWorld(),
+                                    ((Number) corner1List.get(0)).doubleValue(),
+                                    ((Number) corner1List.get(1)).doubleValue(),
+                                    ((Number) corner1List.get(2)).doubleValue());
+                            Location corner2 = new Location(player.getWorld(),
+                                    ((Number) corner2List.get(0)).doubleValue(),
+                                    ((Number) corner2List.get(1)).doubleValue(),
+                                    ((Number) corner2List.get(2)).doubleValue());
+                            if (isWithinBounds(loc, corner1, corner2)) {
+                                isInAnyPortal = true;
+                                if (!playersInPortal.contains(player)) {
+                                    playersInPortal.add(player);
+                                    logger.info("Player {} entered the {}!", new Object[]{player.getName(), name});
+                                    if (block.getType() == Material.NETHER_PORTAL) {
+                                        event.setCancelled(true);
                                     }
-                                    case "waterGate" -> {
-                                        Block block = loc != null ? loc.getBlock() : null;
-                                        if (block != null && block.getType() == Material.WATER) {
-                                            player.performCommand("fmc check");
+                                    switch (name) {
+                                        case "life","distributed","mod","online" -> {
+                                            player.performCommand("fmc menu server " + name);
+                                        }
+                                        case "waterGate" -> {
+                                            if (block.getType() == Material.WATER) {
+                                                player.performCommand("fmc check");
+                                            }
+                                        }
+                                        case "confirm" -> {
+                                            player.performCommand("fmc confirm");
                                         }
                                     }
-                                    case "confirm" -> {
-                                        player.performCommand("fmc confirm");
-                                    }
                                 }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
-            }
-            if (!isInAnyPortal) {
-                playersInPortal.remove(player);
+                if (!isInAnyPortal) {
+                    playersInPortal.remove(player);
+                }
             }
         }
     }
