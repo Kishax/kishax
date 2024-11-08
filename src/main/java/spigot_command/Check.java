@@ -34,7 +34,6 @@ public class Check {
                     @Override
                     public void run() {
                         if (countdown <= 0) {
-                            player.sendMessage(ChatColor.AQUA + "ハブエリアに移動します。");
                             player.teleport(FMCCoords.HUB_POINT.getLocation());
                             cancel();
                             return;

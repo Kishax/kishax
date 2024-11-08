@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,7 +22,6 @@ public class Database {
     private final String host, user, defaultDatabase, password;
     private final int port;
     private final Logger logger;
-    private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
     public Database(Logger logger, String host, String user, String defaultDatabase, String password, int port) {
         this.logger = logger;
@@ -169,7 +167,7 @@ public class Database {
     //conn, "hubinv", false, player.getUniqueId().toString()
     public void updateMemberToggle(Connection conn, String columnName, boolean value, String key) throws SQLException {
         String query = "UPDATE members SET " + columnName + " = ? WHERE ";
-        if (isUUID(key)) {
+        if (JavaUtils.isUUID(key)) {
             query += "uuid = ?";
         } else {
             query += "name = ?";
@@ -184,7 +182,7 @@ public class Database {
     public Map<String, Object> getMemberMap(Connection conn, String key) throws SQLException {
         Map<String, Object> rowMap = new HashMap<>();
         String query = "SELECT * FROM members WHERE ";
-        if (isUUID(key)) {
+        if (JavaUtils.isUUID(key)) {
             query += "uuid = ?";
         } else {
             query += "name = ?";
@@ -208,10 +206,6 @@ public class Database {
             set.add(rs.getObject(1));
         }
         return set;
-    }
-
-    private boolean isUUID(String str) {
-        return UUID_PATTERN.matcher(str).matches();
     }
 
     private void setPreparedStatementValues(PreparedStatement ps, Object[] args) throws SQLException {
