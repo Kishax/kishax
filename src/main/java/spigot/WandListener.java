@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -19,6 +20,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -28,6 +30,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
+import spigot_command.PortalsWand;
 
 public class WandListener implements Listener {
     public static boolean isMakePortal = false;
@@ -49,10 +52,9 @@ public class WandListener implements Listener {
         if (plugin.getConfig().getBoolean("Portals.Wand", false)) {
             Player player = event.getPlayer();
             ItemStack item = event.getItem();
-
             if (item != null && item.getType() == Material.STONE_AXE && event.getHand() == EquipmentSlot.HAND) {
                 ItemMeta meta = item.getItemMeta();
-                if (meta != null && meta.hasDisplayName() && meta.getDisplayName().equals(ChatColor.GREEN + "Portal Wand")) {
+                if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, PortalsWand.PERSISTANT_KEY), PersistentDataType.STRING)) {
                     Block block = event.getClickedBlock();
                     if (block == null) {
                         logger.error("Block is null");
@@ -100,6 +102,11 @@ public class WandListener implements Listener {
                                 .append(ChatColor.GOLD + "ココ")
                                     .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc portal rename " + portalUUID + " "))
                                     .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルの名前を変更")))
+                                .append(ChatColor.WHITE + "をクリックしてね")
+                                .append("\n" + ChatColor.WHITE + "ポータルにネザーゲートを付与するには")
+                                .append(ChatColor.GOLD + "ココ")
+                                    .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmc portal nether " + portalUUID))
+                                    .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルにネザーゲートを付与")))
                                 .append(ChatColor.WHITE + "をクリックしてね")
                                 .create();
                         player.spigot().sendMessage(component);

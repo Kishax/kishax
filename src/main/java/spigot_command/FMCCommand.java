@@ -137,6 +137,10 @@ public class FMCCommand implements TabExecutor {
 							Main.getInjector().getInstance(PortalsRename.class).execute(sender, cmd, label, args);
 							return true;
 						}
+						case "nether" -> {
+							Main.getInjector().getInstance(PortalsNether.class).execute(sender, cmd, label, args);
+							return true;
+						}
 					}
 				} else {
 					sender.sendMessage("Usage: /fmc portal <rename|delete|wand>");
@@ -175,7 +179,7 @@ public class FMCCommand implements TabExecutor {
 						return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
 					}
 					case "portal" -> {
-						List<String> portalCmds = new ArrayList<>(Arrays.asList("menu","wand","delete","rename"));
+						List<String> portalCmds = new ArrayList<>(Arrays.asList("nether","wand","delete","rename"));
 						for (String portalcmd : portalCmds) {
 							if (!sender.hasPermission("fmc.portal." + portalcmd)) continue;
 							ret.add(portalcmd);
