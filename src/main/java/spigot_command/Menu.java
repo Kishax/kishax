@@ -780,7 +780,7 @@ public class Menu {
                 openServerEachInventory(player, thisServerType.get(), 1);
             }
         });
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(serverInventoryName, playerMenuActions);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
