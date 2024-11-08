@@ -22,11 +22,7 @@ import common.Database;
 import common.Luckperms;
 import common.PlayerUtils;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import velocity.Config;
 import velocity.Main;
 import velocity.RomajiConversion;
@@ -37,7 +33,7 @@ public class FMCCommand implements SimpleCommand {
     private final Database db;
     private final PlayerUtils pu;
     private final Luckperms lp;
-    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "ss", "req", "start", "stop", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend"));
+    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend"));
     public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
@@ -53,55 +49,7 @@ public class FMCCommand implements SimpleCommand {
     public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
         String[] args = invocation.arguments();
-        if (args.length == 0 || !subcommands.contains(args[0].toLowerCase())) {
-            if (source.hasPermission("fmc.proxy.commandslist")) {
-                TextComponent component = Component.text()
-                        .append(Component.text("FMC COMMANDS LIST").color(NamedTextColor.YELLOW).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-                        .append(Component.text("\n/hub").color(NamedTextColor.AQUA))
-                        .append(Component.text("\n/fmcp hub").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp hub"))
-                                .hoverEvent(HoverEvent.showText(Component.text("ホームサーバーに帰還"))))
-                        .append(Component.text("\n\n/fmcp ss <server>").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp ss "))
-                                .hoverEvent(HoverEvent.showText(Component.text("サーバーステータス取得"))))
-                        .append(Component.text("\n\n/fmcp start <server>").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp start "))
-                                .hoverEvent(HoverEvent.showText(Component.text("サーバーを起動"))))
-                        .append(Component.text("\n\n/fmcp req <server>").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp req"))
-                                .hoverEvent(HoverEvent.showText(Component.text("サーバー起動リクエスト"))))
-                        .append(Component.text("\n\n/fmcp cancel").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp cancel"))
-                                .hoverEvent(HoverEvent.showText(Component.text("「キャンセルしました」メッセージ"))))
-                        .append(Component.text("\n\n/fmcp debug").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp debug"))
-                                .hoverEvent(HoverEvent.showText(Component.text("管理者専用デバッグモード"))))
-                        .append(Component.text("\n\n/fmcp reload").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp reload"))
-                                .hoverEvent(HoverEvent.showText(Component.text("コンフィグ、リロード"))))
-                        .append(Component.text("\n\n/fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp perm "))
-                                .hoverEvent(HoverEvent.showText(Component.text("ユーザーに対して権限の追加と除去"))))
-                        .append(Component.text("\n\n/fmcb maintenance <switch|list> <discord> <true|false>").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp maintenance "))
-                                .hoverEvent(HoverEvent.showText(Component.text("メンテナンスモードの切り替え"))))
-                        .append(Component.text("\n\n/fmcb conv").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp conv <add|remove|switch|reload> [<add|remove>:key] [<add>:value] [<add>:true|false]"))
-                                .hoverEvent(HoverEvent.showText(Component.text("ローマ字変換方式の切り替え"))))
-                        .append(Component.text("\n\n/fmcp chat <switch|status>").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp chat"))
-                                .hoverEvent(HoverEvent.showText(Component.text("チャットメッセージタイプの切り替え"))))
-                        .append(Component.text("\n\n/fmcb cend").color(NamedTextColor.AQUA)
-                                .clickEvent(ClickEvent.suggestCommand("/fmcp cend"))
-                                .hoverEvent(HoverEvent.showText(Component.text("DiscordのプレイヤーごとのEmbedを編集して、プロキシサーバーをシャットダウン"))))
-                        .build();
-                source.sendMessage(component);
-            } else {
-                source.sendMessage(Component.text("You do not have permission for fmc commands.").color(NamedTextColor.RED));
-            }
-            return;
-        }
-
+        if (args.length == 0 || !subcommands.contains(args[0].toLowerCase())) return;
         String subCommand = args[0];
         if (source instanceof Player player) {
             if (!lp.hasPermission(player.getUsername(),"fmc.proxy." + subCommand)) {
@@ -114,13 +62,11 @@ public class FMCCommand implements SimpleCommand {
             case "debug" -> Main.getInjector().getInstance(Debug.class).execute(source, args);
             case "start" -> Main.getInjector().getInstance(StartServer.class).execute(source, args);
             case "stop" -> Main.getInjector().getInstance(StopServer.class).execute(source, args);
-            case "ss" -> Main.getInjector().getInstance(SetServer.class).execute(source, args);
             case "hub" -> Main.getInjector().getInstance(Hub.class).execute(invocation);
-            case "retry" -> Main.getInjector().getInstance(Retry.class).execute(source, args);
+            case "retry" -> Main.getInjector().getInstance(Retry.class).execute(invocation);
             case "reload" -> Main.getInjector().getInstance(ReloadConfig.class).execute(source, args);
             case "stp" -> Main.getInjector().getInstance(ServerTeleport.class).execute(source, args);
             case "req" -> Main.getInjector().getInstance(RequestInterface.class).execute(source, args);
-            case "cancel" -> Main.getInjector().getInstance(Cancel.class).execute(source, args);
             case "perm" -> Main.getInjector().getInstance(Perm.class).execute(source, args);
             case "maintenance" -> Main.getInjector().getInstance(Maintenance.class).execute(source, args);
             case "conv" -> Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
@@ -135,7 +81,6 @@ public class FMCCommand implements SimpleCommand {
         CommandSource source = invocation.source();
         String[] args = invocation.arguments();
         List<String> ret = new ArrayList<>();
-
         switch (args.length) {
         	case 0, 1 -> {
                 for (String subcmd : subcommands) {
@@ -147,13 +92,7 @@ public class FMCCommand implements SimpleCommand {
             case 2 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
                 switch (args[0].toLowerCase()) {
-                    case "something" -> {
-                        for (String any : bools) {
-                            ret.add(any);
-                        }
-                        return ret;
-                    }
-                    case "start", "req", "ss" -> {
+                    case "start", "req" -> {
                         for (String offlineServer : getServersList(false)) {
                             ret.add(offlineServer);
                         }

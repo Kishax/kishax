@@ -1,6 +1,7 @@
 package common;
 
 import java.security.SecureRandom;
+import java.util.Random;
 
 public class OTPGenerator {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -13,5 +14,10 @@ public class OTPGenerator {
             otp.append(CHARACTERS.charAt(index));
         }
         return otp.toString();
+    }
+
+    public static int generateOTPbyInt() {
+        Random rnd = new Random();
+        return (100000 + rnd.nextInt(900000));
     }
 }

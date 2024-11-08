@@ -28,9 +28,9 @@ public class Check {
                 player.teleport(FMCCoords.ROOM_POINT.getLocation());
             } else {
                 player.sendMessage(ChatColor.GREEN + "WEB認証...PASS\n\nALL CORRECT");
-                player.sendMessage(ChatColor.GREEN + "5秒後にハブに移動します。");
+                player.sendMessage(ChatColor.GREEN + "3秒後にハブに移動します。");
                 new BukkitRunnable() {
-                    int countdown = 5;
+                    int countdown = 3;
                     @Override
                     public void run() {
                         if (countdown <= 0) {
