@@ -78,7 +78,9 @@ public class SocketResponse {
                                 message2.setColor(ChatColor.GRAY);
                                 message2.setItalic(true);
                                 player.spigot().sendMessage(message, asterisk, message2);
-                                menu.openServerInventoryFromOnlineServerInventory(player, extractedServer, 1);
+                                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                    menu.openServerInventoryFromOnlineServerInventory(player, extractedServer, 1);
+                                });
                             }
                         } catch (SQLException | ClassNotFoundException e) {
                             logger.error("A SQLException | ClassNotFoundException occurred: ", e.getMessage());
