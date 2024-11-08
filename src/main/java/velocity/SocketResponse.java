@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,6 +28,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import velocity_command.CommandForwarder;
 
 public class SocketResponse {
+	private final Logger logger;
 	private final ProxyServer server;
 	private final Config config;
 	private final Luckperms lp;
@@ -36,7 +39,8 @@ public class SocketResponse {
 	private String mineName = null;
 	
 	@Inject
-	public SocketResponse (Main plugin, ProxyServer server, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider) {
+	public SocketResponse (Logger logger, ProxyServer server, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider) {
+		this.logger = logger;
 		this.server = server;
         this.config = config;
         this.lp = lp;
@@ -114,6 +118,7 @@ public class SocketResponse {
 				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
             }
     	} else if (res.contains("fv")) {
+			logger.info("resaction: "+res);
     		if (res.contains("\\n")) res = res.replace("\\n", "");
     		String pattern = "(\\S+) fv (\\S+) (.+)";
             java.util.regex.Pattern r = java.util.regex.Pattern.compile(pattern);
@@ -123,6 +128,7 @@ public class SocketResponse {
             	String execplayerName = m.group(1);
                 String playerName = m.group(2);
                 String command = m.group(3);
+				logger.info("resaction: "+execplayerName+" "+playerName+" "+command);
                 Main.getInjector().getInstance(CommandForwarder.class).forwardCommand(execplayerName, command, playerName);
             }
     	} else if (res.contains("プレイヤー不在")) {

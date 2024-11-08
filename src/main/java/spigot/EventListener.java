@@ -28,6 +28,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.slf4j.Logger;
@@ -72,13 +73,33 @@ public final class EventListener implements Listener {
         Player player = event.getPlayer();
         Action action = event.getAction();
         Block clickedBlock = event.getClickedBlock();
-        if (action == Action.RIGHT_CLICK_BLOCK && clickedBlock != null) {
-            ItemStack itemInHand = player.getInventory().getItemInMainHand();
-            if (itemInHand.getType() != Material.AIR) {
-                ItemMeta meta = itemInHand.getItemMeta();
-                if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Button.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                    player.sendMessage(ChatColor.GREEN + "特定のボタンが右クリックされました！");
+        ItemStack itemInHand = player.getInventory().getItemInMainHand();
+        switch (action) {
+            case RIGHT_CLICK_BLOCK, RIGHT_CLICK_AIR -> {
+                switch (itemInHand.getType()) {
+                    case ENCHANTED_BOOK -> {
+                        EnchantmentStorageMeta meta = (EnchantmentStorageMeta) itemInHand.getItemMeta();
+                        if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Menu.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                            player.performCommand("fmc menu");
+                        }
+                    }
+                    default -> {
+                    }
                 }
+                if (clickedBlock != null) {
+                    switch (clickedBlock.getType()) {
+                        case STONE_BUTTON -> {
+                            ItemMeta meta = itemInHand.getItemMeta();
+                            if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Button.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                player.sendMessage(ChatColor.GREEN + "特定のボタンが右クリックされました！");
+                            }
+                        }
+                        default -> {
+                        }
+                    }
+                }
+            }
+            default -> {
             }
         }
     }

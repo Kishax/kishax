@@ -8,17 +8,21 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
+import org.bukkit.persistence.PersistentDataType;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
 import common.Database;
 import spigot_command.Book;
+import spigot_command.Menu;
 
 public class Inventory {
     private final common.Main plugin;
@@ -39,6 +43,7 @@ public class Inventory {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 String playerName = player.getName();
+                boolean hasMenuBook = false;
                 try (Connection conn = db.getConnection()) {
                     Map<Integer, Map<String, Object>> serverImageInfo = im.getThisServerImages(conn);
                     for (ItemStack item : player.getInventory().getContents()) {
@@ -49,6 +54,12 @@ public class Inventory {
                                     if (meta != null) {
                                         item.setItemMeta(book.setBookItemMeta(meta));
                                         logger.info("Updating book in {}\'s inventory...", playerName);
+                                    }
+                                }
+                                case ENCHANTED_BOOK -> {
+                                    EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
+                                    if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Menu.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                        hasMenuBook = true;
                                     }
                                 }
                                 case FILLED_MAP -> {
@@ -95,6 +106,9 @@ public class Inventory {
                     for (StackTraceElement element : e.getStackTrace()) {
                         logger.error(element.toString());
                     }
+                }
+                if (!hasMenuBook) {
+                    player.performCommand("fmc menu get");
                 }
             });
         });

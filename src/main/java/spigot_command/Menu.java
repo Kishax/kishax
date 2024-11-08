@@ -24,6 +24,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -33,6 +34,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import common.Database;
+import common.FMCSettings;
 import common.Luckperms;
 import spigot.ImageMap;
 import spigot.Main;
@@ -41,6 +43,7 @@ import spigot.ServerStatusCache;
 
 @Singleton
 public class Menu {
+    public static final String PERSISTANT_KEY = "fmcmenu";
     public static String serverInventoryName = "server",
         menuInventoryName = "fmc menu",
         onlineServerInventoryName = "online servers",
@@ -48,8 +51,8 @@ public class Menu {
         imageInventoryName = "image maps",
         settingInventoryName = "settings";
     public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName);
-    public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image"));
-    public static List<String> args2 = new ArrayList<>(Arrays.asList("online","life","distibuted","mod"));
+    public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image", "get"));
+    public static List<String> args2 = new ArrayList<>(Arrays.asList("online","life","distibuted","mod","before"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     public static final int[] FACE_POSITIONS = {46, 47, 48, 49, 50, 51, 52};
     private static final List<Material> ORE_BLOCKS = Arrays.asList(
@@ -88,6 +91,38 @@ public class Menu {
                 generalMenu(player, 1);
             } else if (args.length > 1) {
                 switch (args[1].toLowerCase()) {
+                    case "get" -> {
+                        boolean hasMenuBook = false;
+                        for (ItemStack item : player.getInventory().getContents()) {
+                            if (item != null) {
+                                switch (item.getType()) {
+                                    case ENCHANTED_BOOK -> {
+                                        EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
+                                        if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Menu.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                            hasMenuBook = true;
+                                        }
+                                    }
+                                    default -> {
+                                    }
+                                }
+                            }
+                        }
+                        if (!hasMenuBook) {
+                            // エンチャント本を渡す
+                            ItemStack menuBook = new ItemStack(Material.ENCHANTED_BOOK);
+                            EnchantmentStorageMeta meta = (EnchantmentStorageMeta) menuBook.getItemMeta();
+                            if (meta != null) {
+                                meta.getPersistentDataContainer().set(new NamespacedKey(plugin, Menu.PERSISTANT_KEY), PersistentDataType.STRING, "true");
+                                meta.setDisplayName(ChatColor.GOLD + "FMC Menu Book");
+                                meta.setLore(Arrays.asList(ChatColor.GRAY + "右クリックでメニューを開くことができます。"));
+                                menuBook.setItemMeta(meta);
+                            }
+                            player.getInventory().addItem(menuBook);
+                            player.sendMessage(ChatColor.GREEN + "メニューブックを受け取りました。");
+                        } else {
+                            player.sendMessage(ChatColor.RED + "既にメニューブックを持っています。");
+                        }
+                    }
                     case "server" -> {
                         if (plugin.getConfig().getBoolean("Menu.Server", false)) {
                             int permLevel = lp.getPermLevel(player.getName());
@@ -104,7 +139,12 @@ public class Menu {
                                     }
                                     case "life", "distributed", "mod" -> {
                                         int page = getPage(player, serverType);
-                                        openServerEachInventory((Player) sender, serverType, page);
+                                        openServerEachInventory(player, serverType, page);
+                                        return;
+                                    }
+                                    case "before" -> {
+                                        int page = getPage(player, serverType);
+                                        openServerInventory(player, FMCSettings.NOW_ONLINE.getValue(), page);
                                         return;
                                     }
                                     default -> {
@@ -854,13 +894,16 @@ public class Menu {
         int permLevel = lp.getPermLevel(player.getName());
         if (checkServerOnline(serverName)) {
             if (permLevel >= 2) {
+                logger.info("serverSwitch_stop: {}", serverName);
                 player.performCommand("fmc fv " + playerName + " fmcp stop " + serverName);
                 player.closeInventory();
             }
         } else {
             if (permLevel == 1) {
+                logger.info("serverSwitch_req: {}", serverName);
                 player.performCommand("fmc fv " + playerName + " fmcp req " + serverName);
             } else if (permLevel >= 2) {
+                logger.info("serverSwitch_start: {}", serverName);
                 player.performCommand("fmc fv " + playerName + " fmcp start " + serverName);
             }
             player.closeInventory();
