@@ -10,6 +10,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import com.google.inject.Inject;
 
+import common.JavaUtils;
 import spigot.PortalsConfig;
 
 public class PortalsRename {
@@ -25,6 +26,7 @@ public class PortalsRename {
         if (args.length > 2) {
             if (args.length > 3) {
                 String portalUUID = args[2];
+                boolean isUUID = JavaUtils.isUUID(portalUUID);
                 String newName = args[3];
                 FileConfiguration portalsConfig = psConfig.getPortalsConfig();
                 List<Map<?, ?>> portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
@@ -32,7 +34,10 @@ public class PortalsRename {
                     boolean portalFind = false;
                     Map<String, Object> portalFound = new HashMap<>();
                     for (Map<String, Object> portal : (List<Map<String, Object>>) (List<?>) portals) {
-                        if (portalUUID.equals(portal.get("uuid"))) {
+                        if (isUUID && portalUUID.equals(portal.get("uuid"))) {
+                            portalFound = portal;
+                            portalFind = true;
+                        } else if (!isUUID && portalUUID.equals(portal.get("name"))) {
                             portalFound = portal;
                             portalFind = true;
                         }

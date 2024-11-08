@@ -223,12 +223,10 @@ public final class EventListener implements Listener {
                                 isInAnyPortal = true;
                                 if (!playersInPortal.contains(player)) {
                                     playersInPortal.add(player);
-                                    logger.info("Player {} entered the {}!", new Object[]{player.getName(), name});
-                                    if (block.getType() == Material.NETHER_PORTAL) {
-                                        event.setCancelled(true);
-                                    }
+                                    logger.info("Player {} entered the gate: {}!", new Object[]{player.getName(), name});
                                     switch (name) {
                                         case "life","distributed","mod","online" -> {
+                                            event.setCancelled(true);
                                             player.performCommand("fmc menu server " + name);
                                         }
                                         case "waterGate" -> {
