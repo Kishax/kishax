@@ -60,6 +60,18 @@ public class Database {
         }
     }
 
+    public Set<Object> getSet(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
+        PreparedStatement ps = conn.prepareStatement(query);
+        setPreparedStatementValues(ps, args);
+        ResultSet rs = ps.executeQuery();
+        return getResultSetAsSet(rs);
+    }
+
+    public Set<String> getStringSet(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
+        Set<Object> set = getSet(conn, query, args);
+        return set.stream().map(Object::toString).collect(Collectors.toSet());
+    }
+
     public String createQueryPart(Set<String> keySet) {
         return keySet.stream()
                      .map(key -> key + " = ?")
@@ -80,6 +92,10 @@ public class Database {
     
     public void updateLog(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
         insertLog(conn, query, args);
+    }
+
+    public void updateLog(String query, Object[] args) throws SQLException, ClassNotFoundException {
+        insertLog(null, query, args);
     }
 
     public void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException {
@@ -150,6 +166,21 @@ public class Database {
         }
     }
     
+    //conn, "hubinv", false, player.getUniqueId().toString()
+    public void updateMemberToggle(Connection conn, String columnName, boolean value, String key) throws SQLException {
+        String query = "UPDATE members SET " + columnName + " = ? WHERE ";
+        if (isUUID(key)) {
+            query += "uuid = ?";
+        } else {
+            query += "name = ?";
+        }
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setBoolean(1, value);
+            ps.setString(2, key);
+            ps.executeUpdate();
+        }
+    }
+    
     public Map<String, Object> getMemberMap(Connection conn, String key) throws SQLException {
         Map<String, Object> rowMap = new HashMap<>();
         String query = "SELECT * FROM members WHERE ";
@@ -169,6 +200,14 @@ public class Database {
             }
         }
         return rowMap;
+    }
+
+    private Set<Object> getResultSetAsSet(ResultSet rs) throws SQLException {
+        Set<Object> set = new java.util.HashSet<>();
+        while (rs.next()) {
+            set.add(rs.getObject(1));
+        }
+        return set;
     }
 
     private boolean isUUID(String str) {

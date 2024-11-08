@@ -24,6 +24,7 @@ import net.luckperms.api.LuckPermsProvider;
 import velocity_command.CEnd;
 import velocity_command.FMCCommand;
 import velocity_command.Hub;
+import velocity_command.Retry;
 
 public class Main {
 	public static boolean isVelocity = true;
@@ -62,6 +63,7 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("fmcp").build(), getInjector().getInstance(FMCCommand.class));
         commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
+        commandManager.register(commandManager.metaBuilder("retry").build(), getInjector().getInstance(Retry.class));
         getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
         logger.info(FloodgateApi.getInstance().toString());
         logger.info("linking with Floodgate...");

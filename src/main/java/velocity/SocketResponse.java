@@ -104,16 +104,7 @@ public class SocketResponse {
             if (matcher.find()) {
                 String extracted = matcher.group(1);
                 TextComponent component = Component.text()
-						.append(Component.text(extracted+"サーバーが起動しました。\n").color(NamedTextColor.AQUA))
-    			    	.append(Component.text("サーバーに入りますか？\n").color(NamedTextColor.WHITE))
-    			    	.append(Component.text("YES")
-    			    			.color(NamedTextColor.GOLD)
-    			    			.clickEvent(ClickEvent.runCommand("/fmcp stp "+extracted))
-                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)"+extracted+"サーバーに入ります。"))))
-    			    	.append(Component.text(" or ").color(NamedTextColor.GOLD))
-    			    	.append(Component.text("NO").color(NamedTextColor.GOLD)
-    			    			.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
-                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))))
+						.append(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.AQUA))
     			    	.build();
                 for (Player player : server.getAllPlayers()) {
         			if (player.hasPermission("group.new-fmc-user")) {

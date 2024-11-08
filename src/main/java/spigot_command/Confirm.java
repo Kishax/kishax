@@ -6,11 +6,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -18,26 +18,26 @@ import com.google.inject.Inject;
 import common.Database;
 import common.FMCSettings;
 import common.Luckperms;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
+import common.OTPGenerator;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.chat.ComponentSerializer;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import spigot.ImageMap;
 import spigot.ServerHomeDir;
 
 public class Confirm {
     public static final Set<Player> confirmMap = new HashSet<>();
+    private final common.Main plugin;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
     private final ImageMap im;
     private final String thisServerName;
     @Inject
-    public Confirm(Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
+    public Confirm(common.Main plugin, Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
+        this.plugin = plugin;
         this.logger = logger;
         this.db = db;
         this.lp = lp;
@@ -54,27 +54,25 @@ public class Confirm {
                 if (permLevel < 1) {
                     try (Connection conn = db.getConnection()) {
                         int ifMapId = checkExistConfirmMap(conn, new Object[] {thisServerName, true, playerName});
-                        if (ifMapId == -1) {
-                            Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
-                            if (!memberMap.isEmpty()) {
-                                if (memberMap.get("id") instanceof Integer id) {
-                                    String confirmUrl = FMCSettings.CONFIRM_URL.getValue() + "?id=" + id;
-                                    player.sendMessage(ChatColor.GREEN + "WEB認証のQRコードを生成します。");
-                                    String[] imageArgs = {"fmc", "image", "createqr", confirmUrl};
+                        Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
+                        if (!memberMap.isEmpty()) {
+                            if (memberMap.get("id") instanceof Integer id) {
+                                String confirmUrl = FMCSettings.CONFIRM_URL.getValue() + "?id=" + id;
+                                //player.sendMessage(ChatColor.GREEN + "WEB認証のQRコードを生成します。");
+                                String[] imageArgs = {"image", "createqr", confirmUrl};
+                                if (ifMapId == -1) {
                                     im.executeImageMapForConfirm(player, imageArgs);
-                                    Random rnd = new Random();
-                                    int ranum = 100000 + rnd.nextInt(900000);
-                                    String ranumstr = Integer.toString(ranum);
-									int rsAffected3 = updateSecret2(conn, new Object[] {ranum, playerUUID});
-									if (rsAffected3 > 0) {
-                                        sendConfirmationMessage(player, ranumstr, confirmUrl);
-									} else {
-										player.sendMessage(ChatColor.RED + "エラーが発生しました。");
-									}
+                                } else {
+                                    im.giveMapToPlayer(player, ifMapId);
+                                }
+                                int ranum = OTPGenerator.generateOTPbyInt();
+                                int rsAffected3 = updateSecret2(conn, new Object[] {ranum, playerUUID});
+                                if (rsAffected3 > 0) {
+                                    sendConfirmationMessage(player, ranum, confirmUrl);
+                                } else {
+                                    player.sendMessage(ChatColor.RED + "エラーが発生しました。");
                                 }
                             }
-                        } else {
-                            im.giveMapToPlayer(player, ifMapId);
                         }
                     } catch (SQLException | ClassNotFoundException e2) {
                         player.sendMessage(ChatColor.RED + "WEB認証のQRコード生成に失敗しました。");
@@ -104,36 +102,136 @@ public class Confirm {
         return ps.executeUpdate();
     }
 
-    private void sendConfirmationMessage(Player player, String ranumstr, String conrimUrl) {
-        TextComponent message = Component.text("サーバーに参加するには、FMCアカウントとあなたのMinecraftでのUUIDをリンクさせる必要があります。以下、")
-            .color(NamedTextColor.WHITE);
-        Component webAuth = Component.text("WEB認証")
-            .color(NamedTextColor.LIGHT_PURPLE)
-            .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
-            .clickEvent(ClickEvent.openUrl(conrimUrl))
-            .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
-        TextComponent instruction = Component.text("より、手続きを進めてください。")
-            .color(NamedTextColor.WHITE);
-        TextComponent authCode = Component.text("\n\n認証コードは ")
-            .color(NamedTextColor.WHITE);
-        TextComponent code = Component.text(ranumstr)
-            .color(NamedTextColor.BLUE)
-            .clickEvent(ClickEvent.copyToClipboard(ranumstr))
-            .hoverEvent(HoverEvent.showText(Component.text("クリックしてコピー")));
-        TextComponent endMessage = Component.text(" です。")
-            .color(NamedTextColor.WHITE);
-        Component regenerate = Component.text("\n\n認証コードの再生成")
-            .color(NamedTextColor.LIGHT_PURPLE)
-            .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
-            .clickEvent(ClickEvent.runCommand("/fmcp retry"))
-            .hoverEvent(HoverEvent.showText(Component.text("クリックして認証コードを再生成します。")));
-        message = message.append(webAuth)
-            .append(instruction)
-            .append(authCode)
-            .append(code)
-            .append(endMessage)
-            .append(regenerate);
-        player.spigot().sendMessage(new net.md_5.bungee.api.chat.TextComponent(ComponentSerializer.toString(message)));
+    private void sendConfirmationMessage(Player player, int ranum, String confirmUrl) {
+        String ranumstr = Integer.toString(ranum);
+        TextComponent webAuth = new TextComponent("WEB認証");
+        webAuth.setColor(ChatColor.GOLD);
+        webAuth.setBold(true);
+        webAuth.setUnderlined(true);
+        webAuth.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, confirmUrl));
+        webAuth.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてWEB認証ページを開く")));
+        TextComponent forUser = new TextComponent("\n\n[サイトへのアクセス方法]");
+        forUser.setColor(ChatColor.GOLD);
+        forUser.setBold(true);
+        forUser.setUnderlined(true);
+        TextComponent asterisk = new TextComponent("\n※\s");
+        asterisk.setColor(ChatColor.GRAY);
+        asterisk.setItalic(true);
+        TextComponent javaUser = new TextComponent("Java版ユーザー");
+        javaUser.setColor(ChatColor.GRAY);
+        javaUser.setItalic(true);
+        javaUser.setUnderlined(true);
+        TextComponent javaUserAccess = new TextComponent("は、チャット欄よりサイトにアクセスしてね！");
+        javaUserAccess.setColor(ChatColor.GRAY);
+        javaUserAccess.setItalic(true);
+        TextComponent bedrockUser = new TextComponent("Bedrock版ユーザー");
+        bedrockUser.setColor(ChatColor.GRAY);
+        bedrockUser.setItalic(true);
+        bedrockUser.setUnderlined(true);
+        TextComponent bedrockUserAccess = new TextComponent("は、QRコードを読み取ってアクセスしてね！");
+        bedrockUserAccess.setColor(ChatColor.GRAY);
+        bedrockUserAccess.setItalic(true);
+        TextComponent authCode = new TextComponent("\n認証コードは ");
+        authCode.setColor(ChatColor.WHITE);
+        TextComponent code = new TextComponent(ranumstr);
+        code.setColor(ChatColor.BLUE);
+        code.setUnderlined(true);
+        code.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, ranumstr));
+        code.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてコピー")));
+        TextComponent endMessage = new TextComponent(" です。");
+        endMessage.setColor(ChatColor.WHITE);
+        TextComponent regenerate = new TextComponent("\n認証コードの再生成");
+        regenerate.setColor(ChatColor.GOLD);
+        regenerate.setBold(true);
+        regenerate.setUnderlined(true);
+        regenerate.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fmcp retry"));
+        regenerate.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックして認証コードを再生成します。")));
+        TextComponent bedrockUserGenerate = new TextComponent("は、 ");
+        bedrockUserGenerate.setColor(ChatColor.GRAY);
+        bedrockUserGenerate.setItalic(true);
+        TextComponent bedrockUserGenerate2 = new TextComponent("/retry");
+        bedrockUserGenerate2.setColor(ChatColor.GRAY);
+        bedrockUserGenerate2.setItalic(true);
+        bedrockUserGenerate2.setUnderlined(true);
+        TextComponent bedrockUserGenerate3 = new TextComponent(" とコマンドを打ってね！");
+        bedrockUserGenerate3.setColor(ChatColor.GRAY);
+        bedrockUserGenerate3.setItalic(true);
+        new BukkitRunnable() {
+            int countdown = 50;
+            int gCountdown = 3;
+            @Override
+            public void run() {
+                TextComponent message = new TextComponent();
+                switch (countdown) {
+                    case 50 -> message.addExtra("こんにちは！");
+                    case 47 -> message.addExtra("FMCサーバー代表のベラです。");
+                    case 44 -> message.addExtra("サーバーに参加するには、");
+                    case 41 -> message.addExtra("FMCアカウントとMinecraftアカウントをリンクさせる必要があるよ！");
+                    case 39 -> {
+                        message.addExtra(webAuth);
+                        message.addExtra("より、手続きを進めてね！");
+                    }
+                    case 36 -> {
+                        message.addExtra(forUser);
+                    }
+                    case 33 -> {
+                        message.addExtra(asterisk);
+                        message.addExtra(javaUser);
+                        message.addExtra(javaUserAccess);
+                    }
+                    case 30 -> {
+                        message.addExtra(asterisk);
+                        message.addExtra(bedrockUser);
+                        message.addExtra(bedrockUserAccess);
+                    }
+                    case 27 -> {
+                        message.addExtra("\n認証コードを生成するよ。");
+                    }
+                    case 24, 23, 22 -> {
+                        message.addExtra(countGenerate(gCountdown));
+                        gCountdown--;
+                    }
+                    case 21 -> {
+                        message.addExtra(authCode);
+                        message.addExtra(code);
+                        message.addExtra(endMessage);
+                    }
+                    case 18 -> {
+                        message.addExtra("認証コードを再生成する場合は、");
+                    }
+                    case 15 -> {
+                        message.addExtra(regenerate);
+                        message.addExtra(" をクリックしてね！");
+                    }
+                    case 13 -> {
+                        message.addExtra(asterisk);
+                        message.addExtra(bedrockUser);
+                        message.addExtra(bedrockUserGenerate);
+                        message.addExtra(bedrockUserGenerate2);
+                        message.addExtra(bedrockUserGenerate3);
+                    }
+                    case 10 -> {
+                        message.addExtra("\nそれでは、楽しいマイクラライフを！");
+                    }
+                    case 0 -> {
+                        cancel();
+                        return;
+                    }
+                }
+                // ここで、メッセージが.addExtra()で追加されてたら、それをプレイヤーに送信する
+                if (message.getExtra() != null && !message.getExtra().isEmpty()) {
+                    player.spigot().sendMessage(message);
+                }             
+                countdown--;
+            }
+        }.runTaskTimer(plugin, 0, 20);
+    }
+
+    private TextComponent countGenerate(int countdown) {
+        TextComponent untilGenerater = new TextComponent("生成中..." + countdown);
+        untilGenerater.setColor(ChatColor.GRAY);
+        untilGenerater.setItalic(true);
+        return untilGenerater;
     }
     
     private int checkExistConfirmMap(Connection conn, Object[] args) throws SQLException {

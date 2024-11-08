@@ -30,6 +30,14 @@ public class DoServerOnline {
 		// "plugins"ディレクトリの親ディレクトリを取得
 		String serverName = shd.getServerName();
 		Objects.requireNonNull(serverName);
+		try {
+			db.updateLog( "UPDATE settings SET value=? WHERE name=?;", new Object[] {serverName, "now_online"});
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
 
 		// サーバーをオンラインに
 		SocketSwitch ssw = sswProvider.get();

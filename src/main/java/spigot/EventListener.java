@@ -35,9 +35,6 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import common.Luckperms;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
 import spigot_command.Button;
 import spigot_command.Confirm;
 import spigot_command.Menu;
@@ -110,15 +107,9 @@ public final class EventListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         Player player = (Player) event.getPlayer();
         String title = event.getView().getTitle();
-        if (title.equals(Menu.imageInventoryName)) {
-            menu.resetPage(player, Menu.imageInventoryKey);
-        } else if (title.equals(Menu.onlineServerInventoryName)) {
-            // 1: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
-            menu.resetPage(player, Menu.onlineServerInventoryKey);
-        } else if (title.equals(Menu.menuInventoryName)) {
-            menu.resetPage(player, Menu.menuInventoryKey);
+        if (Menu.menuNames.contains(title)) {
+            menu.resetPage(player, title);
         } else if (title.endsWith(" servers")) {
-            // 2: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
             String serverType = title.split(" ")[0];
             if (serverType != null) {
                 menu.resetPage(player, serverType);
@@ -134,14 +125,10 @@ public final class EventListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
-            //playersOpeningNewInventory.add(player);
             String title = event.getView().getTitle();
-            if (title.equals(Menu.imageInventoryName)) {
+            if (Menu.menuNames.contains(title)) {
                 event.setCancelled(true);
-                menu.runMenuAction(player, Menu.imageInventoryKey, event.getRawSlot());
-            } else if (title.equals(Menu.menuInventoryName)) {
-                event.setCancelled(true);
-                menu.runMenuAction(player, Menu.menuInventoryKey, event.getRawSlot());
+                menu.runMenuAction(player, title, event.getRawSlot());
             } else if (title.endsWith(" server")) {
                 event.setCancelled(true);
                 Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
@@ -150,19 +137,11 @@ public final class EventListener implements Listener {
                     .anyMatch(e -> e.getValue().entrySet().stream()
                     .anyMatch(e2 -> e2.getKey() instanceof String statusServerName && statusServerName.equals(serverName)));
                 if (iskey) {
-                    menu.runMenuAction(player, Menu.serverInventoryKey, event.getRawSlot());
+                    menu.runMenuAction(player, Menu.serverInventoryName, event.getRawSlot());
                 }
-            } else if (title.equals(Menu.serverTypeInventoryName)) {
-                // 1: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
-                event.setCancelled(true);
-                menu.runMenuAction(player, Menu.serverTypeInventoryKey, event.getRawSlot());
-            } else if (title.equals(Menu.onlineServerInventoryName)) {
-                event.setCancelled(true);
-                menu.runMenuAction(player, Menu.onlineServerInventoryKey, event.getRawSlot());
             } else if (title.endsWith(" servers")) {
-                // 2: 必ずこの順序で処理すること(インベントリタイトルが重複しているため)
                 event.setCancelled(true);
-                menu.runMenuAction(player, Menu.serverTypeInventoryKey, event.getRawSlot());
+                menu.runMenuAction(player, Menu.serverTypeInventoryName, event.getRawSlot());
             }
         }
     }
@@ -203,20 +182,11 @@ public final class EventListener implements Listener {
                             if (!playersInPortal.contains(player)) {
                                 playersInPortal.add(player);
                                 logger.info("Player {} entered the {}!", new Object[]{player.getName(), name});
-                                BaseComponent[] component = new ComponentBuilder()
-                                    .append(ChatColor.WHITE + "ゲート: ")
-                                    .append(ChatColor.AQUA + name)
-                                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new net.md_5.bungee.api.chat.hover.content.Text("クリックしてコピー")))
-                                        .event(new net.md_5.bungee.api.chat.ClickEvent(net.md_5.bungee.api.chat.ClickEvent.Action.COPY_TO_CLIPBOARD, name))
-                                    .append(ChatColor.WHITE + " に入りました！")
-                                    .create();
-                                player.spigot().sendMessage(component);
                                 switch (name) {
                                     case "life","distributed","mod","online" -> {
                                         player.performCommand("fmc menu server " + name);
                                     }
                                     case "waterGate" -> {
-                                        // ここで触れているブロックが水源ブロックかどうかを判定
                                         Block block = loc != null ? loc.getBlock() : null;
                                         if (block != null && block.getType() == Material.WATER) {
                                             player.performCommand("fmc check");
@@ -227,7 +197,7 @@ public final class EventListener implements Listener {
                                     }
                                 }
                             }
-                            break; // 一つのポータルに触れたらループを抜ける
+                            break;
                         }
                     }
                 }

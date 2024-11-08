@@ -178,7 +178,9 @@ public class ImageMap {
                 db.updateLog(conn, "UPDATE images SET mapid=? WHERE id=?;", new Object[] {mapId, id});
             }
             player.getInventory().addItem(mapItem);
-            player.sendMessage("画像マップを渡しました。");
+            if (!isGiveMap) {
+                player.sendMessage("画像マップを渡しました。");
+            }
         } catch (IOException | SQLException | ClassNotFoundException e) {
             player.sendMessage("画像の読み取りに失敗しました。");
             logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
@@ -284,7 +286,9 @@ public class ImageMap {
                     db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
                 }
                 player.getInventory().addItem(mapItem);
-                player.sendMessage("画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
+                if (!confirm) {
+                    player.sendMessage("画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
+                }
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {
                 player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
                 logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
@@ -301,9 +305,10 @@ public class ImageMap {
 
     public Map<Integer, Map<String, Object>> getImageMap(Connection conn) throws SQLException, ClassNotFoundException {
         Map<Integer, Map<String, Object>> imageInfo = new HashMap<>();
-        String query = "SELECT * FROM images WHERE menu!=?;";
+        String query = "SELECT * FROM images WHERE menu!=? AND confirm!=?;";
         PreparedStatement ps = conn.prepareStatement(query);
         ps.setBoolean(1, true);
+        ps.setBoolean(2, true);
         ResultSet rs = ps.executeQuery();
         int index = 0;
         while (rs.next()) {

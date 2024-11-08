@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,15 +41,13 @@ import spigot.ServerStatusCache;
 
 @Singleton
 public class Menu {
-    public static String menuInventoryKey = "menu",
+    public static String serverInventoryName = "server",
         menuInventoryName = "fmc menu",
-        serverInventoryKey = "servers",
-        onlineServerInventoryKey = "onlineServers",
         onlineServerInventoryName = "online servers",
-        serverTypeInventoryKey = "serverType",
         serverTypeInventoryName = "server type",
-        imageInventoryKey = "image",
-        imageInventoryName = "image maps";
+        imageInventoryName = "image maps",
+        settingInventoryName = "settings";
+    public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName);
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image"));
     public static List<String> args2 = new ArrayList<>(Arrays.asList("online","life","distibuted","mod"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
@@ -83,7 +82,6 @@ public class Menu {
         this.book = book;
 	}
 
-    // fmc menu <server|image> <server: serverType>
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
             if (args.length == 1) {
@@ -157,6 +155,74 @@ public class Menu {
         return this.menuActions.get(player);
     }
 
+    public void settingMenu(Player player, int page) {
+        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Inventory inv = Bukkit.createInventory(null, 27, Menu.settingInventoryName);
+        try (Connection conn = db.getConnection()) {
+            Map<String, Object> memberMap = db.getMemberMap(conn, player.getUniqueId().toString());
+            switch (page) {
+                case 1 -> {
+                    if (memberMap.get("hubinv") instanceof Boolean hubinv) {
+                        playerMenuActions.put(11, () -> {
+                            try (Connection connection = db.getConnection()) {
+                                db.updateMemberToggle(connection, "hubinv", !hubinv, player.getUniqueId().toString());
+                                player.sendMessage(ChatColor.GRAY + "サーバーインベントリを" + (hubinv ? "無効" : "有効") + "にしました。");
+                            } catch (SQLException | ClassNotFoundException e) {
+                                player.closeInventory();
+                                player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+                                logger.error("An error occurred while communicating with the database: {}", e.getMessage());
+                                for (StackTraceElement ste : e.getStackTrace()) {
+                                    logger.error(ste.toString());
+                                }
+                            }
+                            settingMenu(player, 1);
+                        });
+                        if (hubinv) {
+                            ItemStack hubinvItem = new ItemStack(Material.GREEN_WOOL);
+                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
+                            if (hubinvMeta != null) {
+                                hubinvMeta.setDisplayName(ChatColor.GREEN + "サーバー起動インベントリ");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "サーバー起動時のオープンインベントリを無効にします。"));
+                                hubinvItem.setItemMeta(hubinvMeta);
+                            }
+                            inv.setItem(11, hubinvItem);
+                        } else {
+                            ItemStack hubinvItem = new ItemStack(Material.RED_WOOL);
+                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
+                            if (hubinvMeta != null) {
+                                hubinvMeta.setDisplayName(ChatColor.RED + "サーバー起動インベントリ");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "サーバー起動時のオープンインベントリを有効にします。"));
+                                hubinvItem.setItemMeta(hubinvMeta);
+                            }
+                            inv.setItem(11, hubinvItem);
+                        }
+                    }
+                }
+            }
+            this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.settingInventoryName, playerMenuActions);
+        } catch (SQLException | ClassNotFoundException e) {
+            player.closeInventory();
+            player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+            logger.error("An error occurred while communicating with the database: {}", e.getMessage());
+            for (StackTraceElement ste : e.getStackTrace()) {
+                logger.error(ste.toString());
+            }
+        }
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+        playerMenuActions.put(0, () -> {
+            resetPage(player, Menu.settingInventoryName);
+            generalMenu(player, 1);
+        });
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
+        player.openInventory(inv);
+    }
+
     public void generalMenu(Player player, int page) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Menu.menuInventoryName);
@@ -165,8 +231,9 @@ public class Menu {
                 playerMenuActions.put(11, () -> openServerTypeInventory(player));
                 playerMenuActions.put(13, () -> book.giveRuleBook(player));
                 playerMenuActions.put(15, () -> openImageMenu(player, 1));
+                playerMenuActions.put(18, () -> settingMenu(player, 1));
                 playerMenuActions.put(26, () -> {
-                    setPage(player, menuInventoryKey, page + 1);
+                    setPage(player, menuInventoryName, page + 1);
                     generalMenu(player, page + 1);
                 });
                 // サーバーメニューと画像メニューへ誘導するアイテムを追加(クリック時、メニューが開く)
@@ -178,14 +245,6 @@ public class Menu {
                     serverItem.setItemMeta(serverMeta);
                 }
                 inv.setItem(11, serverItem);
-                ItemStack imageItem = new ItemStack(Material.MAP);
-                ItemMeta imageMeta = imageItem.getItemMeta();
-                if (imageMeta != null) {
-                    imageMeta.setDisplayName(ChatColor.GREEN + "画像マップメニュー");
-                    imageMeta.setLore(Arrays.asList(ChatColor.GRAY + "今までアップされた画像マップを確認できるよ。"));
-                    imageItem.setItemMeta(imageMeta);
-                }
-                inv.setItem(15, imageItem);
                 ItemStack ruleBookItem = new ItemStack(Material.WRITTEN_BOOK);
                 ItemMeta ruleBookMeta = ruleBookItem.getItemMeta();
                 if (ruleBookMeta != null) {
@@ -194,6 +253,22 @@ public class Menu {
                     ruleBookItem.setItemMeta(ruleBookMeta);
                 }
                 inv.setItem(13, ruleBookItem);
+                ItemStack imageItem = new ItemStack(Material.MAP);
+                ItemMeta imageMeta = imageItem.getItemMeta();
+                if (imageMeta != null) {
+                    imageMeta.setDisplayName(ChatColor.GREEN + "画像マップメニュー");
+                    imageMeta.setLore(Arrays.asList(ChatColor.GRAY + "今までアップされた画像マップを確認できるよ。"));
+                    imageItem.setItemMeta(imageMeta);
+                }
+                inv.setItem(15, imageItem);
+                ItemStack settingItem = new ItemStack(Material.ENCHANTING_TABLE);
+                ItemMeta settingMeta = settingItem.getItemMeta();
+                if (settingMeta != null) {
+                    settingMeta.setDisplayName(ChatColor.GREEN + "設定メニュー");
+                    settingMeta.setLore(Arrays.asList(ChatColor.GRAY + "プレイヤーの設定を変更できるよ。"));
+                    settingItem.setItemMeta(settingMeta);
+                }
+                inv.setItem(18, settingItem);
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                 if (nextPageMeta != null) {
@@ -208,7 +283,7 @@ public class Menu {
                     player.sendMessage("ここにあればいいなと思う機能があればDiscordで教えてね");
                 });
                 playerMenuActions.put(18, () -> {
-                    setPage(player, Menu.menuInventoryKey, page - 1);
+                    setPage(player, Menu.menuInventoryName, page - 1);
                     generalMenu(player, page - 1);
                 });
                 ItemStack anyItem = new ItemStack(Material.COOKIE);
@@ -227,7 +302,7 @@ public class Menu {
                 inv.setItem(18, prevPageItem);
             }
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryKey, playerMenuActions);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -252,7 +327,7 @@ public class Menu {
             }
             inv.setItem(0, backItem);
             playerMenuActions.put(0, () -> {
-                resetPage(player, Menu.imageInventoryKey);
+                resetPage(player, Menu.imageInventoryName);
                 generalMenu(player, 1);
             });
             if (page < totalPages) {
@@ -264,7 +339,7 @@ public class Menu {
                 }
                 inv.setItem(53, nextPageItem);
                 playerMenuActions.put(53, () -> {
-                    setPage(player, Menu.imageInventoryKey, page + 1);
+                    setPage(player, Menu.imageInventoryName, page + 1);
                     openImageMenu(player, page + 1);
                 });
             }
@@ -277,7 +352,7 @@ public class Menu {
                 }
                 inv.setItem(45, prevPageItem);
                 playerMenuActions.put(45, () -> {
-                    setPage(player, Menu.imageInventoryKey, page - 1);
+                    setPage(player, Menu.imageInventoryName, page - 1);
                     openImageMenu(player, page - 1);
                 });
             }
@@ -351,7 +426,7 @@ public class Menu {
                     //slot++;
                 }
             }
-            this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.imageInventoryKey, playerMenuActions);
+            this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.imageInventoryName, playerMenuActions);
             player.openInventory(inv);
         } catch (SQLException | ClassNotFoundException e) {
             player.openInventory(inv);
@@ -375,7 +450,7 @@ public class Menu {
         }
         inv.setItem(0, backItem);
         playerMenuActions.put(0, () -> {
-            resetPage(player, Menu.onlineServerInventoryKey);
+            resetPage(player, Menu.onlineServerInventoryName);
             openServerTypeInventory(player);
         });
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
@@ -417,7 +492,7 @@ public class Menu {
             }
             inv.setItem(45, prevPageItem);
             playerMenuActions.put(45, () -> {
-                setPage(player, Menu.onlineServerInventoryKey, page - 1);
+                setPage(player, Menu.onlineServerInventoryName, page - 1);
                 openOnlineServerInventory(player, page - 1);
             });
         }
@@ -430,14 +505,14 @@ public class Menu {
             }
             inv.setItem(53, nextPageItem);
             playerMenuActions.put(53, () -> {
-                setPage(player, Menu.onlineServerInventoryKey, page + 1);
+                setPage(player, Menu.onlineServerInventoryName, page + 1);
                 openOnlineServerInventory(player, page + 1);
             });
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.onlineServerInventoryKey, playerMenuActions);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.onlineServerInventoryName, playerMenuActions);
         //logger.info("menuActions: {}", menuActions);
         player.openInventory(inv);
-        setPage(player, Menu.onlineServerInventoryKey, page);
+        setPage(player, Menu.onlineServerInventoryName, page);
     }
 
     public void openServerEachInventory(Player player, String serverType, int page) {
@@ -505,7 +580,7 @@ public class Menu {
                 openServerEachInventory(player, serverType, page + 1);
             });
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryKey, playerMenuActions);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
         player.openInventory(inv);
         setPage(player, serverType, page);
     }
@@ -705,7 +780,7 @@ public class Menu {
                 openServerEachInventory(player, thisServerType.get(), 1);
             }
         });
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(serverInventoryKey, playerMenuActions);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(serverInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -716,7 +791,7 @@ public class Menu {
         playerMenuActions.put(13, () -> openServerEachInventory(player, "distributed", 1));
         playerMenuActions.put(15, () -> openServerEachInventory(player, "mod", 1));
         playerMenuActions.put(18, () -> openOnlineServerInventory(player, 1));
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryKey, playerMenuActions);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
         Inventory inv = Bukkit.createInventory(null, 27, "server type");
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();

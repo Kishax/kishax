@@ -8,8 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
 
 import common.Luckperms;
+import common.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -31,6 +33,13 @@ public class Perm {
 	}
 	
 	public void execute(@NotNull CommandSource source, String[] args) {
+		if (source instanceof Player player) {
+			if (!lp.hasPermission(player.getUsername(), PermSettings.PERM.get())) {
+				source.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
+				return;
+			}
+		}
+
 		permS = config.getList("Permission.Short_Name");
 		permD = config.getList("Permission.Detail_Name");
 		

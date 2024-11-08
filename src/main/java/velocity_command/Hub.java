@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.slf4j.Logger;
 
@@ -15,6 +17,8 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import common.Database;
+import common.Luckperms;
+import common.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -23,23 +27,30 @@ public class Hub implements SimpleCommand {
 	private final ProxyServer server;
 	private final Logger logger;
 	private final Database db;
-	
+	private final Luckperms lp;
+	private final String[] subcommands = {"hub"};
 	@Inject
-    public Hub(ProxyServer server, Logger logger, Database db) {
+    public Hub(ProxyServer server, Logger logger, Database db, Luckperms lp) {
 		this.server = server;
 		this.logger = logger;
 		this.db = db;
+		this.lp = lp;
 	}
 
 	@Override
 	public void execute(Invocation invocation) {
 		CommandSource source = invocation.source();
 		if (!(source instanceof Player)) {
-			Objects.requireNonNull(source);
-            source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
-            return;
+			if (source != null) {
+				source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
+			}
+			return;
         }
 		Player player = (Player) source;
+		if (!lp.hasPermission(player.getUsername(), PermSettings.HUB.get())) {
+			source.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
+			return;
+		}
 		String query = "SELECT * FROM status WHERE hub = 1 LIMIT 1;";
         try (Connection conn = db.getConnection();
 			PreparedStatement ps = conn.prepareStatement(query)) {
@@ -59,5 +70,22 @@ public class Hub implements SimpleCommand {
 			}
 			source.sendMessage(Component.text("エラーが発生しました。").color(NamedTextColor.RED));
 		}
+	}
+
+	@Override
+    public List<String> suggest(Invocation invocation) {
+        CommandSource source = invocation.source();
+        String[] args = invocation.arguments();
+        List<String> ret = new ArrayList<>();
+        switch (args.length) {
+        	case 0, 1 -> {
+                for (String subcmd : subcommands) {
+                    if (!source.hasPermission("fmc.proxy." + subcmd)) continue;
+                    ret.add(subcmd);
+                }
+                return ret;
+            }
+		}
+		return Collections.emptyList();
 	}
 }
