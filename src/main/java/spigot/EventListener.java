@@ -109,13 +109,12 @@ public final class EventListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         event.setJoinMessage(null);
         Player player = event.getPlayer();
-        String playerName = player.getName();
-        int permLevel = lp.getPermLevel(playerName);
-        if (permLevel < 1) {
-            player.teleport(FMCCoords.LOAD_POINT.getLocation());
-        } else {
-            player.teleport(FMCCoords.HUB_POINT.getLocation());
-            if (EventListener.isHub.get()) {
+        if (EventListener.isHub.get()) {
+            int permLevel = lp.getPermLevel(player.getName());
+            if (permLevel < 1) {
+                player.teleport(FMCCoords.LOAD_POINT.getLocation());
+            } else {
+                player.teleport(FMCCoords.HUB_POINT.getLocation());
                 if (player.getGameMode() != GameMode.CREATIVE) {
                     player.setGameMode(GameMode.CREATIVE);
                     player.sendMessage(ChatColor.GREEN + "クリエイティブモードに変更しました。");
