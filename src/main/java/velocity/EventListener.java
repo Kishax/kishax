@@ -329,15 +329,11 @@ public class EventListener {
 									ps4.setString(1, playerUUID);
 									ps4.setBoolean(2, true);
 									try (ResultSet logs = ps4.executeQuery()) {
-										// タイムゾーンをAsia/Tokyoに設定
 										long beforejoin_sa_minute = 0;
 										if (logs.next()) {
-											// Asia/Tokyoのタイムゾーンで現在の時刻を取得
 											ZonedDateTime nowTokyo = ZonedDateTime.now(ZoneId.of("Asia/Tokyo"));
 											long now_timestamp = nowTokyo.toEpochSecond();
-											// TIMESTAMP型のカラムを取得
 											Timestamp beforejoin_timeget = logs.getTimestamp("time");
-											// Unixタイムスタンプに変換
 											long beforejoin_timestamp = beforejoin_timeget.getTime() / 1000L;
 											long beforejoin_sa = now_timestamp - beforejoin_timestamp;
 											if (beforejoin_sa < 0) {
@@ -402,13 +398,10 @@ public class EventListener {
 										// AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
 										if (EventListener.PlayerMessageIds.containsKey(playerUUID)) {
 											// どこからか移動してきたとき
-											//ms.updateJoinPlayers(playerName, currentServerName);
 											if (previousServerInfo.isPresent()) {
 												RegisteredServer previousServer = previousServerInfo.get();
 												ServerInfo beforeServerInfo = previousServer.getServerInfo();
 												String beforeServerName = beforeServerInfo.getName();
-												//logger.info("Player connected to server: " + beforeServerName);
-												//logger.info("Player connected to server: " + currentServerName);
 												ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
 												discordME.AddEmbedSomeMessage("Move", player, serverInfo);
 											}
@@ -419,8 +412,6 @@ public class EventListener {
 													RegisteredServer previousServer = previousServerInfo.get();
 													ServerInfo beforeServerInfo = previousServer.getServerInfo();
 													String beforeServerName = beforeServerInfo.getName();
-													//logger.info("Player connected to server: " + beforeServerName);
-													//logger.info("Player connected to server: " + currentServerName);
 													ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
 													discordME.AddEmbedSomeMessage("Move", player, currentServerName);
 												} else {

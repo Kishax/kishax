@@ -16,3 +16,11 @@ commands:
     usage: /<command>
     description: You can confirm image map code generated at discord
     executor: spigot_command.Q
+  tpa:
+    usage: /<command>
+    description: You can teleport to other player
+    executor: spigot_command.TeleportRequest
+  tpaccept:
+    usage: /<command>
+    description: You can accept teleport request
+    executor: spigot_command.TeleportAccept
