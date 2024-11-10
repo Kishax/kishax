@@ -48,15 +48,6 @@ public class FMCItemFrame {
                         for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
                             ItemStack item = itemFrame.getItem();
                             switch (item.getType()) {
-                                case WRITTEN_BOOK -> {
-                                    BookMeta meta = (BookMeta) item.getItemMeta();
-                                    if (meta != null) {
-                                        if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Book.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                            item.setItemMeta(book.setBookItemMeta((BookMeta) meta));
-                                            logger.info("Updated book item frame: {}", itemFrame.getLocation());
-                                        }
-                                    }
-                                }
                                 case FILLED_MAP -> {
                                     MapMeta mapMeta = (MapMeta) item.getItemMeta();
                                     if (mapMeta != null && mapMeta.hasMapView()) {
@@ -81,6 +72,8 @@ public class FMCItemFrame {
                                                             mapView.getRenderers().clear();
                                                             mapView.addRenderer(new ImageMapRenderer(logger, image, fullPath));
                                                         } 
+                                                        // 地図を配置
+                                                        item.setItemMeta(mapMeta);
                                                     } catch (IOException e) {
                                                         logger.error("マップId {} の画像の読み込みに失敗しました: {}", new Object[] {mapId, fullPath});
                                                         logger.error("An IOException error occurred: {}", e.getMessage());
@@ -90,6 +83,15 @@ public class FMCItemFrame {
                                                     }
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                                case WRITTEN_BOOK -> {
+                                    BookMeta meta = (BookMeta) item.getItemMeta();
+                                    if (meta != null) {
+                                        if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Book.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                            item.setItemMeta(book.setBookItemMeta((BookMeta) meta));
+                                            logger.info("Updated book item frame: {}", itemFrame.getLocation());
                                         }
                                     }
                                 }

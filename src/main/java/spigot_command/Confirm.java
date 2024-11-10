@@ -26,6 +26,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import spigot.ImageMap;
 import spigot.ServerHomeDir;
+import spigot.TCUtils;
 
 public class Confirm {
     public static final Set<Player> confirmMap = new HashSet<>();
@@ -110,24 +111,13 @@ public class Confirm {
         webAuth.setUnderlined(true);
         webAuth.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, confirmUrl));
         webAuth.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてWEB認証ページを開く")));
-        TextComponent forUser = new TextComponent("\n\n[サイトへのアクセス方法]");
+        TextComponent forUser = new TextComponent("\n\n[サイトへのアクセス方法]\n");
         forUser.setColor(ChatColor.GOLD);
         forUser.setBold(true);
         forUser.setUnderlined(true);
-        TextComponent asterisk = new TextComponent("\n※\s");
-        asterisk.setColor(ChatColor.GRAY);
-        asterisk.setItalic(true);
-        TextComponent javaUser = new TextComponent("Java版ユーザー");
-        javaUser.setColor(ChatColor.GRAY);
-        javaUser.setItalic(true);
-        javaUser.setUnderlined(true);
-        TextComponent javaUserAccess = new TextComponent("は、チャット欄よりサイトにアクセスしてね！");
+        TextComponent javaUserAccess = new TextComponent("は、チャット欄よりサイトにアクセスしてね！\n");
         javaUserAccess.setColor(ChatColor.GRAY);
         javaUserAccess.setItalic(true);
-        TextComponent bedrockUser = new TextComponent("Bedrock版ユーザー");
-        bedrockUser.setColor(ChatColor.GRAY);
-        bedrockUser.setItalic(true);
-        bedrockUser.setUnderlined(true);
         TextComponent bedrockUserAccess = new TextComponent("は、QRコードを読み取ってアクセスしてね！");
         bedrockUserAccess.setColor(ChatColor.GRAY);
         bedrockUserAccess.setItalic(true);
@@ -175,13 +165,11 @@ public class Confirm {
                         message.addExtra(forUser);
                     }
                     case 33 -> {
-                        message.addExtra(asterisk);
-                        message.addExtra(javaUser);
+                        message.addExtra(TCUtils.JAVA_USER.get());
                         message.addExtra(javaUserAccess);
                     }
                     case 30 -> {
-                        message.addExtra(asterisk);
-                        message.addExtra(bedrockUser);
+                        message.addExtra(TCUtils.BEDROCK_USER.get());
                         message.addExtra(bedrockUserAccess);
                     }
                     case 27 -> {
@@ -201,11 +189,10 @@ public class Confirm {
                     }
                     case 15 -> {
                         message.addExtra(regenerate);
-                        message.addExtra(" をクリックしてね！");
+                        message.addExtra(" をクリックしてね！\n");
                     }
                     case 13 -> {
-                        message.addExtra(asterisk);
-                        message.addExtra(bedrockUser);
+                        message.addExtra(TCUtils.BEDROCK_USER.get());
                         message.addExtra(bedrockUserGenerate);
                         message.addExtra(bedrockUserGenerate2);
                         message.addExtra(bedrockUserGenerate3);
