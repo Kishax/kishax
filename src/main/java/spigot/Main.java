@@ -45,12 +45,20 @@ public class Main {
     	plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(EventListener.class), plugin);
         plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(WandListener.class), plugin);
 		PluginCommand fmcCmd = plugin.getCommand("fmc"),
-			qCmd = plugin.getCommand("q");
+			qCmd = plugin.getCommand("q"),
+			tpaCmd = plugin.getCommand("tpa"),
+			tpacceptCmd = plugin.getCommand("tpaccept");
 		if (fmcCmd != null) {
 			fmcCmd.setExecutor(getInjector().getInstance(FMCCommand.class));
 		}
 		if (qCmd != null) {
 			qCmd.setExecutor(getInjector().getInstance(Q.class));
+		}
+		if (tpaCmd != null) {
+			tpaCmd.setExecutor(getInjector().getInstance(spigot_command.TeleportRequest.class));
+		}
+		if (tpacceptCmd != null) {
+			tpacceptCmd.setExecutor(getInjector().getInstance(spigot_command.TeleportAccept.class));
 		}
     	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();

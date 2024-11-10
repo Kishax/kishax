@@ -9,6 +9,7 @@ import common.Database;
 import common.Luckperms;
 import common.PlayerUtils;
 import spigot_command.Book;
+import spigot_command.CommandForward;
 import spigot_command.Menu;
 import spigot_command.PortalsDelete;
 import spigot_command.ReloadConfig;
@@ -56,5 +57,6 @@ public class Module extends AbstractModule {
 		bind(Book.class);
 		bind(Inventory.class);
 		bind(FMCItemFrame.class);
+		bind(CommandForward.class);
     }
 }

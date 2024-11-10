@@ -2,6 +2,8 @@ package spigot_command;
 
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,11 +75,12 @@ public class Menu {
     private final ImageMap im;
     private final ServerHomeDir shd;
     private final Book book;
+    private final CommandForward cf;
     private final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new ConcurrentHashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
-	public Menu(common.Main plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book) {  
+	public Menu(common.Main plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf) {  
 		this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -86,6 +89,7 @@ public class Menu {
         this.im = im;
         this.shd = shd;
         this.book = book;
+        this.cf = cf;
 	}
 
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -407,7 +411,6 @@ public class Menu {
     public void teleportResponseMenu(Player player, Player targetPlayer) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Menu.teleportResponseInventoryName);
-        // もし閉じてしまっても、コマンドでもう一度開けられるようにしておく
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
         if (backMeta != null) {
@@ -482,6 +485,7 @@ public class Menu {
         }
         for (int i = startIndex; i < endIndex; i++) {
             Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
+            if (targetPlayer.equals(player)) continue;
             ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
             if (playerMeta != null) {
@@ -492,7 +496,7 @@ public class Menu {
             inv.setItem(i - startIndex + 1, playerItem);
             playerMenuActions.put(i - startIndex + 1, () -> {
                 player.closeInventory();
-                player.teleport(targetPlayer);
+                player.performCommand("tpa " + targetPlayer.getName());
             });
         }
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(teleportRequestInventoryName, playerMenuActions);
@@ -533,6 +537,7 @@ public class Menu {
             }
         }
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportInventoryName, playerMenuActions);
+        player.openInventory(inv);
     }
 
     public void openImageMenu(Player player, int page) {
@@ -813,155 +818,165 @@ public class Menu {
                 String name = serverEntry.getKey();
                 if (name.equals(serverName)) {
                     thisServerType.set(serverType);
-                    Map<String, Object> serverData = serverEntry.getValue();
-                    for (Map.Entry<String, Object> dataEntry : serverData.entrySet()) {
-                        String key = dataEntry.getKey();
-                        Object value = dataEntry.getValue();
-                        if (key.equals("online")) { 
-                            if (value instanceof Boolean online && online) {
-                                ItemStack onlineItem = new ItemStack(Material.GREEN_WOOL);
-                                ItemMeta onlineMeta = onlineItem.getItemMeta();
-                                if (onlineMeta != null) {
-                                    onlineMeta.setDisplayName(ChatColor.GREEN + "オンライン");
-                                    onlineItem.setItemMeta(onlineMeta);
-                                }
-                                inv.setItem(8, onlineItem);
-                                if (isAllowedToEnter(serverName) || permLevel >= 2) {
-                                    ItemStack leverItem = new ItemStack(Material.LEVER);
-                                    ItemMeta leverMeta = leverItem.getItemMeta();
-                                    if (leverMeta != null) {
-                                        if (permLevel == 1) {
-                                            leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーが起動中です！");
-                                            //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
-                                        } else if (permLevel >= 2) {
-                                            leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーを停止する");
-                                            playerMenuActions.put(22, () -> serverSwitch(player, serverName));
-                                            //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + ""));
+                    try (Connection conn = db.getConnection()) {
+                        boolean isAllowedToEnter = isAllowedToEnter(conn, serverName);
+                        Map<String, Object> serverData = serverEntry.getValue();
+                        for (Map.Entry<String, Object> dataEntry : serverData.entrySet()) {
+                            String key = dataEntry.getKey();
+                            Object value = dataEntry.getValue();
+                            if (key.equals("online")) { 
+                                if (value instanceof Boolean online && online) {
+                                    ItemStack onlineItem = new ItemStack(Material.GREEN_WOOL);
+                                    ItemMeta onlineMeta = onlineItem.getItemMeta();
+                                    if (onlineMeta != null) {
+                                        onlineMeta.setDisplayName(ChatColor.GREEN + "オンライン");
+                                        onlineItem.setItemMeta(onlineMeta);
+                                    }
+                                    inv.setItem(8, onlineItem);
+                                    if (isAllowedToEnter && permLevel >= 1) {
+                                        ItemStack leverItem = new ItemStack(Material.LEVER);
+                                        ItemMeta leverMeta = leverItem.getItemMeta();
+                                        if (leverMeta != null) {
+                                            if (permLevel == 1) {
+                                                leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーが起動中です！");
+                                                //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
+                                            } else if (permLevel >= 2) {
+                                                leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーを停止する");
+                                                playerMenuActions.put(22, () -> serverSwitch(player, serverName));
+                                                //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + ""));
+                                            }
+                                            leverItem.setItemMeta(leverMeta);
                                         }
-                                        leverItem.setItemMeta(leverMeta);
-                                    }
-                                    inv.setItem(22, leverItem);
-                                    ItemStack doorItem = new ItemStack(Material.IRON_DOOR);
-                                    ItemMeta doorMeta = doorItem.getItemMeta();
-                                    if (doorMeta != null) {
-                                        doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーに入る");
-                                        doorItem.setItemMeta(doorMeta);
-                                        playerMenuActions.put(23, () -> enterServer(player, serverName));
-                                    }
-                                    inv.setItem(23, doorItem);
-                                } else {
-                                    ItemStack barrierItem = new ItemStack(Material.BARRIER);
-                                    ItemMeta barrierMeta = barrierItem.getItemMeta();
-                                    if (barrierMeta != null) {
-                                        barrierMeta.setDisplayName(ChatColor.RED + "許可されていません。");
-                                        barrierItem.setItemMeta(barrierMeta);
-                                    }
-                                    inv.setItem(23, barrierItem);
-                                    inv.setItem(22, barrierItem);
-                                }
-                            } else {
-                                ItemStack offlineItem = new ItemStack(Material.RED_WOOL);
-                                ItemMeta offlineMeta = offlineItem.getItemMeta();
-                                if (offlineMeta != null) {
-                                    offlineMeta.setDisplayName(ChatColor.RED + "オフライン");
-                                    offlineItem.setItemMeta(offlineMeta);
-                                }
-                                inv.setItem(8, offlineItem);
-                                if (isAllowedToEnter(serverName) || permLevel >= 2) {
-                                    ItemStack leverItem = new ItemStack(Material.LEVER);
-                                    ItemMeta leverMeta = leverItem.getItemMeta();
-                                    if (leverMeta != null) {
-                                        if (permLevel == 1) {
-                                            leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動リクエスト");
-                                            leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
-                                            playerMenuActions.put(22, () -> serverSwitch(player, serverName));
-                                        } else if (permLevel >= 2) {
-                                            leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動");
-                                            leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "アドミン権限より起動する。"));
-                                            playerMenuActions.put(22, () -> serverSwitch(player, serverName));
+                                        inv.setItem(22, leverItem);
+                                        ItemStack doorItem = new ItemStack(Material.IRON_DOOR);
+                                        ItemMeta doorMeta = doorItem.getItemMeta();
+                                        if (doorMeta != null) {
+                                            doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーに入る");
+                                            doorItem.setItemMeta(doorMeta);
+                                            playerMenuActions.put(23, () -> enterServer(player, serverName));
                                         }
-                                        leverItem.setItemMeta(leverMeta);
+                                        inv.setItem(23, doorItem);
+                                    } else {
+                                        ItemStack barrierItem = new ItemStack(Material.BARRIER);
+                                        ItemMeta barrierMeta = barrierItem.getItemMeta();
+                                        if (barrierMeta != null) {
+                                            barrierMeta.setDisplayName(ChatColor.RED + "許可されていません。");
+                                            barrierItem.setItemMeta(barrierMeta);
+                                        }
+                                        inv.setItem(23, barrierItem);
+                                        inv.setItem(22, barrierItem);
                                     }
-                                    inv.setItem(22, leverItem);
-                                    ItemStack doorItem = new ItemStack(Material.IRON_DOOR);
-                                    ItemMeta doorMeta = doorItem.getItemMeta();
-                                    if (doorMeta != null) {
-                                        doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーがオンラインでないため、入れません。");
-                                        doorItem.setItemMeta(doorMeta);
-                                    }
-                                    inv.setItem(23, doorItem);
                                 } else {
-                                    ItemStack barrierItem = new ItemStack(Material.BARRIER);
-                                    ItemMeta barrierMeta = barrierItem.getItemMeta();
-                                    if (barrierMeta != null) {
-                                        barrierMeta.setDisplayName(ChatColor.RED + "許可されていません。");
-                                        barrierItem.setItemMeta(barrierMeta);
+                                    ItemStack offlineItem = new ItemStack(Material.RED_WOOL);
+                                    ItemMeta offlineMeta = offlineItem.getItemMeta();
+                                    if (offlineMeta != null) {
+                                        offlineMeta.setDisplayName(ChatColor.RED + "オフライン");
+                                        offlineItem.setItemMeta(offlineMeta);
                                     }
-                                    inv.setItem(22, barrierItem);
-                                    inv.setItem(23, barrierItem);
+                                    inv.setItem(8, offlineItem);
+                                    if (isAllowedToEnter && permLevel >= 1) {
+                                        ItemStack leverItem = new ItemStack(Material.LEVER);
+                                        ItemMeta leverMeta = leverItem.getItemMeta();
+                                        if (leverMeta != null) {
+                                            if (permLevel == 1) {
+                                                leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動リクエスト");
+                                                leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
+                                                playerMenuActions.put(22, () -> serverSwitch(player, serverName));
+                                            } else if (permLevel >= 2) {
+                                                leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動");
+                                                leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "アドミン権限より起動する。"));
+                                                playerMenuActions.put(22, () -> serverSwitch(player, serverName));
+                                            }
+                                            leverItem.setItemMeta(leverMeta);
+                                        }
+                                        inv.setItem(22, leverItem);
+                                        ItemStack doorItem = new ItemStack(Material.IRON_DOOR);
+                                        ItemMeta doorMeta = doorItem.getItemMeta();
+                                        if (doorMeta != null) {
+                                            doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーがオンラインでないため、入れません。");
+                                            doorItem.setItemMeta(doorMeta);
+                                        }
+                                        inv.setItem(23, doorItem);
+                                    } else {
+                                        ItemStack barrierItem = new ItemStack(Material.BARRIER);
+                                        ItemMeta barrierMeta = barrierItem.getItemMeta();
+                                        if (barrierMeta != null) {
+                                            barrierMeta.setDisplayName(ChatColor.RED + "許可されていません。");
+                                            barrierItem.setItemMeta(barrierMeta);
+                                        }
+                                        inv.setItem(22, barrierItem);
+                                        inv.setItem(23, barrierItem);
+                                    }
+                                }
+                            }
+                            if (key.equals("player_list")) {
+                                if (value instanceof String playerList) {
+                                    String[] playerArray = playerList.split(",\\s*");
+                                    List<String> players = Arrays.asList(playerArray);
+                                    int totalItems = players.size();
+                                    int totalPages = (totalItems + FACE_POSITIONS.length - 1) / SLOT_POSITIONS.length;
+                                    int startIndex = (page - 1) * SLOT_POSITIONS.length;
+                                    int endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
+                                    for (int i = startIndex; i < endIndex; i++) {
+                                        String playerName = players.get(i);
+                                        ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
+                                        SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
+                                        if (playerMeta != null) {
+                                            Map<String, Map<String, String>> memberMap = ssc.getMemberMap();
+                                            UUID playerUUID = UUID.fromString(memberMap.get(playerName).get("uuid"));
+                                            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
+                                            // プレイヤーが一度でもサーバーに参加したことがあるか確認
+                                            if (offlinePlayer.hasPlayedBefore() || offlinePlayer.isOnline()) {
+                                                playerMeta.setOwningPlayer(offlinePlayer);
+                                            } else {
+                                                // プレイヤーが存在しない場合の処理
+                                                playerMeta.setDisplayName(ChatColor.RED + "Unknown Player");
+                                            }
+                                            playerMeta.setDisplayName(ChatColor.GREEN + playerName.trim());
+                                            playerMeta.setLore(Arrays.asList(ChatColor.GRAY + "現在オンラインです！"));
+                                            playerItem.setItemMeta(playerMeta);
+                                        }
+                                        inv.setItem(FACE_POSITIONS[i - startIndex], playerItem);
+                                    }
+                                    // ページ戻るブロックを配置
+                                    if (page > 1) {
+                                        ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                                        ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                                        if (prevPageMeta != null) {
+                                            prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+                                            prevPageItem.setItemMeta(prevPageMeta);
+                                        }
+                                        inv.setItem(45, prevPageItem);
+                                        playerMenuActions.put(45, () -> openServerInventory(player, serverName, page - 1));
+                                    }
+                                    // ページ進むブロックを配置
+                                    if (page < totalPages) {
+                                        ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                                        ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                                        if (nextPageMeta != null) {
+                                            nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                                            nextPageItem.setItemMeta(nextPageMeta);
+                                        }
+                                        inv.setItem(53, nextPageItem);
+                                        playerMenuActions.put(53, () -> openServerInventory(player, serverName, page + 1));
+                                    }
+                                } else {
+                                    ItemStack noPlayerItem = new ItemStack(Material.BARRIER);
+                                    ItemMeta noPlayerMeta = noPlayerItem.getItemMeta();
+                                    if (noPlayerMeta != null) {
+                                        noPlayerMeta.setDisplayName(ChatColor.RED + "プレイヤーがいません");
+                                        noPlayerItem.setItemMeta(noPlayerMeta);
+                                    }
+                                    inv.setItem(36, noPlayerItem);
                                 }
                             }
                         }
-                        if (key.equals("player_list")) {
-                            if (value instanceof String playerList) {
-                                String[] playerArray = playerList.split(",\\s*");
-                                List<String> players = Arrays.asList(playerArray);
-                                int totalItems = players.size();
-                                int totalPages = (totalItems + FACE_POSITIONS.length - 1) / SLOT_POSITIONS.length;
-                                int startIndex = (page - 1) * SLOT_POSITIONS.length;
-                                int endIndex = Math.min(startIndex + SLOT_POSITIONS.length, totalItems);
-                                for (int i = startIndex; i < endIndex; i++) {
-                                    String playerName = players.get(i);
-                                    ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
-                                    SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
-                                    if (playerMeta != null) {
-                                        Map<String, Map<String, String>> memberMap = ssc.getMemberMap();
-                                        UUID playerUUID = UUID.fromString(memberMap.get(playerName).get("uuid"));
-                                        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
-                                        // プレイヤーが一度でもサーバーに参加したことがあるか確認
-                                        if (offlinePlayer.hasPlayedBefore() || offlinePlayer.isOnline()) {
-                                            playerMeta.setOwningPlayer(offlinePlayer);
-                                        } else {
-                                            // プレイヤーが存在しない場合の処理
-                                            playerMeta.setDisplayName(ChatColor.RED + "Unknown Player");
-                                        }
-                                        playerMeta.setDisplayName(ChatColor.GREEN + playerName.trim());
-                                        playerMeta.setLore(Arrays.asList(ChatColor.GRAY + "現在オンラインです！"));
-                                        playerItem.setItemMeta(playerMeta);
-                                    }
-                                    inv.setItem(FACE_POSITIONS[i - startIndex], playerItem);
-                                }
-                                // ページ戻るブロックを配置
-                                if (page > 1) {
-                                    ItemStack prevPageItem = new ItemStack(Material.ARROW);
-                                    ItemMeta prevPageMeta = prevPageItem.getItemMeta();
-                                    if (prevPageMeta != null) {
-                                        prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
-                                        prevPageItem.setItemMeta(prevPageMeta);
-                                    }
-                                    inv.setItem(45, prevPageItem);
-                                    playerMenuActions.put(45, () -> openServerInventory(player, serverName, page - 1));
-                                }
-                                // ページ進むブロックを配置
-                                if (page < totalPages) {
-                                    ItemStack nextPageItem = new ItemStack(Material.ARROW);
-                                    ItemMeta nextPageMeta = nextPageItem.getItemMeta();
-                                    if (nextPageMeta != null) {
-                                        nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
-                                        nextPageItem.setItemMeta(nextPageMeta);
-                                    }
-                                    inv.setItem(53, nextPageItem);
-                                    playerMenuActions.put(53, () -> openServerInventory(player, serverName, page + 1));
-                                }
-                            } else {
-                                ItemStack noPlayerItem = new ItemStack(Material.BARRIER);
-                                ItemMeta noPlayerMeta = noPlayerItem.getItemMeta();
-                                if (noPlayerMeta != null) {
-                                    noPlayerMeta.setDisplayName(ChatColor.RED + "プレイヤーがいません");
-                                    noPlayerItem.setItemMeta(noPlayerMeta);
-                                }
-                                inv.setItem(36, noPlayerItem);
-                            }
+                    } catch (SQLException | ClassNotFoundException e) {
+                        player.closeInventory();
+                        player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+                        logger.error("An error occurred while communicating with the database: {}", e.getMessage());
+                        for (StackTraceElement ste : e.getStackTrace()) {
+                            logger.error(ste.toString());
                         }
                     }
                 }
@@ -1027,9 +1042,8 @@ public class Menu {
     }
 
     public void enterServer(Player player, String serverName) {
-        String playerName = player.getName();
         player.closeInventory();
-        player.performCommand("fmc fv " + playerName + " fmcp stp " + serverName);
+        cf.executeProxyCommand(player, "fmcp stp " + serverName);
     }
 
     private boolean checkServerOnline(String serverName) {
@@ -1044,27 +1058,32 @@ public class Menu {
     }
 
     public void serverSwitch(Player player, String serverName) {
-        String playerName = player.getName();
         int permLevel = lp.getPermLevel(player.getName());
         if (checkServerOnline(serverName)) {
             if (permLevel >= 2) {
-                logger.info("serverSwitch_stop: {}", serverName);
-                player.performCommand("fmc fv " + playerName + " fmcp stop " + serverName);
                 player.closeInventory();
+                cf.executeProxyCommand(player, "fmcp stop " + serverName);
             }
         } else {
-            if (permLevel == 1) {
-                logger.info("serverSwitch_req: {}", serverName);
-                player.performCommand("fmc fv " + playerName + " fmcp req " + serverName);
-            } else if (permLevel >= 2) {
-                logger.info("serverSwitch_start: {}", serverName);
-                player.performCommand("fmc fv " + playerName + " fmcp start " + serverName);
-            }
             player.closeInventory();
+            if (permLevel == 1) {
+                cf.executeProxyCommand(player, "fmcp req " + serverName);
+            } else if (permLevel >= 2) {
+                cf.executeProxyCommand(player, "fmcp start " + serverName);
+            }
         }
     }
 
-    public boolean isAllowedToEnter(String serverName) {
+    public boolean isAllowedToEnter(Connection conn, String serverName) throws SQLException, ClassNotFoundException {
+        String query = "SELECT entry FROM status WHERE name = ?;";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, serverName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean("entry");
+                }
+            }
+        }
         return false;
     }
 

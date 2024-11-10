@@ -107,7 +107,8 @@ public class TeleportRequest implements TabExecutor {
             targetName = targetPlayer.getName();
         try (Connection conn = db.getConnection()) {
             if (teleportMessageType(conn, targetName)) {
-                menu.teleportRequestMenu(targetPlayer, 1);
+                // ここ、逆になることに注意
+                menu.teleportResponseMenu(targetPlayer, player);
             } else {
                 TextComponent message = new TextComponent(playerName + "があなたにテレポートをリクエストしています。\n");
                 TextComponent accept = new TextComponent("[受け入れる]");

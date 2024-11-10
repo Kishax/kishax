@@ -16,19 +16,21 @@ public class CommandForward {
 	}
 	
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
-		String allcmd = "";
-		for (String arg : args) {
-			allcmd += " " + arg;
-		}
+		// fv <player> fmcp <command>
+		String allcmd = String.join(" ", args);
 		if (sender instanceof Player player) {
-			player = (Player) sender;
-			// コマンドを打ったプレイヤー名をallcmdに乗せる
-			allcmd = player.getName() + allcmd; 
+			allcmd = player.getName() + " " + allcmd; 
 		} else {
-			// コンソールから打った場合
-			allcmd = "?" + allcmd;
+			allcmd = "? " + allcmd;
 		}
-		
+		SocketSwitch ssw = sswProvider.get();
+		ssw.sendVelocityServer(allcmd);
+	}
+
+	public void executeProxyCommand(Player player, String allcmd) {
+		// fmcp <command>
+		String playerName = player.getName();
+		allcmd = playerName + " fv " + playerName + " " + allcmd;
 		SocketSwitch ssw = sswProvider.get();
 		ssw.sendVelocityServer(allcmd);
 	}
