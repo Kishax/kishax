@@ -21,7 +21,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -124,25 +123,6 @@ public final class EventListener implements Listener {
         inv.updatePlayerInventory(player);
     }
 
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        Player player = (Player) event.getPlayer();
-        String title = event.getView().getTitle();
-        if (Menu.menuNames.contains(title)) {
-            menu.resetPage(player, title);
-        } else if (title.endsWith(" servers")) {
-            String serverType = title.split(" ")[0];
-            if (serverType != null) {
-                menu.resetPage(player, serverType);
-            }
-        } else if (title.endsWith(" server")) {
-            String serverName = title.split(" ")[0];
-            if (serverName != null) {
-                menu.resetPage(player, serverName);
-            }
-        }
-    }
-    
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {

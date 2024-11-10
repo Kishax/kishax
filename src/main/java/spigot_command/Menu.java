@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
@@ -36,6 +35,7 @@ import com.google.inject.Singleton;
 import common.Database;
 import common.FMCSettings;
 import common.Luckperms;
+import net.md_5.bungee.api.ChatColor;
 import spigot.ImageMap;
 import spigot.Main;
 import spigot.ServerHomeDir;
@@ -70,7 +70,6 @@ public class Menu {
     private final ImageMap im;
     private final ServerHomeDir shd;
     private final Book book;
-    private final Map<Player, Map<String, Integer>> playerOpenningInventoryMap = new HashMap<>();
     private final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new ConcurrentHashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
@@ -134,24 +133,10 @@ public class Menu {
                             if (args.length > 2) {
                                 String serverType = args[2].toLowerCase();
                                 switch (serverType) {
-                                    case "online" -> {
-                                        openOnlineServerInventory(player, 1);
-                                        return;
-                                    }
-                                    case "life", "distributed", "mod" -> {
-                                        int page = getPage(player, serverType);
-                                        openServerEachInventory(player, serverType, page);
-                                        return;
-                                    }
-                                    case "before" -> {
-                                        int page = getPage(player, serverType);
-                                        openServerInventory(player, FMCSettings.NOW_ONLINE.getValue(), page);
-                                        return;
-                                    }
-                                    default -> {
-                                        sender.sendMessage("Usage: /fmc menu server <life|distribution|mod>");
-                                        return;
-                                    }
+                                    case "online" -> openOnlineServerInventory(player, 1);
+                                    case "life", "distributed", "mod" -> openServerEachInventory(player, serverType, 1);
+                                    case "before" -> openServerInventory(player, FMCSettings.NOW_ONLINE.getValue(), 1);
+                                    default -> sender.sendMessage("Usage: /fmc menu server <life|distribution|mod>");
                                 }
                             } else {
                                 Main.getInjector().getInstance(Menu.class).openServerTypeInventory((Player) sender);
@@ -256,10 +241,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> {
-            resetPage(player, Menu.settingInventoryName);
-            generalMenu(player, 1);
-        });
+        playerMenuActions.put(0, () -> generalMenu(player, 1));
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
@@ -272,10 +254,7 @@ public class Menu {
                 playerMenuActions.put(11, () -> openServerTypeInventory(player));
                 playerMenuActions.put(13, () -> book.giveRuleBook(player));
                 playerMenuActions.put(15, () -> openImageMenu(player, 1));
-                playerMenuActions.put(26, () -> {
-                    setPage(player, menuInventoryName, page + 1);
-                    generalMenu(player, page + 1);
-                });
+                playerMenuActions.put(26, () -> generalMenu(player, page + 1));
                 ItemStack serverItem = new ItemStack(Material.COMPASS);
                 ItemMeta serverMeta = serverItem.getItemMeta();
                 if (serverMeta != null) {
@@ -315,10 +294,7 @@ public class Menu {
                     player.closeInventory();
                     player.sendMessage(ChatColor.GREEN + "ここにあればいいなと思う機能があればDiscordで教えてね");
                 });
-                playerMenuActions.put(18, () -> {
-                    setPage(player, Menu.menuInventoryName, page - 1);
-                    generalMenu(player, page - 1);
-                });
+                playerMenuActions.put(18, () -> generalMenu(player, page - 1));
                 ItemStack settingItem = new ItemStack(Material.ENCHANTING_TABLE);
                 ItemMeta settingMeta = settingItem.getItemMeta();
                 if (settingMeta != null) {
@@ -361,7 +337,6 @@ public class Menu {
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, inventorySize, Menu.teleportInventoryName);
-
         int totalItems = Bukkit.getOnlinePlayers().size();
         int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
         int startIndex = (page - 1) * itemsPerPage;
@@ -373,10 +348,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> {
-            resetPage(player, Menu.imageInventoryName);
-            generalMenu(player, 1);
-        });
+        playerMenuActions.put(0, () -> generalMenu(player, 1));
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
             ItemMeta nextPageMeta = nextPageItem.getItemMeta();
@@ -385,10 +357,7 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(26, nextPageItem);
-            playerMenuActions.put(26, () -> {
-                setPage(player, Menu.teleportInventoryName, page + 1);
-                teleportMenu(player, page + 1);
-            });
+            playerMenuActions.put(26, () -> teleportMenu(player, page + 1));
         }
         if (page > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -398,10 +367,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(18, prevPageItem);
-            playerMenuActions.put(18, () -> {
-                setPage(player, Menu.teleportInventoryName, page - 1);
-                teleportMenu(player, page - 1);
-            });
+            playerMenuActions.put(18, () -> teleportMenu(player, page - 1));
         }
         for (int i = startIndex; i < endIndex; i++) {
             Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
@@ -442,10 +408,7 @@ public class Menu {
                 backItem.setItemMeta(backMeta);
             }
             inv.setItem(0, backItem);
-            playerMenuActions.put(0, () -> {
-                resetPage(player, Menu.imageInventoryName);
-                generalMenu(player, 1);
-            });
+            playerMenuActions.put(0, () -> generalMenu(player, 1));
             if (page < totalPages) {
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
@@ -454,10 +417,7 @@ public class Menu {
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(53, nextPageItem);
-                playerMenuActions.put(53, () -> {
-                    setPage(player, Menu.imageInventoryName, page + 1);
-                    openImageMenu(player, page + 1);
-                });
+                playerMenuActions.put(53, () -> openImageMenu(player, page + 1));
             }
             if (page > 1) {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -467,10 +427,7 @@ public class Menu {
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(45, prevPageItem);
-                playerMenuActions.put(45, () -> {
-                    setPage(player, Menu.imageInventoryName, page - 1);
-                    openImageMenu(player, page - 1);
-                });
+                playerMenuActions.put(45, () -> openImageMenu(player, page - 1));
             }
             //int slot = 0;
             for (int i = startIndex; i < endIndex; i++) {
@@ -565,10 +522,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> {
-            resetPage(player, Menu.onlineServerInventoryName);
-            openServerTypeInventory(player);
-        });
+        playerMenuActions.put(0, () -> openServerTypeInventory(player));
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         // オンラインサーバーのみを抽出
         Map<String, Map<String, Object>> serverStatusOnlineMap = serverStatusMap.values().stream()
@@ -607,10 +561,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
-            playerMenuActions.put(45, () -> {
-                setPage(player, Menu.onlineServerInventoryName, page - 1);
-                openOnlineServerInventory(player, page - 1);
-            });
+            playerMenuActions.put(45, () -> openOnlineServerInventory(player, page - 1));
         }
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
@@ -620,15 +571,11 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
-            playerMenuActions.put(53, () -> {
-                setPage(player, Menu.onlineServerInventoryName, page + 1);
-                openOnlineServerInventory(player, page + 1);
-            });
+            playerMenuActions.put(53, () -> openOnlineServerInventory(player, page + 1));
         }
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.onlineServerInventoryName, playerMenuActions);
         //logger.info("menuActions: {}", menuActions);
         player.openInventory(inv);
-        setPage(player, Menu.onlineServerInventoryName, page);
     }
 
     public void openServerEachInventory(Player player, String serverType, int page) {
@@ -641,10 +588,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> {
-            resetPage(player, serverType);
-            openServerTypeInventory(player);
-        });
+        playerMenuActions.put(0, () -> openServerTypeInventory(player));
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusTypeMap = serverStatusMap.get(serverType);
         int totalItems = serverStatusTypeMap.size(),
@@ -678,10 +622,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
-            playerMenuActions.put(45, () -> {
-                setPage(player, serverType, page - 1);
-                openServerEachInventory(player, serverType, page - 1);
-            });
+            playerMenuActions.put(45, () -> openServerEachInventory(player, serverType, page - 1));
         }
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
@@ -691,14 +632,10 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
-            playerMenuActions.put(53, () -> {
-                setPage(player, serverType, page + 1);
-                openServerEachInventory(player, serverType, page + 1);
-            });
+            playerMenuActions.put(53, () -> openServerEachInventory(player, serverType, page + 1));
         }
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
         player.openInventory(inv);
-        setPage(player, serverType, page);
     }
 
     public void openServerInventory(Player player, String serverName, int page) {
@@ -856,10 +793,7 @@ public class Menu {
                                         prevPageItem.setItemMeta(prevPageMeta);
                                     }
                                     inv.setItem(45, prevPageItem);
-                                    playerMenuActions.put(45, () -> {
-                                        setPage(player, serverName, page - 1);
-                                        openServerInventory(player, serverName, page - 1);
-                                    });
+                                    playerMenuActions.put(45, () -> openServerInventory(player, serverName, page - 1));
                                 }
                                 // ページ進むブロックを配置
                                 if (page < totalPages) {
@@ -870,10 +804,7 @@ public class Menu {
                                         nextPageItem.setItemMeta(nextPageMeta);
                                     }
                                     inv.setItem(53, nextPageItem);
-                                    playerMenuActions.put(53, () -> {
-                                        setPage(player, serverName, page + 1);
-                                        openServerInventory(player, serverName, page + 1);
-                                    });
+                                    playerMenuActions.put(53, () -> openServerInventory(player, serverName, page + 1));
                                 }
                             } else {
                                 ItemStack noPlayerItem = new ItemStack(Material.BARRIER);
@@ -1006,30 +937,5 @@ public class Menu {
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
         return serverStatusList != null ? serverStatusList.size() : 0;
-    }
-    
-    public void resetPage(Player player, String serverType) {
-        Map<String, Integer> inventoryMap = playerOpenningInventoryMap.get(player);
-        if (inventoryMap != null) {
-            inventoryMap.entrySet().removeIf(entry -> entry.getKey().equals(serverType));
-        }
-    }
-
-    public void setPage(Player player, String serverType, int page) {
-        Map<String, Integer> inventoryMap = playerOpenningInventoryMap.get(player);
-        if (inventoryMap == null) {
-            inventoryMap = new HashMap<>();
-            playerOpenningInventoryMap.put(player, inventoryMap);
-        }
-        inventoryMap.put(serverType, page);
-    }
-    
-    public int getPage(Player player, String serverType) {
-        Map<String, Integer> inventoryMap = playerOpenningInventoryMap.get(player);
-        if (inventoryMap == null) {
-            inventoryMap = new HashMap<>();
-            playerOpenningInventoryMap.put(player, inventoryMap);
-        }
-        return inventoryMap.getOrDefault(serverType, 1);
     }
 }
