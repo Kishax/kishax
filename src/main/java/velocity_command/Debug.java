@@ -72,7 +72,7 @@ public class Debug {
 		try {
 			config.saveConfig();
 		} catch (IOException e) {
-			source.sendMessage(Component.text("コマンド実行中にエラーが発生しました。").color(NamedTextColor.RED));
+			source.sendMessage(Component.text("コンフィグへの保存に失敗しました。").color(NamedTextColor.RED));
 			logger.error("An IOException error occurred: " + e.getMessage());
 			for (StackTraceElement element : e.getStackTrace()) {
 				logger.error(element.toString());
