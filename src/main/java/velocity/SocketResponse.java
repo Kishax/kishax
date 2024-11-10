@@ -108,7 +108,7 @@ public class SocketResponse {
             if (matcher.find()) {
                 String extracted = matcher.group(1);
                 TextComponent component = Component.text()
-						.append(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.AQUA))
+						.append(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GOLD).decorate(TextDecoration.BOLD))
     			    	.build();
                 for (Player player : server.getAllPlayers()) {
         			if (player.hasPermission("group.new-fmc-user")) {

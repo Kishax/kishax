@@ -156,7 +156,7 @@ public class Discord implements DiscordInterface {
         Button button1 = Button.success("reqOK", "YES");
         Button button2 = Button.danger("reqCancel", "NO");
         MessageCreateAction action = channel.sendMessage(buttonMessage)
-                .setActionRow(button1, button2); // メッセージにボタンを添えて送信
+                .setActionRow(button1, button2);
         action.queue(message -> {
             CompletableFuture.delayedExecutor(3, TimeUnit.MINUTES).execute(() -> {
             	if (!Request.PlayerReqFlags.isEmpty()) {

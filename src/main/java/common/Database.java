@@ -120,6 +120,30 @@ public class Database {
         }
     }
 
+    public List<String> getServersList(boolean isOnline) {
+        List<String> servers = new ArrayList<>();
+        String query = "SELECT * FROM status WHERE online=? AND exception!=1 AND exception2!=1;";
+        try (Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(query)) {
+            if (isOnline) {
+                ps.setBoolean(1, true);
+            } else {
+                ps.setBoolean(1, false);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    servers.add(rs.getString("name"));
+                }
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+        return servers;
+    }
+
     public boolean isMaintenance(Connection conn) {
 		String query = "SELECT online FROM status WHERE name=?;";
 		try (PreparedStatement ps = conn.prepareStatement(query)) {
@@ -164,7 +188,6 @@ public class Database {
         }
     }
     
-    //conn, "hubinv", false, player.getUniqueId().toString()
     public void updateMemberToggle(Connection conn, String columnName, boolean value, String key) throws SQLException {
         String query = "UPDATE members SET " + columnName + " = ? WHERE ";
         if (JavaUtils.isUUID(key)) {

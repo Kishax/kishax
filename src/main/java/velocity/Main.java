@@ -25,6 +25,7 @@ import velocity_command.CEnd;
 import velocity_command.FMCCommand;
 import velocity_command.Hub;
 import velocity_command.Retry;
+import velocity_command.ServerTeleport;
 
 public class Main {
 	public static boolean isVelocity = true;
@@ -33,7 +34,6 @@ public class Main {
 	private final ProxyServer server;
 	private final Logger logger;
 	private final Path dataDirectory;
-	// Guice注入後、取得するインスタンス(フィールド)郡
     @Inject
     public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory) {
         this.server = serverinstance;
@@ -64,6 +64,7 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         commandManager.register(commandManager.metaBuilder("retry").build(), getInjector().getInstance(Retry.class));
+        commandManager.register(commandManager.metaBuilder("stp").build(), getInjector().getInstance(ServerTeleport.class));
         getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
         logger.info(FloodgateApi.getInstance().toString());
         logger.info("linking with Floodgate...");

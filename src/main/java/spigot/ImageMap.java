@@ -368,16 +368,10 @@ public class ImageMap {
             }
         }
         if (!found.get()) {
-            //player.sendMessage("地図ID " + mapId + " が見つかりません。");
-            // このメソッドは、このサーバーにあるマップをプレイヤーに渡すメソッドである。
-            // すなわち、このサーバーに過去あった、もしくは現在あることは確定
-            // このサーバーというのは確定してる
-            // このサーバーにはないマップを生成する
+            // このサーバーに過去あった、もしくは現在あることは確定
             // ロードして、プレイヤーに上げて、もとのデータベースのmapIDを更新すればいい
             // このサーバーとmapIdで一致するデータを取得
             // そのデータを使って、マップを生成
-            // プレイヤーに渡す
-            // そのデータベースのmapIdを更新
             try (Connection conn = db.getConnection()) {
                 Map<String, Object> mapInfo = getMapInfoForThisServerByMapId(conn, mapId);
                 if (!mapInfo.isEmpty()) {

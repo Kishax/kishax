@@ -49,8 +49,9 @@ public class Menu {
         onlineServerInventoryName = "online servers",
         serverTypeInventoryName = "server type",
         imageInventoryName = "image maps",
-        settingInventoryName = "settings";
-    public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName);
+        settingInventoryName = "settings",
+        teleportInventoryName = "player teleport";
+    public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName, Menu.teleportInventoryName);
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image", "get"));
     public static List<String> args2 = new ArrayList<>(Arrays.asList("online","life","distibuted","mod","before"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
@@ -206,7 +207,7 @@ public class Menu {
                         playerMenuActions.put(11, () -> {
                             try (Connection connection = db.getConnection()) {
                                 db.updateMemberToggle(connection, "hubinv", !hubinv, player.getUniqueId().toString());
-                                player.sendMessage(ChatColor.GRAY + "サーバーインベントリを" + (hubinv ? "無効" : "有効") + "にしました。");
+                                player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (hubinv ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
                             } catch (SQLException | ClassNotFoundException e) {
                                 player.closeInventory();
                                 player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
@@ -221,8 +222,8 @@ public class Menu {
                             ItemStack hubinvItem = new ItemStack(Material.GREEN_WOOL);
                             ItemMeta hubinvMeta = hubinvItem.getItemMeta();
                             if (hubinvMeta != null) {
-                                hubinvMeta.setDisplayName(ChatColor.GREEN + "サーバー起動インベントリ");
-                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "サーバー起動時のオープンインベントリを無効にします。"));
+                                hubinvMeta.setDisplayName(ChatColor.GREEN + "サーバー起動時のアクション");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "チャットタイプに切り替えます。"));
                                 hubinvItem.setItemMeta(hubinvMeta);
                             }
                             inv.setItem(11, hubinvItem);
@@ -230,8 +231,8 @@ public class Menu {
                             ItemStack hubinvItem = new ItemStack(Material.RED_WOOL);
                             ItemMeta hubinvMeta = hubinvItem.getItemMeta();
                             if (hubinvMeta != null) {
-                                hubinvMeta.setDisplayName(ChatColor.RED + "サーバー起動インベントリ");
-                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "サーバー起動時のオープンインベントリを有効にします。"));
+                                hubinvMeta.setDisplayName(ChatColor.RED + "サーバー起動時のアクション");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "オープンインベントリタイプに切り替えます。"));
                                 hubinvItem.setItemMeta(hubinvMeta);
                             }
                             inv.setItem(11, hubinvItem);
@@ -271,12 +272,10 @@ public class Menu {
                 playerMenuActions.put(11, () -> openServerTypeInventory(player));
                 playerMenuActions.put(13, () -> book.giveRuleBook(player));
                 playerMenuActions.put(15, () -> openImageMenu(player, 1));
-                playerMenuActions.put(18, () -> settingMenu(player, 1));
                 playerMenuActions.put(26, () -> {
                     setPage(player, menuInventoryName, page + 1);
                     generalMenu(player, page + 1);
                 });
-                // サーバーメニューと画像メニューへ誘導するアイテムを追加(クリック時、メニューが開く)
                 ItemStack serverItem = new ItemStack(Material.COMPASS);
                 ItemMeta serverMeta = serverItem.getItemMeta();
                 if (serverMeta != null) {
@@ -301,14 +300,6 @@ public class Menu {
                     imageItem.setItemMeta(imageMeta);
                 }
                 inv.setItem(15, imageItem);
-                ItemStack settingItem = new ItemStack(Material.ENCHANTING_TABLE);
-                ItemMeta settingMeta = settingItem.getItemMeta();
-                if (settingMeta != null) {
-                    settingMeta.setDisplayName(ChatColor.GREEN + "設定メニュー");
-                    settingMeta.setLore(Arrays.asList(ChatColor.GRAY + "プレイヤーの設定を変更できるよ。"));
-                    settingItem.setItemMeta(settingMeta);
-                }
-                inv.setItem(18, settingItem);
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                 if (nextPageMeta != null) {
@@ -318,21 +309,39 @@ public class Menu {
                 inv.setItem(26, nextPageItem);
             }
             case 2 -> {
-                playerMenuActions.put(13, () -> {
+                playerMenuActions.put(11, () -> settingMenu(player, 1));
+                playerMenuActions.put(13, () -> teleportMenu(player, 1));
+                playerMenuActions.put(15, () -> {
                     player.closeInventory();
-                    player.sendMessage("ここにあればいいなと思う機能があればDiscordで教えてね");
+                    player.sendMessage(ChatColor.GREEN + "ここにあればいいなと思う機能があればDiscordで教えてね");
                 });
                 playerMenuActions.put(18, () -> {
                     setPage(player, Menu.menuInventoryName, page - 1);
                     generalMenu(player, page - 1);
                 });
+                ItemStack settingItem = new ItemStack(Material.ENCHANTING_TABLE);
+                ItemMeta settingMeta = settingItem.getItemMeta();
+                if (settingMeta != null) {
+                    settingMeta.setDisplayName(ChatColor.GREEN + "設定メニュー");
+                    settingMeta.setLore(Arrays.asList(ChatColor.GRAY + "プレイヤーの設定を変更できるよ。"));
+                    settingItem.setItemMeta(settingMeta);
+                }
+                inv.setItem(11, settingItem);
+                ItemStack teleportItem = new ItemStack(Material.ENDER_PEARL);
+                ItemMeta teleportMeta = teleportItem.getItemMeta();
+                if (teleportMeta != null) {
+                    teleportMeta.setDisplayName(ChatColor.GREEN + "テレポートメニュー");
+                    teleportMeta.setLore(Arrays.asList(ChatColor.GRAY + "プレイヤーにテレポートできるよ。(許可制)"));
+                    teleportItem.setItemMeta(teleportMeta);
+                }
+                inv.setItem(13, teleportItem);
                 ItemStack anyItem = new ItemStack(Material.COOKIE);
                 ItemMeta anyMeta = anyItem.getItemMeta();
                 if (anyMeta != null) {
                     anyMeta.setDisplayName(ChatColor.GREEN + "未定");
                     anyItem.setItemMeta(anyMeta);
                 }
-                inv.setItem(13, anyItem);
+                inv.setItem(15, anyItem);
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
                 ItemMeta prevPageMeta = prevPageItem.getItemMeta();
                 if (prevPageMeta != null) {
@@ -343,6 +352,73 @@ public class Menu {
             }
         }
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
+        player.openInventory(inv);
+    }
+
+    public void teleportMenu(Player player, int page) {
+        int inventorySize = 27;
+        int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
+        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Inventory inv = Bukkit.createInventory(null, inventorySize, Menu.teleportInventoryName);
+
+        int totalItems = Bukkit.getOnlinePlayers().size();
+        int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
+        int startIndex = (page - 1) * itemsPerPage;
+        int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+        playerMenuActions.put(0, () -> {
+            resetPage(player, Menu.imageInventoryName);
+            generalMenu(player, 1);
+        });
+        if (page < totalPages) {
+            ItemStack nextPageItem = new ItemStack(Material.ARROW);
+            ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+            if (nextPageMeta != null) {
+                nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                nextPageItem.setItemMeta(nextPageMeta);
+            }
+            inv.setItem(26, nextPageItem);
+            playerMenuActions.put(26, () -> {
+                setPage(player, Menu.teleportInventoryName, page + 1);
+                teleportMenu(player, page + 1);
+            });
+        }
+        if (page > 1) {
+            ItemStack prevPageItem = new ItemStack(Material.ARROW);
+            ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+            if (prevPageMeta != null) {
+                prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
+                prevPageItem.setItemMeta(prevPageMeta);
+            }
+            inv.setItem(18, prevPageItem);
+            playerMenuActions.put(18, () -> {
+                setPage(player, Menu.teleportInventoryName, page - 1);
+                teleportMenu(player, page - 1);
+            });
+        }
+        for (int i = startIndex; i < endIndex; i++) {
+            Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
+            ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
+            SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
+            if (playerMeta != null) {
+                playerMeta.setOwningPlayer(targetPlayer);
+                playerMeta.setDisplayName(ChatColor.GREEN + targetPlayer.getName());
+                playerItem.setItemMeta(playerMeta);
+            }
+            inv.setItem(i - startIndex + 1, playerItem);
+            playerMenuActions.put(i - startIndex + 1, () -> {
+                player.closeInventory();
+                player.teleport(targetPlayer);
+            });
+        }
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
