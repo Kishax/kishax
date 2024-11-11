@@ -204,7 +204,7 @@ public final class EventListener implements Listener {
                                     playersInPortal.add(player);
                                     logger.info("Player {} entered the gate: {}!", new Object[]{player.getName(), name});
                                     switch (name) {
-                                        case "life","distributed","mod","online" -> {
+                                        case "survival","minigame","mod","others","online","dev" -> {
                                             event.setCancelled(true);
                                             player.performCommand("fmc menu server " + name);
                                         }
