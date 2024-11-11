@@ -324,7 +324,7 @@ public class Menu {
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                 if (nextPageMeta != null) {
-                    nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(26, nextPageItem);
@@ -363,7 +363,7 @@ public class Menu {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
                 ItemMeta prevPageMeta = prevPageItem.getItemMeta();
                 if (prevPageMeta != null) {
-                    prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(18, prevPageItem);
@@ -393,7 +393,7 @@ public class Menu {
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                 if (nextPageMeta != null) {
-                    nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(26, nextPageItem);
@@ -403,7 +403,7 @@ public class Menu {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
                 ItemMeta prevPageMeta = prevPageItem.getItemMeta();
                 if (prevPageMeta != null) {
-                    prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
+                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(18, prevPageItem);
@@ -527,7 +527,7 @@ public class Menu {
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                 if (nextPageMeta != null) {
-                    nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(26, nextPageItem);
@@ -537,7 +537,7 @@ public class Menu {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
                 ItemMeta prevPageMeta = prevPageItem.getItemMeta();
                 if (prevPageMeta != null) {
-                    prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
+                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(18, prevPageItem);
@@ -647,7 +647,7 @@ public class Menu {
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                 if (nextPageMeta != null) {
-                    nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(53, nextPageItem);
@@ -657,7 +657,7 @@ public class Menu {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
                 ItemMeta prevPageMeta = prevPageItem.getItemMeta();
                 if (prevPageMeta != null) {
-                    prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
+                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(45, prevPageItem);
@@ -791,7 +791,7 @@ public class Menu {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
             ItemMeta prevPageMeta = prevPageItem.getItemMeta();
             if (prevPageMeta != null) {
-                prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+                prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
@@ -801,7 +801,7 @@ public class Menu {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
             ItemMeta nextPageMeta = nextPageItem.getItemMeta();
             if (nextPageMeta != null) {
-                nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
@@ -852,7 +852,7 @@ public class Menu {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
             ItemMeta prevPageMeta = prevPageItem.getItemMeta();
             if (prevPageMeta != null) {
-                prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+                prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
@@ -862,7 +862,7 @@ public class Menu {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
             ItemMeta nextPageMeta = nextPageItem.getItemMeta();
             if (nextPageMeta != null) {
-                nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
@@ -1025,7 +1025,7 @@ public class Menu {
                                         ItemStack prevPageItem = new ItemStack(Material.ARROW);
                                         ItemMeta prevPageMeta = prevPageItem.getItemMeta();
                                         if (prevPageMeta != null) {
-                                            prevPageMeta.setDisplayName(ChatColor.RED + "前のページ");
+                                            prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
                                             prevPageItem.setItemMeta(prevPageMeta);
                                         }
                                         inv.setItem(45, prevPageItem);
@@ -1036,7 +1036,7 @@ public class Menu {
                                         ItemStack nextPageItem = new ItemStack(Material.ARROW);
                                         ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                                         if (nextPageMeta != null) {
-                                            nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                                            nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
                                             nextPageItem.setItemMeta(nextPageMeta);
                                         }
                                         inv.setItem(53, nextPageItem);
