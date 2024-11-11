@@ -58,7 +58,7 @@ public class Menu {
         teleportResponseHeadInventoryName = "teleport response head";
     public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName, Menu.teleportInventoryName, Menu.teleportRequestInventoryName, Menu.teleportResponseInventoryName, Menu.teleportResponseHeadInventoryName);
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image", "get"));
-    public static List<String> args2 = new ArrayList<>(Arrays.asList("online","life","distibuted","mod","before"));
+    public static List<String> args2 = new ArrayList<>(Arrays.asList("online","survival","minigame","dev","mod","distributed","others","before"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     public static final int[] FACE_POSITIONS = {46, 47, 48, 49, 50, 51, 52};
     private static final List<Material> ORE_BLOCKS = Arrays.asList(
@@ -141,12 +141,12 @@ public class Menu {
                                 String serverType = args[2].toLowerCase();
                                 switch (serverType) {
                                     case "online" -> openOnlineServerInventory(player, 1);
-                                    case "life", "distributed", "mod" -> openServerEachInventory(player, serverType, 1);
+                                    case "survival", "minigame", "mod", "distributed", "others", "dev" -> openServerEachInventory(player, serverType, 1);
                                     case "before" -> openServerInventory(player, FMCSettings.NOW_ONLINE.getValue(), 1);
-                                    default -> sender.sendMessage("Usage: /fmc menu server <life|distribution|mod>");
+                                    default -> sender.sendMessage("Usage: /fmc menu server <survival|minigame|dev|mod|distributed|others>");
                                 }
                             } else {
-                                Main.getInjector().getInstance(Menu.class).openServerTypeInventory((Player) sender);
+                                Main.getInjector().getInstance(Menu.class).openServerTypeInventory((Player) sender, 1);
                             }
                         } else {
                             sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
@@ -283,7 +283,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> generalMenu(player, 1));
+        playerMenuActions.put(0, () -> generalMenu(player, 2));
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
@@ -293,10 +293,18 @@ public class Menu {
         Inventory inv = Bukkit.createInventory(null, 27, Menu.menuInventoryName);
         switch (page) {
             case 1 -> {
-                playerMenuActions.put(11, () -> openServerTypeInventory(player));
-                playerMenuActions.put(13, () -> book.giveRuleBook(player));
+                playerMenuActions.put(11, () -> teleportMenu(player, 1));
+                playerMenuActions.put(13, () -> openServerTypeInventory(player, 1));
                 playerMenuActions.put(15, () -> openImageMenu(player, 1));
                 playerMenuActions.put(26, () -> generalMenu(player, page + 1));
+                ItemStack teleportItem = new ItemStack(Material.ENDER_PEARL);
+                ItemMeta teleportMeta = teleportItem.getItemMeta();
+                if (teleportMeta != null) {
+                    teleportMeta.setDisplayName(ChatColor.GREEN + "テレポートメニュー");
+                    teleportMeta.setLore(Arrays.asList(ChatColor.GRAY + "テレポート関連の機能を使えるよ。"));
+                    teleportItem.setItemMeta(teleportMeta);
+                }
+                inv.setItem(11, teleportItem);
                 ItemStack serverItem = new ItemStack(Material.COMPASS);
                 ItemMeta serverMeta = serverItem.getItemMeta();
                 if (serverMeta != null) {
@@ -304,15 +312,7 @@ public class Menu {
                     serverMeta.setLore(Arrays.asList(ChatColor.GRAY + "各サーバーの情報を確認できるよ。"));
                     serverItem.setItemMeta(serverMeta);
                 }
-                inv.setItem(11, serverItem);
-                ItemStack ruleBookItem = new ItemStack(Material.WRITTEN_BOOK);
-                ItemMeta ruleBookMeta = ruleBookItem.getItemMeta();
-                if (ruleBookMeta != null) {
-                    ruleBookMeta.setDisplayName(ChatColor.GREEN + "ルールブック");
-                    ruleBookMeta.setLore(Arrays.asList(ChatColor.GRAY + "サーバーのルールを確認できるよ。"));
-                    ruleBookItem.setItemMeta(ruleBookMeta);
-                }
-                inv.setItem(13, ruleBookItem);
+                inv.setItem(13, serverItem);
                 ItemStack imageItem = new ItemStack(Material.MAP);
                 ItemMeta imageMeta = imageItem.getItemMeta();
                 if (imageMeta != null) {
@@ -331,7 +331,7 @@ public class Menu {
             }
             case 2 -> {
                 playerMenuActions.put(11, () -> settingMenu(player, 1));
-                playerMenuActions.put(13, () -> teleportMenu(player, 1));
+                playerMenuActions.put(13, () -> book.giveRuleBook(player));
                 playerMenuActions.put(15, () -> {
                     player.closeInventory();
                     player.sendMessage(ChatColor.GREEN + "ここにあればいいなと思う機能があればDiscordで教えてね");
@@ -345,14 +345,14 @@ public class Menu {
                     settingItem.setItemMeta(settingMeta);
                 }
                 inv.setItem(11, settingItem);
-                ItemStack teleportItem = new ItemStack(Material.ENDER_PEARL);
-                ItemMeta teleportMeta = teleportItem.getItemMeta();
-                if (teleportMeta != null) {
-                    teleportMeta.setDisplayName(ChatColor.GREEN + "テレポートメニュー");
-                    teleportMeta.setLore(Arrays.asList(ChatColor.GRAY + "テレポート関連の機能を使えるよ。"));
-                    teleportItem.setItemMeta(teleportMeta);
+                ItemStack ruleBookItem = new ItemStack(Material.WRITTEN_BOOK);
+                ItemMeta ruleBookMeta = ruleBookItem.getItemMeta();
+                if (ruleBookMeta != null) {
+                    ruleBookMeta.setDisplayName(ChatColor.GREEN + "ルールブック");
+                    ruleBookMeta.setLore(Arrays.asList(ChatColor.GRAY + "サーバーのルールを確認できるよ。"));
+                    ruleBookItem.setItemMeta(ruleBookMeta);
                 }
-                inv.setItem(13, teleportItem);
+                inv.setItem(13, ruleBookItem);
                 ItemStack anyItem = new ItemStack(Material.COOKIE);
                 ItemMeta anyMeta = anyItem.getItemMeta();
                 if (anyMeta != null) {
@@ -581,7 +581,7 @@ public class Menu {
         Inventory inv = Bukkit.createInventory(null, 27, Menu.teleportInventoryName);
         switch (page) {
             case 1 -> {
-                playerMenuActions.put(0, () -> generalMenu(player, 2));
+                playerMenuActions.put(0, () -> generalMenu(player, 1));
                 playerMenuActions.put(11, () -> teleportRequestMenu(player, 1));
                 playerMenuActions.put(13, () -> teleportMeRequestMenu(player, 1));
                 playerMenuActions.put(15, () -> teleportResponseHeadMenu(player, 1));
@@ -756,7 +756,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> openServerTypeInventory(player));
+        playerMenuActions.put(0, () -> openServerTypeInventory(player, 1));
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         // オンラインサーバーのみを抽出
         Map<String, Map<String, Object>> serverStatusOnlineMap = serverStatusMap.values().stream()
@@ -822,7 +822,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> openServerTypeInventory(player));
+        playerMenuActions.put(0, () -> openServerTypeInventory(player, 1));
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusTypeMap = serverStatusMap.get(serverType);
         int totalItems = serverStatusTypeMap.size(),
@@ -1075,14 +1075,9 @@ public class Menu {
         player.openInventory(inv);
     }
 
-    public void openServerTypeInventory(Player player) {
+    public void openServerTypeInventory(Player player, int page) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         playerMenuActions.put(0, () -> generalMenu(player, 1));
-        playerMenuActions.put(11, () -> openServerEachInventory(player, "life", 1));
-        playerMenuActions.put(13, () -> openServerEachInventory(player, "distributed", 1));
-        playerMenuActions.put(15, () -> openServerEachInventory(player, "mod", 1));
-        playerMenuActions.put(18, () -> openOnlineServerInventory(player, 1));
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
         Inventory inv = Bukkit.createInventory(null, 27, "server type");
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -1091,35 +1086,85 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        ItemStack lifeServerItem = new ItemStack(Material.GRASS_BLOCK);
-        ItemMeta lifeMeta = lifeServerItem.getItemMeta();
-        if (lifeMeta != null) {
-            lifeMeta.setDisplayName(ChatColor.GREEN + "生活鯖");
-            lifeServerItem.setItemMeta(lifeMeta);
+        switch (page) {
+            case 1 -> {
+                playerMenuActions.put(11, () -> openServerEachInventory(player, "survival", 1));
+                playerMenuActions.put(13, () -> openServerEachInventory(player, "minigame", 1));
+                playerMenuActions.put(15, () -> openServerEachInventory(player, "dev", 1));
+                playerMenuActions.put(18, () -> openOnlineServerInventory(player, 1));
+                playerMenuActions.put(26, () -> openServerTypeInventory(player, 2));
+                ItemStack lifeServerItem = new ItemStack(Material.BREAD);
+                ItemMeta lifeMeta = lifeServerItem.getItemMeta();
+                if (lifeMeta != null) {
+                    lifeMeta.setDisplayName(ChatColor.GREEN + "サバイバル鯖");
+                    lifeServerItem.setItemMeta(lifeMeta);
+                }
+                inv.setItem(11, lifeServerItem);
+                ItemStack eventServerItem = new ItemStack(Material.EGG);
+                ItemMeta eventMeta = eventServerItem.getItemMeta();
+                if (eventMeta != null) {
+                    eventMeta.setDisplayName(ChatColor.YELLOW + "ミニゲーム鯖");
+                    eventServerItem.setItemMeta(eventMeta);
+                }
+                inv.setItem(13, eventServerItem);
+                ItemStack devServerItem = new ItemStack(Material.PUFFERFISH);
+                ItemMeta devMeta = devServerItem.getItemMeta();
+                if (devMeta != null) {
+                    devMeta.setDisplayName(ChatColor.AQUA + "開発鯖");
+                    devServerItem.setItemMeta(devMeta);
+                }
+                inv.setItem(15, devServerItem);
+                ItemStack onlineServerItem = new ItemStack(Material.GREEN_WOOL);
+                ItemMeta onlineMeta = onlineServerItem.getItemMeta();
+                if (onlineMeta != null) {
+                    onlineMeta.setDisplayName(ChatColor.GREEN + "オンラインサーバー");
+                    onlineServerItem.setItemMeta(onlineMeta);
+                }
+                inv.setItem(18, onlineServerItem);
+                ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                if (nextPageMeta != null) {
+                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
+                    nextPageItem.setItemMeta(nextPageMeta);
+                }
+                inv.setItem(26, nextPageItem);
+            }
+            case 2 -> {
+                playerMenuActions.put(11, () -> openServerEachInventory(player, "distributed", 1));
+                playerMenuActions.put(13, () -> openServerEachInventory(player, "mod", 1));
+                playerMenuActions.put(15, () -> openServerEachInventory(player, "others", 1));
+                playerMenuActions.put(18, () -> openServerTypeInventory(player, 1));
+                ItemStack distributionServerItem = new ItemStack(Material.CHORUS_FRUIT);
+                ItemMeta distributionMeta = distributionServerItem.getItemMeta();
+                if (distributionMeta != null) {
+                    distributionMeta.setDisplayName(ChatColor.YELLOW + "配布鯖");
+                    distributionServerItem.setItemMeta(distributionMeta);
+                }
+                inv.setItem(11, distributionServerItem);
+                ItemStack modServerItem = new ItemStack(Material.MELON_SLICE);
+                ItemMeta modMeta = modServerItem.getItemMeta();
+                if (modMeta != null) {
+                    modMeta.setDisplayName(ChatColor.BLUE + "モッド鯖");
+                    modServerItem.setItemMeta(modMeta);
+                }
+                inv.setItem(13, modServerItem);
+                ItemStack otherServerItem = new ItemStack(Material.ROTTEN_FLESH);
+                ItemMeta otherMeta = otherServerItem.getItemMeta();
+                if (otherMeta != null) {
+                    otherMeta.setDisplayName(ChatColor.RED + "その他");
+                    otherServerItem.setItemMeta(otherMeta);
+                }
+                inv.setItem(15, otherServerItem);
+                ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                if (prevPageMeta != null) {
+                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
+                    prevPageItem.setItemMeta(prevPageMeta);
+                }
+                inv.setItem(18, prevPageItem);
+            }
         }
-        inv.setItem(11, lifeServerItem);
-        ItemStack distributionServerItem = new ItemStack(Material.CHEST);
-        ItemMeta distributionMeta = distributionServerItem.getItemMeta();
-        if (distributionMeta != null) {
-            distributionMeta.setDisplayName(ChatColor.YELLOW + "配布鯖");
-            distributionServerItem.setItemMeta(distributionMeta);
-        }
-        inv.setItem(13, distributionServerItem);
-        ItemStack modServerItem = new ItemStack(Material.IRON_BLOCK);
-        ItemMeta modMeta = modServerItem.getItemMeta();
-        if (modMeta != null) {
-            modMeta.setDisplayName(ChatColor.BLUE + "モッド鯖");
-            modServerItem.setItemMeta(modMeta);
-        }
-        inv.setItem(15, modServerItem);
-        // 現在オンラインのサーバーを表示する
-        ItemStack onlineServerItem = new ItemStack(Material.GREEN_WOOL);
-        ItemMeta onlineMeta = onlineServerItem.getItemMeta();
-        if (onlineMeta != null) {
-            onlineMeta.setDisplayName(ChatColor.GREEN + "オンラインサーバー");
-            onlineServerItem.setItemMeta(onlineMeta);
-        }
-        inv.setItem(18, onlineServerItem);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
