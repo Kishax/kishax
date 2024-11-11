@@ -47,19 +47,20 @@ public class Main {
 		PluginCommand fmcCmd = plugin.getCommand("fmc"),
 			qCmd = plugin.getCommand("q"),
 			tprCmd = plugin.getCommand("tpr"),
-			tprmeCmd = plugin.getCommand("tprme"),
-			tpacceptCmd = plugin.getCommand("tpaccept");
+			tprmCmd = plugin.getCommand("tprm"),
+			tprmaCmd = plugin.getCommand("tprma"),
+			tpraCmd = plugin.getCommand("tpra");
 		if (fmcCmd != null) {
 			fmcCmd.setExecutor(getInjector().getInstance(FMCCommand.class));
 		}
 		if (qCmd != null) {
 			qCmd.setExecutor(getInjector().getInstance(Q.class));
 		}
-		if (tprCmd != null) {
+		if (tprCmd != null && tprmCmd != null && tpraCmd != null && tprmaCmd != null) {
 			tprCmd.setExecutor(getInjector().getInstance(spigot_command.TeleportRequest.class));
-		}
-		if (tpacceptCmd != null) {
-			tpacceptCmd.setExecutor(getInjector().getInstance(spigot_command.TeleportAccept.class));
+			tprmCmd.setExecutor(getInjector().getInstance(spigot_command.TeleportRequest.class));
+			tpraCmd.setExecutor(getInjector().getInstance(spigot_command.TeleportAccept.class));
+			tprmaCmd.setExecutor(getInjector().getInstance(spigot_command.TeleportAccept.class));
 		}
     	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
