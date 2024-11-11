@@ -13,6 +13,7 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.StringUtil;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
@@ -21,10 +22,12 @@ import net.md_5.bungee.api.ChatColor;
 
 public class TeleportAccept implements TabExecutor {
     private final common.Main plugin;
+    private final Logger logger;
     private final common.Luckperms lp;
     @Inject
-    public TeleportAccept(common.Main plugin, common.Luckperms lp) {
+    public TeleportAccept(common.Main plugin, Logger logger, common.Luckperms lp) {
         this.plugin = plugin;
+        this.logger = logger;
         this.lp = lp;
     }
 
@@ -40,6 +43,7 @@ public class TeleportAccept implements TabExecutor {
                 return true;
             }
             String targetName = args[0];
+            logger.info("targetName: " + targetName);
             Player targetPlayer = plugin.getServer().getPlayer(targetName);
             if (targetPlayer == null) {
                 player.sendMessage(ChatColor.RED + "プレイヤーが見つかりません。");
@@ -47,7 +51,7 @@ public class TeleportAccept implements TabExecutor {
             }
             String cmdName = cmd.getName();
             switch (cmdName.toLowerCase()) {
-                case "tpaccept" -> {
+                case "tpra" -> {
                     Map<Player, List<Map<Player, BukkitTask>>> teleportMap = TeleportRequest.teleportMap;
                     if (teleportMap.containsKey(targetPlayer)) {
                         List<Map<Player, BukkitTask>> requestedPlayers = teleportMap.get(targetPlayer);
@@ -64,13 +68,36 @@ public class TeleportAccept implements TabExecutor {
                             }
                         }
                         if (!isRequested.get()) {
-                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
+                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。(2)");
                         }
                     } else {
-                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
+                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。(1)");
                     }
                 }
-                case "tpmeaccept" -> {
+                case "tprma" -> {
+                    Map<Player, List<Map<Player, BukkitTask>>> teleportMeMap = TeleportRequest.teleportMeMap;
+                    logger.info("teleportMeMap: " + teleportMeMap);
+                    if (teleportMeMap.containsKey(targetPlayer)) {
+                        logger.info("teleportMeMap.containsKey(targetPlayer)");
+                        List<Map<Player, BukkitTask>> requestedPlayers = teleportMeMap.get(targetPlayer);
+                        AtomicBoolean isRequested = new AtomicBoolean(false);
+                        for (Map<Player, BukkitTask> requestedPlayer : requestedPlayers) {
+                            if (requestedPlayer.containsKey(player)) {
+                                isRequested.set(true);
+                                BukkitTask task = requestedPlayer.get(player);
+                                task.cancel();
+                                requestedPlayers.remove(requestedPlayer);
+                                player.teleport(targetPlayer); // 逆
+                                player.sendMessage(ChatColor.GREEN + "テレポートしました。");
+                                return true;
+                            }
+                        }
+                        if (!isRequested.get()) {
+                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。(2)");
+                        }
+                    } else {
+                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。(1)");
+                    }
                 }
             }
         }
@@ -85,7 +112,7 @@ public class TeleportAccept implements TabExecutor {
 	    	case 1 -> {
                 if (sender instanceof Player player) {
                     switch (cmdName.toLowerCase()) {
-                        case "tpaccept" -> {
+                        case "tpra" -> {
                             Set<Player> requestedPlayers = TeleportRequest.teleportMap.entrySet().stream()
                                 .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
                                 .map(Map.Entry::getKey)
@@ -95,7 +122,7 @@ public class TeleportAccept implements TabExecutor {
                                 ret.add(requestedPlayer.getName());
                             }
                         }
-                        case "tpmeaccept" -> {
+                        case "tprma" -> {
                             Set<Player> requestedPlayers = TeleportRequest.teleportMeMap.entrySet().stream()
                                 .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
                                 .map(Map.Entry::getKey)

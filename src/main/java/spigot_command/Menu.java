@@ -443,6 +443,14 @@ public class Menu {
     }
 
     public void teleportResponseMenu(Player player, Player targetPlayer) {
+        teleportResponseMenu(player, targetPlayer, false);
+    }
+
+    public void teleportMeResponseMenu(Player player, Player targetPlayer) {
+        teleportResponseMenu(player, targetPlayer, true);
+    }
+
+    private void teleportResponseMenu(Player player, Player targetPlayer, boolean me) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Menu.teleportResponseInventoryName);
         ItemStack backItem = new ItemStack(Material.STICK);
@@ -462,7 +470,11 @@ public class Menu {
         inv.setItem(11, acceptItem);
         playerMenuActions.put(11, () -> {
             player.closeInventory();
-            player.performCommand("tpaccept " + targetPlayer.getName());
+            if (!me) {
+                player.performCommand("tpra " + targetPlayer.getName());
+            } else {
+                player.performCommand("tprma " + targetPlayer.getName());
+            }
         });
         ItemStack denyItem = new ItemStack(Material.BARRIER);
         ItemMeta denyMeta = denyItem.getItemMeta();
@@ -473,7 +485,11 @@ public class Menu {
         inv.setItem(15, denyItem);
         playerMenuActions.put(15, () -> {
             player.closeInventory();
-            player.performCommand("tpdeny " + targetPlayer.getName());
+            if (!me) {
+                player.performCommand("tprd " + targetPlayer.getName());
+            } else {
+                player.performCommand("tprmd " + targetPlayer.getName());
+            }
         });
         // ここ、targetPlayerがキーになっているのがあってるかわからない
         this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportResponseInventoryName, playerMenuActions);
@@ -481,6 +497,14 @@ public class Menu {
     }
 
     public void teleportRequestMenu(Player player, int page) {
+        teleportRequestMenu(player, page, false);
+    }
+
+    public void teleportMeRequestMenu(Player player, int page) {
+        teleportRequestMenu(player, page, true);
+    }
+
+    private void teleportRequestMenu(Player player, int page, boolean me) {
         int inventorySize = 27;
         int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
@@ -493,7 +517,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> generalMenu(player, 1));
+        playerMenuActions.put(0, () -> teleportMenu(player, 1));
         int totalItems = Bukkit.getOnlinePlayers().size();
         if (totalItems != 1) {
             int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
@@ -532,7 +556,11 @@ public class Menu {
                 inv.addItem(playerItem);
                 playerMenuActions.put(inv.first(playerItem), () -> {
                     player.closeInventory();
-                    player.performCommand("tpr " + targetPlayer.getName());
+                    if (!me) {
+                        player.performCommand("tpr " + targetPlayer.getName());
+                    } else {
+                        player.performCommand("tprm " + targetPlayer.getName());
+                    }
                 });
             }
         } else {
@@ -555,8 +583,9 @@ public class Menu {
             case 1 -> {
                 playerMenuActions.put(0, () -> generalMenu(player, 2));
                 playerMenuActions.put(11, () -> teleportRequestMenu(player, 1));
+                playerMenuActions.put(13, () -> teleportMeRequestMenu(player, 1));
                 playerMenuActions.put(15, () -> teleportResponseHeadMenu(player, 1));
-                ItemStack backItem = new ItemStack(Material.ARROW);
+                ItemStack backItem = new ItemStack(Material.STICK);
                 ItemMeta backMeta = backItem.getItemMeta();
                 if (backMeta != null) {
                     backMeta.setDisplayName(ChatColor.GOLD + "戻る");
@@ -567,15 +596,23 @@ public class Menu {
                 ItemMeta requestMeta = requestItem.getItemMeta();
                 if (requestMeta != null) {
                     requestMeta.setDisplayName(ChatColor.GREEN + "テレポートリクエスト");
-                    requestMeta.setLore(Arrays.asList(ChatColor.GRAY + "他のプレイヤーにテレポートリクエストを送信できるよ。"));
+                    requestMeta.setLore(Arrays.asList(ChatColor.GRAY + "テレポートリクエストを送信できるよ。"));
                     requestItem.setItemMeta(requestMeta);
                 }
                 inv.setItem(11, requestItem);
+                ItemStack meRequestItem = new ItemStack(Material.TARGET);
+                ItemMeta meRequestMeta = meRequestItem.getItemMeta();
+                if (meRequestMeta != null) {
+                    meRequestMeta.setDisplayName(ChatColor.GREEN + "逆テレポートリクエスト");
+                    meRequestMeta.setLore(Arrays.asList(ChatColor.GRAY + "逆テレポートリクエストを送信できるよ。"));
+                    meRequestItem.setItemMeta(meRequestMeta);
+                }
+                inv.setItem(13, meRequestItem);
                 ItemStack responseItem = new ItemStack(Material.SHIELD);
                 ItemMeta responseMeta = responseItem.getItemMeta();
                 if (responseMeta != null) {
-                    responseMeta.setDisplayName(ChatColor.GREEN + "テレポートリクエストの受け入れ");
-                    responseMeta.setLore(Arrays.asList(ChatColor.GRAY + "他のプレイヤーからのテレポートリクエストを受け入れるよ。"));
+                    responseMeta.setDisplayName(ChatColor.GREEN + "テレポートリクエストBOX");
+                    responseMeta.setLore(Arrays.asList(ChatColor.GRAY + "テレポートリクエストを管理できるよ。"));
                     responseItem.setItemMeta(responseMeta);
                 }
                 inv.setItem(15, responseItem);

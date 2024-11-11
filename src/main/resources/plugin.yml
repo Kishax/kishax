@@ -20,7 +20,15 @@ commands:
     usage: /<command>
     description: You can teleport to other player
     executor: spigot_command.TeleportRequest
-  tpaccept:
+  tprm:
+    usage: /<command>
+    description: You can teleport to other player
+    executor: spigot_command.TeleportRequest
+  tpra:
+    usage: /<command>
+    description: You can accept teleport request
+    executor: spigot_command.TeleportAccept
+  tprma:
     usage: /<command>
     description: You can accept teleport request
     executor: spigot_command.TeleportAccept
