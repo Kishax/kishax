@@ -935,9 +935,9 @@ public class Menu {
                                         if (doorMeta != null) {
                                             doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーに入る");
                                             doorItem.setItemMeta(doorMeta);
-                                            playerMenuActions.put(23, () -> enterServer(player, serverName));
+                                            playerMenuActions.put(24, () -> enterServer(player, serverName));
                                         }
-                                        inv.setItem(23, doorItem);
+                                        inv.setItem(24, doorItem);
                                     } else {
                                         ItemStack barrierItem = new ItemStack(Material.BARRIER);
                                         ItemMeta barrierMeta = barrierItem.getItemMeta();
@@ -945,8 +945,8 @@ public class Menu {
                                             barrierMeta.setDisplayName(ChatColor.RED + "許可されていません。");
                                             barrierItem.setItemMeta(barrierMeta);
                                         }
-                                        inv.setItem(23, barrierItem);
                                         inv.setItem(22, barrierItem);
+                                        inv.setItem(24, barrierItem);
                                     }
                                 } else {
                                     ItemStack offlineItem = new ItemStack(Material.RED_WOOL);
@@ -978,7 +978,7 @@ public class Menu {
                                             doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーがオンラインでないため、入れません。");
                                             doorItem.setItemMeta(doorMeta);
                                         }
-                                        inv.setItem(23, doorItem);
+                                        inv.setItem(24, doorItem);
                                     } else {
                                         ItemStack barrierItem = new ItemStack(Material.BARRIER);
                                         ItemMeta barrierMeta = barrierItem.getItemMeta();
@@ -987,7 +987,7 @@ public class Menu {
                                             barrierItem.setItemMeta(barrierMeta);
                                         }
                                         inv.setItem(22, barrierItem);
-                                        inv.setItem(23, barrierItem);
+                                        inv.setItem(24, barrierItem);
                                     }
                                 }
                             }
