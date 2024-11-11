@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -55,8 +54,9 @@ public class Menu {
         settingInventoryName = "settings",
         teleportInventoryName = "teleport",
         teleportRequestInventoryName = "teleport request",
-        teleportResponseInventoryName = "teleport response";
-    public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName, Menu.teleportInventoryName, Menu.teleportRequestInventoryName);
+        teleportResponseInventoryName = "teleport response",
+        teleportResponseHeadInventoryName = "teleport response head";
+    public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName, Menu.teleportInventoryName, Menu.teleportRequestInventoryName, Menu.teleportResponseInventoryName, Menu.teleportResponseHeadInventoryName);
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image", "get"));
     public static List<String> args2 = new ArrayList<>(Arrays.asList("online","life","distibuted","mod","before"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
@@ -211,23 +211,58 @@ public class Menu {
                             settingMenu(player, 1);
                         });
                         if (hubinv) {
-                            ItemStack hubinvItem = new ItemStack(Material.GREEN_WOOL);
+                            ItemStack hubinvItem = new ItemStack(Material.OAK_SIGN);
                             ItemMeta hubinvMeta = hubinvItem.getItemMeta();
                             if (hubinvMeta != null) {
-                                hubinvMeta.setDisplayName(ChatColor.GREEN + "サーバー起動時のアクション");
+                                hubinvMeta.setDisplayName(ChatColor.GOLD + "サーバー起動時のアクション");
                                 hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "チャットタイプに切り替えます。"));
                                 hubinvItem.setItemMeta(hubinvMeta);
                             }
                             inv.setItem(11, hubinvItem);
                         } else {
-                            ItemStack hubinvItem = new ItemStack(Material.RED_WOOL);
+                            ItemStack hubinvItem = new ItemStack(Material.CHEST);
                             ItemMeta hubinvMeta = hubinvItem.getItemMeta();
                             if (hubinvMeta != null) {
-                                hubinvMeta.setDisplayName(ChatColor.RED + "サーバー起動時のアクション");
+                                hubinvMeta.setDisplayName(ChatColor.GOLD + "サーバー起動時のアクション");
                                 hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "オープンインベントリタイプに切り替えます。"));
                                 hubinvItem.setItemMeta(hubinvMeta);
                             }
                             inv.setItem(11, hubinvItem);
+                        }
+                    }
+                    if (memberMap.get("tptype") instanceof Boolean tptype) {
+                        playerMenuActions.put(13, () -> {
+                            try (Connection connection = db.getConnection()) {
+                                db.updateMemberToggle(connection, "tptype", !tptype, player.getUniqueId().toString());
+                                player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (tptype ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
+                            } catch (SQLException | ClassNotFoundException e) {
+                                player.closeInventory();
+                                player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+                                logger.error("An error occurred while communicating with the database: {}", e.getMessage());
+                                for (StackTraceElement ste : e.getStackTrace()) {
+                                    logger.error(ste.toString());
+                                }
+                            }
+                            settingMenu(player, 1);
+                        });
+                        if (tptype) {
+                            ItemStack hubinvItem = new ItemStack(Material.OAK_SIGN);
+                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
+                            if (hubinvMeta != null) {
+                                hubinvMeta.setDisplayName(ChatColor.GOLD + "テレポート時のアクション");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "チャットタイプに切り替えます。"));
+                                hubinvItem.setItemMeta(hubinvMeta);
+                            }
+                            inv.setItem(13, hubinvItem);
+                        } else {
+                            ItemStack hubinvItem = new ItemStack(Material.CHEST);
+                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
+                            if (hubinvMeta != null) {
+                                hubinvMeta.setDisplayName(ChatColor.GOLD + "テレポート時のアクション");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "オープンインベントリタイプに切り替えます。"));
+                                hubinvItem.setItemMeta(hubinvMeta);
+                            }
+                            inv.setItem(13, hubinvItem);
                         }
                     }
                 }
@@ -343,51 +378,50 @@ public class Menu {
         int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
-        Inventory inv = Bukkit.createInventory(null, inventorySize, teleportRequestInventoryName);
-        Map<Player, Set<Player>> teleportMap = TeleportRequest.teleportMap;
-        final AtomicBoolean hasRequest = new AtomicBoolean(false);
+        Inventory inv = Bukkit.createInventory(null, inventorySize, teleportResponseHeadInventoryName);
         // valueにplayerが含まれていたら、keyplayerをコレクト
-        Set<Player> requestedPlayers = teleportMap.entrySet().stream()
-            .filter(entry -> entry.getValue().contains(player))
+        Set<Player> requestedPlayers = TeleportRequest.teleportMap.entrySet().stream()
+            .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
             .map(Map.Entry::getKey)
             .collect(Collectors.toSet());
-        int totalItems = requestedPlayers.size();
-        int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
-        int startIndex = (page - 1) * itemsPerPage;
-        int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-        if (page < totalPages) {
-            ItemStack nextPageItem = new ItemStack(Material.ARROW);
-            ItemMeta nextPageMeta = nextPageItem.getItemMeta();
-            if (nextPageMeta != null) {
-                nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
-                nextPageItem.setItemMeta(nextPageMeta);
+        if (!requestedPlayers.isEmpty()) {
+            int totalItems = requestedPlayers.size();
+            int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
+            int startIndex = (page - 1) * itemsPerPage;
+            int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            if (page < totalPages) {
+                ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                if (nextPageMeta != null) {
+                    nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                    nextPageItem.setItemMeta(nextPageMeta);
+                }
+                inv.setItem(26, nextPageItem);
+                playerMenuActions.put(26, () -> teleportResponseHeadMenu(player, page + 1));
             }
-            inv.setItem(26, nextPageItem);
-            playerMenuActions.put(26, () -> teleportRequestMenu(player, page + 1));
-        }
-        if (page > 1) {
-            ItemStack prevPageItem = new ItemStack(Material.ARROW);
-            ItemMeta prevPageMeta = prevPageItem.getItemMeta();
-            if (prevPageMeta != null) {
-                prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
-                prevPageItem.setItemMeta(prevPageMeta);
+            if (page > 1) {
+                ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                if (prevPageMeta != null) {
+                    prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
+                    prevPageItem.setItemMeta(prevPageMeta);
+                }
+                inv.setItem(18, prevPageItem);
+                playerMenuActions.put(18, () -> teleportResponseHeadMenu(player, page - 1));
             }
-            inv.setItem(18, prevPageItem);
-            playerMenuActions.put(18, () -> teleportRequestMenu(player, page - 1));
-        }
-        for (int i = startIndex; i < endIndex; i++) {
-            Player targetPlayer = (Player) requestedPlayers.toArray()[i];
-            ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
-            SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
-            if (playerMeta != null) {
-                playerMeta.setOwningPlayer(targetPlayer);
-                playerMeta.setDisplayName(ChatColor.GREEN + targetPlayer.getName());
-                playerItem.setItemMeta(playerMeta);
+            for (int i = startIndex; i < endIndex; i++) {
+                Player targetPlayer = (Player) requestedPlayers.toArray()[i];
+                ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
+                SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
+                if (playerMeta != null) {
+                    playerMeta.setOwningPlayer(targetPlayer);
+                    playerMeta.setDisplayName(ChatColor.GREEN + targetPlayer.getName());
+                    playerItem.setItemMeta(playerMeta);
+                }
+                inv.addItem(playerItem); // i - startIndex + 1
+                playerMenuActions.put(inv.first(playerItem), () -> teleportResponseMenu(targetPlayer, player));
             }
-            inv.setItem(i - startIndex + 1, playerItem);
-            playerMenuActions.put(i - startIndex + 1, () -> teleportResponseMenu(player, targetPlayer));
-        }
-        if (!hasRequest.get()) {
+        } else {
             ItemStack noRequestItem = new ItemStack(Material.BARRIER);
             ItemMeta noRequestMeta = noRequestItem.getItemMeta();
             if (noRequestMeta != null) {
@@ -404,7 +438,7 @@ public class Menu {
         }
         inv.setItem(0, backItem);
         playerMenuActions.put(0, () -> teleportMenu(player, 1));
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(teleportRequestInventoryName, playerMenuActions);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(teleportResponseHeadInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -441,8 +475,9 @@ public class Menu {
             player.closeInventory();
             player.performCommand("tpdeny " + targetPlayer.getName());
         });
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(teleportResponseInventoryName, playerMenuActions);
-        targetPlayer.openInventory(inv);
+        // ここ、targetPlayerがキーになっているのがあってるかわからない
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportResponseInventoryName, playerMenuActions);
+        player.openInventory(inv);
     }
 
     public void teleportRequestMenu(Player player, int page) {
@@ -451,10 +486,6 @@ public class Menu {
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, inventorySize, teleportRequestInventoryName);
-        int totalItems = Bukkit.getOnlinePlayers().size();
-        int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
-        int startIndex = (page - 1) * itemsPerPage;
-        int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
         if (backMeta != null) {
@@ -463,43 +494,57 @@ public class Menu {
         }
         inv.setItem(0, backItem);
         playerMenuActions.put(0, () -> generalMenu(player, 1));
-        if (page < totalPages) {
-            ItemStack nextPageItem = new ItemStack(Material.ARROW);
-            ItemMeta nextPageMeta = nextPageItem.getItemMeta();
-            if (nextPageMeta != null) {
-                nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
-                nextPageItem.setItemMeta(nextPageMeta);
+        int totalItems = Bukkit.getOnlinePlayers().size();
+        if (totalItems != 1) {
+            int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
+            int startIndex = (page - 1) * itemsPerPage;
+            int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            if (page < totalPages) {
+                ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                if (nextPageMeta != null) {
+                    nextPageMeta.setDisplayName(ChatColor.GREEN + "次のページ");
+                    nextPageItem.setItemMeta(nextPageMeta);
+                }
+                inv.setItem(26, nextPageItem);
+                playerMenuActions.put(26, () -> teleportRequestMenu(player, page + 1));
             }
-            inv.setItem(26, nextPageItem);
-            playerMenuActions.put(26, () -> teleportRequestMenu(player, page + 1));
-        }
-        if (page > 1) {
-            ItemStack prevPageItem = new ItemStack(Material.ARROW);
-            ItemMeta prevPageMeta = prevPageItem.getItemMeta();
-            if (prevPageMeta != null) {
-                prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
-                prevPageItem.setItemMeta(prevPageMeta);
+            if (page > 1) {
+                ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                if (prevPageMeta != null) {
+                    prevPageMeta.setDisplayName(ChatColor.GREEN + "前のページ");
+                    prevPageItem.setItemMeta(prevPageMeta);
+                }
+                inv.setItem(18, prevPageItem);
+                playerMenuActions.put(18, () -> teleportRequestMenu(player, page - 1));
             }
-            inv.setItem(18, prevPageItem);
-            playerMenuActions.put(18, () -> teleportRequestMenu(player, page - 1));
-        }
-        for (int i = startIndex; i < endIndex; i++) {
-            Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
-            if (targetPlayer.equals(player)) continue;
-            ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
-            SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
-            if (playerMeta != null) {
-                playerMeta.setOwningPlayer(targetPlayer);
-                playerMeta.setDisplayName(ChatColor.GREEN + targetPlayer.getName());
-                playerItem.setItemMeta(playerMeta);
+            for (int i = startIndex; i < endIndex; i++) {
+                Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
+                if (targetPlayer.equals(player)) continue;
+                ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
+                SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
+                if (playerMeta != null) {
+                    playerMeta.setOwningPlayer(targetPlayer);
+                    playerMeta.setDisplayName(ChatColor.GREEN + targetPlayer.getName());
+                    playerItem.setItemMeta(playerMeta);
+                }
+                inv.addItem(playerItem);
+                playerMenuActions.put(inv.first(playerItem), () -> {
+                    player.closeInventory();
+                    player.performCommand("tpr " + targetPlayer.getName());
+                });
             }
-            inv.setItem(i - startIndex + 1, playerItem);
-            playerMenuActions.put(i - startIndex + 1, () -> {
-                player.closeInventory();
-                player.performCommand("tpa " + targetPlayer.getName());
-            });
+        } else {
+            ItemStack noRequestItem = new ItemStack(Material.BARRIER);
+            ItemMeta noRequestMeta = noRequestItem.getItemMeta();
+            if (noRequestMeta != null) {
+                noRequestMeta.setDisplayName(ChatColor.RED + "テレポートできるプレイヤーがいません");
+                noRequestItem.setItemMeta(noRequestMeta);
+            }
+            inv.setItem(13, noRequestItem);
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(teleportRequestInventoryName, playerMenuActions);
+        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportRequestInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -508,7 +553,7 @@ public class Menu {
         Inventory inv = Bukkit.createInventory(null, 27, Menu.teleportInventoryName);
         switch (page) {
             case 1 -> {
-                playerMenuActions.put(0, () -> generalMenu(player, 1));
+                playerMenuActions.put(0, () -> generalMenu(player, 2));
                 playerMenuActions.put(11, () -> teleportRequestMenu(player, 1));
                 playerMenuActions.put(15, () -> teleportResponseHeadMenu(player, 1));
                 ItemStack backItem = new ItemStack(Material.ARROW);

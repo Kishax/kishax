@@ -80,16 +80,16 @@ public class SocketResponse {
                                     TextComponent message4 = new TextComponent("をクリックしてください。\n");
                                     player.spigot().sendMessage(message2, message3, message4, TCUtils.SETTINGS_ENTER.get());
                                 } else {
-                                    TextComponent message = new TextComponent("サーバーインベントリを開きます。\n");
+                                    TextComponent message = new TextComponent("3秒後にインベントリを開きます。\n");
                                     message.setBold(true);
                                     message.setUnderlined(true);
                                     message.setColor(ChatColor.GOLD);
                                     message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fmc menu server before"));
                                     message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("直近で起動したサーバーインベントリを開きます。")));
                                     player.spigot().sendMessage(message, TCUtils.SETTINGS_ENTER.get());
-                                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                                         menu.openServerInventoryFromOnlineServerInventory(player, extractedServer, 1);
-                                    });
+                                    }, 60L);
                                 }
                             }
                         } catch (SQLException | ClassNotFoundException e) {
