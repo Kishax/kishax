@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 
 import common.PermSettings;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
 
 public class TeleportAccept implements TabExecutor {
     private final common.Main plugin;
@@ -63,22 +64,24 @@ public class TeleportAccept implements TabExecutor {
                                 task.cancel();
                                 requestedPlayers.remove(requestedPlayer);
                                 targetPlayer.teleport(player);
-                                player.sendMessage(ChatColor.GREEN + "テレポートしました。");
+                                TextComponent message = new TextComponent("テレポートしました。");
+                                message.setBold(true);
+                                message.setColor(ChatColor.GREEN);
+                                player.spigot().sendMessage(message);
+                                targetPlayer.spigot().sendMessage(message);
                                 return true;
                             }
                         }
                         if (!isRequested.get()) {
-                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。(2)");
+                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
                         }
                     } else {
-                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。(1)");
+                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
                     }
                 }
                 case "tprma" -> {
                     Map<Player, List<Map<Player, BukkitTask>>> teleportMeMap = TeleportRequest.teleportMeMap;
-                    logger.info("teleportMeMap: " + teleportMeMap);
                     if (teleportMeMap.containsKey(targetPlayer)) {
-                        logger.info("teleportMeMap.containsKey(targetPlayer)");
                         List<Map<Player, BukkitTask>> requestedPlayers = teleportMeMap.get(targetPlayer);
                         AtomicBoolean isRequested = new AtomicBoolean(false);
                         for (Map<Player, BukkitTask> requestedPlayer : requestedPlayers) {
@@ -88,15 +91,19 @@ public class TeleportAccept implements TabExecutor {
                                 task.cancel();
                                 requestedPlayers.remove(requestedPlayer);
                                 player.teleport(targetPlayer); // 逆
-                                player.sendMessage(ChatColor.GREEN + "テレポートしました。");
+                                TextComponent message = new TextComponent("テレポートしました。");
+                                message.setBold(true);
+                                message.setColor(ChatColor.GREEN);
+                                player.spigot().sendMessage(message);
+                                targetPlayer.spigot().sendMessage(message);
                                 return true;
                             }
                         }
                         if (!isRequested.get()) {
-                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。(2)");
+                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
                         }
                     } else {
-                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。(1)");
+                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
                     }
                 }
             }
