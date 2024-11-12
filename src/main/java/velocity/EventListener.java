@@ -477,15 +477,6 @@ public class EventListener {
 						// サーバー移動通知
 						component = Component.text("サーバー移動通知: "+playerName+" -> "+currentServerName).color(NamedTextColor.AQUA);
 						bc.sendExceptServerMessage(component, currentServerName);
-						if (currentServerName.equals("latest")) {
-							component = Component.text()
-										.append(Component.text("dynmap").decorate(TextDecoration.BOLD).color(NamedTextColor.GOLD))
-										.append(Component.text("\nhttps://keypforev.ddns.net/dynmap/").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED)
-											.clickEvent(ClickEvent.openUrl("https://keypforev.ddns.net/dynmap/"))
-											.hoverEvent(HoverEvent.showText(Component.text("(クリックして)地図を見る"))))
-										.build();
-							player.sendMessage(component);
-						}
 						// Amabassadorプラグインと競合している可能性あり
 						// Main.getInjector().getInstance(velocity.PlayerUtil.class).updatePlayers();
 						pu.updatePlayers();
