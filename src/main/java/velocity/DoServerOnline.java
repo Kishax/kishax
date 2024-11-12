@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -229,7 +230,7 @@ public class DoServerOnline {
 							Object configServerValue = configServerInfo.get(entry4);
 							if (dbServerInfo.keySet().contains(entry4)) {
 								Object dbServerValue = dbServerInfo.get(entry4);
-								if (!configServerValue.equals(dbServerValue)) {
+								if (!Objects.equals(configServerValue, dbServerValue)) {
 									diffKeySet.add(entry4);
 								}
 							} else if (addedColumnSet.contains(entry4)) {
