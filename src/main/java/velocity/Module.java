@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import common.Database;
 import common.PlayerUtils;
+import common.SocketSwitch;
 import discord.Discord;
 import discord.DiscordEventListener;
 import discord.DiscordInterface;

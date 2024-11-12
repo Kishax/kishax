@@ -20,6 +20,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import common.Database;
+import common.SocketSwitch;
 
 @Singleton
 public class ServerStatusCache {

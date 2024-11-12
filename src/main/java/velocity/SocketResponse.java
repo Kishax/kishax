@@ -1,5 +1,7 @@
 package velocity;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -16,8 +18,10 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.Database;
 import common.Luckperms;
 import common.PermSettings;
+import common.SocketSwitch;
 import discord.MessageEditorInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -30,6 +34,7 @@ import velocity_command.CommandForwarder;
 public class SocketResponse {
 	private final Logger logger;
 	private final ProxyServer server;
+	private final Database db;
 	private final Config config;
 	private final Luckperms lp;
 	private final BroadCast bc;
@@ -39,9 +44,10 @@ public class SocketResponse {
 	private String mineName = null;
 	
 	@Inject
-	public SocketResponse (Logger logger, ProxyServer server, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider) {
+	public SocketResponse (Logger logger, ProxyServer server, Database db, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider) {
 		this.logger = logger;
 		this.server = server;
+		this.db = db;
         this.config = config;
         this.lp = lp;
         this.bc = bc;
@@ -62,8 +68,15 @@ public class SocketResponse {
                 	mineName = matcher.group(1);
 					lp.addPermission(mineName, PermSettings.NEW_FMC_USER.get());
 					// spigotsに通知し、serverCacheを更新させる
-					SocketSwitch ssw = sswProvider.get();
-					ssw.sendSpigotServer(res);
+					try (Connection conn = db.getConnection()) {
+						SocketSwitch ssw = sswProvider.get();
+						ssw.sendSpigotServer(conn, res);
+					} catch (SQLException | ClassNotFoundException e) {
+						logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+						for (StackTraceElement element : e.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
                 	Optional<Player> playerOptional = server.getAllPlayers().stream()
 						.filter(player -> player.getUsername().equalsIgnoreCase(mineName))
 						.findFirst();

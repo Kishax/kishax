@@ -1,14 +1,22 @@
-package spigot;
+package common;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+
+import spigot.PortFinder;
+import spigot.ServerStatusCache;
+import spigot.SocketResponse;
 
 public class SocketSwitch {
     private final Logger logger;
@@ -93,27 +101,14 @@ public class SocketSwitch {
 	    }
 	}
     
-    public void sendSpigotServer(String sendmsg) {
-        sendMessageToServer("spigot", sendmsg);
+    public void sendSpigotServer(Connection conn, String sendmsg) throws SQLException, ClassNotFoundException {
+        sendMessageToServer(conn, "spigot", sendmsg);
     }
 
-    public void sendVelocityServer(String sendmsg) {
-        sendMessageToServer("velocity", sendmsg);
+    public void sendVelocityServer(Connection conn, String sendmsg) throws SQLException, ClassNotFoundException {
+        sendMessageToServer(conn, "velocity", sendmsg);
     }
     
-    private void sendMessageToServer(String serverType, String sendmsg) {
-        ssc.getStatusMap().values().stream()
-            .flatMap(serverMap -> serverMap.entrySet().stream())
-            .filter(entry -> entry.getValue().get("online") instanceof Boolean online && online)
-            .filter(entry -> entry.getValue().get("platform") instanceof String platform && platform.equalsIgnoreCase(serverType))
-            .filter(entry -> entry.getValue().get("socketport") instanceof Integer port && port != 0)
-            .forEach(entry -> {
-                int port = (Integer) entry.getValue().get("socketport");
-                logger.info("sendSpigotServer: Starting client for server {} on port {}", new Object[]{entry.getKey(), port});
-                startSocketClient(port, sendmsg);
-            });
-    }
-
     public void stopSocketClient() {
         try {
             if (clientThread != null && clientThread.isAlive()) {
@@ -154,5 +149,62 @@ public class SocketSwitch {
                 logger.error(element.toString());
             }
         }
+    }
+
+    public boolean sendSpecificServer(Connection conn, String serverName, String msg) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String serverDBName = rs.getString("name");
+                    int port = rs.getInt("socketport");
+                    boolean online = rs.getBoolean("online");
+                    if (port == 0) {
+                        //logger.info("sendSpecificServer: Server " + serverName + " has no socketport");
+                        continue;
+                    }
+                    if (online && serverDBName.equalsIgnoreCase(serverName)) {
+                        logger.info("sendSpecificServer: Starting client for server " + serverName + " on port " + port);
+                        startSocketClient(port, msg);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void sendMessageToServer(Connection conn, String serverType, String sendmsg) throws SQLException, ClassNotFoundException {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String serverName = rs.getString("name"),
+                        platform = rs.getString("platform");
+                    int port = rs.getInt("socketport");
+                    boolean online = rs.getBoolean("online");
+                    if (port == 0) {
+                        //logger.info("sendSpigotServer: Server " + serverName + " has no socketport");
+                        continue;
+                    }
+                    if (online && platform.equalsIgnoreCase(serverType)) {
+                        logger.info("sendSpigotServer: Starting client for server " + serverName + " on port " + port);
+                        startSocketClient(port, sendmsg);
+                    }
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private void sendMessageToServer2(String serverType, String sendmsg) {
+        ssc.getStatusMap().values().stream()
+            .flatMap(serverMap -> serverMap.entrySet().stream())
+            .filter(entry -> entry.getValue().get("online") instanceof Boolean online && online)
+            .filter(entry -> entry.getValue().get("platform") instanceof String platform && platform.equalsIgnoreCase(serverType))
+            .filter(entry -> entry.getValue().get("socketport") instanceof Integer port && port != 0)
+            .forEach(entry -> {
+                int port = (Integer) entry.getValue().get("socketport");
+                logger.info("sendSpigotServer: Starting client for server {} on port {}", new Object[]{entry.getKey(), port});
+                startSocketClient(port, sendmsg);
+            });
     }
 }

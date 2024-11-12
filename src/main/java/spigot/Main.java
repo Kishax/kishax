@@ -15,6 +15,7 @@ import com.google.inject.Injector;
 import common.Database;
 import common.Luckperms;
 import common.PlayerUtils;
+import common.SocketServerThread;
 import net.luckperms.api.LuckPermsProvider;
 import spigot_command.FMCCommand;
 import spigot_command.Q;
@@ -30,6 +31,7 @@ public class Main {
 	
 	public void onEnable() {
 		logger.info("detected spigot platform.");
+		SocketServerThread.platform.set("spigot");
         injector = Guice.createInjector(new spigot.Module(plugin, logger));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 		Database db = getInjector().getInstance(Database.class);
