@@ -49,6 +49,7 @@ public class FMCItemFrame {
                             ItemStack item = itemFrame.getItem();
                             switch (item.getType()) {
                                 case FILLED_MAP -> {
+                                    logger.info("Loaded map item frame: {}", itemFrame.getLocation());
                                     MapMeta mapMeta = (MapMeta) item.getItemMeta();
                                     if (mapMeta != null && mapMeta.hasMapView()) {
                                         if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
@@ -71,9 +72,8 @@ public class FMCItemFrame {
                                                             image = isQr ? image : im.resizeImage(image, 128, 128);
                                                             mapView.getRenderers().clear();
                                                             mapView.addRenderer(new ImageMapRenderer(logger, image, fullPath));
+                                                            item.setItemMeta(mapMeta);
                                                         } 
-                                                        // 地図を配置
-                                                        item.setItemMeta(mapMeta);
                                                     } catch (IOException e) {
                                                         logger.error("マップId {} の画像の読み込みに失敗しました: {}", new Object[] {mapId, fullPath});
                                                         logger.error("An IOException error occurred: {}", e.getMessage());
