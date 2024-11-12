@@ -117,6 +117,7 @@ public class DiscordEventListener extends ListenerAdapter {
 		MessageChannel channel = e.getChannel();
 		String userId = e.getMember().getId(),
 			userName = e.getMember().getNickname(),
+			userName2 = user.getName(),
 			channelId = channel.getId(),
 			guildId = e.getGuild().getId(),
 			channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId);
@@ -208,9 +209,9 @@ public class DiscordEventListener extends ListenerAdapter {
 							LocalDate now = LocalDate.now();
 							String imageUUID = UUID.randomUUID().toString(),
 								otp = OTPGenerator.generateOTP(6);
-							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, d, dname, did, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName, null, null, null, title, imageUUID, ext, url, comment, isQr, otp, true, userName, userId, java.sql.Date.valueOf(now)});
+							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, d, dname, did, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName != null ? userName : userName2, null, null, null, title, imageUUID, ext, url, comment, isQr, otp, true, userName, userId, java.sql.Date.valueOf(now)});
 							e.reply("画像メタデータを登録しました。("+thisTimes+"/10)\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
-							logger.info("(Discord)" + userName+" が画像メタデータを登録しました。("+thisTimes+"/10)");
+							logger.info("(Discord)" + userName != null ? userName : userName2 +" が画像メタデータを登録しました。("+thisTimes+"/10)");
 						} catch (IOException | URISyntaxException e2) {
 							e.reply("指定のURLは無効です。").setEphemeral(true).queue();
 							return;

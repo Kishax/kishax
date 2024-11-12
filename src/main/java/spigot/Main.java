@@ -73,7 +73,7 @@ public class Main {
 		getInjector().getInstance(PlayerUtils.class).loadPlayers();
     	// DoServerOnlineとPortFinderとSocketの処理を統合
 		getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
-		getInjector().getInstance(FMCItemFrame.class).loadWorldsItemFrames();
+		//getInjector().getInstance(FMCItemFrame.class).loadWorldsItemFrames();
 		logger.info("fmc plugin has been enabled.");
     }
     

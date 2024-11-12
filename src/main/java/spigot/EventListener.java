@@ -27,6 +27,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -47,10 +48,11 @@ public final class EventListener implements Listener {
     private final ServerStatusCache ssc;
     private final Luckperms lp;
     private final Inventory inv;
+    private final FMCItemFrame fif;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
 
     @Inject
-	public EventListener(common.Main plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv) {
+	public EventListener(common.Main plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv, FMCItemFrame fif) {
 		this.plugin = plugin;
         this.logger = logger;
 		this.psConfig = psConfig;
@@ -58,8 +60,14 @@ public final class EventListener implements Listener {
         this.ssc = ssc;
         this.lp = lp;
         this.inv = inv;
+        this.fif = fif;
 	}
 
+    @EventHandler
+    public void onServerLoad(ServerLoadEvent event) {
+        //fif.loadWorldsItemFrames();
+    }
+    
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
@@ -92,6 +100,7 @@ public final class EventListener implements Listener {
     
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        fif.loadWorldsItemFrames();
         event.setJoinMessage(null);
         Player player = event.getPlayer();
         if (EventListener.isHub.get()) {
