@@ -9,17 +9,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 
-import spigot.SocketResponse;
-
 public class SocketServerThread extends Thread {
     public static AtomicReference<String> platform = new AtomicReference<>();
     public Logger logger;
-    public SocketResponse sr;
     private final Socket socket;
     
-    public SocketServerThread (Logger logger, SocketResponse sr, Socket socket) {
+    public SocketServerThread (Logger logger, Socket socket) {
         this.logger = logger;
-        this.sr = sr;
         this.socket = socket;
     }
 
@@ -35,10 +31,10 @@ public class SocketServerThread extends Thread {
             // プラットフォームによって、receivedMessageを処理するメソッドを分ける
             switch (SocketServerThread.platform.get()) {
                 case "velocity" -> {
-                    velocity.Main.getInjector().getInstance(SocketResponse.class).resaction(receivedMessage);
+                    velocity.Main.getInjector().getInstance(velocity.SocketResponse.class).resaction(receivedMessage);
                 }
                 case "spigot" -> {
-                    spigot.Main.getInjector().getInstance(SocketResponse.class).resaction(receivedMessage);
+                    spigot.Main.getInjector().getInstance(spigot.SocketResponse.class).resaction(receivedMessage);
                 }
             }
         } catch (Exception e) {

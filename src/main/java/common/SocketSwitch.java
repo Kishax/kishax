@@ -14,24 +14,17 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import spigot.PortFinder;
-import spigot.ServerStatusCache;
-import spigot.SocketResponse;
 
 public class SocketSwitch {
     private final Logger logger;
-    private final SocketResponse sr;
-    private final ServerStatusCache ssc;
     private final String hostname = "localhost";
     private ServerSocket serverSocket;
     private Thread clientThread, socketThread;
     private volatile boolean running = true;
     
     @Inject
-	public SocketSwitch(Logger logger, SocketResponse sr, PortFinder pf, ServerStatusCache ssc) {
+	public SocketSwitch(Logger logger) {
         this.logger = logger;
-        this.ssc = ssc;
-        this.sr = sr;
 	}
     
     //Server side
@@ -48,7 +41,7 @@ public class SocketSwitch {
                             break;
                         }
                         // logger.info("New client connected()");
-                        new SocketServerThread(logger, sr, socket2).start();
+                        new SocketServerThread(logger, socket2).start();
                     } catch (IOException e) {
                         if (running) {
                             logger.error("An IOException error occurred: {}", e.getMessage());
@@ -192,19 +185,5 @@ public class SocketSwitch {
                 }
             }
         }
-    }
-
-    @SuppressWarnings("unused")
-    private void sendMessageToServer2(String serverType, String sendmsg) {
-        ssc.getStatusMap().values().stream()
-            .flatMap(serverMap -> serverMap.entrySet().stream())
-            .filter(entry -> entry.getValue().get("online") instanceof Boolean online && online)
-            .filter(entry -> entry.getValue().get("platform") instanceof String platform && platform.equalsIgnoreCase(serverType))
-            .filter(entry -> entry.getValue().get("socketport") instanceof Integer port && port != 0)
-            .forEach(entry -> {
-                int port = (Integer) entry.getValue().get("socketport");
-                logger.info("sendSpigotServer: Starting client for server {} on port {}", new Object[]{entry.getKey(), port});
-                startSocketClient(port, sendmsg);
-            });
     }
 }
