@@ -11,6 +11,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import common.Database;
+import common.SocketSwitch;
 
 public class DoServerOnline {
 	private final Logger logger;
@@ -30,31 +31,21 @@ public class DoServerOnline {
 		// "plugins"ディレクトリの親ディレクトリを取得
 		String serverName = shd.getServerName();
 		Objects.requireNonNull(serverName);
-		try {
+		try (Connection conn = db.getConnection()) {
 			db.updateLog( "UPDATE settings SET value=? WHERE name=?;", new Object[] {serverName, "now_online"});
-		} catch (SQLException | ClassNotFoundException e) {
-			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
-			for (StackTraceElement element : e.getStackTrace()) {
-				logger.error(element.toString());
-			}
-		}
-
-		// サーバーをオンラインに
-		SocketSwitch ssw = sswProvider.get();
-		// 他のサーバーに通知
-		ssw.sendVelocityServer(serverName+"サーバーが起動しました。");
-		ssw.sendSpigotServer(serverName+"サーバーが起動しました。");
-		// ServerStatusCache初回ループと各サーバーのSocketResponseクラスで、
-		// refreshManualOnlineServer()を呼び出しているので、MineStatusSyncは不要
-		String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
-		try (Connection conn = db.getConnection();
-			PreparedStatement ps = conn != null && !conn.isClosed() ? conn.prepareStatement(query) : db.getConnection().prepareStatement(query)) {
-			ps.setBoolean(1,true);
-			ps.setInt(2, socketport);
-			ps.setString(3, serverName);
-			int rsAffected = ps.executeUpdate();
-			if (rsAffected > 0) {
-				logger.info("MySQL Server is connected!");
+			SocketSwitch ssw = sswProvider.get();
+			ssw.sendVelocityServer(conn, serverName+"サーバーが起動しました。");
+			ssw.sendSpigotServer(conn, serverName+"サーバーが起動しました。");
+			// refreshManualOnlineServer()を呼び出しているので、MineStatusSyncは不要
+			String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
+			try (PreparedStatement ps = conn.prepareStatement(query)) {
+				ps.setBoolean(1,true);
+				ps.setInt(2, socketport);
+				ps.setString(3, serverName);
+				int rsAffected = ps.executeUpdate();
+				if (rsAffected > 0) {
+					logger.info("MySQL Server is connected!");
+				}
 			}
 		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("An error occurred while updating the database: " + e.getMessage(), e);

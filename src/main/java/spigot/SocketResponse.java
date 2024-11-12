@@ -14,6 +14,7 @@ import com.google.inject.Provider;
 
 import common.Database;
 import common.Luckperms;
+import common.SocketSwitch;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -51,8 +52,15 @@ public class SocketResponse {
             res = res.replace("\n", "").replace("\r", "");
             if (res.startsWith("proxy->")) {
                 if (res.contains("stop")) {
-                    SocketSwitch ssw = sswProvider.get();
-	            	ssw.sendVelocityServer("管理者の命令より、"+thisServerName+"サーバーを停止させます。");
+                    try (Connection conn = db.getConnection()) {
+                        SocketSwitch ssw = sswProvider.get();
+	            	    ssw.sendVelocityServer(conn, "管理者の命令より、"+thisServerName+"サーバーを停止させます。");
+                    } catch (SQLException | ClassNotFoundException e) {
+                        logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+                        for (StackTraceElement element : e.getStackTrace()) {
+                            logger.error(element.toString());
+                        }
+                    }
 	                plugin.getServer().broadcastMessage(ChatColor.RED+"管理者の命令より、"+thisServerName+"サーバーを5秒後に停止します。");
 	                asd.countdownAndShutdown(5);
                 }

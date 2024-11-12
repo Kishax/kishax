@@ -1,17 +1,27 @@
 package spigot_command;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import spigot.SocketSwitch;
+import common.Database;
+import common.SocketSwitch;
+import net.md_5.bungee.api.ChatColor;
 
 public class CommandForward {
+	private final Database db;
+	private final Logger logger;
 	private final Provider<SocketSwitch> sswProvider;
 	@Inject
-	public CommandForward(Provider<SocketSwitch> sswProvider) {
+	public CommandForward(Database db, Logger logger, Provider<SocketSwitch> sswProvider) {
+		this.db = db;
+		this.logger = logger;
 		this.sswProvider = sswProvider;
 	}
 	
@@ -24,7 +34,17 @@ public class CommandForward {
 			allcmd = "? " + allcmd;
 		}
 		SocketSwitch ssw = sswProvider.get();
-		ssw.sendVelocityServer(allcmd);
+		try (Connection conn = db.getConnection()) {
+			ssw.sendVelocityServer(conn, allcmd);
+		} catch (SQLException | ClassNotFoundException e) {
+			if (sender != null) {
+				sender.sendMessage(ChatColor.RED + "データベースに接続できませんでした。");
+			}
+			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
 	}
 
 	public void executeProxyCommand(Player player, String allcmd) {
@@ -32,6 +52,14 @@ public class CommandForward {
 		String playerName = player.getName();
 		allcmd = playerName + " fv " + playerName + " " + allcmd;
 		SocketSwitch ssw = sswProvider.get();
-		ssw.sendVelocityServer(allcmd);
+		try (Connection conn = db.getConnection()) {
+			ssw.sendVelocityServer(conn, allcmd);
+		} catch (SQLException | ClassNotFoundException e) {
+			player.sendMessage(ChatColor.RED + "データベースに接続できませんでした。");
+			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
 	}
 }

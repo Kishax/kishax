@@ -88,10 +88,6 @@ public class FMCCommand implements TabExecutor {
 				Main.getInjector().getInstance(Menu.class).execute(sender, cmd, label, args);
 				return true;
 			}
-			case "button" -> {
-				Main.getInjector().getInstance(Button.class).execute(sender, cmd, label, args);
-				return true;
-			}
 			case "check" -> {
 				Main.getInjector().getInstance(Check.class).execute(sender, cmd, label, args);
 				return true;

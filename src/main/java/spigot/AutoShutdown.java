@@ -1,5 +1,7 @@
 package spigot;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Objects;
 
 import org.bukkit.ChatColor;
@@ -9,20 +11,25 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import common.Database;
+import common.SocketSwitch;
+
 public class AutoShutdown {
 
 	private final common.Main plugin;
 	private final Logger logger;
+	private final Database db;
 	private final Provider<SocketSwitch> sswProvider;
-	private final ServerHomeDir shd;
+	private final String thisServerName;
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown (common.Main plugin, Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+	public AutoShutdown (common.Main plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
 		this.plugin = plugin;
 		this.logger = logger;
+		this.db = db;
 		this.sswProvider = sswProvider;
-		this.shd = shd;
+		this.thisServerName = shd.getServerName();
 	}
 	
 	public void startCheckForPlayers() {
@@ -40,10 +47,15 @@ public class AutoShutdown {
 	        public void run() {
 				SocketSwitch ssw = sswProvider.get();
 	            if (plugin.getServer().getOnlinePlayers().isEmpty()) {
-	            	String serverName = shd.getServerName();
-	            	ssw.sendVelocityServer("プレイヤー不在のため、"+serverName+"サーバーを停止させます。");
-	            	
-	                plugin.getServer().broadcastMessage(ChatColor.RED+"プレイヤー不在のため、"+serverName+"サーバーを5秒後に停止します。");
+					try (Connection conn = db.getConnection()) {
+						ssw.sendVelocityServer(conn, "プレイヤー不在のため、"+thisServerName+"サーバーを停止させます。");
+					} catch (SQLException | ClassNotFoundException e) {
+						logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+						for (StackTraceElement element : e.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
+	                plugin.getServer().broadcastMessage(ChatColor.RED+"プレイヤー不在のため、"+thisServerName+"サーバーを5秒後に停止します。");
 	                countdownAndShutdown(5);
 	            }
 	        }
@@ -59,8 +71,16 @@ public class AutoShutdown {
             public void run() {
                 if (countdown <= 0) {
                     plugin.getServer().broadcastMessage(ChatColor.RED + "サーバーを停止します。");
-					SocketSwitch ssw = sswProvider.get();
-					ssw.sendVelocityServer(shd.getServerName() + "サーバーが停止しました。");
+					try (Connection conn = db.getConnection()) {
+						SocketSwitch ssw = sswProvider.get();
+						ssw.sendVelocityServer(conn, thisServerName + "サーバーが停止しました。");
+					} catch (SQLException | ClassNotFoundException e) {
+						logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+						for (StackTraceElement element : e.getStackTrace()) {
+							logger.error(element.toString());
+						}
+					}
+					
                     plugin.getServer().shutdown();
                     cancel();
                     return;

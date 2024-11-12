@@ -28,6 +28,7 @@ import com.google.inject.Provider;
 import common.Database;
 import common.FMCSettings;
 import common.OTPGenerator;
+import common.SocketSwitch;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.Role;
@@ -48,7 +49,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import velocity.BroadCast;
 import velocity.Config;
-import velocity.SocketSwitch;
 import velocity_command.Request;
 import velocity_command.RequestInterface;
 
@@ -96,7 +96,7 @@ public class DiscordEventListener extends ListenerAdapter {
 			try (Connection conn = db.getConnection()) {
 				db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {newContent, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
 				SocketSwitch ssw = sswProvider.get();
-				ssw.sendSpigotServer("RulebookSync");
+				ssw.sendSpigotServer(conn, "RulebookSync");
 				logger.info("detecting rulebook update.");
 				logger.info("updated rulebook content: {}", newContent);
 			} catch (SQLException | ClassNotFoundException e) {
@@ -136,7 +136,7 @@ public class DiscordEventListener extends ListenerAdapter {
 								db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {content, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
 								e.reply("ルールブックを更新しました。").setEphemeral(true).queue();
 								SocketSwitch ssw = sswProvider.get();
-								ssw.sendSpigotServer("RulebookSync");
+								ssw.sendSpigotServer(conn, "RulebookSync");
 							} catch (SQLException | ClassNotFoundException e1) {
 								e.reply("データベースに接続できませんでした。").setEphemeral(true).queue();
 								logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());

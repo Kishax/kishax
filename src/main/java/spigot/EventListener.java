@@ -29,14 +29,12 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
 import common.Luckperms;
-import spigot_command.Button;
 import spigot_command.Confirm;
 import spigot_command.Menu;
 
@@ -72,7 +70,7 @@ public final class EventListener implements Listener {
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         Action action = event.getAction();
-        Block clickedBlock = event.getClickedBlock();
+        //Block clickedBlock = event.getClickedBlock();
         ItemStack itemInHand = player.getInventory().getItemInMainHand();
         switch (action) {
             case RIGHT_CLICK_BLOCK, RIGHT_CLICK_AIR -> {
@@ -84,18 +82,6 @@ public final class EventListener implements Listener {
                         }
                     }
                     default -> {
-                    }
-                }
-                if (clickedBlock != null) {
-                    switch (clickedBlock.getType()) {
-                        case STONE_BUTTON -> {
-                            ItemMeta meta = itemInHand.getItemMeta();
-                            if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Button.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                player.sendMessage(ChatColor.GREEN + "特定のボタンが右クリックされました！");
-                            }
-                        }
-                        default -> {
-                        }
                     }
                 }
             }

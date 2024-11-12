@@ -1,6 +1,8 @@
 package velocity;
 
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.TimeZone;
 
 import org.geysermc.floodgate.api.FloodgateApi;
@@ -16,8 +18,11 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
+import common.Database;
 import common.Luckperms;
 import common.PlayerUtils;
+import common.SocketServerThread;
+import common.SocketSwitch;
 import discord.Discord;
 import discord.EmojiManager;
 import net.luckperms.api.LuckPermsProvider;
@@ -44,6 +49,7 @@ public class Main {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent e) {
     	logger.info("detected velocity platform.");
+        SocketServerThread.platform.set("velocity");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
         injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory));
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
@@ -53,7 +59,12 @@ public class Main {
                 getInjector().getInstance(EmojiManager.class).updateDefaultEmojiId();
             }
         }); 		
-    	getInjector().getInstance(DoServerOnline.class).updateDatabase();
+        Database db = getInjector().getInstance(Database.class);
+		try (Connection conn = db.getConnection()) {
+            getInjector().getInstance(DoServerOnline.class).updateDatabase(conn);
+		} catch (SQLException | ClassNotFoundException e1) {
+			logger.error("An error occurred while updating the database: {}", e1.getMessage());
+		}
     	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
     	getInjector().getInstance(Luckperms.class).triggerNetworkSync();
  		logger.info("linking with LuckPerms...");
@@ -65,7 +76,11 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         commandManager.register(commandManager.metaBuilder("retry").build(), getInjector().getInstance(Retry.class));
         commandManager.register(commandManager.metaBuilder("stp").build(), getInjector().getInstance(ServerTeleport.class));
-        getInjector().getProvider(SocketSwitch.class).get().startSocketServer();
+        Config config = getInjector().getInstance(Config.class);
+        int port = config.getInt("Socket.Server_Port",0);
+        if (port != 0) {
+            getInjector().getProvider(SocketSwitch.class).get().startSocketServer(port);
+		}
         logger.info(FloodgateApi.getInstance().toString());
         logger.info("linking with Floodgate...");
 	    logger.info("fmc plugin has been enabled.");

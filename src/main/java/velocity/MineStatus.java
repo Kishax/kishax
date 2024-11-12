@@ -14,6 +14,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import common.Database;
+import common.SocketSwitch;
 
 public class MineStatus {
     private final Logger logger;
@@ -143,7 +144,7 @@ public class MineStatus {
                 }
                 if (rsAffecteds2.stream().anyMatch(rs2 -> rs2 > 0)) {
                     SocketSwitch ssw = sswProvider.get();
-                    ssw.sendSpigotServer("MineStatusSync");
+                    ssw.sendSpigotServer(conn, "MineStatusSync");
                 }
             }
         } catch (SQLException | ClassNotFoundException e) {

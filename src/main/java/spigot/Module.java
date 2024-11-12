@@ -8,6 +8,7 @@ import com.google.inject.AbstractModule;
 import common.Database;
 import common.Luckperms;
 import common.PlayerUtils;
+import common.SocketSwitch;
 import spigot_command.Book;
 import spigot_command.CommandForward;
 import spigot_command.Menu;

@@ -21,6 +21,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import common.Database;
+import common.SocketSwitch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -145,20 +146,20 @@ public class DoServerOnline {
 		}
 	}
 	
-	public void updateDatabaseFromCmd() {
+	public void updateDatabaseFromCmd(Connection conn) throws SQLException, ClassNotFoundException {
 		updateDatabase(true);
 		SocketSwitch ssw = sswProvider.get();
-		ssw.sendSpigotServer("MineStatusSync");
+		ssw.sendSpigotServer(conn, "MineStatusSync");
 		logger.info("データベースとの同期を完了しました。");
 	}
 
-	public void updateDatabase() {
+	public void updateDatabase(Connection conn) throws SQLException, ClassNotFoundException {
 		updateDatabase(false);
 		SocketSwitch ssw = sswProvider.get();
-		ssw.sendSpigotServer("MineStatusSync");
+		ssw.sendSpigotServer(conn, "MineStatusSync");
 	}
 
-	public void updateDatabase(boolean isCmd) {
+	private void updateDatabase(boolean isCmd) {
 		server.getScheduler().buildTask(plugin, () -> {
 			try (Connection conn = db.getConnection()) {
 				// コマンドから実行していなければ
@@ -212,7 +213,7 @@ public class DoServerOnline {
 				if (isAdded.get()) {
 					// 追加されたサーバーがある場合は、再度同期を行う
 					logger.info("追加されたサーバーがあるため、再度同期を実行します。");
-					updateDatabase();
+					updateDatabase(conn);
 				}
 				// toml, db, configのキーが同期した
 				// ここから、configMapとDBの情報を比較
