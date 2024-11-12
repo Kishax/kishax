@@ -822,7 +822,9 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> openServerTypeInventory(player, 1));
+        playerMenuActions.put(0, () -> {
+            openServerTypeInventory(player, 1);
+        });
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusTypeMap = serverStatusMap.get(serverType);
         int totalItems = serverStatusTypeMap.size(),
