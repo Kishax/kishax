@@ -81,5 +81,6 @@ public class Module extends AbstractModule {
         bind(RequestInterface.class).to(velocity_command.Request.class);
         bind(GeyserMC.class);
         bind(Maintenance.class);
+        bind(FMCBoard.class).in(com.google.inject.Scopes.SINGLETON);
     }
 }

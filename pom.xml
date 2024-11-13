@@ -32,8 +32,17 @@
          <id>papermc</id>
          <url>https://repo.papermc.io/repository/maven-public/</url>
       </repository>
+      <repository>
+        <id>skyblocksquad</id>
+        <url>https://repo.skyblocksquad.de/repo</url>
+      </repository>
    </repositories>
    <dependencies>
+      <dependency>
+         <groupId>de.timongcraft</groupId>
+         <artifactId>VeloBoard</artifactId>
+         <version>1.4.0-EXPERIMENTAL-CHANGES</version>
+      </dependency>
       <!-- https://mvnrepository.com/artifact/net.coobird/thumbnailator -->
       <dependency>
          <groupId>net.coobird</groupId>

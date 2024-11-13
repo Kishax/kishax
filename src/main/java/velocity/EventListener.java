@@ -25,8 +25,10 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -65,11 +67,12 @@ public class EventListener {
 	private final MineStatus ms;
 	private final GeyserMC gm;
 	private final Maintenance mt;
+	private final FMCBoard fb;
 	private ServerInfo serverInfo = null;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 	@Inject
-	public EventListener (Main plugin, Logger logger, ProxyServer server, Config config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, GeyserMC gm, Maintenance mt) {
+	public EventListener (Main plugin, Logger logger, ProxyServer server, Config config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
@@ -85,6 +88,7 @@ public class EventListener {
 		this.ms = ms;
 		this.gm = gm;
 		this.mt = mt;
+		this.fb = fb;
 	}
 	
 	@Subscribe
@@ -246,6 +250,19 @@ public class EventListener {
 	            }
     		}
         }).schedule();
+	}
+	
+	@Subscribe
+	public void onPostLogin(PostLoginEvent event) {
+		Player player = event.getPlayer();
+		fb.addBoard(player);
+	}
+
+	@Subscribe
+    @SuppressWarnings("UnstableApiUsage")
+    public void onServerPostConnect(ServerPostConnectEvent event) {
+		Player player = event.getPlayer();
+        fb.resendBoard(player.getUniqueId());
 	}
 	
 	@Subscribe
@@ -506,6 +523,7 @@ public class EventListener {
 		} else {
 			logger.info("Java player disconnected: " + playerName);
 		}
+		fb.removeBoard(player.getUniqueId());
 		player.getCurrentServer().ifPresent(serverConnection -> {
 			RegisteredServer registeredServer = serverConnection.getServer();
 			serverInfo = registeredServer.getServerInfo();
