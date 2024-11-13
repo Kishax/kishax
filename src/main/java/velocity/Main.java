@@ -23,6 +23,7 @@ import common.Luckperms;
 import common.PlayerUtils;
 import common.SocketServerThread;
 import common.SocketSwitch;
+import de.timongcraft.veloboard.VeloBoardRegistry;
 import discord.Discord;
 import discord.EmojiManager;
 import net.luckperms.api.LuckPermsProvider;
@@ -51,7 +52,9 @@ public class Main {
     	logger.info("detected velocity platform.");
         SocketServerThread.platform.set("velocity");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
+        VeloBoardRegistry.register();
         injector = Guice.createInjector(new velocity.Module(this, server, logger, dataDirectory));
+        getInjector().getInstance(FMCBoard.class).updateScheduler();
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
             if (jda != null) {
                 //getInjector().getInstance(MineStatusReflect.class).sendEmbedMessage(jda);
