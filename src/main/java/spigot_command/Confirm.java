@@ -58,7 +58,7 @@ public class Confirm {
                         Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
                         if (!memberMap.isEmpty()) {
                             if (memberMap.get("id") instanceof Integer id) {
-                                String confirmUrl = FMCSettings.CONFIRM_URL.getValue() + "?id=" + id;
+                                String confirmUrl = FMCSettings.CONFIRM_URL.getValue() + "?n=" + id;
                                 //player.sendMessage(ChatColor.GREEN + "WEB認証のQRコードを生成します。");
                                 String[] imageArgs = {"image", "createqr", confirmUrl};
                                 if (ifMapId == -1) {
