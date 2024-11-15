@@ -49,7 +49,7 @@ public class FMCItemFrame {
                             ItemStack item = itemFrame.getItem();
                             switch (item.getType()) {
                                 case FILLED_MAP -> {
-                                    logger.info("Loaded map item frame: {}", itemFrame.getLocation());
+                                    //logger.info("Loaded map item frame: {}", itemFrame.getLocation());
                                     MapMeta mapMeta = (MapMeta) item.getItemMeta();
                                     if (mapMeta != null && mapMeta.hasMapView()) {
                                         if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
