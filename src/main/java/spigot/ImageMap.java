@@ -41,9 +41,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -51,24 +53,28 @@ import com.google.zxing.qrcode.QRCodeWriter;
 
 import common.Database;
 import common.FMCSettings;
+import common.SocketSwitch;
 import net.coobird.thumbnailator.Thumbnails;
 import net.md_5.bungee.api.ChatColor;
 
 public class ImageMap {
     public static final String PERSISTANT_KEY = "custom_image";
+    public static final String ACTIONS_KEY = "largeImageMap";
     public static List<String> imagesColumnsList = new ArrayList<>();
     public static List<Integer> thisServerMapIds = new ArrayList<>();
     public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q"));
     private final common.Main plugin;
     private final Logger logger;
     private final Database db;
+    private final Provider<SocketSwitch> sswProvider;
     private final String serverName;
     @Inject
-    public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd) {
+    public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
         this.serverName = shd.getServerName();
+        this.sswProvider = sswProvider;
     }
 
     public void executeQ(CommandSender sender, Command command, String label, String[] args, boolean q) {
@@ -229,7 +235,7 @@ public class ImageMap {
                 }
                 LocalDate localDate = LocalDate.now();
                 String now = fromDiscord ? ((Date) dArgs[3]).toString() : localDate.toString();
-                BufferedImage image;
+                BufferedImage image = null;
                 if (isQr) {
                     ext = "png";
                     fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
@@ -251,22 +257,23 @@ public class ImageMap {
                         }
                     }
                     fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
-                    image =  ImageIO.read(getUrl);
-                    saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
-                    image = resizeImage(image, 128, 128);
-                    if (image == null) {
-                        player.sendMessage("指定のURLは規定の拡張子を持ちません。");
+                    BufferedImage imageDefault =  ImageIO.read(getUrl);
+                    if (imageDefault == null) {
+                        player.sendMessage(ChatColor.RED + "指定のURLは規定の拡張子を持ちません。");
                         return;
                     }
+                    saveImageToFileSystem(imageDefault, imageUUID, ext); // リサイズ前の画像を保存
+                    image = resizeImage(imageDefault, 128, 128);
                 }
                 List<String> lores = new ArrayList<>();
                 lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
                 List<String> commentLines = Arrays.stream(comment.split("\n"))
-                                  .map(String::trim)
-                                  .collect(Collectors.toList());
+                                .map(String::trim)
+                                .collect(Collectors.toList());
                 lores.addAll(commentLines);
                 lores.add("created by " + playerName);
                 lores.add("at " + now.replace("-", "/"));
+                lores.add("size 1x1(1)");
                 ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
                 MapView mapView = Bukkit.createMap(player.getWorld());
                 int mapId = mapView.getId(); // 一意のmapIdを取得
@@ -299,6 +306,209 @@ public class ImageMap {
         } else {
             if (sender != null) {
                 sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
+            }
+        }
+    }
+
+    // 画像マップであることは確定事項(QRコードは実装しない)
+    // 画像マップの大きさは、1x1(1)以上であることは確定事項
+    @SuppressWarnings("null")
+    private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs) {
+        if (sender instanceof Player player) {
+            // プレイヤーが現在インプットモードでなかったら、このメソッドを実行する
+            // EventListener.playerInputerMap.containsKeyにplayerが含まれているとき、EventListener.playerInputerMap.get(player)にACTIONS_KEY以外のものが含まれているとき
+            if (EventListener.playerInputerMap.containsKey(player) && EventListener.playerTaskMap.containsKey(player)) {
+                Map<String, Runnable> playerActions = EventListener.playerInputerMap.get(player);
+                Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
+                // playerActions, playerTasksにACTIONS_KEY以外が含まれているとき
+                boolean isInputMode = playerActions.entrySet().stream().anyMatch(entry -> !entry.getKey().equals(ImageMap.ACTIONS_KEY)),
+                    isTaskMode = playerTasks.entrySet().stream().anyMatch(entry -> !entry.getKey().equals(ImageMap.ACTIONS_KEY));
+                if (isInputMode || isTaskMode) {
+                    player.sendMessage(ChatColor.RED + "他でインプットモード中です。");
+                    return;
+                }
+            }
+            if (args.length < 3) {
+                player.sendMessage("使用法: /fmc im <largecreate> <url> [Optional: <title> <comment>]");
+                return;
+            }
+            boolean fromDiscord = (dArgs != null);
+            String playerName = player.getName(),
+                playerUUID = player.getUniqueId().toString(),
+                imageUUID = UUID.randomUUID().toString(),
+                url = args[2],
+                title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
+                comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
+                ext,
+                fullPath;
+            try (Connection conn = db.getConnection()) {
+                // 一日のアップロード回数は制限する
+                // ラージマップは要考
+                int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
+                    playerUploadTimes = getPlayerTodayTimes(conn, playerName),
+                    thisTimes = playerUploadTimes + 1;
+                if (thisTimes >= limitUploadTimes) {
+                    player.sendMessage(ChatColor.RED + "1日の登録回数は"+limitUploadTimes+"回までです。");
+                    return;
+                }
+                if (!isValidURL(url)) {
+                    player.sendMessage("無効なURLです。");
+                    return;
+                }
+                LocalDate localDate = LocalDate.now();
+                String now = fromDiscord ? ((Date) dArgs[3]).toString() : localDate.toString();
+                BufferedImage image = null;
+                URL getUrl = new URI(url).toURL();
+                HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
+                connection.setRequestMethod("GET");
+                connection.connect();
+                String contentType = connection.getContentType();
+                switch (contentType) {
+                    case "image/png" -> ext = "png";
+                    case "image/jpeg" -> ext = "jpeg";
+                    case "image/jpg" -> ext = "jpg";
+                    default -> {
+                        player.sendMessage("指定のURLは規定の拡張子を持ちません。");
+                        return;
+                    }
+                }
+                fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
+                BufferedImage imageDefault =  ImageIO.read(getUrl);
+                if (imageDefault == null) {
+                    player.sendMessage(ChatColor.RED + "指定のURLは規定の拡張子を持ちません。");
+                    return;
+                }
+                int maxTiles = 16*16;
+                int imageWidth = imageDefault.getWidth();
+                int imageHeight = imageDefault.getHeight();
+                int mapsX = (imageWidth + 127) / 128;
+                int mapsY = (imageHeight + 127) / 128;
+                if (mapsX * mapsY > maxTiles) {
+                    // 画像が大きすぎるため、画像を半分にリサイズすることを提案する
+                    // そのときに、必要になる(x, y)を提示する
+                    int x = (int) Math.ceil(Math.sqrt((double) imageWidth * imageHeight / maxTiles));
+                    int y = (int) Math.ceil((double) x * imageHeight / imageWidth);
+                    int inputPeriod = 60;
+                    // 
+                    player.sendMessage("画像が大きすぎるため、画像を半分にリサイズすることを提案します。");
+                    player.sendMessage("適切な(x, y)は(" + x + ", " + y + ")です。");
+                    player.sendMessage("このまま続行する場合は、1を入力してください。");
+                    player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
+                    player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
+                    Object[] inputs2 = new Object[] {x, y, imageDefault};
+                    Map<String, Runnable> playerActions = new HashMap<>();
+                    Map<String, BukkitTask> playerTasks = new HashMap<>();
+                    playerActions.put(ImageMap.ACTIONS_KEY, () -> executeLargeImageMap(sender, args, dArgs, inputs2));
+                    EventListener.playerInputerMap.put(player, playerActions);
+                    SocketSwitch ssw = sswProvider.get();
+                    BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
+                        // EventListener.userInputerMapのキーにplayerがあって、値のマップのキーにACTIONS_KEYがある場合
+                        EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
+                        EventListener.playerTaskMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
+                        try (Connection connection2 = db.getConnection()) {
+                            ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName);
+                        } catch (SQLException | ClassNotFoundException e) {
+                            logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace()) {
+                                logger.error(element.toString());
+                            }
+                        }
+                    }, 20 * inputPeriod);
+                    playerTasks.put(ImageMap.ACTIONS_KEY, task);
+                    EventListener.playerTaskMap.put(player, playerTasks);
+                    ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName);
+                }
+
+                // 縦・横のサイズを入力させるフェーズに入る
+                // その前に、適切な縦横のタイル数(x, y)を計算する
+                // 適切な(x, y)は、(x * 128) * (y * 128) >= (imageWidth * imageHeight)を満たす最小の(x, y)である
+                // それを提示し、プレイヤーに入力させる
+                saveImageToFileSystem(imageDefault, imageUUID, ext); // リサイズ前の画像を保存
+
+
+                List<String> lores = new ArrayList<>();
+                lores.add("<ラージイメージマップ>");
+                List<String> commentLines = Arrays.stream(comment.split("\n"))
+                                .map(String::trim)
+                                .collect(Collectors.toList());
+                lores.addAll(commentLines);
+                lores.add("created by " + playerName);
+                lores.add("at " + now.replace("-", "/"));
+                lores.add("size 1x1(1)");
+                ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+                MapView mapView = Bukkit.createMap(player.getWorld());
+                int mapId = mapView.getId(); // 一意のmapIdを取得
+                mapView.getRenderers().clear();
+                mapView.addRenderer(new ImageMapRenderer(logger, image, fullPath));
+                var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
+                if (meta != null) {
+                    meta.setDisplayName(title);
+                    meta.setLore(lores);
+                    meta.setMapView(mapView);
+                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
+                    mapItem.setItemMeta(meta);
+                }
+                /*if (fromDiscord) {
+                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], now, (String) dArgs[0]});
+                } else {
+                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
+                }*/
+                player.getInventory().addItem(mapItem);
+                player.sendMessage("画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
+                
+            } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException e) {
+                player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
+                logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.error(element.toString());
+                }
+            }
+        } else {
+            if (sender != null) {
+                sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
+            }
+        }
+    }
+
+    public void getLargeMap(Player player, BufferedImage image) {
+        //BufferedImage image = ImageIO.read(new File("path/to/your/image.png"));
+
+        // 画像のサイズを取得
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+
+        // 必要なマップの数を計算
+        int mapsX = (imageWidth + 127) / 128;
+        int mapsY = (imageHeight + 127) / 128;
+
+        // 各タイルをマップに設定
+        for (int y = 0; y < mapsY; y++) {
+            for (int x = 0; x < mapsX; x++) {
+                // タイルの範囲を計算
+                int tileX = x * 128;
+                int tileY = y * 128;
+                int tileWidth = Math.min(128, imageWidth - tileX);
+                int tileHeight = Math.min(128, imageHeight - tileY);
+
+                // タイルを切り出し
+                BufferedImage tile = image.getSubimage(tileX, tileY, tileWidth, tileHeight);
+
+                // 新しいマップを作成
+                MapView mapView = Bukkit.createMap(player.getWorld());
+                mapView.getRenderers().clear();
+                mapView.addRenderer(new ImageMapRenderer(logger, tile, ""));
+
+                // マップアイテムを作成
+                ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+                MapMeta mapMeta = (MapMeta) mapItem.getItemMeta();
+                if (mapMeta != null) {
+                    mapMeta.setMapView(mapView);
+                    mapItem.setItemMeta(mapMeta);
+                }
+
+                // プレイヤーにマップを与える
+                player.getInventory().addItem(mapItem);
             }
         }
     }
