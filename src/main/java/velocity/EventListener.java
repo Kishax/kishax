@@ -9,10 +9,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +50,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import velocity_command.Maintenance;
 
 public class EventListener {
+	public static Set<String> playerInputers = new HashSet<>();
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
 	public static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
 	public final Main plugin;
@@ -97,6 +100,10 @@ public class EventListener {
 	    Player player = e.getPlayer();
 		String playerName = player.getUsername();
 	    originalMessage = e.getMessage();
+		if (playerInputers.contains(playerName)) {
+			// プレイヤーの入力をキャンセル
+			return;
+		}
 	    // プレイヤーの現在のサーバーを取得
         player.getCurrentServer().ifPresent(serverConnection -> {
             RegisteredServer registeredServer = serverConnection.getServer();
@@ -517,6 +524,9 @@ public class EventListener {
     public void onPlayerDisconnect(DisconnectEvent e) {
     	Player player = e.getPlayer();
 		String playerName = player.getUsername();
+		if (playerInputers.contains(player)) {
+			playerInputers.remove(player);
+		}
 		if (gm.isGeyserPlayer(player)) {
 			logger.info("GeyserMC player disconnected: " + playerName);
 			return;

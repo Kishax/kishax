@@ -59,7 +59,22 @@ public class SocketResponse {
 	public void resaction(String res) {
     	if (Objects.isNull(res)) return;
 		res = res.replace("\n", "").replace("\r", "");
-    	if (res.contains("PHP")) {
+		if (res.contains("inputMode")) {
+			if (res.contains("name")) {
+				String pattern = "inputMode->(.*?)->name->(.*?)";
+				Pattern compiledPattern = Pattern.compile(pattern);
+				Matcher matcher = compiledPattern.matcher(res);
+				if (matcher.find()) {
+					String inputMode = matcher.group(1);
+					String playerName = matcher.group(2);
+					if (inputMode.equalsIgnoreCase("on")) {
+						EventListener.playerInputers.add(playerName);
+					} else if (inputMode.equalsIgnoreCase("off")) {
+						EventListener.playerInputers.remove(playerName);
+					}
+				}
+			}
+		} else if (res.contains("PHP")) {
     		if (res.contains("uuid")) {
     			String pattern = "PHP->uuid->new->(.*?)->";
                 Pattern compiledPattern = Pattern.compile(pattern);
