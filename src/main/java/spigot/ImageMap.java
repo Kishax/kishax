@@ -1,5 +1,6 @@
 package spigot;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -392,7 +393,7 @@ public class ImageMap {
                         int x = (int) Math.ceil((double) imageWidth / 128);
                         int y = (int) Math.ceil((double) imageHeight / 128);
                         int inputPeriod = 60;
-                        player.sendMessage("画像が大きすぎるため、画像を半分にリサイズすることを提案します。");
+                        player.sendMessage("画像が大きすぎるため、総タイル数"+maxTiles+"を超過しました。\n画像を半分にリサイズすることを提案します。");
                         player.sendMessage("適切な(x, y)は(" + x + ", " + y + ")です。");
                         player.sendMessage("リサイズして続行する場合は、1と入力してください。");
                         player.sendMessage("リサイズせず、処理を中断する場合は、2と入力してください。");
@@ -402,20 +403,10 @@ public class ImageMap {
                         Map<String, MessageRunnable> playerActions = new HashMap<>();
                         Map<String, BukkitTask> playerTasks = new HashMap<>();
                         int[] intergs = new int[] {maxTiles, imageWidth, imageHeight};
-                        SocketSwitch ssw = sswProvider.get();
                         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                             player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
                             // EventListener.userInputerMapのキーにplayerがあって、値のマップのキーにACTIONS_KEYがある場合
-                            EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-                            EventListener.playerTaskMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-                            try (Connection connection2 = db.getConnection()) {
-                                ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName);
-                            } catch (SQLException | ClassNotFoundException e) {
-                                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                                for (StackTraceElement element : e.getStackTrace()) {
-                                    logger.error(element.toString());
-                                }
-                            }
+                            removeTaskRunnable(player);
                         }, 20 * inputPeriod);
                         playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
                             switch (input) {
@@ -439,16 +430,7 @@ public class ImageMap {
                                 }
                                 case "2" -> {
                                     player.sendMessage("リサイズせず、処理を中断しました。");
-                                    EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-                                    EventListener.playerTaskMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-                                    try (Connection connection2 = db.getConnection()) {
-                                        ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName);
-                                    } catch (SQLException | ClassNotFoundException e) {
-                                        logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                                        for (StackTraceElement element : e.getStackTrace()) {
-                                            logger.error(element.toString());
-                                        }
-                                    }
+                                    removeTaskRunnable(player);
                                 }
                                 default -> {
                                     player.sendMessage(ChatColor.RED + "無効な入力です。");
@@ -458,93 +440,14 @@ public class ImageMap {
                         EventListener.playerInputerMap.put(player, playerActions);
                         playerTasks.put(ImageMap.ACTIONS_KEY, task);
                         EventListener.playerTaskMap.put(player, playerTasks);
-                        ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName);
-                        return;
-                    } else if ((mapsX * 2) * (mapsY * 2) <= maxTiles) {
-                        // 2倍にリサイズしても、maxTiles以下になる場合
-                        // 2倍にリサイズ可能
-                        // 画像をより大きくする必要がある場合
-                        // その場合は、画像をリサイズするかどうかをプレイヤーに尋ねる
-                        // そのときに、必要になる(x, y)を提示する
-                        int x = (int) Math.ceil((double) imageWidth / 128);
-                        int y = (int) Math.ceil((double) imageHeight / 128);
-                        int inputPeriod = 60;
-                        player.sendMessage("画像が小さすぎるため、画像を拡大することを提案します。");
-                        player.sendMessage("適切な(x, y)は(" + x + ", " + y + ")です。");
-                        // もしリサイズしなかった場合の(x, y)も提示する
-                        player.sendMessage("もしリサイズしない有効な(x, y)は(" + mapsX + ", " + mapsY + ")です。");
-                        player.sendMessage("リサイズして続行する場合は、1と入力してください。");
-                        player.sendMessage("リサイズせず、このまま続行する場合は、2と入力してください。");
-                        player.sendMessage("処理を中断する場合は、3と入力してください。");
-                        player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                        player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
-                        final Object[] inputs2 = new Object[] {x, y, now, ext, fullPath, null};
-                        Map<String, MessageRunnable> playerActions = new HashMap<>();
-                        Map<String, BukkitTask> playerTasks = new HashMap<>();
-                        int[] intergs = new int[] {maxTiles, imageWidth, imageHeight};
                         SocketSwitch ssw = sswProvider.get();
-                        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                            player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
-                            // EventListener.userInputerMapのキーにplayerがあって、値のマップのキーにACTIONS_KEYがある場合
-                            EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-                            EventListener.playerTaskMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-                            try (Connection connection2 = db.getConnection()) {
-                                ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName);
-                            } catch (SQLException | ClassNotFoundException e) {
-                                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                                for (StackTraceElement element : e.getStackTrace()) {
-                                    logger.error(element.toString());
-                                }
-                            }
-                        }, 20 * inputPeriod);
-                        playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
-                            switch (input) {
-                                case "1" -> {
-                                    try {
-                                        Object[] resized = resizedOverMaxTiles(image, intergs);
-                                        BufferedImage imageResized = (BufferedImage) resized[0];
-                                        int index = (int) resized[1];
-                                        // inputs2にimageResizedを追加
-                                        inputs2[5] = imageResized;
-                                        executeLargeImageMap(sender, args, dArgs, inputs2);
-                                        // 何倍にリサイズされたかをプレイヤーに知らせる
-                                        player.sendMessage("画像が" + (int) Math.pow(2, index) + "倍にリサイズされました。");
-                                    } catch (IOException e) {
-                                        player.sendMessage(ChatColor.RED + "画像のリサイズに失敗しました。");
-                                        logger.error("An IOException error occurred: {}", e.getMessage());
-                                        for (StackTraceElement element : e.getStackTrace()) {
-                                            logger.error(element.toString());
-                                        }
-                                    }
-                                }
-                                case "2" -> {
-                                    // inputs2にimageを追加
-                                    player.sendMessage("リサイズせず、このまま続行します。");
-                                    inputs2[5] = image;
-                                    executeLargeImageMap(sender, args, dArgs, inputs2);
-                                }
-                                case "3" -> {
-                                    player.sendMessage("処理を中断しました。");
-                                    EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-                                    EventListener.playerTaskMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-                                    try (Connection connection2 = db.getConnection()) {
-                                        ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName);
-                                    } catch (SQLException | ClassNotFoundException e) {
-                                        logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                                        for (StackTraceElement element : e.getStackTrace()) {
-                                            logger.error(element.toString());
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                        EventListener.playerInputerMap.put(player, playerActions);
-                        playerTasks.put(ImageMap.ACTIONS_KEY, task);
-                        EventListener.playerTaskMap.put(player, playerTasks);
                         ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName);
                         return;
                     }
                 } else {
+                    removeTaskRunnable(player);
+                    int x = (int) inputs[0];
+                    int y = (int) inputs[1];
                     now = (String) inputs[2];
                     ext = (String) inputs[3];
                     fullPath = (String) inputs[4];
@@ -556,10 +459,54 @@ public class ImageMap {
                     }
                 }
 
+                player.sendMessage("縦と横のサイズを整数値で入力してください。\n(例) 5*5");
+                player.sendMessage(ChatColor.BLUE + "-------user-input-mode(60s)-------");
+                player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
+                
                 // 縦・横のサイズを入力させるフェーズに入る
                 // その前に、適切な縦横のタイル数(x, y)を計算する
-                // 適切な(x, y)は、(x * 128) * (y * 128) >= (imageWidth * imageHeight)を満たす最小の(x, y)である
                 // それを提示し、プレイヤーに入力させる
+                int inputPeriod = 60;
+                int mapsX = (image.getWidth() + 127) / 128;
+                int mapsY = (image.getHeight() + 127) / 128;
+                player.sendMessage("適切な(x, y)は(" + mapsX + ", " + mapsY + ")です。");
+                player.sendMessage("縦と横のサイズを入力してください。\n(例) 5*5");
+                player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
+                player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
+                final Object[] inputs2 = new Object[] {now, ext, fullPath, null};
+                Map<String, MessageRunnable> playerActions = new HashMap<>();
+                Map<String, BukkitTask> playerTasks = new HashMap<>();
+                BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
+                    // EventListener.userInputerMapのキーにplayerがあって、値のマップのキーにACTIONS_KEYがある場合
+                    removeTaskRunnable(player);
+                }, 20 * inputPeriod);
+                playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
+                    String[] xy = input.split("\\*");
+                    if (xy.length != 2) {
+                        player.sendMessage(ChatColor.RED + "無効な入力です。");
+                        return;
+                    }
+                    try {
+                        int x = Integer.parseInt(xy[0]);
+                        int y = Integer.parseInt(xy[1]);
+                        if (x <= 0 || y <= 0) {
+                            player.sendMessage(ChatColor.RED + "無効な入力です。");
+                            return;
+                        }
+                        inputs2[3] = new int[] {x, y};
+                        executeLargeImageMap(sender, args, dArgs, inputs2);
+                    } catch (NumberFormatException e) {
+                        player.sendMessage(ChatColor.RED + "無効な入力です。");
+                    }
+                });
+                EventListener.playerInputerMap.put(player, playerActions);
+                playerTasks.put(ImageMap.ACTIONS_KEY, task);
+                EventListener.playerTaskMap.put(player, playerTasks);
+                SocketSwitch ssw = sswProvider.get();
+                ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName);
+
+                
                 saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
                 List<String> lores = new ArrayList<>();
                 lores.add("<ラージイメージマップ>");
@@ -605,29 +552,62 @@ public class ImageMap {
         }
     }
 
-    private Object[] resizedOverMaxTiles(BufferedImage imageDefault, int[] args) throws IOException {
-        // for文を使って、画像を2倍にリサイズする。maxTiles以上になるまで繰り返す
-        int maxTiles = args[0];
-        int imageWidth = args[1];
-        int imageHeight = args[2];
-        int mapsX, mapsY;
-        int index = 0;
-        for (int i = 0; i < 10; i++) {
-            if (i != 0) {
-                imageWidth = imageDefault.getWidth();
-                imageHeight = imageDefault.getHeight();
+    private void removeTaskRunnable(Player player) {
+        String playerName = player.getName();
+        EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
+        EventListener.playerTaskMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
+        try (Connection connection2 = db.getConnection()) {
+            SocketSwitch ssw = sswProvider.get();
+            ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName);
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
             }
-            mapsX = (imageWidth + 127) / 128;
-            mapsY = (imageHeight + 127) / 128;
-            // maxTilesを越える一つ前の画像を返す
-            if (mapsX * mapsY >= maxTiles) {
-                // indexより画像が何倍になったかを示す
-                return new Object[] {imageDefault, index - 1};
-            }
-            imageDefault = resizeImage(imageDefault, imageWidth * 2, imageHeight * 2);
-            index++;
         }
-        return null;
+    }
+    public void getLargeMap(Player player, BufferedImage image, String fullPath) {
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        int mapsX = (imageWidth + 127) / 128;
+        int mapsY = (imageHeight + 127) / 128;
+        int canvasWidth = mapsX * 128;
+        int canvasHeight = mapsY * 128;
+
+        // キャンバスを作成し、画像を中央に配置
+        BufferedImage canvas = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = canvas.createGraphics();
+        g2d.setColor(new java.awt.Color(0, 0, 0, 0)); // 透明な背景
+        g2d.fillRect(0, 0, canvasWidth, canvasHeight);
+        int xOffset = (canvasWidth - imageWidth) / 2;
+        int yOffset = (canvasHeight - imageHeight) / 2;
+        g2d.drawImage(image, xOffset, yOffset, null);
+        g2d.dispose();
+
+        // キャンバスをタイルに分割
+        for (int y = 0; y < mapsY; y++) {
+            for (int x = 0; x < mapsX; x++) {
+                int tileX = x * 128;
+                int tileY = y * 128;
+                BufferedImage tile = canvas.getSubimage(tileX, tileY, 128, 128);
+
+                // 新しいマップを作成
+                MapView mapView = Bukkit.createMap(player.getWorld());
+                mapView.getRenderers().clear();
+                mapView.addRenderer(new ImageMapRenderer(logger, tile, fullPath));
+
+                // マップアイテムを作成
+                ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+                MapMeta mapMeta = (MapMeta) mapItem.getItemMeta();
+                if (mapMeta != null) {
+                    mapMeta.setMapView(mapView);
+                    mapItem.setItemMeta(mapMeta);
+                }
+
+                // プレイヤーにマップを与える
+                player.getInventory().addItem(mapItem);
+            }
+        }
     }
 
     private Object[] resizedUnderMaxTiles(BufferedImage imageDefault, int[] args) throws IOException {
