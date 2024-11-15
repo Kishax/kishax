@@ -524,8 +524,8 @@ public class EventListener {
     public void onPlayerDisconnect(DisconnectEvent e) {
     	Player player = e.getPlayer();
 		String playerName = player.getUsername();
-		if (playerInputers.contains(player)) {
-			playerInputers.remove(player);
+		if (playerInputers.contains(playerName)) {
+			playerInputers.remove(playerName);
 		}
 		if (gm.isGeyserPlayer(player)) {
 			logger.info("GeyserMC player disconnected: " + playerName);
