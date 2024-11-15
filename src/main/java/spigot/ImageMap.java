@@ -389,8 +389,8 @@ public class ImageMap {
                     if (mapsX * mapsY > maxTiles) {
                         // 画像が大きすぎるため、画像を半分にリサイズすることを提案する
                         // そのときに、必要になる(x, y)を提示する
-                        int x = (int) Math.ceil(Math.sqrt((double) imageWidth * imageHeight / maxTiles));
-                        int y = (int) Math.ceil((double) x * imageHeight / imageWidth);
+                        int x = (int) Math.ceil((double) imageWidth / 128);
+                        int y = (int) Math.ceil((double) imageHeight / 128);
                         int inputPeriod = 60;
                         player.sendMessage("画像が大きすぎるため、画像を半分にリサイズすることを提案します。");
                         player.sendMessage("適切な(x, y)は(" + x + ", " + y + ")です。");
@@ -466,8 +466,8 @@ public class ImageMap {
                         // 画像をより大きくする必要がある場合
                         // その場合は、画像をリサイズするかどうかをプレイヤーに尋ねる
                         // そのときに、必要になる(x, y)を提示する
-                        int x = (int) Math.ceil(Math.sqrt((double) imageWidth * imageHeight / maxTiles));
-                        int y = (int) Math.ceil((double) x * imageHeight / imageWidth);
+                        int x = (int) Math.ceil((double) imageWidth / 128);
+                        int y = (int) Math.ceil((double) imageHeight / 128);
                         int inputPeriod = 60;
                         player.sendMessage("画像が小さすぎるため、画像を拡大することを提案します。");
                         player.sendMessage("適切な(x, y)は(" + x + ", " + y + ")です。");
