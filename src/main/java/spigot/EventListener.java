@@ -42,7 +42,7 @@ import spigot_command.Confirm;
 import spigot_command.Menu;
 
 public final class EventListener implements Listener {
-    public static Map<Player, Map<String, Runnable>> playerInputerMap = new HashMap<>();
+    public static Map<Player, Map<String, MessageRunnable>> playerInputerMap = new HashMap<>();
     public static Map<Player, Map<String, BukkitTask>> playerTaskMap = new HashMap<>();
     public static final AtomicBoolean isHub = new AtomicBoolean(false);
     private final common.Main plugin;
@@ -108,21 +108,15 @@ public final class EventListener implements Listener {
     public void onChat(org.bukkit.event.player.AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         String message = event.getMessage();
-        if (message.startsWith("fmc")) {
-            event.setCancelled(true);
-            //player.performCommand(message);
-        }
         if (EventListener.playerInputerMap.containsKey(player)) {
             event.setCancelled(true);
-            String input = event.getMessage();
-            Map<String, Runnable> map = EventListener.playerInputerMap.get(player);
+            Map<String, MessageRunnable> map = EventListener.playerInputerMap.get(player);
             map.entrySet().forEach(action -> {
                 String key = action.getKey();
                 switch (key) {
                     case ImageMap.ACTIONS_KEY -> {
-                        
-                        Runnable runnable = action.getValue();
-                        runnable.run();
+                        MessageRunnable runnable = action.getValue();
+                        runnable.run(message);
                     }
                 }
             });
