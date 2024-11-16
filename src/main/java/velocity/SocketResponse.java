@@ -68,10 +68,8 @@ public class SocketResponse {
 					String inputMode = matcher.group(1);
 					String playerName = matcher.group(2);
 					if (inputMode.equalsIgnoreCase("on")) {
-						logger.info("inputMode: "+inputMode+" playerName: "+playerName);
 						EventListener.playerInputers.add(playerName);
 					} else if (inputMode.equalsIgnoreCase("off")) {
-						logger.info("inputMode: "+inputMode+" playerName: "+playerName);
 						EventListener.playerInputers.remove(playerName);
 					}
 				}
