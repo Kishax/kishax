@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -517,6 +518,7 @@ public class ImageMap {
                     int yOffset = (canvasHeight - image.getHeight()) / 2;
                     g2d.drawImage(image, xOffset, yOffset, null);
                     g2d.dispose();
+                    List<ItemStack> mapItems = new ArrayList<>();
                     for (int y_ = 0; y_ < y; y_++) {
                         for (int x_ = 0; x_ < x; x_++) {
                             int tileX = x_ * 128;
@@ -545,10 +547,22 @@ public class ImageMap {
                                 //mapMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
                                 mapItem.setItemMeta(mapMeta);
                             }
-                            player.getInventory().addItem(mapItem);
+                            mapItems.add(mapItem);
                         }
                     }
-                    player.sendMessage("画像マップを渡しました。");
+                    List<ItemStack> remainingItems = new ArrayList<>();
+                    for (ItemStack mapItem : mapItems) {
+                        HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(mapItem);
+                        remainingItems.addAll(remaining.values());
+                    }
+                    Location playerLocation = player.getLocation();
+                    World world = player.getWorld();
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        for (ItemStack remainingItem : remainingItems) {
+                            world.dropItemNaturally(playerLocation, remainingItem);
+                        }
+                        player.sendMessage("画像マップを渡しました。");
+                    });
                 }
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException e) {
                 player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
