@@ -314,7 +314,7 @@ public class ImageMap {
     // 画像マップであることは確定事項(QRコードは実装しない)
     // 画像マップの大きさは、1x1(1)以上であることは確定事項
     @SuppressWarnings({"null","unused"})
-    private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs) {
+    private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2) {
         if (sender instanceof Player player) {
             // プレイヤーが現在インプットモードでなかったら、このメソッドを実行する
             // EventListener.playerInputerMap.containsKeyにplayerが含まれているとき、EventListener.playerInputerMap.get(player)にACTIONS_KEY以外のものが含まれているとき
@@ -333,8 +333,7 @@ public class ImageMap {
                 player.sendMessage("使用法: /fmc im <largecreate> <url> [Optional: <title> <comment>]");
                 return;
             }
-            boolean fromDiscord = (dArgs != null),
-                isInputMode = (inputs != null);
+            boolean fromDiscord = (dArgs != null);
             String playerName = player.getName(),
                 playerUUID = player.getUniqueId().toString(),
                 imageUUID = UUID.randomUUID().toString(),
@@ -351,7 +350,7 @@ public class ImageMap {
                     thisTimes = playerUploadTimes + 1;
                 String now;
                 final BufferedImage image;
-                if (!isInputMode) {
+                if (inputs == null) {
                     if (thisTimes >= limitUploadTimes) {
                         player.sendMessage(ChatColor.RED + "1日の登録回数は"+limitUploadTimes+"回までです。");
                         return;
@@ -399,13 +398,12 @@ public class ImageMap {
                         player.sendMessage("リサイズせず、処理を中断する場合は、2と入力してください。");
                         player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
                         player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
-                        final Object[] inputs2 = new Object[] {x, y, now, ext, fullPath, null};
+                        final Object[] inputs_1 = new Object[] {x, y, now, ext, fullPath, null};
                         Map<String, MessageRunnable> playerActions = new HashMap<>();
                         Map<String, BukkitTask> playerTasks = new HashMap<>();
                         int[] intergs = new int[] {maxTiles, imageWidth, imageHeight};
                         BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                             player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
-                            // EventListener.userInputerMapのキーにplayerがあって、値のマップのキーにACTIONS_KEYがある場合
                             removeTaskRunnable(player);
                         }, 20 * inputPeriod);
                         playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
@@ -417,7 +415,7 @@ public class ImageMap {
                                         int index = (int) resized[1];
                                         // inputs2にimageResizedを追加
                                         inputs2[5] = imageResized;
-                                        executeLargeImageMap(sender, args, dArgs, inputs2);
+                                        executeLargeImageMap(sender, args, dArgs, inputs_1, null);
                                         // 何分の一にリサイズされたかをプレイヤーに知らせる
                                         player.sendMessage("画像が" + (int) Math.pow(2, index) + "分の1にリサイズされました。");
                                     } catch (IOException e) {
@@ -459,85 +457,99 @@ public class ImageMap {
                     }
                 }
 
-                player.sendMessage("縦と横のサイズを整数値で入力してください。\n(例) 5*5");
-                player.sendMessage(ChatColor.BLUE + "-------user-input-mode(60s)-------");
-                player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
-                
-                // 縦・横のサイズを入力させるフェーズに入る
-                // その前に、適切な縦横のタイル数(x, y)を計算する
-                // それを提示し、プレイヤーに入力させる
-                int inputPeriod = 60;
-                int mapsX = (image.getWidth() + 127) / 128;
-                int mapsY = (image.getHeight() + 127) / 128;
-                player.sendMessage("適切な(x, y)は(" + mapsX + ", " + mapsY + ")です。");
-                player.sendMessage("縦と横のサイズを入力してください。\n(例) 5*5");
-                player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
-                final Object[] inputs2 = new Object[] {now, ext, fullPath, null};
-                Map<String, MessageRunnable> playerActions = new HashMap<>();
-                Map<String, BukkitTask> playerTasks = new HashMap<>();
-                BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
-                    // EventListener.userInputerMapのキーにplayerがあって、値のマップのキーにACTIONS_KEYがある場合
-                    removeTaskRunnable(player);
-                }, 20 * inputPeriod);
-                playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
-                    String[] xy = input.split("\\*");
-                    if (xy.length != 2) {
-                        player.sendMessage(ChatColor.RED + "無効な入力です。");
-                        return;
-                    }
-                    try {
-                        int x = Integer.parseInt(xy[0]);
-                        int y = Integer.parseInt(xy[1]);
-                        if (x <= 0 || y <= 0) {
+                if (inputs2 == null) {
+                    player.sendMessage("縦と横のサイズを整数値で入力してください。\n(例) 5*5");
+                    player.sendMessage(ChatColor.BLUE + "-------user-input-mode(60s)-------");
+                    player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
+                    
+                    // 縦・横のサイズを入力させるフェーズに入る
+                    // その前に、適切な縦横のタイル数(x, y)を計算する
+                    // それを提示し、プレイヤーに入力させる
+                    int inputPeriod = 60;
+                    int mapsX = (image.getWidth() + 127) / 128;
+                    int mapsY = (image.getHeight() + 127) / 128;
+                    player.sendMessage("適切な(x, y)は(" + mapsX + ", " + mapsY + ")です。");
+                    player.sendMessage("縦と横のサイズを入力してください。\n(例) 5*5");
+                    player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
+                    player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
+                    final Object[] inputs_1 = new Object[] {now, ext, fullPath, null};
+                    Map<String, MessageRunnable> playerActions = new HashMap<>();
+                    Map<String, BukkitTask> playerTasks = new HashMap<>();
+                    BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
+                        removeTaskRunnable(player);
+                    }, 20 * inputPeriod);
+                    playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
+                        String[] xy = input.split("\\*");
+                        if (xy.length != 2) {
                             player.sendMessage(ChatColor.RED + "無効な入力です。");
                             return;
                         }
-                        inputs2[3] = new int[] {x, y};
-                        executeLargeImageMap(sender, args, dArgs, inputs2);
-                    } catch (NumberFormatException e) {
-                        player.sendMessage(ChatColor.RED + "無効な入力です。");
-                    }
-                });
-                EventListener.playerInputerMap.put(player, playerActions);
-                playerTasks.put(ImageMap.ACTIONS_KEY, task);
-                EventListener.playerTaskMap.put(player, playerTasks);
-                SocketSwitch ssw = sswProvider.get();
-                ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName);
-
-                
-                saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
-                List<String> lores = new ArrayList<>();
-                lores.add("<ラージイメージマップ>");
-                List<String> commentLines = Arrays.stream(comment.split("\n"))
-                                .map(String::trim)
-                                .collect(Collectors.toList());
-                lores.addAll(commentLines);
-                lores.add("created by " + playerName);
-                lores.add("at " + now.replace("-", "/"));
-                lores.add("size 1x1(1)");
-                ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
-                MapView mapView = Bukkit.createMap(player.getWorld());
-                int mapId = mapView.getId(); // 一意のmapIdを取得
-                mapView.getRenderers().clear();
-                mapView.addRenderer(new ImageMapRenderer(logger, image, fullPath));
-                var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
-                if (meta != null) {
-                    meta.setDisplayName(title);
-                    meta.setLore(lores);
-                    meta.setMapView(mapView);
-                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
-                    mapItem.setItemMeta(meta);
-                }
-                /*if (fromDiscord) {
-                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], now, (String) dArgs[0]});
+                        try {
+                            int x = Integer.parseInt(xy[0]);
+                            int y = Integer.parseInt(xy[1]);
+                            if (x <= 0 || y <= 0) {
+                                player.sendMessage(ChatColor.RED + "無効な入力です。");
+                                return;
+                            }
+                            Object[] inputs_2 = new Object[] {x, y};
+                            executeLargeImageMap(sender, args, dArgs, inputs_1, inputs_2);
+                        } catch (NumberFormatException e) {
+                            player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) 5*5のように入力してください。");
+                        }
+                    });
+                    EventListener.playerInputerMap.put(player, playerActions);
+                    playerTasks.put(ImageMap.ACTIONS_KEY, task);
+                    EventListener.playerTaskMap.put(player, playerTasks);
+                    SocketSwitch ssw = sswProvider.get();
+                    ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName);
                 } else {
-                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
-                }*/
-                player.getInventory().addItem(mapItem);
-                player.sendMessage("画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
-                
+                    //saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
+                    int x = (int) inputs2[0];
+                    int y = (int) inputs2[1];
+                    int canvasWidth = x * 128;
+                    int canvasHeight = y * 128;
+                    BufferedImage canvas = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g2d = canvas.createGraphics();
+                    g2d.setColor(new java.awt.Color(0, 0, 0, 0)); // 透明な背景
+                    g2d.fillRect(0, 0, canvasWidth, canvasHeight);
+                    int xOffset = (canvasWidth - image.getWidth()) / 2;
+                    int yOffset = (canvasHeight - image.getHeight()) / 2;
+                    g2d.drawImage(image, xOffset, yOffset, null);
+                    g2d.dispose();
+                    for (int y_ = 0; y_ < y; y_++) {
+                        for (int x_ = 0; x_ < x; x_++) {
+                            int tileX = x_ * 128;
+                            int tileY = y_ * 128;
+                            BufferedImage tile = canvas.getSubimage(tileX, tileY, 128, 128);
+                            MapView mapView = Bukkit.createMap(player.getWorld());
+                            mapView.getRenderers().clear();
+                            mapView.addRenderer(new ImageMapRenderer(logger, tile, fullPath));
+                            ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+                            MapMeta mapMeta = (MapMeta) mapItem.getItemMeta();
+                            List<String> lores = new ArrayList<>();
+                            lores.add("<ラージイメージマップ>");
+                            List<String> commentLines = Arrays.stream(comment.split("\n"))
+                                            .map(String::trim)
+                                            .collect(Collectors.toList());
+                            lores.addAll(commentLines);
+                            lores.add("created by " + playerName);
+                            lores.add("at " + now.replace("-", "/"));
+                            lores.add("size " + x + "x" + y + "(" + x * y + ")");
+                            lores.add("in (" + x_ + ", " + y_ + ")");
+                            int mapId = mapView.getId(); // 一意のmapIdを取得
+                            if (mapMeta != null) {
+                                mapMeta.setDisplayName(title);
+                                mapMeta.setLore(lores);
+                                mapMeta.setMapView(mapView);
+                                //mapMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
+                                mapItem.setItemMeta(mapMeta);
+                            }
+                            player.getInventory().addItem(mapItem);
+                        }
+                    }
+                    player.sendMessage("画像マップを渡しました。");
+                }
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException e) {
                 player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
                 logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
