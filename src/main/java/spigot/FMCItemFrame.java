@@ -83,6 +83,8 @@ public class FMCItemFrame {
                                                     }
                                                 }
                                             }
+                                        } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                            
                                         }
                                     }
                                 }

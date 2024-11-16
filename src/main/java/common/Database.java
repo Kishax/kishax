@@ -88,6 +88,10 @@ public class Database {
         ps.executeUpdate();
     }
     
+    public void deleteLog(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
+        insertLog(conn, query, args);
+    }
+
     public void updateLog(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
         insertLog(conn, query, args);
     }
