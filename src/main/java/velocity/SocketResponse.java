@@ -61,15 +61,17 @@ public class SocketResponse {
 		res = res.replace("\n", "").replace("\r", "");
 		if (res.contains("inputMode")) {
 			if (res.contains("name")) {
-				String pattern = "inputMode->(.*?)->name->(.*?)";
+				String pattern = "inputMode->(.*?)->name->(.*?)->";
 				Pattern compiledPattern = Pattern.compile(pattern);
 				Matcher matcher = compiledPattern.matcher(res);
 				if (matcher.find()) {
 					String inputMode = matcher.group(1);
 					String playerName = matcher.group(2);
 					if (inputMode.equalsIgnoreCase("on")) {
+						logger.info("inputMode: "+inputMode+" playerName: "+playerName);
 						EventListener.playerInputers.add(playerName);
 					} else if (inputMode.equalsIgnoreCase("off")) {
+						logger.info("inputMode: "+inputMode+" playerName: "+playerName);
 						EventListener.playerInputers.remove(playerName);
 					}
 				}
