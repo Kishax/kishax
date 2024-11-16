@@ -63,7 +63,7 @@ import net.coobird.thumbnailator.Thumbnails;
 import net.md_5.bungee.api.ChatColor;
 
 public class ImageMap {
-    public static final Map<Integer, Map<Integer, Map<Integer, BufferedImage>>> largeImageMap = new ConcurrentHashMap<>();
+    public static final Map<Integer, String> largeImageMap = new ConcurrentHashMap<>();
     public static final String PERSISTANT_KEY = "custom_image";
     public static final String LARGE_PERSISTANT_KEY = "custom_large_image";
     public static final String ACTIONS_KEY = "largeImageMap";
@@ -690,7 +690,7 @@ public class ImageMap {
     }
 
     public BufferedImage loadImageTile(Connection conn, int mapId, int x, int y) throws SQLException, IOException {
-        String sql = "SELECT image FROM image_tiles WHERE map_id = ? AND x = ? AND y = ?";
+        String sql = "SELECT image FROM image_tiles WHERE mapid = ? AND x = ? AND y = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, mapId);
             stmt.setInt(2, x);
@@ -706,9 +706,9 @@ public class ImageMap {
         return null;
     }
 
-    public void getThisServerLargeImageMap(Connection conn) throws SQLException, ClassNotFoundException {
-        Map<Integer, Map<Integer, Map<Integer, BufferedImage>>> largeImageInfo = new HashMap<>();
-        String query = "SELECT * FROM large_images WHERE server=?;";
+    public void getThisServerLargeImageInfo(Connection conn) throws SQLException, ClassNotFoundException {
+        Map<Integer, String> largeImageInfo = new HashMap<>();
+        String query = "SELECT * FROM image_tiles WHERE server=?;";
         PreparedStatement ps = conn.prepareStatement(query);
         ps.setString(1, serverName);
         ResultSet rs = ps.executeQuery();
@@ -716,9 +716,7 @@ public class ImageMap {
             int mapId = rs.getInt("mapid"),
                 x = rs.getInt("lx"),
                 y = rs.getInt("ly");
-            largeImageInfo.computeIfAbsent(mapId, _ -> new HashMap<>())
-                .computeIfAbsent(x, _ -> new HashMap<>())
-                .put(y, null);
+            
         }
         largeImageMap.putAll(largeImageInfo);
     }
