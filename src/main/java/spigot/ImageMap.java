@@ -35,6 +35,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.ItemFrame;
@@ -70,6 +71,7 @@ public class ImageMap {
     private final Database db;
     private final Provider<SocketSwitch> sswProvider;
     private final String serverName;
+    private final int inputPeriod = 60;
     @Inject
     public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
@@ -315,7 +317,7 @@ public class ImageMap {
     // 画像マップであることは確定事項(QRコードは実装しない)
     // 画像マップの大きさは、1x1(1)以上であることは確定事項
     @SuppressWarnings({"null","unused"})
-    public void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2) {
+    public void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2, Object[] inputs3) {
         if (sender instanceof Player player) {
             // プレイヤーが現在インプットモードでなかったら、このメソッドを実行する
             // EventListener.playerInputerMap.containsKeyにplayerが含まれているとき、EventListener.playerInputerMap.get(player)にACTIONS_KEY以外のものが含まれているとき
@@ -343,7 +345,7 @@ public class ImageMap {
                 comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
                 ext,
                 fullPath;
-            final int inputPeriod = 60;
+            final int maxTiles = 8*8;
             try (Connection conn = db.getConnection()) {
                 // 一日のアップロード回数は制限する
                 // ラージマップは要考
@@ -383,7 +385,6 @@ public class ImageMap {
                         player.sendMessage(ChatColor.RED + "指定のURLは規定の拡張子を持ちません。");
                         return;
                     }
-                    int maxTiles = 8*8;
                     int imageWidth = image.getWidth();
                     int imageHeight = image.getHeight();
                     int mapsX = (imageWidth + 127) / 128;
@@ -398,15 +399,11 @@ public class ImageMap {
                         player.sendMessage("リサイズして続行する場合は、1と入力してください。");
                         player.sendMessage("リサイズせず、処理を中断する場合は、2と入力してください。");
                         player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                        player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
+                        player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
                         final Object[] inputs_1 = new Object[] {x, y, now, ext, fullPath, null};
                         Map<String, MessageRunnable> playerActions = new HashMap<>();
                         Map<String, BukkitTask> playerTasks = new HashMap<>();
                         int[] intergs = new int[] {maxTiles, imageWidth, imageHeight};
-                        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                            player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
-                            removeTaskRunnable(player);
-                        }, 20 * inputPeriod);
                         playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
                             switch (input) {
                                 case "1" -> {
@@ -416,7 +413,7 @@ public class ImageMap {
                                         int index = (int) resized[1];
                                         // inputs2にimageResizedを追加
                                         inputs2[5] = imageResized;
-                                        executeLargeImageMap(sender, args, dArgs, inputs_1, null);
+                                        executeLargeImageMap(sender, args, dArgs, inputs_1, null, null);
                                         // 何分の一にリサイズされたかをプレイヤーに知らせる
                                         player.sendMessage("画像が" + (int) Math.pow(2, index) + "分の1にリサイズされました。");
                                     } catch (IOException e) {
@@ -429,22 +426,18 @@ public class ImageMap {
                                 }
                                 case "2" -> {
                                     player.sendMessage("リサイズせず、処理を中断しました。");
-                                    removeTaskRunnable(player);
+                                    removeCancelTaskRunnable(player);
                                 }
                                 default -> {
                                     player.sendMessage(ChatColor.RED + "無効な入力です。");
                                 }
                             }
                         });
-                        EventListener.playerInputerMap.put(player, playerActions);
-                        playerTasks.put(ImageMap.ACTIONS_KEY, task);
-                        EventListener.playerTaskMap.put(player, playerTasks);
-                        SocketSwitch ssw = sswProvider.get();
-                        ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName + "->");
+                        addTaskRunnable(player, playerActions);
                         return;
                     }
                 } else {
-                    removeTaskRunnable(player);
+                    removeCancelTaskRunnable(player);
                     //int x = (int) inputs[0];
                     //int y = (int) inputs[1];
                     now = (String) inputs[0];
@@ -458,65 +451,113 @@ public class ImageMap {
                     }
                 }
                 if (inputs2 == null) {
-                    // 縦・横のサイズを入力させるフェーズに入る
+                    // 縦か横のサイズを入力させるフェーズに入る
                     // その前に、適切な縦横のタイル数(x, y)を計算する
                     // それを提示し、プレイヤーに入力させる
                     int mapsX = (image.getWidth() + 127) / 128;
                     int mapsY = (image.getHeight() + 127) / 128;
-                    player.sendMessage("縦と横のサイズを整数値で入力してください。\n(例) 5*5");
-                    player.sendMessage("適切な(x, y)は(" + mapsX + ", " + mapsY + ")です。");
-                    player.sendMessage("縦と横のサイズを入力してください。\n(例) 5*5");
+                    player.sendMessage("縦か横のサイズを整数値で指定してください。\n(例) x=5 or y=4");
+                    player.sendMessage("元の画像のアスペクト比を維持するため、それに応じ、指定していない方のx, yが自動的に決定されます。");
+                    player.sendMessage("現在、適切な(x, y)は(" + mapsX + ", " + mapsY + ")です。");
                     player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                    player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
+                    player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
                     final Object[] inputs_1 = new Object[] {now, ext, fullPath, image};
                     Map<String, MessageRunnable> playerActions = new HashMap<>();
-                    Map<String, BukkitTask> playerTasks = new HashMap<>();
-                    BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
-                        removeTaskRunnable(player);
-                    }, 20 * inputPeriod);
                     playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
-                        logger.info("input: {}", input);
-                        String[] xy = input.split("\\*");
-                        logger.info("xy: {}", Arrays.toString(xy));
-                        if (xy.length != 2) {
-                            player.sendMessage(ChatColor.RED + "無効な入力です。");
-                            return;
-                        }
-                        try {
-                            logger.info("parseIntStage");
-                            int x = Integer.parseInt(xy[0].trim());
-                            int y = Integer.parseInt(xy[1].trim());
-                            logger.info("x: {}, y: {}", x, y);
-                            if (x <= 0 || y <= 0) {
-                                player.sendMessage(ChatColor.RED + "無効な入力です。");
+                        // x=? or y=?
+                        if (input.contains("=")) {
+                            String[] xy = input.split("=");
+                            // 空白を削除
+                            xy[0] = xy[0].trim();
+                            xy[1] = xy[1].trim();
+                            if (!xy[0].equals("x") || !xy[0].equals("y")) {
+                                player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) x=5 or y=4のように入力してください。");
                                 return;
                             }
-                            Object[] inputs_2 = new Object[] {x, y};
-                            executeLargeImageMap(sender, args, dArgs, inputs_1, inputs_2);
-                        } catch (NumberFormatException e) {
-                            player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) 5*5のように入力してください。");
+                            try {
+                                int xOry = Integer.parseInt(xy[1].trim());
+                                if (xOry < 1) {
+                                    player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) x=5 or y=4のように入力してください。");
+                                    extendTask(player);
+                                    return;
+                                }
+                                Object[] inputs_2 = new Object[] {xy[0], xOry};
+                                executeLargeImageMap(sender, args, dArgs, inputs_1, inputs_2, null);
+                            } catch (NumberFormatException e) {
+                                player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) x=5 or y=4のように入力してください。");
+                                extendTask(player);
+                            }
                         }
                     });
-                    EventListener.playerInputerMap.put(player, playerActions);
-                    playerTasks.put(ImageMap.ACTIONS_KEY, task);
-                    EventListener.playerTaskMap.put(player, playerTasks);
-                    SocketSwitch ssw = sswProvider.get();
-                    ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName + "->");
+                    addTaskRunnable(player, playerActions);
                 } else {
-                    removeTaskRunnable(player);
+                    removeCancelTaskRunnable(player);
                     //saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
-                    int x = (Integer) inputs2[0];
-                    int y = (Integer) inputs2[1];
+                    // x=? or y=?
+                    String xOry = (String) inputs2[0];
+                    int xOryValue = (Integer) inputs2[1];
+                    int x, y;
+                    if (xOry.equals("x")) {
+                        x = xOryValue;
+                        y = (int) Math.ceil((double) image.getHeight() / (image.getWidth() / x));
+                    } else {
+                        y = xOryValue;
+                        x = (int) Math.ceil((double) image.getWidth() / (image.getHeight() / y));
+                    }
+                    // 総タイル数がmaxTilesを超過しているかを確認する
+                    if (x * y > maxTiles) {
+                        player.sendMessage(ChatColor.RED + "総タイル数("+maxTiles+")を超過しています。\nもう一度、入力してください。");
+                        extendTask(player);
+                        return;
+                    }
+                    // ここで一度確認を挟む
+                    player.sendMessage("以下の内容で画像マップを生成します。");
+                    player.sendMessage("タイトル: " + title);
+                    player.sendMessage("コメント: " + comment);
+                    player.sendMessage("URL: " + url);
+                    player.sendMessage("サイズ: " + x + "x" + y + "(" + x * y + ")");
+                    player.sendMessage("縦横のサイズ: " + xOry + "=" + xOryValue);
+                    player.sendMessage("総タイル数: " + x * y);
+                    player.sendMessage("生成する場合は、1と入力してください。");
+                    player.sendMessage("生成を中止する場合は、2と入力してください。");
+                    player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
+                    player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
+                    Map<String, MessageRunnable> playerActions = new HashMap<>();
+                    playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
+                        switch (input) {
+                            case "1" -> {
+                                Object[] inputs_3 = new Object[] {x, y};
+                                executeLargeImageMap(sender, args, dArgs, inputs, inputs2, inputs_3);
+                            }
+                            case "2" -> {
+                                player.sendMessage("生成を中止しました。");
+                                removeCancelTaskRunnable(player);
+                            }
+                            default -> {
+                                player.sendMessage(ChatColor.RED + "無効な入力です。\n生成する場合は、1と入力してください。\n生成を中止する場合は、2と入力してください。");
+                                extendTask(player);
+
+                            }
+                        }
+                    });
+                    addTaskRunnable(player, playerActions);
+                    return;
+                }
+                if (inputs3 != null) {
+                    removeCancelTaskRunnable(player);
+                    int x = (int) inputs3[0];
+                    int y = (int) inputs3[1];
+                    // x, y に応じて、画像をリサイズする
                     int canvasWidth = x * 128;
                     int canvasHeight = y * 128;
+                    BufferedImage resizedImage = resizeImage(image, x * 128, y * 128);
                     BufferedImage canvas = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB);
                     Graphics2D g2d = canvas.createGraphics();
                     g2d.setColor(new java.awt.Color(0, 0, 0, 0)); // 透明な背景
                     g2d.fillRect(0, 0, canvasWidth, canvasHeight);
-                    int xOffset = (canvasWidth - image.getWidth()) / 2;
-                    int yOffset = (canvasHeight - image.getHeight()) / 2;
-                    g2d.drawImage(image, xOffset, yOffset, null);
+                    int xOffset = (canvasWidth - resizedImage.getWidth()) / 2;
+                    int yOffset = (canvasHeight - resizedImage.getHeight()) / 2;
+                    g2d.drawImage(resizedImage, xOffset, yOffset, null);
                     g2d.dispose();
                     List<ItemStack> mapItems = new ArrayList<>();
                     for (int y_ = 0; y_ < y; y_++) {
@@ -550,19 +591,57 @@ public class ImageMap {
                             mapItems.add(mapItem);
                         }
                     }
+                    Location playerLocation = player.getLocation();
+                    World world = player.getWorld();
+                    Block block = playerLocation.getBlock();
                     List<ItemStack> remainingItems = new ArrayList<>();
                     for (ItemStack mapItem : mapItems) {
                         HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(mapItem);
                         remainingItems.addAll(remaining.values());
                     }
-                    Location playerLocation = player.getLocation();
-                    World world = player.getWorld();
-                    Bukkit.getScheduler().runTask(plugin, () -> {
-                        for (ItemStack remainingItem : remainingItems) {
-                            world.dropItemNaturally(playerLocation, remainingItem);
+                    if (remainingItems.isEmpty()) {
+                        player.sendMessage("すべての画像マップを渡しました。");
+                    } else {
+                        // プレイヤーが浮いているかどうかを確認する
+                        // プレイヤーがブロックの上にいる場合、地面にドロップする
+                        if (block.getType() != Material.AIR) {
+                            Bukkit.getScheduler().runTask(plugin, () -> {
+                                player.sendMessage("インベントリに入り切らないマップは、ドロップしました。");
+                                for (ItemStack remainingItem : remainingItems) {
+                                    world.dropItemNaturally(playerLocation, remainingItem);
+                                }
+                                player.sendMessage("すべての画像マップを渡しました。");
+                                removeCancelTaskRunnable(player);
+                            });
+                        } else {
+                            player.sendMessage("インベントリに入り切らないマップをドロップするために、ブロックの上に移動し、1と入力してください。");
+                            player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
+                            player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
+                            Map<String, MessageRunnable> playerActions = new HashMap<>();
+                            playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
+                                if (input.equals("1")) {
+                                    Location playerLocation_ = player.getLocation();
+                                    Block block_ = playerLocation_.getBlock();
+                                    if (block_.getType() != Material.AIR) {
+                                        player.sendMessage("ブロックの上に移動してください。");
+                                        extendTask(player);
+                                        return;
+                                    }
+                                    Bukkit.getScheduler().runTask(plugin, () -> {
+                                        for (ItemStack remainingItem : remainingItems) {
+                                            world.dropItemNaturally(playerLocation, remainingItem);
+                                        }
+                                        player.sendMessage("インベントリに入り切らないマップをドロップしました。");
+                                        player.sendMessage("すべての画像マップを渡しました。");
+                                        removeCancelTaskRunnable(player);
+                                    });
+                                } else {
+                                    player.sendMessage(ChatColor.RED + "無効な入力です。");
+                                }
+                            });
+                            addTaskRunnable(player, playerActions);
                         }
-                        player.sendMessage("画像マップを渡しました。");
-                    });
+                    }
                 }
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException e) {
                 player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
@@ -578,10 +657,62 @@ public class ImageMap {
         }
     }
 
-    private void removeTaskRunnable(Player player) {
+    private void addTaskRunnable(Player player, Map<String, MessageRunnable> playerActions) {
+        EventListener.playerInputerMap.put(player, playerActions);
+        scheduleNewTask(player, inputPeriod);
+        try (Connection connection3 = db.getConnection()) {
+            SocketSwitch ssw = sswProvider.get();
+            ssw.sendVelocityServer(connection3, "inputMode->on->name->" + player.getName() + "->");
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+    }
+
+    private void extendTask(Player player) {
+        cancelTask(player);
+        scheduleNewTask(player, inputPeriod);
+    }
+
+    private void scheduleNewTask(Player player, int delaySeconds) {
+        BukkitTask newTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
+            removeCancelTaskRunnable(player);
+        }, 20 * delaySeconds);
+        if (EventListener.playerTaskMap.containsKey(player)) {
+            Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
+            playerTasks.put(ImageMap.ACTIONS_KEY, newTask);
+            EventListener.playerTaskMap.put(player, playerTasks);
+        } else {
+            Map<String, BukkitTask> playerTasks = new HashMap<>();
+            playerTasks.put(ImageMap.ACTIONS_KEY, newTask);
+            EventListener.playerTaskMap.put(player, playerTasks);
+        }
+    }
+
+    private void cancelTask(Player player) {
+        if (EventListener.playerTaskMap.containsKey(player)) {
+            Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
+            if (playerTasks.containsKey(ImageMap.ACTIONS_KEY)) {
+                BukkitTask task = playerTasks.get(ImageMap.ACTIONS_KEY);
+                task.cancel();
+            }
+        }
+    }
+
+    private void removeCancelTaskRunnable(Player player) {
         String playerName = player.getName();
         EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
-        EventListener.playerTaskMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
+        // タスクをキャンセルしてから、playerTaskMapから削除する
+        EventListener.playerTaskMap.entrySet().stream()
+            .filter(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY))
+            .forEach(entry -> {
+                BukkitTask task = entry.getValue().get(ImageMap.ACTIONS_KEY);
+                task.cancel();
+                entry.getValue().remove(ImageMap.ACTIONS_KEY);
+            });
         try (Connection connection2 = db.getConnection()) {
             SocketSwitch ssw = sswProvider.get();
             ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName + "->");
@@ -592,6 +723,7 @@ public class ImageMap {
             }
         }
     }
+
     public void getLargeMap(Player player, BufferedImage image, String fullPath) {
         int imageWidth = image.getWidth();
         int imageHeight = image.getHeight();

@@ -112,7 +112,7 @@ public class FMCCommand implements TabExecutor {
 							return true;
 						}
 						case "largecreate" -> {
-							Main.getInjector().getInstance(ImageMap.class).executeLargeImageMap(sender, args, null, null, null);
+							Main.getInjector().getInstance(ImageMap.class).executeLargeImageMap(sender, args, null, null, null, null);
 							return true;
 						}
 					}
