@@ -63,7 +63,7 @@ public class ImageMap {
     public static final String ACTIONS_KEY = "largeImageMap";
     public static List<String> imagesColumnsList = new ArrayList<>();
     public static List<Integer> thisServerMapIds = new ArrayList<>();
-    public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q"));
+    public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q", "largecreate"));
     private final common.Main plugin;
     private final Logger logger;
     private final Database db;
@@ -314,7 +314,7 @@ public class ImageMap {
     // 画像マップであることは確定事項(QRコードは実装しない)
     // 画像マップの大きさは、1x1(1)以上であることは確定事項
     @SuppressWarnings({"null","unused"})
-    private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2) {
+    public void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2) {
         if (sender instanceof Player player) {
             // プレイヤーが現在インプットモードでなかったら、このメソッドを実行する
             // EventListener.playerInputerMap.containsKeyにplayerが含まれているとき、EventListener.playerInputerMap.get(player)にACTIONS_KEY以外のものが含まれているとき
@@ -342,6 +342,7 @@ public class ImageMap {
                 comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
                 ext,
                 fullPath;
+            final int inputPeriod = 60;
             try (Connection conn = db.getConnection()) {
                 // 一日のアップロード回数は制限する
                 // ラージマップは要考
@@ -381,7 +382,7 @@ public class ImageMap {
                         player.sendMessage(ChatColor.RED + "指定のURLは規定の拡張子を持ちません。");
                         return;
                     }
-                    int maxTiles = 16*16;
+                    int maxTiles = 8*8;
                     int imageWidth = image.getWidth();
                     int imageHeight = image.getHeight();
                     int mapsX = (imageWidth + 127) / 128;
@@ -391,7 +392,6 @@ public class ImageMap {
                         // そのときに、必要になる(x, y)を提示する
                         int x = (int) Math.ceil((double) imageWidth / 128);
                         int y = (int) Math.ceil((double) imageHeight / 128);
-                        int inputPeriod = 60;
                         player.sendMessage("画像が大きすぎるため、総タイル数"+maxTiles+"を超過しました。\n画像を半分にリサイズすることを提案します。");
                         player.sendMessage("適切な(x, y)は(" + x + ", " + y + ")です。");
                         player.sendMessage("リサイズして続行する場合は、1と入力してください。");
@@ -439,40 +439,35 @@ public class ImageMap {
                         playerTasks.put(ImageMap.ACTIONS_KEY, task);
                         EventListener.playerTaskMap.put(player, playerTasks);
                         SocketSwitch ssw = sswProvider.get();
-                        ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName);
+                        ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName + "->");
                         return;
                     }
                 } else {
                     removeTaskRunnable(player);
-                    int x = (int) inputs[0];
-                    int y = (int) inputs[1];
-                    now = (String) inputs[2];
-                    ext = (String) inputs[3];
-                    fullPath = (String) inputs[4];
-                    if (inputs[5] != null) {
-                        image = (BufferedImage) inputs[5];
+                    //int x = (int) inputs[0];
+                    //int y = (int) inputs[1];
+                    now = (String) inputs[0];
+                    ext = (String) inputs[1];
+                    fullPath = (String) inputs[2];
+                    if (inputs[3] != null) {
+                        image = (BufferedImage) inputs[3];
                     } else {
-                        player.sendMessage(ChatColor.RED + "画像のリサイズに失敗しました。");
+                        player.sendMessage(ChatColor.RED + "画像のリサイズに失敗しました。\n最初からやり直してください。");
                         return;
                     }
                 }
-
                 if (inputs2 == null) {
-                    player.sendMessage("縦と横のサイズを整数値で入力してください。\n(例) 5*5");
-                    player.sendMessage(ChatColor.BLUE + "-------user-input-mode(60s)-------");
-                    player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
-                    
                     // 縦・横のサイズを入力させるフェーズに入る
                     // その前に、適切な縦横のタイル数(x, y)を計算する
                     // それを提示し、プレイヤーに入力させる
-                    int inputPeriod = 60;
                     int mapsX = (image.getWidth() + 127) / 128;
                     int mapsY = (image.getHeight() + 127) / 128;
+                    player.sendMessage("縦と横のサイズを整数値で入力してください。\n(例) 5*5");
                     player.sendMessage("適切な(x, y)は(" + mapsX + ", " + mapsY + ")です。");
                     player.sendMessage("縦と横のサイズを入力してください。\n(例) 5*5");
                     player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
                     player.sendMessage("以下、入力した内容は、チャット欄には表示されず、ログにも残りません。");
-                    final Object[] inputs_1 = new Object[] {now, ext, fullPath, null};
+                    final Object[] inputs_1 = new Object[] {now, ext, fullPath, image};
                     Map<String, MessageRunnable> playerActions = new HashMap<>();
                     Map<String, BukkitTask> playerTasks = new HashMap<>();
                     BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -480,14 +475,18 @@ public class ImageMap {
                         removeTaskRunnable(player);
                     }, 20 * inputPeriod);
                     playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
+                        logger.info("input: {}", input);
                         String[] xy = input.split("\\*");
+                        logger.info("xy: {}", Arrays.toString(xy));
                         if (xy.length != 2) {
                             player.sendMessage(ChatColor.RED + "無効な入力です。");
                             return;
                         }
                         try {
-                            int x = Integer.parseInt(xy[0]);
-                            int y = Integer.parseInt(xy[1]);
+                            logger.info("parseIntStage");
+                            int x = Integer.parseInt(xy[0].trim());
+                            int y = Integer.parseInt(xy[1].trim());
+                            logger.info("x: {}, y: {}", x, y);
                             if (x <= 0 || y <= 0) {
                                 player.sendMessage(ChatColor.RED + "無効な入力です。");
                                 return;
@@ -502,11 +501,12 @@ public class ImageMap {
                     playerTasks.put(ImageMap.ACTIONS_KEY, task);
                     EventListener.playerTaskMap.put(player, playerTasks);
                     SocketSwitch ssw = sswProvider.get();
-                    ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName);
+                    ssw.sendVelocityServer(conn, "inputMode->on->name->" + playerName + "->");
                 } else {
+                    removeTaskRunnable(player);
                     //saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
-                    int x = (int) inputs2[0];
-                    int y = (int) inputs2[1];
+                    int x = (Integer) inputs2[0];
+                    int y = (Integer) inputs2[1];
                     int canvasWidth = x * 128;
                     int canvasHeight = y * 128;
                     BufferedImage canvas = new BufferedImage(canvasWidth, canvasHeight, BufferedImage.TYPE_INT_ARGB);
@@ -570,7 +570,7 @@ public class ImageMap {
         EventListener.playerTaskMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
         try (Connection connection2 = db.getConnection()) {
             SocketSwitch ssw = sswProvider.get();
-            ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName);
+            ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName + "->");
         } catch (SQLException | ClassNotFoundException e) {
             logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {

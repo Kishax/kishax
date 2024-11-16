@@ -167,7 +167,7 @@ public class SocketSwitch {
     }
 
     private void sendMessageToServer(Connection conn, String serverType, String sendmsg) throws SQLException, ClassNotFoundException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status")) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String serverName = rs.getString("name"),

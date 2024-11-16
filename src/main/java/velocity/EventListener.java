@@ -102,6 +102,7 @@ public class EventListener {
 	    originalMessage = e.getMessage();
 		if (playerInputers.contains(playerName)) {
 			// プレイヤーの入力をキャンセル
+			//e.setResult(PlayerChatEvent.ChatResult.denied());
 			return;
 		}
 	    // プレイヤーの現在のサーバーを取得

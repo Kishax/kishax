@@ -102,12 +102,19 @@ public class FMCCommand implements TabExecutor {
 						sender.sendMessage(ChatColor.RED + "権限がありません。");
 						return true;
 					}
-					if (args[1].equalsIgnoreCase("create") || args[1].equalsIgnoreCase("createqr")) {
-						Main.getInjector().getInstance(ImageMap.class).executeImageMap(sender, cmd, label, args, null);
-						return true;
-					} else if (args[1].equalsIgnoreCase("q")) {
-						Main.getInjector().getInstance(ImageMap.class).executeQ(sender, cmd, label, args, false);
-						return true;
+					switch (args[1].toLowerCase()) {
+						case "create","createqr" -> {
+							Main.getInjector().getInstance(ImageMap.class).executeImageMap(sender, cmd, label, args, null);
+							return true;
+						}
+						case "q" -> {
+							Main.getInjector().getInstance(ImageMap.class).executeQ(sender, cmd, label, args, false);
+							return true;
+						}
+						case "largecreate" -> {
+							Main.getInjector().getInstance(ImageMap.class).executeLargeImageMap(sender, args, null, null, null);
+							return true;
+						}
 					}
 				} else {
 					sender.sendMessage("Usage: /fmc im <create|createqr> <title> <comment> <url>");
