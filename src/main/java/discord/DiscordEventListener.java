@@ -175,6 +175,9 @@ public class DiscordEventListener extends ListenerAdapter {
 							e.reply("画像URLと画像の両方を指定することはできません。").setEphemeral(true).queue();
 							return;
 						}
+						if (attachment != null) {
+							url = attachment.getUrl();
+						}
 						LocalDate now = LocalDate.now();
 						String otp = OTPGenerator.generateOTP(6);
 						db.insertLog(conn, "INSERT INTO images (name, title, url, comment, otp, d, dname, did, date, locked, locked_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName12, title, url, comment, otp, true, userName12, userId, java.sql.Date.valueOf(now), true, false});
