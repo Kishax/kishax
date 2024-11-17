@@ -55,8 +55,9 @@ public class Menu {
         teleportInventoryName = "teleport",
         teleportRequestInventoryName = "teleport request",
         teleportResponseInventoryName = "teleport response",
-        teleportResponseHeadInventoryName = "teleport response head";
-    public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName, Menu.teleportInventoryName, Menu.teleportRequestInventoryName, Menu.teleportResponseInventoryName, Menu.teleportResponseHeadInventoryName);
+        teleportResponseHeadInventoryName = "teleport response head",
+        chooseColorInventoryName = "choose color";
+    public static Set<String> menuNames = Set.of(Menu.serverInventoryName, Menu.menuInventoryName, Menu.onlineServerInventoryName, Menu.serverTypeInventoryName, Menu.imageInventoryName, Menu.settingInventoryName, Menu.teleportInventoryName, Menu.teleportRequestInventoryName, Menu.teleportResponseInventoryName, Menu.teleportResponseHeadInventoryName, Menu.chooseColorInventoryName);
     public static List<String> args1 = new ArrayList<>(Arrays.asList("server", "image", "get"));
     public static List<String> args2 = new ArrayList<>(Arrays.asList("online","survival","minigame","dev","mod","distributed","others","before"));
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
@@ -170,6 +171,10 @@ public class Menu {
         }
 	}
 
+    public Map<Player, Map<String, Map<Integer, Runnable>>> getMenuActions() {
+        return this.menuActions;
+    }
+    
     public void runMenuAction(Player player, String menuType, int slot) {
         Map<String, Map<Integer, Runnable>> playerMenuActions = getPlayerMenuActions(player);
         if (playerMenuActions != null) {
