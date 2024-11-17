@@ -1,22 +1,16 @@
 package spigot;
 
 import java.awt.Color;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import com.google.inject.Inject;
-
 public class ColorItems {
-    @Inject
-    public ColorItems() {
-    }
-
-    public Map<ItemStack, Color> getColorItems() {
-        Map<ItemStack, Color> colorItems = new HashMap<>();
+    public static Map<ItemStack, Color> getColorItems() {
+        Map<ItemStack, Color> colorItems = new LinkedHashMap<>();
         ItemStack white = new ItemStack(Material.WHITE_WOOL);
         ItemMeta whiteMeta = white.getItemMeta();
         if (whiteMeta != null) {
@@ -139,10 +133,15 @@ public class ColorItems {
         return colorItems;
     }
 
-    public String getColorName(java.awt.Color color) {
+    public static boolean isTransparent(java.awt.Color color) {
+        return color.getAlpha() != 255;
+    }
+
+    public static String getColorName(java.awt.Color color) {
         int r = color.getRed();
         int g = color.getGreen();
         int b = color.getBlue();
+        int a = color.getAlpha();
         if (r == 255 && g == 255 && b == 255) {
             return "ホワイト";
         } else if (r == 255 && g == 165 && b == 0) {
@@ -173,9 +172,9 @@ public class ColorItems {
             return "グリーン";
         } else if (r == 255 && g == 0 && b == 0) {
             return "レッド";
-        } else if (r == 0 && g == 0 && b == 0) {
+        } else if (r == 0 && g == 0 && b == 0 && a == 255) {
             return "ブラック";
-        } else if (r == 0 && g == 0 && b == 0) {
+        } else if (r == 0 && g == 0 && b == 0 && a == 0) {
             return "透明";
         } else {
             return "カスタム: (" + r + ", " + g + ", " + b + ")";

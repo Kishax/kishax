@@ -57,6 +57,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import common.CalcUtil;
 import common.Database;
 import common.FMCSettings;
 import common.SocketSwitch;
@@ -77,17 +78,15 @@ public class ImageMap {
     private final Logger logger;
     private final Database db;
     private final Provider<SocketSwitch> sswProvider;
-    private final ColorItems ci;
     private final String serverName;
     private final int inputPeriod = 60;
     @Inject
-    public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, ColorItems ci) {
+    public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
         this.serverName = shd.getServerName();
         this.sswProvider = sswProvider;
-        this.ci = ci;
     }
 
     public void executeQ(CommandSender sender, Command command, String label, String[] args, boolean q) {
@@ -398,13 +397,23 @@ public class ImageMap {
                     int imageHeight = image.getHeight();
                     int x = (int) Math.ceil((double) imageWidth / 128);
                     int y = (int) Math.ceil((double) imageHeight / 128);
+                    int gcd = CalcUtil.gcd(x, y);
+                    x /= gcd;
+                    y /= gcd;
                     int mapsX = (image.getWidth() + 127) / 128;
                     int mapsY = (image.getHeight() + 127) / 128;
-                    player.sendMessage("縦か横のサイズを整数値で指定してください。\n(例) x=5 or y=4");
-                    player.sendMessage("元の画像のアスペクト比を維持するため、それに応じ、指定していない方のx, yが自動的に決定されます。");
-                    player.sendMessage("現在、適切な縦横比は、"+x+":"+y+"です。");
-                    player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                    player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
+                    TextComponent ratio = new TextComponent(x + ":" + y);
+                    ratio.setUnderlined(true);
+                    ratio.setBold(true);
+                    ratio.setColor(ChatColor.GOLD);
+                    player.spigot().sendMessage(
+                        new TextComponent("現在、適切な縦横比は、"),
+                        ratio,
+                        new TextComponent("です。\n"),
+                        new TextComponent("元の画像のアスペクト比を維持するため、縦か横のもう一方は自動的に決定されます。"),
+                        new TextComponent("縦か横のサイズを整数値で指定してください。\n(例) x=5 or y=4\n"),
+                        TCUtils.INPUT_MODE.get()
+                    );
                     final Object[] inputs_1 = new Object[] {now, ext, fullPath, image};
                     Map<String, MessageRunnable> playerActions = new HashMap<>();
                     playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
@@ -429,7 +438,7 @@ public class ImageMap {
                                     extendTask(player);
                                     return;
                                 }
-                                player.sendMessage(input + "が入力されました。");
+                                player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
                                 Object[] inputs_2 = new Object[] {xy[0], xOry};
                                 executeLargeImageMap(sender, args, dArgs, inputs_1, inputs_2, null);
                             } catch (NumberFormatException e) {
@@ -465,28 +474,37 @@ public class ImageMap {
                         removeCancelTaskRunnable(player);
                         Object[] inputs_3 = new Object[] {x, y, null};
                         // ここでプレイヤーに色を決めさせる
-                        player.sendMessage("次に、背景色を選択してください。\n縁の色になります。");
-                        player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                        player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
+                        player.sendMessage("次に、背景色を選択します。");
+                        TextComponent note = new TextComponent("jpegかjpgの画像の場合、背景色に透明を選ぶことはできません。\n");
+                        note.setUnderlined(true);
+                        note.setItalic(true);
+                        note.setColor(ChatColor.GRAY);
+                        player.spigot().sendMessage(note, TCUtils.INPUT_MODE.get());
                         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
                         Inventory inv = Bukkit.createInventory(null, 27, Menu.chooseColorInventoryName);
-                        Map<ItemStack, java.awt.Color> colorItems = ci.getColorItems();
-                        for (ItemStack item : colorItems.keySet()) {
-                            java.awt.Color color = colorItems.get(item);
-                            inputs_3[2] = color;
-                            inv.addItem(item);
-                            playerMenuActions.put(inv.first(item), () -> executeLargeImageMap(sender, args, dArgs, inputs, inputs2, inputs_3));
+                        Map<ItemStack, java.awt.Color> colorItems = ColorItems.getColorItems();
+                        //logger.info("colorItems: {}", colorItems);
+                        int index = 0;
+                        for (Map.Entry<ItemStack, java.awt.Color> entry : colorItems.entrySet()) {
+                            ItemStack item = entry.getKey();
+                            java.awt.Color color = entry.getValue();
+                            inv.setItem(index, item);
+                            playerMenuActions.put(index, () -> {
+                                player.closeInventory();
+                                inputs_3[2] = color;
+                                executeLargeImageMap(sender, args, dArgs, inputs, inputs2, inputs_3);
+                            });
+                            index++;
                         }
                         ItemStack custom = new ItemStack(Material.WHITE_GLAZED_TERRACOTTA);
                         ItemMeta customMeta = custom.getItemMeta();
                         customMeta.setDisplayName("カスタム");
                         custom.setItemMeta(customMeta);
-                        inv.addItem(custom);
-                        playerMenuActions.put(inv.first(custom), () -> {
+                        inv.setItem(index, custom);
+                        index++;
+                        playerMenuActions.put(index, () -> {
                             removeCancelTaskRunnable(player);
-                            player.sendMessage("カスタム色を選択してください。");
-                            player.sendMessage("色のRGB値を入力してください。\n(例) 255, 255, 255");
-                            player.sendMessage("0~255の範囲で入力してください。");
+                            player.closeInventory();
                             TextComponent link1 = new TextComponent("ココ");
                             link1.setBold(true);
                             link1.setUnderlined(true);
@@ -497,24 +515,34 @@ public class ImageMap {
                             link2.setUnderlined(true);
                             link2.setColor(ChatColor.GOLD);
                             link2.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://www.cc.kyoto-su.ac.jp/~shimizu/MAKE_HTML/rgb2.html"));
-                            player.spigot().sendMessage(new TextComponent("外部サイトのRGBカラーリストを見るには、"), link1, new TextComponent("をクリックしてください。"));
-                            player.spigot().sendMessage(new TextComponent("外部サイトのRGBカラーシミュレーターツールを使うには、"), link2, new TextComponent("をクリックしてください。"));
-                            player.sendMessage("色選択メニューに戻る場合は、0と入力してください。");
-                            player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                            player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
+                            player.spigot().sendMessage(
+                                new TextComponent("カスタム色を選択してください。\n"),
+                                new TextComponent("色のRGB値を入力してください。\n(例) 255, 255, 255"),
+                                new TextComponent("それぞれ、0~255の範囲で入力してください。\n"),
+                                new TextComponent("外部サイトのRGBカラーリストを見るには、"), 
+                                link1,
+                                new TextComponent("をクリックしてください。\n"),
+                                new TextComponent("外部サイトのRGBカラーシミュレーターツールを使うには、"),
+                                link2,
+                                new TextComponent("をクリックしてください。\n"),
+                                new TextComponent("色選択メニューに戻る場合は、0と入力してください。\n"),
+                                TCUtils.INPUT_MODE.get()
+                            );
                             Map<String, MessageRunnable> playerActions = new HashMap<>();
                             playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
                                 if (input.equals("0")) {
-                                    player.sendMessage(input + "が入力されました。");
-                                    player.sendMessage("色選択メニューに戻ります。");
-                                    TextComponent message = new TextComponent("3秒後にインベントリを開きます。");
+                                    TextComponent message = new TextComponent("5秒後にインベントリを開きます。");
                                     message.setBold(true);
                                     message.setUnderlined(true);
                                     message.setColor(ChatColor.GOLD);
-                                    player.spigot().sendMessage(message);
+                                    player.spigot().sendMessage(
+                                        new TCUtils2(input).getResponseComponent(),
+                                        new TextComponent("\n色選択メニューに戻ります。"),
+                                        message
+                                    );
                                     plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                                        executeLargeImageMap(sender, args, dArgs, inputs, inputs2, inputs_3);
-                                    }, 60L);
+                                        player.openInventory(inv);
+                                    }, 100L);
                                     return;
                                 }
                                 String[] rgb = input.split(",");
@@ -534,7 +562,7 @@ public class ImageMap {
                                     }
                                     java.awt.Color customColor = new java.awt.Color(r, g, b);
                                     inputs_3[2] = customColor;
-                                    player.sendMessage("(R, G, B) = (" + r + ", " + g + ", " + b + ")を選択しました。");
+                                    player.spigot().sendMessage(new TCUtils2("(R, G, B) = (" + r + ", " + g + ", " + b + ")").getResponseComponent());
                                     executeLargeImageMap(sender, args, dArgs, inputs, inputs2, inputs_3);
                                 } catch (NumberFormatException e) {
                                     player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) 255, 255, 255のように入力してください。");
@@ -543,58 +571,107 @@ public class ImageMap {
                             });
                             addTaskRunnable(player, playerActions);
                         });
-                        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.settingInventoryName, playerMenuActions);
-                        player.spigot().sendMessage(TCUtils.LATER_OPEN_INV.get());
+                        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.chooseColorInventoryName, playerMenuActions);
+                        player.spigot().sendMessage(TCUtils.LATER_OPEN_INV_5.get());
                         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                             player.openInventory(inv);
-                            player.sendMessage("もう一度、背景色選択メニューを開くには、1と入力してください。");
-                            player.sendMessage("生成を中止する場合は、2と入力してください。");
-                            player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                            player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
+                            player.spigot().sendMessage(
+                                new TextComponent("手動で背景色選択メニューを開くには、"),
+                                TCUtils.ONE.get(),
+                                new TextComponent("と入力してください。\n"),
+                                new TextComponent("生成を中止する場合は、"),
+                                TCUtils.TWO.get(),
+                                new TextComponent("と入力してください。\n"),
+                                TCUtils.INPUT_MODE.get()
+                            );
                             Map<String, MessageRunnable> playerActions = new HashMap<>();
                             playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
                                 switch (input) {
                                     case "1" -> {
-                                        player.sendMessage(input + "が入力されました。");
-                                        player.spigot().sendMessage(TCUtils.LATER_OPEN_INV.get());
+                                        player.spigot().sendMessage(
+                                            new TCUtils2(input).getResponseComponent(),
+                                            new TextComponent("\n"),
+                                            TCUtils.LATER_OPEN_INV_3.get()
+                                        );
+                                        player.spigot().sendMessage();
                                         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                                             player.openInventory(inv);
                                         }, 60L);
                                     }
                                     case "2" -> {
-                                        player.sendMessage(input + "が入力されました。");
-                                        player.sendMessage("生成を中止しました。");
+                                        player.spigot().sendMessage(
+                                            new TCUtils2(input).getResponseComponent(),
+                                            new TextComponent("\n生成を中止しました。")
+                                        );
                                         removeCancelTaskRunnable(player);
                                     }
                                     default -> {
-                                        player.sendMessage(ChatColor.RED + "無効な入力です。\n背景色を選択する場合は、1と入力してください。\n生成を中止する場合は、2と入力してください。");
+                                        TextComponent alert = new TextComponent("無効な入力です。\n");
+                                        alert.setColor(ChatColor.RED);
+                                        player.spigot().sendMessage(
+                                            alert,
+                                            new TextComponent("手動で背景色選択メニューを開くには、"),
+                                            TCUtils.ONE.get(),
+                                            new TextComponent("と入力してください。\n"),
+                                            new TextComponent("生成を中止する場合は、"),
+                                            TCUtils.TWO.get(),
+                                            new TextComponent("と入力してください。\n")
+                                        );
                                         extendTask(player);
                                     }
                                 }
                             });
                             addTaskRunnable(player, playerActions);
-                        }, 60L);
+                        }, 100L);
                     } else {
+                        logger.info("inputs3: {}", inputs3);
+                        java.awt.Color color = (java.awt.Color) inputs3[2];
+                        String colorName = ColorItems.getColorName(color);
+                        logger.info("colorName: " + colorName);
+                        logger.info("ext: " + ext);
+                        logger.info("color: " + color);
+                        if (ext.equals("jpg") || ext.equals("jpeg")) {
+                            if (ColorItems.isTransparent(color)) {
+                                TextComponent alert = new TextComponent("jpg, jpeg形式の画像は透明度を持たないため、透明色を選択することはできません。\n背景色を選択し直してください。\n");
+                                alert.setColor(ChatColor.RED);
+                                player.spigot().sendMessage(
+                                    alert,
+                                    new TextComponent("手動で背景色選択メニューを開くには、"),
+                                    TCUtils.ONE.get(),
+                                    new TextComponent("と入力してください。\n"),
+                                    new TextComponent("生成を中止する場合は、"),
+                                    TCUtils.TWO.get(),
+                                    new TextComponent("と入力してください。\n"),
+                                    TCUtils.INPUT_MODE.get()
+                                );
+                                extendTask(player);
+                                return;
+                            }
+                        }
                         removeCancelTaskRunnable(player);
                         // ここで一度確認を挟む
                         int x = (int) inputs3[0];
                         int y = (int) inputs3[1];
-                        java.awt.Color color = (java.awt.Color) inputs3[2];
-                        player.sendMessage("以下の内容で画像マップを生成します。");
-                        player.sendMessage("タイトル: " + title);
-                        player.sendMessage("コメント: " + comment);
-                        player.sendMessage("サイズ: " + x + "x" + y + "(" + x * y + ")");
-                        player.sendMessage("背景色: " + ci.getColorName(color));
-                        player.sendMessage("生成する場合は、1と入力してください。");
-                        player.sendMessage("生成を中止する場合は、2と入力してください。");
-                        player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                        player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
+                        player.spigot().sendMessage(
+                            new TextComponent("以下の内容で画像マップを生成します。\n"),
+                            new TextComponent("タイトル: " + title + "\n"),
+                            new TextComponent("コメント: " + comment + "\n"),
+                            new TextComponent("サイズ: " + x + "x" + y + "(" + x * y + ")\n"),
+                            new TextComponent("背景色: " + colorName + "\n"),
+                            new TextComponent("生成する場合は、"),
+                            TCUtils.ONE.get(),
+                            new TextComponent("と入力してください。\n"),
+                            new TextComponent("生成を中止する場合は、"),
+                            TCUtils.TWO.get(),
+                            new TextComponent("と入力してください。\n"),
+                            TCUtils.INPUT_MODE.get()
+                        );
                         Map<String, MessageRunnable> playerActions = new HashMap<>();
                         playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
                             switch (input) {
                                 case "1" -> {
-                                    player.sendMessage(input + "が入力されました。");
-                                    try {
+                                    player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                                    try (Connection conn2 = db.getConnection()) {
                                         // x, y に応じて、画像をリサイズする
                                         int canvasWidth = x * 128;
                                         int canvasHeight = y * 128;
@@ -639,13 +716,13 @@ public class ImageMap {
                                                     mapItem.setItemMeta(mapMeta);
                                                 }
                                                 mapItems.add(mapItem);
-                                                saveImageToDatabase(conn, mapId, x, y, tile, ext);
+                                                saveImageToDatabase(conn2, mapId, x, y, tile, ext);
                                             }
                                         }
                                         if (fromDiscord) {
-                                            db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=?, large=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, null, true, (String) dArgs[1], (String) dArgs[2], now, true, (String) dArgs[0]});
+                                            db.updateLog(conn2, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=?, large=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, null, true, (String) dArgs[1], (String) dArgs[2], now, true, (String) dArgs[0]});
                                         } else {
-                                            db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date, large) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, false, Date.valueOf(LocalDate.now()), true});
+                                            db.insertLog(conn2, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date, large) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, false, Date.valueOf(LocalDate.now()), true});
                                         }
                                         Location playerLocation = player.getLocation();
                                         World world = player.getWorld();
@@ -657,6 +734,7 @@ public class ImageMap {
                                         }
                                         if (remainingItems.isEmpty()) {
                                             player.sendMessage("すべての画像マップを渡しました。");
+                                            removeCancelTaskRunnable(player);
                                         } else {
                                             // プレイヤーが浮いているかどうかを確認する
                                             // プレイヤーがブロックの上にいる場合、地面にドロップする
@@ -670,16 +748,28 @@ public class ImageMap {
                                                     removeCancelTaskRunnable(player);
                                                 });
                                             } else {
-                                                player.sendMessage("インベントリに入り切らないマップをドロップするために、ブロックの上に移動し、1と入力してください。");
-                                                player.sendMessage(ChatColor.BLUE + "-------user-input-mode(" + inputPeriod + "s)-------");
-                                                player.sendMessage("以下、入力する内容は、チャット欄には表示されません。");
+                                                player.spigot().sendMessage(
+                                                    new TextComponent("インベントリに入り切らないマップをドロップするために、ブロックの上に移動し、"),
+                                                    TCUtils.ONE.get(),
+                                                    new TextComponent("と入力してください。\n"),
+                                                    TCUtils.INPUT_MODE.get()
+                                                );
                                                 Map<String, MessageRunnable> playerActions2 = new HashMap<>();
                                                 playerActions2.put(ImageMap.ACTIONS_KEY, (input2) -> {
                                                     if (input2.equals("1")) {
                                                         Location playerLocation_ = player.getLocation();
                                                         Block block_ = playerLocation_.getBlock();
                                                         if (block_.getType() != Material.AIR) {
-                                                            player.sendMessage("ブロックの上に移動してください。");
+                                                            TextComponent alert = new TextComponent("ブロックの上に移動してください。");
+                                                            alert.setColor(ChatColor.RED);
+                                                            TextComponent alert2 = new TextComponent("と入力してください。\n");
+                                                            alert2.setColor(ChatColor.RED);
+                                                            player.spigot().sendMessage(
+                                                                alert,
+                                                                TCUtils.ONE.get(),
+                                                                alert2,
+                                                                TCUtils.INPUT_MODE.get()
+                                                            );
                                                             extendTask(player);
                                                             return;
                                                         }
@@ -707,8 +797,10 @@ public class ImageMap {
                                     }
                                 }
                                 case "2" -> {
-                                    player.sendMessage(input + "が入力されました。");
-                                    player.sendMessage("生成を中止しました。");
+                                    player.spigot().sendMessage(
+                                        new TCUtils2(input).getResponseComponent(),
+                                        new TextComponent("\n生成を中止しました。")
+                                    );
                                     removeCancelTaskRunnable(player);
                                 }
                                 default -> {
@@ -828,7 +920,7 @@ public class ImageMap {
     }
 
     public void loadAndSetImageTile(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView) throws SQLException, ClassNotFoundException {
-        logger.info("Replacing tile image to the map(No.{})...", mapId);
+        //logger.info("Replacing tile image to the map(No.{})...", mapId);
         try {
             BufferedImage tileImage = loadTileImage(conn, mapId);
             if (tileImage != null) {
@@ -848,7 +940,7 @@ public class ImageMap {
     }
 
     public void loadAndSetImage(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView) throws SQLException, ClassNotFoundException {
-        logger.info("Replacing image to the map(No.{})...", mapId);
+        //logger.info("Replacing image to the map(No.{})...", mapId);
         try {
             BufferedImage image = loadImage(conn, mapId);
             if (image != null) {
@@ -1076,7 +1168,7 @@ public class ImageMap {
         return imageInfo;
     }
 
-    public int getPlayerTodayTimes(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
+    private int getPlayerTodayTimes(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
         String query = "SELECT COUNT(*) FROM images WHERE menu != ? AND name = ? AND DATE(date) = ?";
 		PreparedStatement ps = conn.prepareStatement(query);
         ps.setBoolean(1, true);
@@ -1089,11 +1181,11 @@ public class ImageMap {
         return 0;
     }
 
-    public String getFullPath(Date date, String imageUUID, String ext) {
+    private String getFullPath(Date date, String imageUUID, String ext) {
         return FMCSettings.IMAGE_FOLDER.getValue() + "/" + date.toString().replace("-", "") + "/" + imageUUID + "." + ext;
     }
 
-    public BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) throws IOException {
+    private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) throws IOException {
         return Thumbnails.of(originalImage)
             .size(targetWidth, targetHeight)
             .asBufferedImage();
