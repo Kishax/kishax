@@ -8,10 +8,9 @@ public enum TCUtils {
     JAVA_USER("javauser"),
     BEDROCK_USER("bedrockuser"),
     SETTINGS_ENTER("settings_enter"),
+    LATER_OPEN_INV("later_open_inv"),
     ;
-
 	private final TextComponent value;
-	
 	TCUtils(String key) {
         TextComponent message = new TextComponent();
         switch (key) {
@@ -36,6 +35,12 @@ public enum TCUtils {
                 message.addExtra("この機能はいつでもメニュー>設定より変更できます。");
                 message.setColor(ChatColor.GRAY);
                 message.setItalic(true);
+            }
+            case "later_open_inv" -> {
+                message.addExtra("3秒後にインベントリを開きます。");
+                message.setBold(true);
+                message.setUnderlined(true);
+                message.setColor(ChatColor.GOLD);
             }
         }
         this.value = message;

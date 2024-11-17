@@ -1,11 +1,7 @@
 package spigot;
 
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.SQLException;
-import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -43,9 +39,9 @@ public class Inventory {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 String playerName = player.getName();
+                logger.info("Updating player's inventory: {}", player.getName());
                 boolean hasMenuBook = false;
                 try (Connection conn = db.getConnection()) {
-                    Map<Integer, Map<String, Object>> serverImageInfo = im.getThisServerImages(conn);
                     for (ItemStack item : player.getInventory().getContents()) {
                         if (item != null) {
                             switch (item.getType()) {
@@ -68,28 +64,12 @@ public class Inventory {
                                         MapView mapView = mapMeta.getMapView();
                                         if (mapView != null) {
                                             int mapId = mapView.getId();
-                                            if (serverImageInfo.containsKey(mapId) && !ImageMap.thisServerMapIds.contains(mapId)) {
-                                                Map<String, Object> imageInfo = serverImageInfo.get(mapId);
-                                                boolean isQr = (boolean) imageInfo.get("isqr");
-                                                Date date = (Date) imageInfo.get("date");
-                                                String imageUUID = (String) imageInfo.get("imuuid");
-                                                String ext = (String) imageInfo.get("ext");
-                                                try {
-                                                    String fullPath = im.getFullPath(date, imageUUID, ext); // Connectionが必要ない場合はnullを渡す
-                                                    logger.info("Replacing image to the No.{} map in {}\'s inventory...", new Object[] {mapId, playerName});
-                                                        BufferedImage image = im.loadImage(fullPath);
-                                                        if (image != null) {
-                                                            // QRコードならリサイズしない
-                                                            image = isQr ? image : im.resizeImage(image, 128, 128);
-                                                            mapView.getRenderers().clear();
-                                                            mapView.addRenderer(new ImageMapRenderer(logger, image, fullPath));
-                                                            mapMeta.setMapView(mapView);
-                                                            item.setItemMeta(mapMeta);
-                                                        } else {
-                                                            logger.error("Failed to load image from path: {}", fullPath);
-                                                        }
-                                                } catch (IOException e) {
-                                                    logger.error("Error loading image: {}" , e);
+                                            // FMCItemFrameですでに設定済みのマップはスキップ
+                                            if (!ImageMap.thisServerMapIds.contains(mapId)) {
+                                                if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                                    im.loadAndSetImage(conn, mapId, item, mapMeta, mapView);
+                                                } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                                    im.loadAndSetImageTile(conn, mapId, item, mapMeta, mapView);
                                                 }
                                             }
                                         }

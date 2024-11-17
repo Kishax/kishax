@@ -59,5 +59,6 @@ public class Module extends AbstractModule {
 		bind(Inventory.class);
 		bind(FMCItemFrame.class);
 		bind(CommandForward.class);
+		bind(spigot.ColorItems.class).asEagerSingleton();
     }
 }
