@@ -3,6 +3,7 @@ package spigot;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -26,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -63,7 +63,6 @@ import net.coobird.thumbnailator.Thumbnails;
 import net.md_5.bungee.api.ChatColor;
 
 public class ImageMap {
-    public static final Map<Integer, String> largeImageMap = new ConcurrentHashMap<>();
     public static final String PERSISTANT_KEY = "custom_image";
     public static final String LARGE_PERSISTANT_KEY = "custom_large_image";
     public static final String ACTIONS_KEY = "largeImageMap";
@@ -318,23 +317,12 @@ public class ImageMap {
         }
     }
 
-    // 画像マップであることは確定事項(QRコードは実装しない)
-    // 画像マップの大きさは、1x1(1)以上であることは確定事項
     @SuppressWarnings({"null","unused"})
     public void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2, Object[] inputs3) {
         if (sender instanceof Player player) {
-            // プレイヤーが現在インプットモードでなかったら、このメソッドを実行する
-            // EventListener.playerInputerMap.containsKeyにplayerが含まれているとき、EventListener.playerInputerMap.get(player)にACTIONS_KEY以外のものが含まれているとき
-            if (EventListener.playerInputerMap.containsKey(player) && EventListener.playerTaskMap.containsKey(player)) {
-                Map<String, MessageRunnable> playerActions = EventListener.playerInputerMap.get(player);
-                Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
-                // playerActions, playerTasksにACTIONS_KEY以外が含まれているとき
-                boolean isInputMode = playerActions.entrySet().stream().anyMatch(entry -> !entry.getKey().equals(ImageMap.ACTIONS_KEY)),
-                    isTaskMode = playerTasks.entrySet().stream().anyMatch(entry -> !entry.getKey().equals(ImageMap.ACTIONS_KEY));
-                if (isInputMode || isTaskMode) {
-                    player.sendMessage(ChatColor.RED + "他でインプットモード中です。");
-                    return;
-                }
+            if (checkIsInputMode(player)) {
+                player.sendMessage(ChatColor.RED + "他でインプットモード中です。");
+                return;
             }
             if (args.length < 3) {
                 player.sendMessage("使用法: /fmc im <largecreate> <url> [Optional: <title> <comment>]");
@@ -547,9 +535,14 @@ public class ImageMap {
                                     mapItem.setItemMeta(mapMeta);
                                 }
                                 mapItems.add(mapItem);
-                                db.insertLog(conn, "INSERT INTO large_images (server, lid, lx, ly, mapid) VALUES (?, ?, ?, ?, ?);", new Object[] {serverName, imageUUID, x_, y_, mapId});
+                                // 各タイルの情報をデータベースに保存する
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                ImageIO.write(image, ext, baos);
+                                byte[] imageBytes = baos.toByteArray();
+                                db.insertLog(conn, "INSERT INTO image_tiles (server, mapid, x, y, image) VALUES (?, ?, ?, ?, ?);", new Object[] {serverName, mapId, x_, y_, imageBytes});
                             }
                         }
+                        // 元の画像のメタデータはimagesデータベースにおいておく
                         if (fromDiscord) {
                             db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=?, large=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, null, true, (String) dArgs[1], (String) dArgs[2], now, true, (String) dArgs[0]});
                         } else {
@@ -657,6 +650,18 @@ public class ImageMap {
         }
     }
 
+    private boolean checkIsInputMode(Player player)  {
+        if (EventListener.playerInputerMap.containsKey(player) && EventListener.playerTaskMap.containsKey(player)) {
+            Map<String, MessageRunnable> playerActions = EventListener.playerInputerMap.get(player);
+            Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
+            // playerActions, playerTasksにACTIONS_KEY以外が含まれているとき
+            boolean isInputMode = playerActions.entrySet().stream().anyMatch(entry -> !entry.getKey().equals(ImageMap.ACTIONS_KEY)),
+                isTaskMode = playerTasks.entrySet().stream().anyMatch(entry -> !entry.getKey().equals(ImageMap.ACTIONS_KEY));
+            return isInputMode || isTaskMode;
+        }
+        return false;
+    }
+
     private void cancelTask(Player player) {
         if (EventListener.playerTaskMap.containsKey(player)) {
             Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
@@ -689,12 +694,11 @@ public class ImageMap {
         }
     }
 
-    public BufferedImage loadImageTile(Connection conn, int mapId, int x, int y) throws SQLException, IOException {
-        String sql = "SELECT image FROM image_tiles WHERE mapid = ? AND x = ? AND y = ?";
+    public BufferedImage loadTileImage(Connection conn, int mapId) throws SQLException, IOException {
+        String sql = "SELECT image FROM image_tiles WHERE mapid = ? AND server = ?;";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, mapId);
-            stmt.setInt(2, x);
-            stmt.setInt(3, y);
+            stmt.setString(2, serverName);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     byte[] imageBytes = rs.getBytes("image");
@@ -704,21 +708,6 @@ public class ImageMap {
             }
         }
         return null;
-    }
-
-    public void getThisServerLargeImageInfo(Connection conn) throws SQLException, ClassNotFoundException {
-        Map<Integer, String> largeImageInfo = new HashMap<>();
-        String query = "SELECT * FROM image_tiles WHERE server=?;";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setString(1, serverName);
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            int mapId = rs.getInt("mapid"),
-                x = rs.getInt("lx"),
-                y = rs.getInt("ly");
-            
-        }
-        largeImageMap.putAll(largeImageInfo);
     }
 
     public Map<Integer, Map<String, Object>> getImageMap(Connection conn) throws SQLException, ClassNotFoundException {
