@@ -154,16 +154,15 @@ public class DiscordEventListener extends ListenerAdapter {
 						return null;
 					});
 				}
-				case "create", "createqr" -> {
+				case "image_add_q" -> {
 					try (Connection conn = db.getConnection()) {
-						int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
+						int limitUploadTimes = FMCSettings.DISCORD_IMAGE_LIMIT_TIMES.getIntValue(),
 							userUploadTimes = getUserTodayTimes(conn, userId),
 							thisTimes = userUploadTimes + 1;
 						if (thisTimes >= limitUploadTimes) {
 							e.reply("1日の登録回数は"+limitUploadTimes+"回までです。").setEphemeral(true).queue();
 							return;
 						}
-						boolean isQr = e.getSubcommandName().equals("createqr");
 						String url = e.getOption("url") != null ? e.getOption("url").getAsString() : null,
 							title = (e.getOption("title") != null) ? e.getOption("title").getAsString() : "無名のタイトル",
 							comment = (e.getOption("comment") != null) ? e.getOption("comment").getAsString() : "コメントなし";
@@ -176,47 +175,13 @@ public class DiscordEventListener extends ListenerAdapter {
 							e.reply("画像URLと画像の両方を指定することはできません。").setEphemeral(true).queue();
 							return;
 						}
-						String ext;
-						if (attachment != null && !isQr) {
-							url = attachment.getUrl();
-							String fileName = attachment.getFileName().toLowerCase();
-							ext = fileName.substring(fileName.lastIndexOf(".") + 1);
-							if (!ext.equals("jpeg") && !ext.equals("jpg") && !ext.equals("png")) {
-								e.reply("指定のファイルは規定の拡張子を持ちません。").setEphemeral(true).queue();
-								return;
-							}
-						}
-						try {
-							if (!isQr) {
-								URL getUrl = new URI(url).toURL();
-								HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
-								connection.setRequestMethod("GET");
-								connection.connect();
-								String contentType = connection.getContentType();
-								//logger.error("contentType: "+contentType);
-								switch (contentType) {
-									case "image/png" -> ext = "png";
-									case "image/jpeg" -> ext = "jpeg";
-									case "image/jpg" -> ext = "jpg";
-									default -> {
-										e.reply("指定のURLは規定の拡張子を持ちません。2").setEphemeral(true).queue();
-										return;
-									}
-								}
-							} else {
-								ext = "png";
-							}
-							LocalDate now = LocalDate.now();
-							String imageUUID = UUID.randomUUID().toString(),
-								otp = OTPGenerator.generateOTP(6);
-							db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, d, dname, did, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName != null ? userName : userName2, null, null, null, title, imageUUID, ext, url, comment, isQr, otp, true, userName, userId, java.sql.Date.valueOf(now)});
-							e.reply("画像メタデータを登録しました。("+thisTimes+"/10)\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
-							logger.info("(Discord) 画像メタデータを登録しました。");
-							logger.info("ユーザー: {}\n試行: {}", (userName != null ? userName : userName2),"("+thisTimes+"/10)");
-						} catch (IOException | URISyntaxException e2) {
-							e.reply("指定のURLは無効です。").setEphemeral(true).queue();
-							return;
-						}
+						LocalDate now = LocalDate.now();
+						String imageUUID = UUID.randomUUID().toString(),
+							otp = OTPGenerator.generateOTP(6);
+						db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, d, dname, did, date, locked, locked_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName != null ? userName : userName2, null, null, null, title, imageUUID, null, url, comment, null, otp, true, userName != null ? userName : userName2, userId, java.sql.Date.valueOf(now), true, false});
+						e.reply("画像メタデータを登録しました。("+thisTimes+"/10)\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
+						logger.info("(Discord) 画像メタデータを登録しました。");
+						logger.info("ユーザー: {}\n試行: {}", (userName != null ? userName : userName2),"("+thisTimes+"/10)");
 					} catch (SQLException | ClassNotFoundException e1) {
 						e.reply("データベースに接続できませんでした。").setEphemeral(true).queue();
 						logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());

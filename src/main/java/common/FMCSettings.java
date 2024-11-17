@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 public enum FMCSettings {
 	IMAGE_LIMIT_TIMES("imageuploadlimittimes"),
+    DISCORD_IMAGE_LIMIT_TIMES("discordimageuploadlimittimes"),
     IMAGE_FOLDER("image_folder"),
     RULEBOOK_CONTENT("rulebook"),
     CONFIRM_URL("confirm_url"),

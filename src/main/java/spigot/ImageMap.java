@@ -89,48 +89,105 @@ public class ImageMap {
         this.sswProvider = sswProvider;
     }
 
+    public void executeQFromMenu(Player player, Object[] Args) {
+        executeQ(player, null, null, null, false, Args);
+    }
+
     public void executeQ(CommandSender sender, Command command, String label, String[] args, boolean q) {
+        executeQ(sender, command, label, args, q, null);
+    }
+
+    @SuppressWarnings("null")
+    private void executeQ(CommandSender sender, Command command, String label, String[] args, boolean q, Object[] Args) {
         if (sender instanceof Player player) {
-            int argsLength = args.length;
-            String otp;
-            // q : true -> /q, false -> /fmc q
-            if (q) {
-                otp = args[0];
-                if (argsLength < 1) {
-                    player.sendMessage("使用法: /q <code>");
+            String otp, title, comment, url, date;
+            boolean fromMenu = (Args != null);
+            if (!fromMenu) {
+                if (q) {
+                    otp = args[0];
+                    if (args.length < 1) {
+                        player.sendMessage("使用法: /q <code>");
+                        return;
+                    }
+                } else {
+                    otp = args[1];
+                    if (args.length < 2) {
+                        player.sendMessage("使用法: /fmc q <code>");
+                        return;
+                    }
+                }
+                try (Connection conn = db.getConnection()) {
+                    if (checkOTPIsCorrect(conn, otp)) {
+                        player.sendMessage(ChatColor.GREEN + "認証に成功しました。");
+                        Map<String, Object> imageInfo = getImageInfoByOTP(conn, otp);
+                        title = (String) imageInfo.get("title");
+                        comment = (String) imageInfo.get("comment");
+                        url = (String) imageInfo.get("url");
+                        date = Date.valueOf(((Date) imageInfo.get("date")).toLocalDate()).toString();
+                        // locked->false, nameをプレイヤーネームに更新する
+                        db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, locked=? WHERE otp=?;", new Object[] {player.getName(), player.getUniqueId().toString(), serverName, false, otp});
+                    } else {
+                        player.sendMessage(ChatColor.RED + "ワンタイムパスワードが間違っています。");
+                        return;
+                    }
+                } catch (SQLException | ClassNotFoundException e) {
+                    player.sendMessage("画像の読み込みに失敗しました。");
+                    logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) {
+                        logger.error(element.toString());
+                    }
                     return;
                 }
             } else {
-                otp = args[1];
-                if (argsLength < 2) {
-                    player.sendMessage("使用法: /fmc q <code>");
-                    return;
-                }
+                otp = (String) Args[0];
+                title = (String) Args[1];
+                comment = (String) Args[2];
+                url = (String) Args[3];
+                date = (String) Args[4];
             }
-            try (Connection conn = db.getConnection()) {
-                if (checkOTPIsCorrect(conn, otp)) {
-                    player.sendMessage("認証に成功しました。");
-                    Map<String, Object> imageInfo = getImageInfoByOTP(conn, otp);
-                    String dName = (String) imageInfo.get("name"),
-                        dId = (String) imageInfo.get("did"),
-                        title = (String) imageInfo.get("title"),
-                        comment = (String) imageInfo.get("comment"),
-                        url = (String) imageInfo.get("url");
-                    Date date = Date.valueOf(((Date) imageInfo.get("date")).toLocalDate());
-                    boolean isQr = (boolean) imageInfo.get("isqr");
-                    String[] imageArgs = new String[] {"im", isQr ? "createqr" : "create", url, title, comment};
-                    // dateを使うので、player.performCommandメソッドを使わず、直接実行させる
-                    executeImageMap(sender, command, label, imageArgs, new Object[] {otp, dName, dId, date});
-                } else {
-                    player.sendMessage(ChatColor.RED + "ワンタイムパスワードが間違っています。");
+            // ラージか1✕1かをプレイヤーに問う
+            TextComponent message = new TextComponent("操作が途中で中断された場合、メニュー->画像マップより再開できます。\n");
+            message.setColor(ChatColor.GRAY);
+            player.spigot().sendMessage(
+                new TextComponent("1✕1の画像マップを作成する場合は、"),
+                TCUtils.ZERO.get(),
+                new TextComponent("と入力してください。\n"),
+                new TextComponent("1✕1のQRコードコードを作成する場合は、"),
+                TCUtils.ONE.get(),
+                new TextComponent("と入力してください。\n"),
+                new TextComponent("ラージマップを作成する場合は、"),
+                TCUtils.TWO.get(),
+                new TextComponent("と入力してください。\n"),
+                message,
+                TCUtils.INPUT_MODE.get()
+            );
+            Map<String, MessageRunnable> playerActions = new HashMap<>();
+            playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
+                switch (input) {
+                    case "0", "1" -> {
+                        String cmd;
+                        if (input.equals("0")) {
+                            cmd = "create";
+                        } else {
+                            cmd = "createqr";
+                        }
+                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                        String[] imageArgs = new String[] {"im", cmd, url, title, comment};
+                        executeImageMap(sender, command, label, imageArgs, new Object[] {otp, date});
+                    }
+                    case "2" -> {
+                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                        String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
+                        executeLargeImageMap(sender, imageArgs, new Object[] {otp, date}, null, null, null);
+                    }
+                    default -> {
+                        player.sendMessage(ChatColor.RED + "無効な入力です。\n1または2を入力してください。");
+                        extendTask(player);
+                    }
                 }
-            } catch (SQLException | ClassNotFoundException e) {
-                player.sendMessage("画像の読み込みに失敗しました。");
-                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                for (StackTraceElement element : e.getStackTrace()) {
-                    logger.error(element.toString());
-                }
-            }
+            });
+            addTaskRunnable(player, playerActions);
         } else {
             if (sender != null) {
                 sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
@@ -244,7 +301,7 @@ public class ImageMap {
                     return;
                 }
                 LocalDate localDate = LocalDate.now();
-                String now = fromDiscord ? ((Date) dArgs[3]).toString() : localDate.toString();
+                String now = fromDiscord ? ((Date) dArgs[1]).toString() : localDate.toString();
                 BufferedImage image;
                 if (isQr) {
                     ext = "png";
@@ -296,7 +353,7 @@ public class ImageMap {
                     mapItem.setItemMeta(meta);
                 }
                 if (fromDiscord) {
-                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, fromDiscord, (String) dArgs[1], (String) dArgs[2], now, (String) dArgs[0]});
+                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, date=?, locked_action=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, now, true, (String) dArgs[0]});
                 } else {
                     db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
                 }
@@ -336,8 +393,7 @@ public class ImageMap {
                 url = args[2],
                 title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
                 comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
-                ext,
-                fullPath;
+                ext;
             final int maxTiles = 8*8;
             try (Connection conn = db.getConnection()) {
                 // 一日のアップロード回数は制限する
@@ -375,8 +431,7 @@ public class ImageMap {
                         }
                     }
                     LocalDate localDate = LocalDate.now();
-                    now = fromDiscord ? ((Date) dArgs[3]).toString() : localDate.toString();
-                    fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + now.replace("-", "") + "/" + imageUUID + "." + ext;
+                    now = fromDiscord ? ((Date) dArgs[1]).toString() : localDate.toString();
                     image =  ImageIO.read(getUrl);
                     if (image == null) {
                         player.sendMessage(ChatColor.RED + "指定のURLは規定の拡張子を持ちません。");
@@ -385,7 +440,6 @@ public class ImageMap {
                 } else {
                     now = (String) inputs[0];
                     ext = (String) inputs[1];
-                    fullPath = (String) inputs[2];
                     image = (BufferedImage) inputs[3];
                 }
                 // x, y, now, ext, fullPath, null
@@ -414,7 +468,7 @@ public class ImageMap {
                         new TextComponent("縦か横のサイズを整数値で指定してください。\n(例) x=5 or y=4\n"),
                         TCUtils.INPUT_MODE.get()
                     );
-                    final Object[] inputs_1 = new Object[] {now, ext, fullPath, image};
+                    final Object[] inputs_1 = new Object[] {now, ext, image};
                     Map<String, MessageRunnable> playerActions = new HashMap<>();
                     playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
                         // x=? or y=?
@@ -624,12 +678,8 @@ public class ImageMap {
                             addTaskRunnable(player, playerActions);
                         }, 100L);
                     } else {
-                        logger.info("inputs3: {}", inputs3);
                         java.awt.Color color = (java.awt.Color) inputs3[2];
                         String colorName = ColorItems.getColorName(color);
-                        logger.info("colorName: " + colorName);
-                        logger.info("ext: " + ext);
-                        logger.info("color: " + color);
                         if (ext.equals("jpg") || ext.equals("jpeg")) {
                             if (ColorItems.isTransparent(color)) {
                                 TextComponent alert = new TextComponent("jpg, jpeg形式の画像は透明度を持たないため、透明色を選択することはできません。\n背景色を選択し直してください。\n");
@@ -720,7 +770,7 @@ public class ImageMap {
                                             }
                                         }
                                         if (fromDiscord) {
-                                            db.updateLog(conn2, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, d=?, dname=?, did=?, date=?, large=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, null, true, (String) dArgs[1], (String) dArgs[2], now, true, (String) dArgs[0]});
+                                            db.updateLog(conn2, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, date=?, large=?, locked_action=?  WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, null, now, true, true, (String) dArgs[0]});
                                         } else {
                                             db.insertLog(conn2, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date, large) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, false, Date.valueOf(LocalDate.now()), true});
                                         }
@@ -1192,9 +1242,11 @@ public class ImageMap {
     }
 
     private boolean checkOTPIsCorrect(Connection conn, String code) throws SQLException, ClassNotFoundException {
-        String query = "SELECT * FROM images WHERE otp=? LIMIT 1;";
+        String query = "SELECT * FROM images WHERE otp=? AND locked=? LIMIT 1;";
         PreparedStatement ps = conn.prepareStatement(query);
+        // otpがあって、lockされているものに限る
         ps.setString(1, code);
+        ps.setBoolean(2, true);
         ResultSet rs = ps.executeQuery();
         return rs.next();
     }
