@@ -71,6 +71,7 @@ public class ImageMap {
     public static final String PERSISTANT_KEY = "custom_image";
     public static final String LARGE_PERSISTANT_KEY = "custom_large_image";
     public static final String ACTIONS_KEY = "largeImageMap";
+    public static final String ACTIONS_KEY2 = "createImageMapFromQ";
     public static List<String> imagesColumnsList = new ArrayList<>();
     public static List<Integer> thisServerMapIds = new ArrayList<>();
     public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q", "largecreate"));
@@ -162,9 +163,10 @@ public class ImageMap {
                 TCUtils.INPUT_MODE.get()
             );
             Map<String, MessageRunnable> playerActions = new HashMap<>();
-            playerActions.put(ImageMap.ACTIONS_KEY, (input) -> {
+            playerActions.put(ImageMap.ACTIONS_KEY2, (input) -> {
                 switch (input) {
                     case "0", "1" -> {
+                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
                         String cmd;
                         if (input.equals("0")) {
                             cmd = "create";
@@ -176,18 +178,18 @@ public class ImageMap {
                         executeImageMap(sender, command, label, imageArgs, new Object[] {otp, date});
                     }
                     case "2" -> {
-                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
                         player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
                         String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
                         executeLargeImageMap(sender, imageArgs, new Object[] {otp, date}, null, null, null);
                     }
                     default -> {
                         player.sendMessage(ChatColor.RED + "無効な入力です。\n1または2を入力してください。");
-                        extendTask(player);
+                        extendTask(player, ImageMap.ACTIONS_KEY2);
                     }
                 }
             });
-            addTaskRunnable(player, playerActions);
+            addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY2);
         } else {
             if (sender != null) {
                 sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
@@ -290,7 +292,7 @@ public class ImageMap {
                 ext;
             try (Connection conn = db.getConnection()) {
                 int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
-                    playerUploadTimes = getPlayerTodayTimes(conn, playerName),
+                    playerUploadTimes = getPlayerTodayCreateImageTimes(conn, playerName),
                     thisTimes = playerUploadTimes + 1;
                 if (thisTimes >= limitUploadTimes) {
                     player.sendMessage(ChatColor.RED + "1日の登録回数は"+limitUploadTimes+"回までです。");
@@ -301,7 +303,7 @@ public class ImageMap {
                     return;
                 }
                 LocalDate localDate = LocalDate.now();
-                String now = fromDiscord ? ((Date) dArgs[1]).toString() : localDate.toString();
+                String now = fromDiscord ? (String) dArgs[1] : localDate.toString();
                 BufferedImage image;
                 if (isQr) {
                     ext = "png";
@@ -394,12 +396,12 @@ public class ImageMap {
                 title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
                 comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
                 ext;
-            final int maxTiles = 8*8;
+            final int maxTiles = FMCSettings.MAX_IMAGE_TILES.getIntValue();
             try (Connection conn = db.getConnection()) {
                 // 一日のアップロード回数は制限する
                 // ラージマップは要考
-                int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
-                    playerUploadTimes = getPlayerTodayTimes(conn, playerName),
+                int limitUploadTimes = FMCSettings.LARGE_IMAGE_LIMIT_TIMES.getIntValue(),
+                    playerUploadTimes = getPlayerTodayCreateLargeImageTimes(conn, playerName),
                     thisTimes = playerUploadTimes + 1;
                 String now;
                 final BufferedImage image;
@@ -431,7 +433,7 @@ public class ImageMap {
                         }
                     }
                     LocalDate localDate = LocalDate.now();
-                    now = fromDiscord ? ((Date) dArgs[1]).toString() : localDate.toString();
+                    now = fromDiscord ? (String) dArgs[1] : localDate.toString();
                     image =  ImageIO.read(getUrl);
                     if (image == null) {
                         player.sendMessage(ChatColor.RED + "指定のURLは規定の拡張子を持ちません。");
@@ -440,7 +442,7 @@ public class ImageMap {
                 } else {
                     now = (String) inputs[0];
                     ext = (String) inputs[1];
-                    image = (BufferedImage) inputs[3];
+                    image = (BufferedImage) inputs[2];
                 }
                 // x, y, now, ext, fullPath, null
                 if (inputs2 == null) {
@@ -485,11 +487,11 @@ public class ImageMap {
                                 int xOry = Integer.parseInt(xy[1].trim());
                                 if (xOry == 1) {
                                     player.sendMessage(ChatColor.RED + "ラージマップでないため、x=1, y=1を選択することはできません。\n(例) x=5 or y=4のように入力してください。");
-                                    extendTask(player);
+                                    extendTask(player, ImageMap.ACTIONS_KEY);
                                     return;
                                 } else if (xOry < 1) {
                                     player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) x=5 or y=4のように入力してください。");
-                                    extendTask(player);
+                                    extendTask(player, ImageMap.ACTIONS_KEY);
                                     return;
                                 }
                                 player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
@@ -497,14 +499,14 @@ public class ImageMap {
                                 executeLargeImageMap(sender, args, dArgs, inputs_1, inputs_2, null);
                             } catch (NumberFormatException e) {
                                 player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) x=5 or y=4のように入力してください。");
-                                extendTask(player);
+                                extendTask(player, ImageMap.ACTIONS_KEY);
                             }
                         } else {
                             player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) x=5 or y=4のように入力してください。");
-                            extendTask(player);
+                            extendTask(player, ImageMap.ACTIONS_KEY);
                         }
                     });
-                    addTaskRunnable(player, playerActions);
+                    addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY);
                 } else {
                     if (inputs3 == null) {
                         //saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
@@ -522,10 +524,10 @@ public class ImageMap {
                         // 総タイル数がmaxTilesを超過しているかを確認する
                         if (x * y > maxTiles) {
                             player.sendMessage(ChatColor.RED + "総タイル数("+maxTiles+")を超過しています。\nもう一度、入力してください。");
-                            extendTask(player);
+                            extendTask(player, ImageMap.ACTIONS_KEY);
                             return;
                         }
-                        removeCancelTaskRunnable(player);
+                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                         Object[] inputs_3 = new Object[] {x, y, null};
                         // ここでプレイヤーに色を決めさせる
                         player.sendMessage("次に、背景色を選択します。");
@@ -557,7 +559,7 @@ public class ImageMap {
                         inv.setItem(index, custom);
                         index++;
                         playerMenuActions.put(index, () -> {
-                            removeCancelTaskRunnable(player);
+                            removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                             player.closeInventory();
                             TextComponent link1 = new TextComponent("ココ");
                             link1.setBold(true);
@@ -602,7 +604,7 @@ public class ImageMap {
                                 String[] rgb = input.split(",");
                                 if (rgb.length != 3) {
                                     player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) 255, 255, 255のように入力してください。");
-                                    extendTask(player);
+                                    extendTask(player, ImageMap.ACTIONS_KEY);
                                     return;
                                 }
                                 try {
@@ -611,7 +613,7 @@ public class ImageMap {
                                     int b = Integer.parseInt(rgb[2].trim());
                                     if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
                                         player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) 255, 255, 255のように入力してください。");
-                                        extendTask(player);
+                                        extendTask(player, ImageMap.ACTIONS_KEY);
                                         return;
                                     }
                                     java.awt.Color customColor = new java.awt.Color(r, g, b);
@@ -620,10 +622,10 @@ public class ImageMap {
                                     executeLargeImageMap(sender, args, dArgs, inputs, inputs2, inputs_3);
                                 } catch (NumberFormatException e) {
                                     player.sendMessage(ChatColor.RED + "無効な入力です。\n(例) 255, 255, 255のように入力してください。");
-                                    extendTask(player);
+                                    extendTask(player, ImageMap.ACTIONS_KEY);
                                 }
                             });
-                            addTaskRunnable(player, playerActions);
+                            addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY);
                         });
                         Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.chooseColorInventoryName, playerMenuActions);
                         player.spigot().sendMessage(TCUtils.LATER_OPEN_INV_5.get());
@@ -657,7 +659,7 @@ public class ImageMap {
                                             new TCUtils2(input).getResponseComponent(),
                                             new TextComponent("\n生成を中止しました。")
                                         );
-                                        removeCancelTaskRunnable(player);
+                                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                                     }
                                     default -> {
                                         TextComponent alert = new TextComponent("無効な入力です。\n");
@@ -671,11 +673,11 @@ public class ImageMap {
                                             TCUtils.TWO.get(),
                                             new TextComponent("と入力してください。\n")
                                         );
-                                        extendTask(player);
+                                        extendTask(player, ImageMap.ACTIONS_KEY);
                                     }
                                 }
                             });
-                            addTaskRunnable(player, playerActions);
+                            addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY);
                         }, 100L);
                     } else {
                         java.awt.Color color = (java.awt.Color) inputs3[2];
@@ -694,11 +696,11 @@ public class ImageMap {
                                     new TextComponent("と入力してください。\n"),
                                     TCUtils.INPUT_MODE.get()
                                 );
-                                extendTask(player);
+                                extendTask(player, ImageMap.ACTIONS_KEY);
                                 return;
                             }
                         }
-                        removeCancelTaskRunnable(player);
+                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                         // ここで一度確認を挟む
                         int x = (int) inputs3[0];
                         int y = (int) inputs3[1];
@@ -784,7 +786,7 @@ public class ImageMap {
                                         }
                                         if (remainingItems.isEmpty()) {
                                             player.sendMessage("すべての画像マップを渡しました。");
-                                            removeCancelTaskRunnable(player);
+                                            removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                                         } else {
                                             // プレイヤーが浮いているかどうかを確認する
                                             // プレイヤーがブロックの上にいる場合、地面にドロップする
@@ -795,7 +797,7 @@ public class ImageMap {
                                                         world.dropItemNaturally(playerLocation, remainingItem);
                                                     }
                                                     player.sendMessage("すべての画像マップを渡しました。");
-                                                    removeCancelTaskRunnable(player);
+                                                    removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                                                 });
                                             } else {
                                                 player.spigot().sendMessage(
@@ -820,7 +822,7 @@ public class ImageMap {
                                                                 alert2,
                                                                 TCUtils.INPUT_MODE.get()
                                                             );
-                                                            extendTask(player);
+                                                            extendTask(player, ImageMap.ACTIONS_KEY);
                                                             return;
                                                         }
                                                         Bukkit.getScheduler().runTask(plugin, () -> {
@@ -829,13 +831,13 @@ public class ImageMap {
                                                             }
                                                             player.sendMessage("インベントリに入り切らないマップをドロップしました。");
                                                             player.sendMessage("すべての画像マップを渡しました。");
-                                                            removeCancelTaskRunnable(player);
+                                                            removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                                                         });
                                                     } else {
                                                         player.sendMessage(ChatColor.RED + "無効な入力です。");
                                                     }
                                                 });
-                                                addTaskRunnable(player, playerActions2);
+                                                addTaskRunnable(player, playerActions2, ImageMap.ACTIONS_KEY);
                                             }
                                         }
                                     } catch (IOException | SQLException | ClassNotFoundException e) {
@@ -851,15 +853,15 @@ public class ImageMap {
                                         new TCUtils2(input).getResponseComponent(),
                                         new TextComponent("\n生成を中止しました。")
                                     );
-                                    removeCancelTaskRunnable(player);
+                                    removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                                 }
                                 default -> {
                                     player.sendMessage(ChatColor.RED + "無効な入力です。\n生成する場合は、1と入力してください。\n生成を中止する場合は、2と入力してください。");
-                                    extendTask(player);
+                                    extendTask(player, ImageMap.ACTIONS_KEY);
                                 }
                             }
                         });
-                        addTaskRunnable(player, playerActions);
+                        addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY);
                     }
                 }
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException e) {
@@ -1033,9 +1035,9 @@ public class ImageMap {
         return baos.toByteArray();
     }
 
-    private void addTaskRunnable(Player player, Map<String, MessageRunnable> playerActions) {
+    private void addTaskRunnable(Player player, Map<String, MessageRunnable> playerActions, String key) {
         EventListener.playerInputerMap.put(player, playerActions);
-        scheduleNewTask(player, inputPeriod);
+        scheduleNewTask(player, inputPeriod, key);
         try (Connection connection3 = db.getConnection()) {
             SocketSwitch ssw = sswProvider.get();
             ssw.sendVelocityServer(connection3, "inputMode->on->name->" + player.getName() + "->");
@@ -1047,23 +1049,23 @@ public class ImageMap {
         }
     }
 
-    private void extendTask(Player player) {
+    private void extendTask(Player player, String key) {
         cancelTask(player);
-        scheduleNewTask(player, inputPeriod);
+        scheduleNewTask(player, inputPeriod, key);
     }
 
-    private void scheduleNewTask(Player player, int delaySeconds) {
+    private void scheduleNewTask(Player player, int delaySeconds, String key) {
         BukkitTask newTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
-            removeCancelTaskRunnable(player);
+            removeCancelTaskRunnable(player, key);
         }, 20 * delaySeconds);
         if (EventListener.playerTaskMap.containsKey(player)) {
             Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
-            playerTasks.put(ImageMap.ACTIONS_KEY, newTask);
+            playerTasks.put(key, newTask);
             EventListener.playerTaskMap.put(player, playerTasks);
         } else {
             Map<String, BukkitTask> playerTasks = new HashMap<>();
-            playerTasks.put(ImageMap.ACTIONS_KEY, newTask);
+            playerTasks.put(key, newTask);
             EventListener.playerTaskMap.put(player, playerTasks);
         }
     }
@@ -1102,16 +1104,16 @@ public class ImageMap {
         }
     }
 
-    private void removeCancelTaskRunnable(Player player) {
+    private void removeCancelTaskRunnable(Player player, String key) {
         String playerName = player.getName();
-        EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY));
+        EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(key));
         // タスクをキャンセルしてから、playerTaskMapから削除する
         EventListener.playerTaskMap.entrySet().stream()
-            .filter(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(ImageMap.ACTIONS_KEY))
+            .filter(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(key))
             .forEach(entry -> {
-                BukkitTask task = entry.getValue().get(ImageMap.ACTIONS_KEY);
+                BukkitTask task = entry.getValue().get(key);
                 task.cancel();
-                entry.getValue().remove(ImageMap.ACTIONS_KEY);
+                entry.getValue().remove(key);
             });
         try (Connection connection2 = db.getConnection()) {
             SocketSwitch ssw = sswProvider.get();
@@ -1218,12 +1220,26 @@ public class ImageMap {
         return imageInfo;
     }
 
-    private int getPlayerTodayTimes(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
+    private int getPlayerTodayCreateImageTimes(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
         String query = "SELECT COUNT(*) FROM images WHERE menu != ? AND name = ? AND DATE(date) = ?";
 		PreparedStatement ps = conn.prepareStatement(query);
         ps.setBoolean(1, true);
 		ps.setString(2, playerName);
 		ps.setDate(3, java.sql.Date.valueOf(LocalDate.now()));
+		ResultSet rs = ps.executeQuery();
+		if (rs.next()) {
+			return rs.getInt(1);
+		}
+        return 0;
+    }
+
+    private int getPlayerTodayCreateLargeImageTimes(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
+        String query = "SELECT COUNT(*) FROM images WHERE menu != ? AND name = ? AND DATE(date) = ? AND large = ?;";
+		PreparedStatement ps = conn.prepareStatement(query);
+        ps.setBoolean(1, true);
+		ps.setString(2, playerName);
+		ps.setDate(3, java.sql.Date.valueOf(LocalDate.now()));
+        ps.setBoolean(4, true);
 		ResultSet rs = ps.executeQuery();
 		if (rs.next()) {
 			return rs.getInt(1);

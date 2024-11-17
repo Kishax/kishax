@@ -157,7 +157,7 @@ public class DiscordEventListener extends ListenerAdapter {
 				case "image_add_q" -> {
 					try (Connection conn = db.getConnection()) {
 						int limitUploadTimes = FMCSettings.DISCORD_IMAGE_LIMIT_TIMES.getIntValue(),
-							userUploadTimes = getUserTodayTimes(conn, userId),
+							userUploadTimes = getDiscordUserTodayRegisterImageMetaTimes(conn, userId),
 							thisTimes = userUploadTimes + 1;
 						if (thisTimes >= limitUploadTimes) {
 							e.reply("1日の登録回数は"+limitUploadTimes+"回までです。").setEphemeral(true).queue();
@@ -177,7 +177,7 @@ public class DiscordEventListener extends ListenerAdapter {
 						}
 						LocalDate now = LocalDate.now();
 						String otp = OTPGenerator.generateOTP(6);
-						db.insertLog(conn, "INSERT INTO images (name, title, url, comment, otp, d, dname, did, date, locked, locked_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName12, title, url, comment, otp, true, userName12, userId, java.sql.Date.valueOf(now), true, false});
+						db.insertLog(conn, "INSERT INTO images (name, title, url, comment, otp, d, dname, did, date, locked, locked_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName12, title, url, comment, otp, true, userName12, userId, java.sql.Date.valueOf(now), true, false});
 						e.reply("画像メタデータを登録しました。("+thisTimes+"/10)\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
 						logger.info("(Discord) 画像メタデータを登録しました。");
 						logger.info("ユーザー: {}\n試行: {}", (userName != null ? userName : userName2),"("+thisTimes+"/10)");
@@ -416,7 +416,7 @@ public class DiscordEventListener extends ListenerAdapter {
         }
     }
 
-	private int getUserTodayTimes(Connection conn, String userId) throws SQLException, ClassNotFoundException {
+	private int getDiscordUserTodayRegisterImageMetaTimes(Connection conn, String userId) throws SQLException, ClassNotFoundException {
         String query = "SELECT COUNT(*) FROM images WHERE did = ? AND DATE(date) = ?";
 		PreparedStatement ps = conn.prepareStatement(query);
 		ps.setString(1, userId);

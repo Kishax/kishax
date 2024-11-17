@@ -38,6 +38,7 @@ import common.Database;
 import common.FMCSettings;
 import common.Luckperms;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
 import spigot.ImageMap;
 import spigot.Main;
 import spigot.ServerHomeDir;
@@ -664,7 +665,7 @@ public class Menu {
                 inv.setItem(45, prevPageItem);
                 playerMenuActions.put(45, () -> openImageMenu(player, page - 1));
             }
-            //int slot = 0;
+            int index = 0;
             for (int i = startIndex; i < endIndex; i++) {
                 Map<String, Object> imageInfo = imageMap.get(i);
                 if (imageInfo != null) {
@@ -714,7 +715,7 @@ public class Menu {
                     if (meta != null) {
                         meta.setDisplayName(ChatColor.GREEN + title);
                         meta.setLore(lores);
-                        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, imageUUID), PersistentDataType.STRING, "true");
+                        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, String.valueOf(index)), PersistentDataType.STRING, "true");
                         item.setItemMeta(meta);
                     }
                     inv.addItem(item);
@@ -743,13 +744,29 @@ public class Menu {
                             // 作成者以外の場合
                             playerMenuActions.put(inv.first(item), () -> {
                                 player.closeInventory();
-                                player.sendMessage(ChatColor.RED + "この画像はロックされています。\n作成者がロック後のアクションに、画像マップかQRコードを選択した後に取得できます。");
+                                TextComponent alert = new TextComponent("ロック解除済みです。\n");
+                                alert.setColor(ChatColor.RED);
+                                player.spigot().sendMessage(
+                                    alert,
+                                    new TextComponent("作成者のみロック後のアクションを選択できます。")
+                                );
                             });
                         }
                     } else if (large) {
                         playerMenuActions.put(inv.first(item), () -> {
                             player.closeInventory();
-                            player.sendMessage(ChatColor.RED + "この画像は" + server + "サーバーで作られたラージマップです。\nラージマップは取得できません。");
+                            TextComponent message = new TextComponent(server + "サーバー");
+                            message.setBold(true);
+                            message.setUnderlined(true);
+                            message.setColor(ChatColor.GOLD);
+                            TextComponent alert = new TextComponent("ラージマップは取得できません。");
+                            alert.setColor(ChatColor.RED);
+                            player.spigot().sendMessage(
+                                new TextComponent("この画像は"),
+                                message,
+                                new TextComponent("で作られたラージマップです。\n"),
+                                alert
+                            );
                         });
                     } else if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
                         // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
@@ -766,7 +783,7 @@ public class Menu {
                             im.executeImageMapFromMenu(player, new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date});
                         });
                     }
-                    //slot++;
+                    index++;
                 }
             }
             Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.imageInventoryName, playerMenuActions);

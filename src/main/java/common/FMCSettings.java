@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public enum FMCSettings {
+    MAX_IMAGE_TILES("maximagetiles"),
+    LARGE_IMAGE_LIMIT_TIMES("largeimageuploadlimittimes"),
 	IMAGE_LIMIT_TIMES("imageuploadlimittimes"),
     DISCORD_IMAGE_LIMIT_TIMES("discordimageuploadlimittimes"),
     IMAGE_FOLDER("image_folder"),

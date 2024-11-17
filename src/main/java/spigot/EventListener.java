@@ -114,7 +114,7 @@ public final class EventListener implements Listener {
             map.entrySet().forEach(action -> {
                 String key = action.getKey();
                 switch (key) {
-                    case ImageMap.ACTIONS_KEY -> {
+                    case ImageMap.ACTIONS_KEY, ImageMap.ACTIONS_KEY2 -> {
                         MessageRunnable runnable = action.getValue();
                         runnable.run(message);
                     }
