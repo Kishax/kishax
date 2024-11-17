@@ -702,6 +702,7 @@ public class Menu {
                     if (locked) {
                         lores.add(ChatColor.RED + "ロックされています。");
                     } else if (!lockedAction) {
+                        lores.add(ChatColor.RED + "ロック解除済みです。");
                         lores.add(ChatColor.RED + "作成者のみロック後のアクションを選択できます。");
                     } else if (large) {
                         lores.add(ChatColor.RED + "取得できません。");
