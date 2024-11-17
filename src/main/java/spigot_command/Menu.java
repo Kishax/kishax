@@ -45,6 +45,7 @@ import spigot.ServerStatusCache;
 
 @Singleton
 public class Menu {
+    public static final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new ConcurrentHashMap<>();
     public static final String PERSISTANT_KEY = "fmcmenu";
     public static String serverInventoryName = "server",
         menuInventoryName = "fmc menu",
@@ -77,7 +78,6 @@ public class Menu {
     private final ServerHomeDir shd;
     private final Book book;
     private final CommandForward cf;
-    private final Map<Player, Map<String, Map<Integer, Runnable>>> menuActions = new ConcurrentHashMap<>();
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
@@ -171,10 +171,6 @@ public class Menu {
         }
 	}
 
-    public Map<Player, Map<String, Map<Integer, Runnable>>> getMenuActions() {
-        return this.menuActions;
-    }
-    
     public void runMenuAction(Player player, String menuType, int slot) {
         Map<String, Map<Integer, Runnable>> playerMenuActions = getPlayerMenuActions(player);
         if (playerMenuActions != null) {
@@ -190,7 +186,7 @@ public class Menu {
     }
 
     public Map<String, Map<Integer, Runnable>> getPlayerMenuActions(Player player) {
-        return this.menuActions.get(player);
+        return Menu.menuActions.get(player);
     }
 
     public void settingMenu(Player player, int page) {
@@ -272,7 +268,7 @@ public class Menu {
                     }
                 }
             }
-            this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.settingInventoryName, playerMenuActions);
+            Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.settingInventoryName, playerMenuActions);
         } catch (SQLException | ClassNotFoundException e) {
             player.closeInventory();
             player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
@@ -289,7 +285,7 @@ public class Menu {
         }
         inv.setItem(0, backItem);
         playerMenuActions.put(0, () -> generalMenu(player, 2));
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -374,7 +370,7 @@ public class Menu {
                 inv.setItem(18, prevPageItem);
             }
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.menuInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -443,7 +439,7 @@ public class Menu {
         }
         inv.setItem(0, backItem);
         playerMenuActions.put(0, () -> teleportMenu(player, 1));
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(teleportResponseHeadInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(teleportResponseHeadInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -497,7 +493,7 @@ public class Menu {
             }
         });
         // ここ、targetPlayerがキーになっているのがあってるかわからない
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportResponseInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportResponseInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -577,7 +573,7 @@ public class Menu {
             }
             inv.setItem(13, noRequestItem);
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportRequestInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportRequestInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -623,7 +619,7 @@ public class Menu {
                 inv.setItem(15, responseItem);
             }
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.teleportInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -738,7 +734,7 @@ public class Menu {
                     //slot++;
                 }
             }
-            this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.imageInventoryName, playerMenuActions);
+            Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.imageInventoryName, playerMenuActions);
             player.openInventory(inv);
         } catch (SQLException | ClassNotFoundException e) {
             player.openInventory(inv);
@@ -812,7 +808,7 @@ public class Menu {
             inv.setItem(53, nextPageItem);
             playerMenuActions.put(53, () -> openOnlineServerInventory(player, page + 1));
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.onlineServerInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.onlineServerInventoryName, playerMenuActions);
         //logger.info("menuActions: {}", menuActions);
         player.openInventory(inv);
     }
@@ -875,7 +871,7 @@ public class Menu {
             inv.setItem(53, nextPageItem);
             playerMenuActions.put(53, () -> openServerEachInventory(player, serverType, page + 1));
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -1078,7 +1074,7 @@ public class Menu {
                 openServerEachInventory(player, thisServerType.get(), 1);
             }
         });
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 
@@ -1171,7 +1167,7 @@ public class Menu {
                 inv.setItem(18, prevPageItem);
             }
         }
-        this.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
+        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.serverTypeInventoryName, playerMenuActions);
         player.openInventory(inv);
     }
 

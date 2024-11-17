@@ -77,18 +77,16 @@ public class ImageMap {
     private final Logger logger;
     private final Database db;
     private final Provider<SocketSwitch> sswProvider;
-    private final Menu menu;
     private final ColorItems ci;
     private final String serverName;
     private final int inputPeriod = 60;
     @Inject
-    public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, Menu menu, ColorItems ci) {
+    public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, ColorItems ci) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
         this.serverName = shd.getServerName();
         this.sswProvider = sswProvider;
-        this.menu = menu;
         this.ci = ci;
     }
 
@@ -545,7 +543,7 @@ public class ImageMap {
                             });
                             addTaskRunnable(player, playerActions);
                         });
-                        menu.getMenuActions().computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.settingInventoryName, playerMenuActions);
+                        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.settingInventoryName, playerMenuActions);
                         player.spigot().sendMessage(TCUtils.LATER_OPEN_INV.get());
                         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                             player.openInventory(inv);
