@@ -52,9 +52,9 @@ public class FMCItemFrame {
                                     //logger.info("Loaded map item frame: {}", itemFrame.getLocation());
                                     MapMeta mapMeta = (MapMeta) item.getItemMeta();
                                     if (mapMeta != null && mapMeta.hasMapView()) {
-                                        if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                            MapView mapView = mapMeta.getMapView();
-                                            if (mapView != null) {
+                                        MapView mapView = mapMeta.getMapView();
+                                        if (mapView != null) {
+                                            if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
                                                 int mapId = mapView.getId();
                                                 if (serverImageInfo.containsKey(mapId)) {
                                                     ImageMap.thisServerMapIds.add(mapId);
@@ -64,7 +64,7 @@ public class FMCItemFrame {
                                                     String imageUUID = (String) imageInfo.get("imuuid");
                                                     String ext = (String) imageInfo.get("ext");
                                                     String fullPath = im.getFullPath(date, imageUUID, ext);
-                                                    logger.info("Replacing image to the map(No.{})...", new Object[] {mapId, fullPath});
+                                                    logger.info("Replacing image to the map(No.{})...", new Object[] {mapId});
                                                     try {
                                                         BufferedImage image = im.loadImage(fullPath);
                                                         if (image != null) {
@@ -82,9 +82,23 @@ public class FMCItemFrame {
                                                         }
                                                     }
                                                 }
+                                            } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                                int mapId = mapView.getId();
+                                                logger.info("Replacing large tile image to the map(No.{})...", new Object[] {mapId});
+                                                try {
+                                                    BufferedImage tileImage = im.loadTileImage(conn, mapId);
+                                                    if (tileImage != null) {
+                                                        mapView.getRenderers().clear();
+                                                        mapView.addRenderer(new ImageMapRenderer(logger, tileImage, null));
+                                                        item.setItemMeta(mapMeta);
+                                                    }
+                                                } catch (IOException e) {
+                                                    logger.error("Failed to load tile image: {}", e.getMessage());
+                                                    for (StackTraceElement element : e.getStackTrace()) {
+                                                        logger.error(element.toString());
+                                                    }
+                                                }
                                             }
-                                        } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                            
                                         }
                                     }
                                 }
