@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -120,7 +119,8 @@ public class DiscordEventListener extends ListenerAdapter {
 			userName2 = user.getName(),
 			channelId = channel.getId(),
 			guildId = e.getGuild().getId(),
-			channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId);
+			channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId),
+			userName12 = userName != null ? userName : userName2;
 		List<Role> roles = member.getRoles();
 		if (e.getName().equals("fmc")) {
 			switch (e.getSubcommandName()) {
@@ -176,9 +176,8 @@ public class DiscordEventListener extends ListenerAdapter {
 							return;
 						}
 						LocalDate now = LocalDate.now();
-						String imageUUID = UUID.randomUUID().toString(),
-							otp = OTPGenerator.generateOTP(6);
-						db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, otp, d, dname, did, date, locked, locked_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName != null ? userName : userName2, null, null, null, title, imageUUID, null, url, comment, null, otp, true, userName != null ? userName : userName2, userId, java.sql.Date.valueOf(now), true, false});
+						String otp = OTPGenerator.generateOTP(6);
+						db.insertLog(conn, "INSERT INTO images (name, title, url, comment, otp, d, dname, did, date, locked, locked_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName12, title, url, comment, otp, true, userName12, userId, java.sql.Date.valueOf(now), true, false});
 						e.reply("画像メタデータを登録しました。("+thisTimes+"/10)\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
 						logger.info("(Discord) 画像メタデータを登録しました。");
 						logger.info("ユーザー: {}\n試行: {}", (userName != null ? userName : userName2),"("+thisTimes+"/10)");
