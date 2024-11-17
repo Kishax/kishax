@@ -676,17 +676,20 @@ public class Menu {
                         comment = (String) imageInfo.get("comment"),
                         imageUUID = (String) imageInfo.get("imuuid"),
                         ext = (String) imageInfo.get("ext"),
-                        date = ((Date) imageInfo.get("date")).toString();
+                        date = ((Date) imageInfo.get("date")).toString(),
+                        url = (String) imageInfo.get("url");
                     boolean fromDiscord = Optional.ofNullable(imageInfo.get("d"))
                         .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
                         .orElse(false),
                         isQr = Optional.ofNullable(imageInfo.get("isqr"))
                             .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
                             .orElse(false),
-                        locked = imageInfo.get("otp") != null;
+                        locked = (boolean) imageInfo.get("locked"),
+                        lockedAction = (boolean) imageInfo.get("locked_action"),
+                        large = (boolean) imageInfo.get("large");
                         //isQr = imageInfo.get("isqr") != null && (imageInfo.get("isqr") instanceof Boolean ? (Boolean) imageInfo.get("isqr") : (Integer) imageInfo.get("isqr") != 0);
                     List<String> lores = new ArrayList<>();
-                    lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
+                    lores.add(large ? "<ラージマップ>" : isQr ? "<QRコード>" : "<イメージマップ>");
                     List<String> commentLines = Arrays.stream(comment.split("\n"))
                                         .map(String::trim)
                                         .collect(Collectors.toList());
@@ -697,7 +700,13 @@ public class Menu {
                         lores.add("from " + ChatColor.BLUE + "Discord");
                     }
                     if (locked) {
-                        lores.add(ChatColor.RED + "ロックされています");
+                        lores.add(ChatColor.RED + "ロックされています。");
+                    } else if (!lockedAction) {
+                        lores.add(ChatColor.RED + "作成者のみロック後のアクションを選択できます。");
+                    } else if (large) {
+                        lores.add(ChatColor.RED + "取得できません。");
+                    } else {
+                        lores.add(ChatColor.GREEN + "取得できます。");
                     }
                     ItemStack item = new ItemStack(Material.MAP);
                     ItemMeta meta = item.getItemMeta();
@@ -709,21 +718,46 @@ public class Menu {
                     }
                     inv.addItem(item);
                     //inv.setItem(slot, item);
-                    if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
-                        // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
-                        //Map<String, Object> thisServerImage = thisServerImageInfo.get(mapId);
-                        playerMenuActions.put(inv.first(item), () -> {
-                            //logger.info("through into giveMap");
-                            player.closeInventory();
-                            im.giveMapToPlayer(player, mapId);
-                        });
-                    } else if (locked) {
+                    if (locked) {
+                        // discord未認証(/qコマンドでロック解除されていない)の場合
                         playerMenuActions.put(inv.first(item), () -> {
                             //logger.info("through into lockedMap");
                             player.closeInventory();
                             player.sendMessage(ChatColor.RED + "この画像はロックされています。\n"
                                 + ChatColor.GRAY + "この画像を取得するには、/qコマンドにて、OTPを入力してください。");
                         });
+                    } else if (!lockedAction) {
+                        // 認証はされているが、1✕1のマップかラージマップかを選んでいない場合
+                        if (authorName.equals(player.getName())) {
+                            // 作成者の場合
+                            // OTPがまだデータベースに残っているのが確定している
+                            playerMenuActions.put(inv.first(item), () -> {
+                                //logger.info("through into executeQFromMenu");
+                                player.closeInventory();
+                                if (imageInfo.get("otp") instanceof String otp) {
+                                    im.executeQFromMenu(player, new Object[] {otp, title, comment, url, date});
+                                }
+                            });
+                        } else {
+                            // 作成者以外の場合
+                            playerMenuActions.put(inv.first(item), () -> {
+                                player.closeInventory();
+                                player.sendMessage(ChatColor.RED + "この画像はロックされています。\n作成者がロック後のアクションに、画像マップかQRコードを選択した後に取得できます。");
+                            });
+                        }
+                    } else if (large) {
+                        playerMenuActions.put(inv.first(item), () -> {
+                            player.closeInventory();
+                            player.sendMessage(ChatColor.RED + "この画像は" + server + "サーバーで作られたラージマップです。\nラージマップは取得できません。");
+                        });
+                    } else if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
+                        // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
+                        //Map<String, Object> thisServerImage = thisServerImageInfo.get(mapId);
+                        playerMenuActions.put(inv.first(item), () -> {
+                            //logger.info("through into giveMap");
+                            player.closeInventory();
+                            im.giveMapToPlayer(player, mapId);
+                        }); 
                     } else {
                         playerMenuActions.put(inv.first(item), () -> {
                             //logger.info("through into executeImageMapFromMenu");

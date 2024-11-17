@@ -79,21 +79,16 @@ public class Discord implements DiscordInterface {
                         .addChoice("Stop", "stop")
                         .addChoice("Status", "status")
                     );
-                SubcommandData createImageSubcommand = new SubcommandData("create", "マイクラの画像マップを作成するコマンド(urlか添付ファイルのどっちかを指定可能)")
+                SubcommandData createImageSubcommand = new SubcommandData("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)")
                     .addOptions(
+                        //new OptionData(OptionType.BOOLEAN, "isqr", "QRコードか否かを選択するオプション").setRequired(true), // QRコードか否かを選択するオプション
                         new OptionData(OptionType.STRING, "url", "画像リンクの設定項目").setRequired(false),
                         new OptionData(OptionType.ATTACHMENT, "image", "ファイルの添付項目").setRequired(false),
                         new OptionData(OptionType.STRING, "title", "画像マップのタイトル設定項目").setRequired(false),
                         new OptionData(OptionType.STRING, "comment", "画像マップのコメント設定項目").setRequired(false)
                     );
-                SubcommandData createQRSubcommand = new SubcommandData("createqr", "マイクラのQRコードマップを作成するコマンド(urlを指定してください)")
-                    .addOptions(
-                        new OptionData(OptionType.STRING, "url", "画像リンクの設定項目").setRequired(true),
-                        new OptionData(OptionType.STRING, "title", "画像マップのタイトル設定項目").setRequired(false),
-                        new OptionData(OptionType.STRING, "comment", "画像マップのコメント設定項目").setRequired(false)
-                    );
                 SubcommandData syncRuleBookSubcommand = new SubcommandData("syncrulebook", "ルールブックの同期を行うコマンド");
-                createFMCCommand.addSubcommands(teraSubCommand, createImageSubcommand, createQRSubcommand, syncRuleBookSubcommand).queue();
+                createFMCCommand.addSubcommands(teraSubCommand, createImageSubcommand, syncRuleBookSubcommand).queue();
                 jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
                 isDiscord = true;
                 logger.info("discord bot has been logged in.");
