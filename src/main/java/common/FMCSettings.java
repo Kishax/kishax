@@ -10,7 +10,8 @@ public enum FMCSettings {
     IMAGE_FOLDER("image_folder"),
     RULEBOOK_CONTENT("rulebook"),
     CONFIRM_URL("confirm_url"),
-    NOW_ONLINE("now_online")
+    NOW_ONLINE("now_online"),
+    INPUT_PERIOD("input_period"),
     ;
 
     private final Database db = Database.getInstance();
