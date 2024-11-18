@@ -15,6 +15,7 @@ public enum FMCSettings {
     CONFIRM_URL("confirm_url"),
     NOW_ONLINE("now_online"),
     INPUT_PERIOD("input_period"),
+    HUB_TELEPORT_TIME("hubteleporttime"),
     ;
 
     private final Database db = Database.getInstance();

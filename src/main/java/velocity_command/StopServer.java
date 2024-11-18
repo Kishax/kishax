@@ -99,7 +99,7 @@ public class StopServer {
 						db.insertLog(connection, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true, "stop"});
 						discordME.AddEmbedSomeMessage("Stop", player, targetServerName);
 						TextComponent component = Component.text()
-								.append(Component.text("WEB認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
+								.append(Component.text("WEB認証...PASS\nアドミン認証...PASS\n\nALL CORRECT\n").color(NamedTextColor.GREEN))
 								.append(Component.text(targetServerName+"サーバーがまもなく停止します。").color(NamedTextColor.RED))
 								.build();
 						player.sendMessage(component);

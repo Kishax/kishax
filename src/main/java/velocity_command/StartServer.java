@@ -153,7 +153,7 @@ public class StartServer {
 														}
 														discordME.AddEmbedSomeMessage("Start", player, targetServerName);
 														TextComponent component = Component.text()
-																	.append(Component.text("WEB認証...PASS\n\nアドミン認証...PASS\n\nALL CORRECT\n\n").color(NamedTextColor.GREEN))
+																	.append(Component.text("WEB認証...PASS\nアドミン認証...PASS\n\nALL CORRECT\n").color(NamedTextColor.GREEN))
 																	.append(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
 																	.build();
 														player.sendMessage(component);
