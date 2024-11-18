@@ -156,7 +156,7 @@ public class SocketSwitch {
                         continue;
                     }
                     if (online && serverDBName.equalsIgnoreCase(serverName)) {
-                        logger.info("sendSpecificServer: Starting client for server " + serverName + " on port " + port);
+                        //logger.info("sendSpecificServer: Starting client for server " + serverName + " on port " + port);
                         startSocketClient(port, msg);
                         return true;
                     }
@@ -170,8 +170,8 @@ public class SocketSwitch {
         try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    String serverName = rs.getString("name"),
-                        platform = rs.getString("platform");
+                    //String serverName = rs.getString("name");
+                    String platform = rs.getString("platform");
                     int port = rs.getInt("socketport");
                     boolean online = rs.getBoolean("online");
                     if (port == 0) {
@@ -179,7 +179,7 @@ public class SocketSwitch {
                         continue;
                     }
                     if (online && platform.equalsIgnoreCase(serverType)) {
-                        logger.info("sendSpigotServer: Starting client for server " + serverName + " on port " + port);
+                        //logger.info("sendSpigotServer: Starting client for server " + serverName + " on port " + port);
                         startSocketClient(port, sendmsg);
                     }
                 }

@@ -6,9 +6,11 @@ import org.slf4j.Logger;
 import com.google.inject.AbstractModule;
 
 import common.Database;
+import common.JedisProvider;
 import common.Luckperms;
 import common.PlayerUtils;
 import common.SocketSwitch;
+import redis.clients.jedis.Jedis;
 import spigot_command.Book;
 import spigot_command.CommandForward;
 import spigot_command.Menu;
@@ -37,6 +39,7 @@ public class Module extends AbstractModule {
     protected void configure() {
 		bind(Database.class).toInstance(db);
 		bind(org.slf4j.Logger.class).toInstance(logger);
+		bind(Jedis.class).toProvider(JedisProvider.class);
 		bind(common.Main.class).toInstance(plugin);
 		bind(SocketSwitch.class);
 		bind(ServerHomeDir.class);
@@ -59,5 +62,6 @@ public class Module extends AbstractModule {
 		bind(Inventory.class);
 		bind(FMCItemFrame.class);
 		bind(CommandForward.class);
+		bind(TPSUtils.class).in(com.google.inject.Scopes.SINGLETON);
     }
 }
