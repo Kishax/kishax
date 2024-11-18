@@ -37,7 +37,6 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
@@ -63,6 +62,7 @@ import common.FMCSettings;
 import common.SocketSwitch;
 import net.coobird.thumbnailator.Thumbnails;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import spigot_command.Menu;
@@ -72,9 +72,10 @@ public class ImageMap {
     public static final String LARGE_PERSISTANT_KEY = "custom_large_image";
     public static final String ACTIONS_KEY = "largeImageMap";
     public static final String ACTIONS_KEY2 = "createImageMapFromQ";
+    public static final String ACTIONS_KEY3 = "createImageMapFromCommandLine";
     public static List<String> imagesColumnsList = new ArrayList<>();
     public static List<Integer> thisServerMapIds = new ArrayList<>();
-    public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "createqr", "q", "largecreate"));
+    public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "q"));
     private final common.Main plugin;
     private final Logger logger;
     private final Database db;
@@ -91,112 +92,13 @@ public class ImageMap {
     }
 
     public void executeQFromMenu(Player player, Object[] Args) {
-        executeQ(player, null, null, null, false, Args);
+        executeQ(player, null, false, Args);
     }
 
-    public void executeQ(CommandSender sender, Command command, String label, String[] args, boolean q) {
-        executeQ(sender, command, label, args, q, null);
+    public void executeQ(CommandSender sender, String[] args, boolean q) {
+        executeQ(sender, args, q, null);
     }
 
-    @SuppressWarnings("null")
-    private void executeQ(CommandSender sender, Command command, String label, String[] args, boolean q, Object[] Args) {
-        if (sender instanceof Player player) {
-            String otp, title, comment, url, date;
-            boolean fromMenu = (Args != null);
-            if (!fromMenu) {
-                if (q) {
-                    otp = args[0];
-                    if (args.length < 1) {
-                        player.sendMessage("使用法: /q <code>");
-                        return;
-                    }
-                } else {
-                    otp = args[1];
-                    if (args.length < 2) {
-                        player.sendMessage("使用法: /fmc q <code>");
-                        return;
-                    }
-                }
-                try (Connection conn = db.getConnection()) {
-                    if (checkOTPIsCorrect(conn, otp)) {
-                        player.sendMessage(ChatColor.GREEN + "認証に成功しました。");
-                        Map<String, Object> imageInfo = getImageInfoByOTP(conn, otp);
-                        title = (String) imageInfo.get("title");
-                        comment = (String) imageInfo.get("comment");
-                        url = (String) imageInfo.get("url");
-                        date = Date.valueOf(((Date) imageInfo.get("date")).toLocalDate()).toString();
-                        // locked->false, nameをプレイヤーネームに更新する
-                        db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, locked=? WHERE otp=?;", new Object[] {player.getName(), player.getUniqueId().toString(), serverName, false, otp});
-                    } else {
-                        player.sendMessage(ChatColor.RED + "ワンタイムパスワードが間違っています。");
-                        return;
-                    }
-                } catch (SQLException | ClassNotFoundException e) {
-                    player.sendMessage("画像の読み込みに失敗しました。");
-                    logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                    for (StackTraceElement element : e.getStackTrace()) {
-                        logger.error(element.toString());
-                    }
-                    return;
-                }
-            } else {
-                otp = (String) Args[0];
-                title = (String) Args[1];
-                comment = (String) Args[2];
-                url = (String) Args[3];
-                date = (String) Args[4];
-            }
-            // ラージか1✕1かをプレイヤーに問う
-            TextComponent message = new TextComponent("操作が途中で中断された場合、メニュー->画像マップより再開できます。\n");
-            message.setColor(ChatColor.GRAY);
-            player.spigot().sendMessage(
-                new TextComponent("1✕1の画像マップを作成する場合は、"),
-                TCUtils.ZERO.get(),
-                new TextComponent("と入力してください。\n"),
-                new TextComponent("1✕1のQRコードコードを作成する場合は、"),
-                TCUtils.ONE.get(),
-                new TextComponent("と入力してください。\n"),
-                new TextComponent("ラージマップを作成する場合は、"),
-                TCUtils.TWO.get(),
-                new TextComponent("と入力してください。\n"),
-                message,
-                TCUtils.INPUT_MODE.get()
-            );
-            Map<String, MessageRunnable> playerActions = new HashMap<>();
-            playerActions.put(ImageMap.ACTIONS_KEY2, (input) -> {
-                switch (input) {
-                    case "0", "1" -> {
-                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
-                        String cmd;
-                        if (input.equals("0")) {
-                            cmd = "create";
-                        } else {
-                            cmd = "createqr";
-                        }
-                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
-                        String[] imageArgs = new String[] {"im", cmd, url, title, comment};
-                        executeImageMap(sender, null, null, imageArgs, new Object[] {otp, date});
-                    }
-                    case "2" -> {
-                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
-                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
-                        String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
-                        executeLargeImageMap(sender, imageArgs, new Object[] {otp, date}, null, null, null);
-                    }
-                    default -> {
-                        player.sendMessage(ChatColor.RED + "無効な入力です。\n1または2を入力してください。");
-                        extendTask(player, ImageMap.ACTIONS_KEY2);
-                    }
-                }
-            });
-            addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY2);
-        } else {
-            if (sender != null) {
-                sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
-            }
-        }
-    }
-    
     public void executeImageMapFromGivingMap(Player player, Object[] mArgs) {
         executeImageMapFromMenu(player, mArgs, true);
     }
@@ -205,7 +107,7 @@ public class ImageMap {
         executeImageMapFromMenu(player, mArgs, false);
     }
 
-    private void executeImageMapLeading(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
+    public void executeImageMapLeading(CommandSender sender, String[] args) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
                 player.sendMessage("使用法: /fmc im <create> <url> [Optional: <title> <comment>]");
@@ -214,274 +116,11 @@ public class ImageMap {
             String url = args[2],
                 title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
                 comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし";
-            // ラージか1✕1かをプレイヤーに問う
-            TextComponent message = new TextComponent("操作が途中で中断された場合、メニュー->画像マップより再開できます。\n");
-            message.setColor(ChatColor.GRAY);
-            player.spigot().sendMessage(
-                new TextComponent("1✕1の画像マップを作成する場合は、"),
-                TCUtils.ZERO.get(),
-                new TextComponent("と入力してください。\n"),
-                new TextComponent("1✕1のQRコードコードを作成する場合は、"),
-                TCUtils.ONE.get(),
-                new TextComponent("と入力してください。\n"),
-                new TextComponent("ラージマップを作成する場合は、"),
-                TCUtils.TWO.get(),
-                new TextComponent("と入力してください。\n"),
-                message,
-                TCUtils.INPUT_MODE.get()
-            );
-            Map<String, MessageRunnable> playerActions = new HashMap<>();
-            playerActions.put(ImageMap.ACTIONS_KEY2, (input) -> {
-                switch (input) {
-                    case "0", "1" -> {
-                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
-                        String cmd;
-                        if (input.equals("0")) {
-                            cmd = "create";
-                        } else {
-                            cmd = "createqr";
-                        }
-                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
-                        String[] imageArgs = new String[] {"im", cmd, url, title, comment};
-                        executeImageMap(sender, null, null, imageArgs, null);
-                    }
-                    case "2" -> {
-                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
-                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
-                        String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
-                        executeLargeImageMap(sender, imageArgs, null, null, null, null);
-                    }
-                    default -> {
-                        player.sendMessage(ChatColor.RED + "無効な入力です。\n1または2を入力してください。");
-                        extendTask(player, ImageMap.ACTIONS_KEY2);
-                    }
-                }
-            });
-            addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY2);
-        } else {
-            if (sender != null) {
-                sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
-            }
-        }
-    }
-
-    private void leadAction(Player player, String key, String[] usingArgs, Object[] qArgs) {
-        boolean fromQ = (qArgs != null);
-        String url = usingArgs[0],
-            title = usingArgs[1],
-            comment = usingArgs[2];
-        // ラージか1✕1かをプレイヤーに問う
-        TextComponent message;
-        if (fromQ) {
-            message = new TextComponent("操作が途中で中断された場合、メニュー->画像マップより再開できます。\n");
-            message.setColor(ChatColor.GRAY);
-        } else {
-            message = new TextComponent();
-        }
-        player.spigot().sendMessage(
-            new TextComponent("1✕1の画像マップを作成する場合は、"),
-            TCUtils.ZERO.get(),
-            new TextComponent("と入力してください。\n"),
-            new TextComponent("1✕1のQRコードコードを作成する場合は、"),
-            TCUtils.ONE.get(),
-            new TextComponent("と入力してください。\n"),
-            new TextComponent("ラージマップを作成する場合は、"),
-            TCUtils.TWO.get(),
-            new TextComponent("と入力してください。\n"),
-            message,
-            TCUtils.INPUT_MODE.get()
-        );
-        Map<String, MessageRunnable> playerActions = new HashMap<>();
-        playerActions.put(key, (input) -> {
-            switch (input) {
-                case "0", "1" -> {
-                    removeCancelTaskRunnable(player, key);
-                    String cmd;
-                    if (input.equals("0")) {
-                        cmd = "create";
-                    } else {
-                        cmd = "createqr";
-                    }
-                    player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
-                    String[] imageArgs = new String[] {"im", cmd, url, title, comment};
-                    executeImageMap(player, null, null, imageArgs, qArgs);
-                }
-                case "2" -> {
-                    removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
-                    player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
-                    String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
-                    executeLargeImageMap(player, imageArgs, qArgs, null, null, null);
-                }
-                default -> {
-                    player.sendMessage(ChatColor.RED + "無効な入力です。\n1または2を入力してください。");
-                    extendTask(player, key);
-                }
-            }
-        });
-        addTaskRunnable(player, playerActions, key);
-    }
-
-    private void executeImageMapFromMenu(Player player, Object[] mArgs, boolean isGiveMap) {
-        // このサーバーにはないマップを生成する
-        try (Connection conn = db.getConnection()) {
-            int id = (int) mArgs[0];
-            boolean isQr = (boolean) mArgs[1];
-            String authorName = (String) mArgs[2],
-                imageUUID = (String) mArgs[3],
-                title = (String) mArgs[4],
-                comment = (String) mArgs[5],
-                ext = (String) mArgs[6],
-                date = (String) mArgs[7],
-                fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
-                playerName = player.getName();
-            BufferedImage image = ImageIO.read(new File(fullPath));
-            image = !isQr ? resizeImage(image, 128, 128) : image;
-            List<String> lores = new ArrayList<>();
-            lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
-            List<String> commentLines = Arrays.stream(comment.split("\n"))
-                                .map(String::trim)
-                                .collect(Collectors.toList());
-            lores.addAll(commentLines);
-            lores.add("created by " + authorName);
-            lores.add("at " + date.replace("-", "/"));
-            ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
-            MapView mapView = Bukkit.createMap(player.getWorld());
-            int mapId = mapView.getId(); // 一意のmapIdを取得
-            mapView.getRenderers().clear();
-            mapView.addRenderer(new ImageMapRenderer(image));
-            var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(title);
-                meta.setLore(lores);
-                meta.setMapView(mapView);
-                meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
-                mapItem.setItemMeta(meta);
-            }
-            Map<String, String> modifyMap = new HashMap<>();
-            modifyMap.put("menu", "true");
-            modifyMap.put("menuer", "\"" + playerName + "\"");
-            modifyMap.put("server", "\"" + serverName + "\"");
-            modifyMap.put("mapid", String.valueOf(mapId));
-            copyLineFromMenu(conn, id, modifyMap);
-            if (isGiveMap) {
-                // mapIdを更新する必要がある
-                // なぜなら、このサーバーにはないマップを生成するため
-                // giveMapメソッドで、そのワールド内にないことは確認済みなので
-                db.updateLog(conn, "UPDATE images SET mapid=? WHERE id=?;", new Object[] {mapId, id});
-            }
-            player.getInventory().addItem(mapItem);
-            if (!isGiveMap) {
-                player.sendMessage("画像マップを渡しました。");
-            }
-        } catch (IOException | SQLException | ClassNotFoundException e) {
-            player.sendMessage("画像の読み取りに失敗しました。");
-            logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-        }
-    }
-
-    public void executeImageMap(CommandSender sender, Command command, String label, String[] args, Object[] dArgs) {
-        executeImageMap(sender, args, dArgs, false);
-    }
-
-    public void executeImageMapForConfirm(CommandSender sender, String[] args) {
-        executeImageMap(sender, args, null, true);
-    }
-
-    @SuppressWarnings("null")
-    private void executeImageMap(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
-        if (sender instanceof Player player) {
-            if (args.length < 3) {
-                player.sendMessage("使用法: /fmc im <create|createqr> <url> [Optional: <title> <comment>]");
-                return;
-            }
-            boolean isQr = args[1].equalsIgnoreCase("createqr"),
-                fromDiscord = (dArgs != null);
-            String playerName = player.getName(),
-                playerUUID = player.getUniqueId().toString(),
-                imageUUID = UUID.randomUUID().toString(),
-                url = args[2],
-                title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
-                comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
-                ext;
             try (Connection conn = db.getConnection()) {
-                int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
-                    playerUploadTimes = getPlayerTodayCreateImageTimes(conn, playerName),
-                    thisTimes = playerUploadTimes + 1;
-                if (thisTimes >= limitUploadTimes) {
-                    player.sendMessage(ChatColor.RED + "1日の登録回数は"+limitUploadTimes+"回までです。");
-                    return;
-                }
-                if (!isQr && !isValidURL(url)) {
-                    player.sendMessage("無効なURLです。");
-                    return;
-                }
-                LocalDate localDate = LocalDate.now();
-                String now = fromDiscord ? (String) dArgs[1] : localDate.toString();
-                BufferedImage image;
-                if (isQr) {
-                    ext = "png";
-                    image = generateQRCodeImage(url);
-                    saveImageToFileSystem(image, imageUUID, ext);
-                } else {
-                    URL getUrl = new URI(url).toURL();
-                    HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.connect();
-                    String contentType = connection.getContentType();
-                    switch (contentType) {
-                        case "image/png" -> ext = "png";
-                        case "image/jpeg" -> ext = "jpeg";
-                        case "image/jpg" -> ext = "jpg";
-                        default -> {
-                            player.sendMessage("指定のURLは規定の拡張子を持ちません。");
-                            return;
-                        }
-                    }
-                    BufferedImage imageDefault =  ImageIO.read(getUrl);
-                    if (imageDefault == null) {
-                        player.sendMessage(ChatColor.RED + "指定のURLは規定の拡張子を持ちません。");
-                        return;
-                    }
-                    saveImageToFileSystem(imageDefault, imageUUID, ext); // リサイズ前の画像を保存
-                    image = resizeImage(imageDefault, 128, 128);
-                }
-                List<String> lores = new ArrayList<>();
-                lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
-                List<String> commentLines = Arrays.stream(comment.split("\n"))
-                            .map(String::trim)
-                            .collect(Collectors.toList());
-                lores.addAll(commentLines);
-                lores.add("created by " + playerName);
-                lores.add("at " + now.replace("-", "/"));
-                lores.add("size 1x1(1)");
-                ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
-                MapView mapView = Bukkit.createMap(player.getWorld());
-                int mapId = mapView.getId(); // 一意のmapIdを取得
-                mapView.getRenderers().clear();
-                mapView.addRenderer(new ImageMapRenderer(image));
-                var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
-                if (meta != null) {
-                    meta.setDisplayName(title);
-                    meta.setLore(lores);
-                    meta.setMapView(mapView);
-                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
-                    mapItem.setItemMeta(meta);
-                }
-                if (fromDiscord) {
-                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, date=?, locked_action=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, now, true, (String) dArgs[0]});
-                } else {
-                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
-                }
-                player.getInventory().addItem(mapItem);
-                if (!confirm) {
-                    player.sendMessage("画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
-                }
-            } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {
-                player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
-                logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
+                leadAction(conn, player, ACTIONS_KEY3, new String[] {url, title, comment}, null);
+            } catch (SQLException | ClassNotFoundException e) {
+                player.sendMessage("データベースとの通信に問題が発生しました。");
+                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
                     logger.error(element.toString());
                 }
@@ -493,8 +132,147 @@ public class ImageMap {
         }
     }
 
-    @SuppressWarnings({"null","unused"})
-    public void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2, Object[] inputs3) {
+    public void executeImageMapForConfirm(CommandSender sender, String[] args) {
+        executeImageMap(sender, args, null, true);
+    }
+
+    public Map<Integer, Map<String, Object>> getImageMap(Connection conn) throws SQLException, ClassNotFoundException {
+        Map<Integer, Map<String, Object>> imageInfo = new HashMap<>();
+        String query = "SELECT * FROM images WHERE menu!=? AND confirm!=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setBoolean(1, true);
+        ps.setBoolean(2, true);
+        ResultSet rs = ps.executeQuery();
+        int index = 0;
+        while (rs.next()) {
+            Map<String, Object> rowMap = new HashMap<>();
+            int columnCount = rs.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = rs.getMetaData().getColumnName(i);
+                rowMap.put(columnName, rs.getObject(columnName));
+            }
+            imageInfo.computeIfAbsent(index, _ -> rowMap);
+            index++;
+        }
+        return imageInfo;
+    }
+
+    public Map<Integer, Map<String, Object>> getThisServerImages(Connection conn) throws SQLException, ClassNotFoundException {
+        Map<Integer, Map<String, Object>> serverImageInfo = new HashMap<>();
+        String query = "SELECT * FROM images WHERE server=?;";
+        PreparedStatement ps = conn.prepareStatement(query);
+        ps.setString(1, serverName);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Map<String, Object> rowMap = new HashMap<>();
+            int mapId = rs.getInt("mapid");
+            int columnCount = rs.getMetaData().getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = rs.getMetaData().getColumnName(i);
+                if (!columnName.equals("mapid")) {
+                    rowMap.put(columnName, rs.getObject(columnName));
+                }
+            }
+            serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
+        }
+        return serverImageInfo;
+    }
+
+    public void giveMapToPlayer(Player player, int mapId) {
+        AtomicBoolean found = new AtomicBoolean(false);
+        for (World world : Bukkit.getWorlds()) {
+            for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
+                ItemStack item = itemFrame.getItem();
+                if (item.getType() == Material.FILLED_MAP) {
+                    MapMeta mapMeta = (MapMeta) item.getItemMeta();
+                    if (mapMeta != null && mapMeta.hasMapView()) {
+                        MapView mapView = mapMeta.getMapView();
+                        if (mapView != null && mapView.getId() == mapId) {
+                            found.set(true);
+                            ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+                            mapMeta.setMapView(mapView);
+                            mapItem.setItemMeta(mapMeta);
+                            player.getInventory().addItem(mapItem);
+                            player.sendMessage("画像マップを渡しました。");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        if (!found.get()) {
+            // このサーバーに過去あった、もしくは現在あることは確定
+            // ロードして、プレイヤーに上げて、もとのデータベースのmapIDを更新すればいい
+            // このサーバーとmapIdで一致するデータを取得
+            // そのデータを使って、マップを生成
+            try (Connection conn = db.getConnection()) {
+                Map<String, Object> mapInfo = getMapInfoForThisServerByMapId(conn, mapId);
+                if (!mapInfo.isEmpty()) {
+                    int id = (Integer) mapInfo.get("id");
+                    boolean isQr = (boolean) mapInfo.get("isqr");
+                    String authorName = (String) mapInfo.get("name"),
+                        imageUUID = (String) mapInfo.get("imuuid"),
+                        title = (String) mapInfo.get("title"),
+                        comment = (String) mapInfo.get("comment"),
+                        ext = (String) mapInfo.get("ext"),
+                        date = ((Date) mapInfo.get("date")).toString();
+                    Object[] mArgs = new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date, mapId};
+                    executeImageMapFromGivingMap(player, mArgs);
+                }
+            } catch (SQLException | ClassNotFoundException e) {
+                player.sendMessage("画像の読み取りに失敗しました。");
+                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.error(element.toString());
+                }
+            }
+        }
+    }
+
+    public void loadAndSetImageTile(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView) throws SQLException, ClassNotFoundException {
+        //logger.info("Replacing tile image to the map(No.{})...", mapId);
+        try {
+            BufferedImage tileImage = loadTileImage(conn, mapId);
+            if (tileImage != null) {
+                mapView.getRenderers().clear();
+                mapView.addRenderer(new ImageMapRenderer(tileImage));
+                item.setItemMeta(mapMeta);
+                ImageMap.thisServerMapIds.add(mapId);
+            } else {
+                throw new IOException("Failed to load tile image.");
+            }
+        } catch (IOException e) {
+            logger.error("Failed to load tile image: {}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+    }
+
+    public void loadAndSetImage(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView) throws SQLException, ClassNotFoundException {
+        //logger.info("Replacing image to the map(No.{})...", mapId);
+        try {
+            BufferedImage image = loadImage(conn, mapId);
+            if (image != null) {
+                image = resizeImage(image, 128, 128);
+                mapView.getRenderers().clear();
+                mapView.addRenderer(new ImageMapRenderer(image));
+                item.setItemMeta(mapMeta);
+                ImageMap.thisServerMapIds.add(mapId);
+            } else {
+                throw new IOException("Failed to load image.");
+            }
+        } catch (IOException e) {
+            logger.error("マップId {} の画像の読み込みに失敗しました: {}", mapId);
+            logger.error("An IOException error occurred: {}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+    }
+
+    @SuppressWarnings("null")
+    private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2, Object[] inputs3) {
         if (sender instanceof Player player) {
             if (checkIsOtherInputMode(player)) {
                 player.sendMessage(ChatColor.RED + "他でインプットモード中です。");
@@ -519,15 +297,15 @@ public class ImageMap {
                 int limitUploadTimes = FMCSettings.LARGE_IMAGE_LIMIT_TIMES.getIntValue(),
                     playerUploadTimes = getPlayerTodayCreateLargeImageTimes(conn, playerName),
                     thisTimes = playerUploadTimes + 1;
+                if (thisTimes > limitUploadTimes) {
+                    player.sendMessage(ChatColor.RED + "1日の登録回数は"+limitUploadTimes+"回までです。");
+                    return;
+                }
                 String now;
                 final BufferedImage image;
                 if (inputs == null) {
                     if (checkIsInputMode(player)) {
                         player.sendMessage(ChatColor.RED + "インプットモード中に他のラージマップを作成することはできません。");
-                        return;
-                    }
-                    if (thisTimes >= limitUploadTimes) {
-                        player.sendMessage(ChatColor.RED + "1日の登録回数は"+limitUploadTimes+"回までです。");
                         return;
                     }
                     if (!isValidURL(url)) {
@@ -572,8 +350,8 @@ public class ImageMap {
                     int gcd = CalcUtil.gcd(x, y);
                     x /= gcd;
                     y /= gcd;
-                    int mapsX = (image.getWidth() + 127) / 128;
-                    int mapsY = (image.getHeight() + 127) / 128;
+                    //int mapsX = (image.getWidth() + 127) / 128;
+                    //int mapsY = (image.getHeight() + 127) / 128;
                     TextComponent ratio = new TextComponent(x + ":" + y);
                     ratio.setUnderlined(true);
                     ratio.setBold(true);
@@ -884,7 +662,7 @@ public class ImageMap {
                                                     mapItem.setItemMeta(mapMeta);
                                                 }
                                                 mapItems.add(mapItem);
-                                                saveImageToDatabase(conn2, mapId, x, y, tile, ext);
+                                                saveImageToDatabase(conn2, mapId, x_, y_, tile, ext);
                                             }
                                         }
                                         if (fromDiscord) {
@@ -901,7 +679,18 @@ public class ImageMap {
                                             remainingItems.addAll(remaining.values());
                                         }
                                         if (remainingItems.isEmpty()) {
-                                            player.sendMessage("すべての画像マップを渡しました。");
+                                            try (Connection conn3 = db.getConnection()) {
+                                                player.spigot().sendMessage(
+                                                    new TextComponent("すべての画像マップを渡しました。"),
+                                                    getPlayerTimesComponent(conn3, playerName)[1]
+                                                );
+                                            } catch (SQLException | ClassNotFoundException e) {
+                                                player.sendMessage("すべての画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
+                                                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                                                for (StackTraceElement element : e.getStackTrace()) {
+                                                    logger.error(element.toString());
+                                                }
+                                            }
                                             removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                                         } else {
                                             // プレイヤーが浮いているかどうかを確認する
@@ -912,7 +701,18 @@ public class ImageMap {
                                                     for (ItemStack remainingItem : remainingItems) {
                                                         world.dropItemNaturally(playerLocation, remainingItem);
                                                     }
-                                                    player.sendMessage("すべての画像マップを渡しました。");
+                                                    try (Connection conn3 = db.getConnection()) {
+                                                        player.spigot().sendMessage(
+                                                            new TextComponent("すべての画像マップを渡しました。"),
+                                                            getPlayerTimesComponent(conn3, playerName)[1]
+                                                        );
+                                                    } catch (SQLException | ClassNotFoundException e) {
+                                                        player.sendMessage("すべての画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
+                                                        logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                                                        for (StackTraceElement element : e.getStackTrace()) {
+                                                            logger.error(element.toString());
+                                                        }
+                                                    }
                                                     removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                                                 });
                                             } else {
@@ -946,7 +746,18 @@ public class ImageMap {
                                                                 world.dropItemNaturally(playerLocation, remainingItem);
                                                             }
                                                             player.sendMessage("インベントリに入り切らないマップをドロップしました。");
-                                                            player.sendMessage("すべての画像マップを渡しました。");
+                                                            try (Connection conn3 = db.getConnection()) {
+                                                                player.spigot().sendMessage(
+                                                                    new TextComponent("すべての画像マップを渡しました。"),
+                                                                    getPlayerTimesComponent(conn3, playerName)[1]
+                                                                );
+                                                            } catch (SQLException | ClassNotFoundException e) {
+                                                                player.sendMessage("すべての画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
+                                                                logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                                                                for (StackTraceElement element : e.getStackTrace()) {
+                                                                    logger.error(element.toString());
+                                                                }
+                                                            }
                                                             removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY);
                                                         });
                                                     } else {
@@ -993,136 +804,329 @@ public class ImageMap {
             }
         }
     }
-
-    public Map<Integer, Map<String, Object>> getImageMap(Connection conn) throws SQLException, ClassNotFoundException {
-        Map<Integer, Map<String, Object>> imageInfo = new HashMap<>();
-        String query = "SELECT * FROM images WHERE menu!=? AND confirm!=?;";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setBoolean(1, true);
-        ps.setBoolean(2, true);
-        ResultSet rs = ps.executeQuery();
-        int index = 0;
-        while (rs.next()) {
-            Map<String, Object> rowMap = new HashMap<>();
-            int columnCount = rs.getMetaData().getColumnCount();
-            for (int i = 1; i <= columnCount; i++) {
-                String columnName = rs.getMetaData().getColumnName(i);
-                rowMap.put(columnName, rs.getObject(columnName));
-            }
-            imageInfo.computeIfAbsent(index, _ -> rowMap);
-            index++;
-        }
-        return imageInfo;
+    
+    private void executeImageMap(CommandSender sender, String[] args, Object[] dArgs) {
+        executeImageMap(sender, args, dArgs, false);
     }
-
-    public Map<Integer, Map<String, Object>> getThisServerImages(Connection conn) throws SQLException, ClassNotFoundException {
-        Map<Integer, Map<String, Object>> serverImageInfo = new HashMap<>();
-        String query = "SELECT * FROM images WHERE server=?;";
-        PreparedStatement ps = conn.prepareStatement(query);
-        ps.setString(1, serverName);
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            Map<String, Object> rowMap = new HashMap<>();
-            int mapId = rs.getInt("mapid");
-            int columnCount = rs.getMetaData().getColumnCount();
-            for (int i = 1; i <= columnCount; i++) {
-                String columnName = rs.getMetaData().getColumnName(i);
-                if (!columnName.equals("mapid")) {
-                    rowMap.put(columnName, rs.getObject(columnName));
+    
+    @SuppressWarnings("null")
+    private void executeImageMap(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
+        if (sender instanceof Player player) {
+            if (args.length < 3) {
+                player.sendMessage("使用法: /fmc im <create|createqr> <url> [Optional: <title> <comment>]");
+                return;
+            }
+            boolean isQr = args[1].equalsIgnoreCase("createqr"),
+                fromDiscord = (dArgs != null);
+            String playerName = player.getName(),
+                playerUUID = player.getUniqueId().toString(),
+                imageUUID = UUID.randomUUID().toString(),
+                url = args[2],
+                title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
+                comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
+                ext;
+            try (Connection conn = db.getConnection()) {
+                int limitUploadTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
+                    playerUploadTimes = getPlayerTodayCreateImageTimes(conn, playerName),
+                    thisTimes = playerUploadTimes + 1;
+                if (thisTimes > limitUploadTimes) {
+                    player.sendMessage(ChatColor.RED + "1日の登録回数は"+limitUploadTimes+"回までです。");
+                    return;
                 }
-            }
-            serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
-        }
-        return serverImageInfo;
-    }
-
-    public void giveMapToPlayer(Player player, int mapId) {
-        AtomicBoolean found = new AtomicBoolean(false);
-        for (World world : Bukkit.getWorlds()) {
-            for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
-                ItemStack item = itemFrame.getItem();
-                if (item.getType() == Material.FILLED_MAP) {
-                    MapMeta mapMeta = (MapMeta) item.getItemMeta();
-                    if (mapMeta != null && mapMeta.hasMapView()) {
-                        MapView mapView = mapMeta.getMapView();
-                        if (mapView != null && mapView.getId() == mapId) {
-                            found.set(true);
-                            ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
-                            mapMeta.setMapView(mapView);
-                            mapItem.setItemMeta(mapMeta);
-                            player.getInventory().addItem(mapItem);
-                            player.sendMessage("画像マップを渡しました。");
+                if (!isQr && !isValidURL(url)) {
+                    player.sendMessage("無効なURLです。");
+                    return;
+                }
+                LocalDate localDate = LocalDate.now();
+                String now = fromDiscord ? (String) dArgs[1] : localDate.toString();
+                BufferedImage image;
+                if (isQr) {
+                    ext = "png";
+                    image = generateQRCodeImage(url);
+                    saveImageToFileSystem(image, imageUUID, ext);
+                } else {
+                    URL getUrl = new URI(url).toURL();
+                    HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.connect();
+                    String contentType = connection.getContentType();
+                    switch (contentType) {
+                        case "image/png" -> ext = "png";
+                        case "image/jpeg" -> ext = "jpeg";
+                        case "image/jpg" -> ext = "jpg";
+                        default -> {
+                            player.sendMessage("指定のURLは規定の拡張子を持ちません。");
                             return;
                         }
                     }
+                    BufferedImage imageDefault =  ImageIO.read(getUrl);
+                    if (imageDefault == null) {
+                        player.sendMessage(ChatColor.RED + "指定のURLは規定の拡張子を持ちません。");
+                        return;
+                    }
+                    saveImageToFileSystem(imageDefault, imageUUID, ext); // リサイズ前の画像を保存
+                    image = resizeImage(imageDefault, 128, 128);
+                }
+                List<String> lores = new ArrayList<>();
+                lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
+                List<String> commentLines = Arrays.stream(comment.split("\n"))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                lores.addAll(commentLines);
+                lores.add("created by " + playerName);
+                lores.add("at " + now.replace("-", "/"));
+                lores.add("size 1x1(1)");
+                ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+                MapView mapView = Bukkit.createMap(player.getWorld());
+                int mapId = mapView.getId(); // 一意のmapIdを取得
+                mapView.getRenderers().clear();
+                mapView.addRenderer(new ImageMapRenderer(image));
+                var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
+                if (meta != null) {
+                    meta.setDisplayName(title);
+                    meta.setLore(lores);
+                    meta.setMapView(mapView);
+                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
+                    mapItem.setItemMeta(meta);
+                }
+                if (fromDiscord) {
+                    db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, date=?, locked_action=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, now, true, (String) dArgs[0]});
+                } else {
+                    db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
+                }
+                player.getInventory().addItem(mapItem);
+                if (!confirm) {
+                    try (Connection conn3 = db.getConnection()) {
+                        player.spigot().sendMessage(
+                            new TextComponent("画像マップを渡しました。"),
+                            getPlayerTimesComponent(conn3, playerName)[0]
+                        );
+                    } catch (SQLException | ClassNotFoundException e) {
+                        player.sendMessage("すべての画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
+                        logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                        for (StackTraceElement element : e.getStackTrace()) {
+                            logger.error(element.toString());
+                        }
+                    }
+                }
+            } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {
+                player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
+                logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.error(element.toString());
                 }
             }
+        } else {
+            if (sender != null) {
+                sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
+            }
         }
-        if (!found.get()) {
-            // このサーバーに過去あった、もしくは現在あることは確定
-            // ロードして、プレイヤーに上げて、もとのデータベースのmapIDを更新すればいい
-            // このサーバーとmapIdで一致するデータを取得
-            // そのデータを使って、マップを生成
+    }
+
+    @SuppressWarnings("null")
+    private void executeQ(CommandSender sender, String[] args, boolean q, Object[] Args) {
+        if (sender instanceof Player player) {
+            String otp, title, comment, url, date;
+            boolean fromMenu = (Args != null);
             try (Connection conn = db.getConnection()) {
-                Map<String, Object> mapInfo = getMapInfoForThisServerByMapId(conn, mapId);
-                if (!mapInfo.isEmpty()) {
-                    int id = (Integer) mapInfo.get("id");
-                    boolean isQr = (boolean) mapInfo.get("isqr");
-                    String authorName = (String) mapInfo.get("name"),
-                        imageUUID = (String) mapInfo.get("imuuid"),
-                        title = (String) mapInfo.get("title"),
-                        comment = (String) mapInfo.get("comment"),
-                        ext = (String) mapInfo.get("ext"),
-                        date = ((Date) mapInfo.get("date")).toString();
-                    Object[] mArgs = new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date, mapId};
-                    executeImageMapFromGivingMap(player, mArgs);
+                if (!fromMenu) {
+                    if (q) {
+                        otp = args[0];
+                        if (args.length < 1) {
+                            player.sendMessage("使用法: /q <code>");
+                            return;
+                        }
+                    } else {
+                        otp = args[1];
+                        if (args.length < 2) {
+                            player.sendMessage("使用法: /fmc q <code>");
+                            return;
+                        }
+                    }
+                    if (checkOTPIsCorrect(conn, otp)) {
+                        player.sendMessage(ChatColor.GREEN + "認証に成功しました。");
+                        Map<String, Object> imageInfo = getImageInfoByOTP(conn, otp);
+                        title = (String) imageInfo.get("title");
+                        comment = (String) imageInfo.get("comment");
+                        url = (String) imageInfo.get("url");
+                        date = Date.valueOf(((Date) imageInfo.get("date")).toLocalDate()).toString();
+                        // locked->false, nameをプレイヤーネームに更新する
+                        db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, locked=? WHERE otp=?;", new Object[] {player.getName(), player.getUniqueId().toString(), serverName, false, otp});
+                    } else {
+                        player.sendMessage(ChatColor.RED + "ワンタイムパスワードが間違っています。");
+                        return;
+                    }
+                } else {
+                    otp = (String) Args[0];
+                    title = (String) Args[1];
+                    comment = (String) Args[2];
+                    url = (String) Args[3];
+                    date = (String) Args[4];
                 }
+                leadAction(conn, player, ACTIONS_KEY2, new String[] {url, title, comment}, new Object[] {otp, date});
             } catch (SQLException | ClassNotFoundException e) {
-                player.sendMessage("画像の読み取りに失敗しました。");
+                player.sendMessage("データベースとの通信に問題が発生しました。");
                 logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
                     logger.error(element.toString());
                 }
             }
-        }
-    }
-
-    public void loadAndSetImageTile(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView) throws SQLException, ClassNotFoundException {
-        //logger.info("Replacing tile image to the map(No.{})...", mapId);
-        try {
-            BufferedImage tileImage = loadTileImage(conn, mapId);
-            if (tileImage != null) {
-                mapView.getRenderers().clear();
-                mapView.addRenderer(new ImageMapRenderer(tileImage));
-                item.setItemMeta(mapMeta);
-                ImageMap.thisServerMapIds.add(mapId);
-            } else {
-                throw new IOException("Failed to load tile image.");
-            }
-        } catch (IOException e) {
-            logger.error("Failed to load tile image: {}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
+        } else {
+            if (sender != null) {
+                sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
             }
         }
     }
+    
+    private BaseComponent[] getPlayerTimesComponent(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
+        int limitUploadSmallTimes = FMCSettings.IMAGE_LIMIT_TIMES.getIntValue(),
+            limitUploadLargeTimes = FMCSettings.LARGE_IMAGE_LIMIT_TIMES.getIntValue(),
+            playerUploadSmallTimes = getPlayerTodayCreateImageTimes(conn, playerName),
+            playerUploadLargeTimes = getPlayerTodayCreateLargeImageTimes(conn, playerName),
+            thisSmallTimes = playerUploadSmallTimes + 1,
+            thisLargeTimes = playerUploadLargeTimes + 1;
+        TextComponent smallTimes = new TextComponent(playerUploadSmallTimes + "/" + limitUploadSmallTimes),
+            largeTimes = new TextComponent(playerUploadLargeTimes + "/" + limitUploadLargeTimes);
+        smallTimes.setBold(true);
+        smallTimes.setUnderlined(true);
+        largeTimes.setBold(true);
+        largeTimes.setUnderlined(true);
+        if (playerUploadSmallTimes >= limitUploadSmallTimes) {
+            smallTimes.setColor(ChatColor.RED);
+        } else if (thisSmallTimes >= limitUploadSmallTimes) {
+            smallTimes.setColor(ChatColor.YELLOW);
+        } else {
+            smallTimes.setColor(ChatColor.LIGHT_PURPLE);
+        }
+        if (playerUploadLargeTimes >= limitUploadLargeTimes) {
+            largeTimes.setColor(ChatColor.RED);
+        } else if (thisLargeTimes >= limitUploadLargeTimes) {
+            largeTimes.setColor(ChatColor.YELLOW);
+        } else {
+            largeTimes.setColor(ChatColor.GOLD);
+        }
+        return new BaseComponent[] {smallTimes, largeTimes};
+    }
 
-    public void loadAndSetImage(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView) throws SQLException, ClassNotFoundException {
-        //logger.info("Replacing image to the map(No.{})...", mapId);
-        try {
-            BufferedImage image = loadImage(conn, mapId);
-            if (image != null) {
-                image = resizeImage(image, 128, 128);
-                mapView.getRenderers().clear();
-                mapView.addRenderer(new ImageMapRenderer(image));
-                item.setItemMeta(mapMeta);
-                ImageMap.thisServerMapIds.add(mapId);
-            } else {
-                throw new IOException("Failed to load image.");
+    private void leadAction(Connection conn, Player player, String key, String[] usingArgs, Object[] qArgs) throws SQLException, ClassNotFoundException {
+        String playerName = player.getName();
+        boolean fromQ = (qArgs != null);
+        String url = usingArgs[0],
+            title = usingArgs[1],
+            comment = usingArgs[2];
+        // ラージか1✕1かをプレイヤーに問う
+        TextComponent message;
+        if (fromQ) {
+            message = new TextComponent("操作が途中で中断された場合、メニュー->画像マップより再開できます。\n");
+            message.setColor(ChatColor.GRAY);
+        } else {
+            message = new TextComponent();
+        }
+        BaseComponent[] times = getPlayerTimesComponent(conn, playerName);
+        player.spigot().sendMessage(
+            new TextComponent("1✕1の画像マップを作成する場合は、"),
+            TCUtils.ZERO.get(),
+            new TextComponent("と入力してください。"),
+            times[0],
+            new TextComponent("\n"),
+            new TextComponent("1✕1のQRコードコードを作成する場合は、"),
+            TCUtils.ONE.get(),
+            new TextComponent("と入力してください。"),
+            times[0],
+            new TextComponent("\n"),
+            new TextComponent("ラージマップを作成する場合は、"),
+            TCUtils.TWO.get(),
+            new TextComponent("と入力してください。"),
+            times[1],
+            new TextComponent("\n"),
+            message,
+            TCUtils.INPUT_MODE.get()
+        );
+        Map<String, MessageRunnable> playerActions = new HashMap<>();
+        playerActions.put(key, (input) -> {
+            switch (input) {
+                case "0", "1" -> {
+                    removeCancelTaskRunnable(player, key);
+                    String cmd;
+                    if (input.equals("0")) {
+                        cmd = "create";
+                    } else {
+                        cmd = "createqr";
+                    }
+                    player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                    String[] imageArgs = new String[] {"im", cmd, url, title, comment};
+                    executeImageMap(player, imageArgs, qArgs);
+                }
+                case "2" -> {
+                    removeCancelTaskRunnable(player, key);
+                    player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                    String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
+                    executeLargeImageMap(player, imageArgs, qArgs, null, null, null);
+                }
+                default -> {
+                    player.sendMessage(ChatColor.RED + "無効な入力です。\n1または2を入力してください。");
+                    extendTask(player, key);
+                }
             }
-        } catch (IOException e) {
-            logger.error("マップId {} の画像の読み込みに失敗しました: {}", mapId);
-            logger.error("An IOException error occurred: {}", e.getMessage());
+        });
+        addTaskRunnable(player, playerActions, key);
+    }
+
+    private void executeImageMapFromMenu(Player player, Object[] mArgs, boolean isGiveMap) {
+        // このサーバーにはないマップを生成する
+        try (Connection conn = db.getConnection()) {
+            int id = (int) mArgs[0];
+            boolean isQr = (boolean) mArgs[1];
+            String authorName = (String) mArgs[2],
+                imageUUID = (String) mArgs[3],
+                title = (String) mArgs[4],
+                comment = (String) mArgs[5],
+                ext = (String) mArgs[6],
+                date = (String) mArgs[7],
+                fullPath = FMCSettings.IMAGE_FOLDER.getValue() + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
+                playerName = player.getName();
+            BufferedImage image = ImageIO.read(new File(fullPath));
+            image = !isQr ? resizeImage(image, 128, 128) : image;
+            List<String> lores = new ArrayList<>();
+            lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
+            List<String> commentLines = Arrays.stream(comment.split("\n"))
+                                .map(String::trim)
+                                .collect(Collectors.toList());
+            lores.addAll(commentLines);
+            lores.add("created by " + authorName);
+            lores.add("at " + date.replace("-", "/"));
+            ItemStack mapItem = new ItemStack(Material.FILLED_MAP);
+            MapView mapView = Bukkit.createMap(player.getWorld());
+            int mapId = mapView.getId(); // 一意のmapIdを取得
+            mapView.getRenderers().clear();
+            mapView.addRenderer(new ImageMapRenderer(image));
+            var meta = (org.bukkit.inventory.meta.MapMeta) mapItem.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName(title);
+                meta.setLore(lores);
+                meta.setMapView(mapView);
+                meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
+                mapItem.setItemMeta(meta);
+            }
+            Map<String, String> modifyMap = new HashMap<>();
+            modifyMap.put("menu", "true");
+            modifyMap.put("menuer", "\"" + playerName + "\"");
+            modifyMap.put("server", "\"" + serverName + "\"");
+            modifyMap.put("mapid", String.valueOf(mapId));
+            copyLineFromMenu(conn, id, modifyMap);
+            if (isGiveMap) {
+                // mapIdを更新する必要がある
+                // なぜなら、このサーバーにはないマップを生成するため
+                // giveMapメソッドで、そのワールド内にないことは確認済みなので
+                db.updateLog(conn, "UPDATE images SET mapid=? WHERE id=?;", new Object[] {mapId, id});
+            }
+            player.getInventory().addItem(mapItem);
+            if (!isGiveMap) {
+                player.sendMessage("画像マップを渡しました。");
+            }
+        } catch (IOException | SQLException | ClassNotFoundException e) {
+            player.sendMessage("画像の読み取りに失敗しました。");
+            logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
             }

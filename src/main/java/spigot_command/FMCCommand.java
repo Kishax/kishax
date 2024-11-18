@@ -103,16 +103,12 @@ public class FMCCommand implements TabExecutor {
 						return true;
 					}
 					switch (args[1].toLowerCase()) {
-						case "create","createqr" -> {
-							Main.getInjector().getInstance(ImageMap.class).executeImageMap(sender, cmd, label, args, null);
+						case "create" -> {
+							Main.getInjector().getInstance(ImageMap.class).executeImageMapLeading(sender, args);
 							return true;
 						}
 						case "q" -> {
-							Main.getInjector().getInstance(ImageMap.class).executeQ(sender, cmd, label, args, false);
-							return true;
-						}
-						case "largecreate" -> {
-							Main.getInjector().getInstance(ImageMap.class).executeLargeImageMap(sender, args, null, null, null, null);
+							Main.getInjector().getInstance(ImageMap.class).executeQ(sender, args, false);
 							return true;
 						}
 					}
