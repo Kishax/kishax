@@ -41,11 +41,8 @@ public class Main {
 		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("An error occurred while updating the database: {}", e.getMessage());
 		}
-		//getInjector().getInstance(TPSUtils.class).startTickMonitor();
-		//plugin.getServer().getScheduler().runTaskTimer(plugin, getInjector().getInstance(TPSUtils.class)::log, 0L, 100L);
-		plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-			logger.info("TPS: {}", TPSUtils2.getTPS());
-		}, 0L, 100L);
+		/*plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+		}, 0L, 100L);*/
 		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
 	    plugin.saveDefaultConfig();
 		getInjector().getInstance(PortalsConfig.class).createPortalsConfig();
