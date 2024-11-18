@@ -175,7 +175,7 @@ public class ImageMap {
                         }
                         player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
                         String[] imageArgs = new String[] {"im", cmd, url, title, comment};
-                        executeImageMap(sender, command, label, imageArgs, new Object[] {otp, date});
+                        executeImageMap(sender, null, null, imageArgs, new Object[] {otp, date});
                     }
                     case "2" -> {
                         removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
@@ -203,6 +203,122 @@ public class ImageMap {
 
     public void executeImageMapFromMenu(Player player, Object[] mArgs) {
         executeImageMapFromMenu(player, mArgs, false);
+    }
+
+    private void executeImageMapLeading(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
+        if (sender instanceof Player player) {
+            if (args.length < 3) {
+                player.sendMessage("使用法: /fmc im <create> <url> [Optional: <title> <comment>]");
+                return;
+            }
+            String url = args[2],
+                title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
+                comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし";
+            // ラージか1✕1かをプレイヤーに問う
+            TextComponent message = new TextComponent("操作が途中で中断された場合、メニュー->画像マップより再開できます。\n");
+            message.setColor(ChatColor.GRAY);
+            player.spigot().sendMessage(
+                new TextComponent("1✕1の画像マップを作成する場合は、"),
+                TCUtils.ZERO.get(),
+                new TextComponent("と入力してください。\n"),
+                new TextComponent("1✕1のQRコードコードを作成する場合は、"),
+                TCUtils.ONE.get(),
+                new TextComponent("と入力してください。\n"),
+                new TextComponent("ラージマップを作成する場合は、"),
+                TCUtils.TWO.get(),
+                new TextComponent("と入力してください。\n"),
+                message,
+                TCUtils.INPUT_MODE.get()
+            );
+            Map<String, MessageRunnable> playerActions = new HashMap<>();
+            playerActions.put(ImageMap.ACTIONS_KEY2, (input) -> {
+                switch (input) {
+                    case "0", "1" -> {
+                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
+                        String cmd;
+                        if (input.equals("0")) {
+                            cmd = "create";
+                        } else {
+                            cmd = "createqr";
+                        }
+                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                        String[] imageArgs = new String[] {"im", cmd, url, title, comment};
+                        executeImageMap(sender, null, null, imageArgs, null);
+                    }
+                    case "2" -> {
+                        removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
+                        player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                        String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
+                        executeLargeImageMap(sender, imageArgs, null, null, null, null);
+                    }
+                    default -> {
+                        player.sendMessage(ChatColor.RED + "無効な入力です。\n1または2を入力してください。");
+                        extendTask(player, ImageMap.ACTIONS_KEY2);
+                    }
+                }
+            });
+            addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY2);
+        } else {
+            if (sender != null) {
+                sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
+            }
+        }
+    }
+
+    private void leadAction(Player player, String key, String[] usingArgs, Object[] qArgs) {
+        boolean fromQ = (qArgs != null);
+        String url = usingArgs[0],
+            title = usingArgs[1],
+            comment = usingArgs[2];
+        // ラージか1✕1かをプレイヤーに問う
+        TextComponent message;
+        if (fromQ) {
+            message = new TextComponent("操作が途中で中断された場合、メニュー->画像マップより再開できます。\n");
+            message.setColor(ChatColor.GRAY);
+        } else {
+            message = new TextComponent();
+        }
+        player.spigot().sendMessage(
+            new TextComponent("1✕1の画像マップを作成する場合は、"),
+            TCUtils.ZERO.get(),
+            new TextComponent("と入力してください。\n"),
+            new TextComponent("1✕1のQRコードコードを作成する場合は、"),
+            TCUtils.ONE.get(),
+            new TextComponent("と入力してください。\n"),
+            new TextComponent("ラージマップを作成する場合は、"),
+            TCUtils.TWO.get(),
+            new TextComponent("と入力してください。\n"),
+            message,
+            TCUtils.INPUT_MODE.get()
+        );
+        Map<String, MessageRunnable> playerActions = new HashMap<>();
+        playerActions.put(key, (input) -> {
+            switch (input) {
+                case "0", "1" -> {
+                    removeCancelTaskRunnable(player, key);
+                    String cmd;
+                    if (input.equals("0")) {
+                        cmd = "create";
+                    } else {
+                        cmd = "createqr";
+                    }
+                    player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                    String[] imageArgs = new String[] {"im", cmd, url, title, comment};
+                    executeImageMap(player, null, null, imageArgs, qArgs);
+                }
+                case "2" -> {
+                    removeCancelTaskRunnable(player, ImageMap.ACTIONS_KEY2);
+                    player.spigot().sendMessage(new TCUtils2(input).getResponseComponent());
+                    String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
+                    executeLargeImageMap(player, imageArgs, qArgs, null, null, null);
+                }
+                default -> {
+                    player.sendMessage(ChatColor.RED + "無効な入力です。\n1または2を入力してください。");
+                    extendTask(player, key);
+                }
+            }
+        });
+        addTaskRunnable(player, playerActions, key);
     }
 
     private void executeImageMapFromMenu(Player player, Object[] mArgs, boolean isGiveMap) {
