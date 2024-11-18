@@ -146,7 +146,7 @@ public class SocketResponse {
 				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
             }
     	} else if (res.contains("fv")) {
-			logger.info("resaction: "+res);
+			//logger.info("resaction: "+res);
     		if (res.contains("\\n")) res = res.replace("\\n", "");
     		String pattern = "(\\S+) fv (\\S+) (.+)";
             java.util.regex.Pattern r = java.util.regex.Pattern.compile(pattern);

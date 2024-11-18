@@ -39,7 +39,7 @@ public class Inventory {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 String playerName = player.getName();
-                logger.info("Updating player's inventory: {}", player.getName());
+                //logger.info("Updating player's inventory: {}", player.getName());
                 boolean hasMenuBook = false;
                 try (Connection conn = db.getConnection()) {
                     for (ItemStack item : player.getInventory().getContents()) {

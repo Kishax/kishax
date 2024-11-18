@@ -5,12 +5,14 @@ import java.util.Objects;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin {
+    private spigot.Main main;
 	private final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("FMC-Plugin");
     @Override
     public void onEnable() {
         try {
             if (!isVelocity()) {
-                new spigot.Main(this, logger).onEnable();
+                main = new spigot.Main(this, logger);
+                main.onEnable();
             }
         } catch (Exception e) {
             logger.error("An Exception error occurred: {}", e.getMessage());
@@ -24,7 +26,7 @@ public class Main extends JavaPlugin {
     public void onDisable() {
     	try {
             if (!isVelocity()) {
-            	new spigot.Main(this, logger).onDisable();
+            	main.onDisable();
             }
         } catch (Exception e) {
             logger.error("An Exception error occurred: {}", e.getMessage());

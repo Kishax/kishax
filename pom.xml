@@ -38,6 +38,12 @@
       </repository>
    </repositories>
    <dependencies>
+      <!-- https://mvnrepository.com/artifact/redis.clients/jedis -->
+      <dependency>
+         <groupId>redis.clients</groupId>
+         <artifactId>jedis</artifactId>
+         <version>5.2.0</version>
+      </dependency>
       <dependency>
          <groupId>de.timongcraft</groupId>
          <artifactId>VeloBoard</artifactId>
@@ -80,9 +86,15 @@
       <dependency>
          <groupId>io.papermc.paper</groupId>
          <artifactId>paper-api</artifactId>
-         <version>[1.20.6,1.22)</version>
+         <version>1.21.3-R0.1-SNAPSHOT</version>
          <scope>provided</scope>
       </dependency>
+      <!--<dependency>
+         <groupId>io.papermc.paper</groupId>
+         <artifactId>paper-api</artifactId>
+         <version>[1.20.6,1.22)</version>
+         <scope>provided</scope>
+      </dependency>-->
       <dependency>
          <groupId>net.luckperms</groupId>
          <artifactId>api</artifactId>

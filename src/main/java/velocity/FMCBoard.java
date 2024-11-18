@@ -20,6 +20,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 public class FMCBoard {
     private final Main plugin;
     private final ProxyServer server;
+    @SuppressWarnings("unused")
     private final Logger logger;
     private final Map<UUID, VeloBoard> boards = new HashMap<>();
     @Inject
@@ -31,8 +32,9 @@ public class FMCBoard {
 
     public void updateScheduler() {
         server.getScheduler().buildTask(plugin, () -> {
-            for (VeloBoard board : getBoards().values())
+            for (VeloBoard board : getBoards().values()) {
                 updateBoard(board);
+            }
         }).repeat(Duration.ofSeconds(1)).schedule();
     }
 
@@ -40,7 +42,7 @@ public class FMCBoard {
         VeloBoard board = boards.get(uuid);
         if (board != null) {
             board.resend();
-            logger.info("Board resent for player UUID: " + uuid);
+            //logger.info("Board resent for player UUID: " + uuid);
         }
     }
 
@@ -48,7 +50,7 @@ public class FMCBoard {
         VeloBoard board = new VeloBoard(player);
         board.updateTitle(Component.text("FMC Server").color(NamedTextColor.GOLD));
         getBoards().put(player.getUniqueId(), board);
-        logger.info("Board added for player: " + player.getUsername());
+        //logger.info("Board added for player: " + player.getUsername());
     }
 
     public void removeBoard(UUID uuid) {
