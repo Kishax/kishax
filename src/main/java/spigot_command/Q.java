@@ -20,7 +20,7 @@ public class Q implements TabExecutor {
             sender.sendMessage("Usage: /q <code>");
             return true;
         }
-        Main.getInjector().getInstance(ImageMap.class).executeQ(sender, cmd, label, args, true);
+        Main.getInjector().getInstance(ImageMap.class).executeQ(sender, args, true);
         return true;
     }
 
