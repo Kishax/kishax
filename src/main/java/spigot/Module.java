@@ -62,6 +62,5 @@ public class Module extends AbstractModule {
 		bind(Inventory.class);
 		bind(FMCItemFrame.class);
 		bind(CommandForward.class);
-		bind(TPSUtils.class).in(com.google.inject.Scopes.SINGLETON);
     }
 }
