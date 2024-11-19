@@ -15,6 +15,7 @@
 		<module>v1_21_1</module>
 	</modules>
 	<properties>
+		<maven.compiler.release>17</maven.compiler.release>
 		<thumbnailator.version>0.4.20</thumbnailator.version>
 		<zxing.core.version>3.4.1</zxing.core.version>
 		<zxing.javase.version>3.4.1</zxing.javase.version>

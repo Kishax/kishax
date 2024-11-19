@@ -85,7 +85,7 @@ public class StopServer {
 		try (Connection conn = db.getConnection()) {
             Map<String, Map<String, Object>> statusMap = dso.loadStatusTable(conn);
             statusMap.entrySet().stream()
-                .filter(entry -> entry.getKey() instanceof String serverName && serverName.equals(targetServerName))
+                .filter(entry -> entry.getKey() instanceof String && entry.getKey().equals(targetServerName))
                 .forEach(entry -> {
 				Map<String, Object> serverInfo = entry.getValue();
 				if (serverInfo.get("online") instanceof Boolean online && !online) {

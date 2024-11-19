@@ -75,7 +75,7 @@ public class ServerStatusCache {
 							rowMap.put(columnName, rs.getObject(columnName));
 						}
 					}
-                    newServerStatusMap.computeIfAbsent(serverType, _ -> new HashMap<>()).put(serverName, rowMap);
+                    newServerStatusMap.computeIfAbsent(serverType, _p -> new HashMap<>()).put(serverName, rowMap);
                 }
     
                 // サーバーネームをアルファベット順にソート
@@ -90,7 +90,7 @@ public class ServerStatusCache {
                         .collect(Collectors.toMap(
                             Map.Entry::getKey,
                             Map.Entry::getValue,
-                            (e1, _) -> e1,
+                            (e1, _p) -> e1,
                             LinkedHashMap::new
                         ));
     

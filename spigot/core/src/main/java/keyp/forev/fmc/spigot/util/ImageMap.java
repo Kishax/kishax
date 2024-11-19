@@ -153,7 +153,7 @@ public class ImageMap {
                 String columnName = rs.getMetaData().getColumnName(i);
                 rowMap.put(columnName, rs.getObject(columnName));
             }
-            imageInfo.computeIfAbsent(index, _ -> rowMap);
+            imageInfo.computeIfAbsent(index, _p -> rowMap);
             index++;
         }
         return imageInfo;
@@ -175,7 +175,7 @@ public class ImageMap {
                     rowMap.put(columnName, rs.getObject(columnName));
                 }
             }
-            serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
+            serverImageInfo.computeIfAbsent(mapId, _p -> rowMap);
         }
         return serverImageInfo;
     }
@@ -523,7 +523,7 @@ public class ImageMap {
                             });
                             addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY);
                         });
-                        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.chooseColorInventoryName, playerMenuActions);
+                        Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Menu.chooseColorInventoryName, playerMenuActions);
                         player.spigot().sendMessage(TCUtils.LATER_OPEN_INV_5.get());
                         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                             player.openInventory(inv);

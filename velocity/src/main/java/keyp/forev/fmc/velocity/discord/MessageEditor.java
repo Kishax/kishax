@@ -109,14 +109,10 @@ public class MessageEditor implements MessageEditorInterface {
 	@SuppressWarnings("null")
 	private CompletableFuture<Void> AddEmbedSomeMessage (String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName, String chatMessage, UUID playerUUID) {
 		if (Objects.isNull(player)) {
-			// player変数がnullかつalternativePlayerNameが与えられていたとき
 			if (Objects.nonNull(alternativePlayerName)) {
-				// データベースからuuidを取ってくる
 				uuid = pu.getPlayerUUIDByNameFromDB(alternativePlayerName);
 				playerName = alternativePlayerName;
 			} else if (Objects.nonNull(playerUUID)) {
-				// プレイヤー変数がnullかつalternativePlayerNameがnullかつplayerUUIDが与えられていた時
-				// データベースからnameを取ってくる
 				uuid = playerUUID.toString();
 				playerName = pu.getPlayerNameByUUIDFromDB(uuid);
 			}
@@ -139,14 +135,13 @@ public class MessageEditor implements MessageEditorInterface {
             }
 		}
 	    return CompletableFuture.allOf(EmojiFutureId, FaceEmojiFutureId)
-				.thenCompose((var _) -> {
+				.thenCompose((var _p) -> {
 	        try {
 	            if (Objects.nonNull(serverInfo)) {
 	                currentServerName = serverInfo.getName();
 	            } else {
 	                currentServerName = "";
 	            }
-
 	            if (Objects.isNull(serverName)) {
 	                targetServerName = "";
 	            } else {
@@ -156,16 +151,13 @@ public class MessageEditor implements MessageEditorInterface {
 	            String FaceEmojiId = FaceEmojiFutureId.get(); // minecraftのアバターの顔の絵文字Id取得
 	            Emoji = emoji.getEmojiString(EmojiName, EmojiId);
 	            FaceEmoji = emoji.getEmojiString(playerName, FaceEmojiId);
-	            
 	            String messageId = EventListener.PlayerMessageIds.getOrDefault(uuid, null);
 	            String chatMessageId = DiscordEventListener.PlayerChatMessageId;
-	            
 	            addMessage = null;
 	            switch (type) {
 	            	case "End" -> {
 						List<CompletableFuture<Void>> futures = new ArrayList<>();
 						for (Player eachPlayer : server.getAllPlayers()) {
-							// プレイヤーの現在のサーバーを取得
 							CompletableFuture<Void> future = eachPlayer.getCurrentServer()
 									.map(serverConnection -> {
 										RegisteredServer registerServer = serverConnection.getServer();
@@ -173,17 +165,13 @@ public class MessageEditor implements MessageEditorInterface {
 										// AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
 										return AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo);
 									}).orElse(CompletableFuture.completedFuture(null)); // サーバーが取得できない場合は即完了するFuture
-							
 							futures.add(future);
 						}
-						
-						// 全ての非同期処理が完了するのを待つ
 						CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
 								.thenRun(() -> {
 									// 全てのAddEmbedSomeMessageの処理が完了した後に実行される
 									discord.logoutDiscordBot().thenRun(() -> server.shutdown());
 								});
-						
 						return CompletableFuture.completedFuture(null);
                     }
 	            	case "Exit" -> {
@@ -198,12 +186,8 @@ public class MessageEditor implements MessageEditorInterface {
 								}
 							}
 							String convStringTime = secondsToStr(playTime);
-							// すべての処理が完了するまで待つ
 							CompletableFuture<Void> editFuture = CompletableFuture.completedFuture(null);
-							
-							// Velocityサーバー停止のフラグが立っていたら
 							if (!Main.isVelocity) {
-								// poweroffの絵文字を取りに行く
 								String EndEmojiName = config.getString("Discord.EndEmojiName","");
 								editFuture = emoji.createOrgetEmojiId(EndEmojiName).thenAccept(EndEmojiId -> {
 									if (Objects.nonNull(EndEmojiId)) {
@@ -212,11 +196,8 @@ public class MessageEditor implements MessageEditorInterface {
 												currentServerName + "サーバーから退出しました。\n\n:alarm_clock: プレイ時間: " + convStringTime;
 									}
 								});
-								
-								// 編集を行う
-								return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
+								return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
 							} else if (Maintenance.isMente) {
-								// メンテのフラグが立っていたら
 								Maintenance.isMente = false;
 								addMessage = String.format("""
              
@@ -226,11 +207,10 @@ public class MessageEditor implements MessageEditorInterface {
 								
 								:alarm_clock: プレイ時間: %s
 								""", Emoji, FaceEmoji, playerName, currentServerName, convStringTime);
-
 								if (!player.hasPermission("group.super-admin")) {
 									EventListener.PlayerMessageIds.remove(uuid);
 									// 編集を行う
-									return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
+									return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
 								}
 							} else {
 								addMessage = String.format("""
@@ -240,32 +220,24 @@ public class MessageEditor implements MessageEditorInterface {
 								
 									:alarm_clock: プレイ時間: %s
 								""",Emoji, FaceEmoji, playerName, currentServerName, convStringTime);
-
 								EventListener.PlayerMessageIds.remove(uuid);
-								// 編集を行う
-								return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
+								return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
 							}
-							
-							// 編集を行う
-							return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
+							return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
 						}
-
 						return CompletableFuture.completedFuture(null);
                     }
-	                	
 	            	case "MenteOn" -> {
 						if (Objects.nonNull(Emoji)) {
 							addMessage = Emoji + "メンテナンスモードが有効になりました。\nいまは遊べないカッ...";
 						} else {
 							addMessage = "メンテナンスモードが有効になりました。";
 						}
-						
 						createEmbed = discord.createEmbed (
 										addMessage,
 										ColorUtil.AQUA.getRGB()
 									);
 						discord.sendBotMessage(createEmbed);
-						
 						for (Player eachPlayer : server.getAllPlayers()) {
 							// プレイヤーの現在のサーバーを取得
 							Optional<ServerConnection> optionalServerConnection = eachPlayer.getCurrentServer();
@@ -277,17 +249,14 @@ public class MessageEditor implements MessageEditorInterface {
 								AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo);
 							}
 						}
-						
 						return CompletableFuture.completedFuture(null);
                     }
-	            	
 	            	case "MenteOff" -> {
 						if (Objects.nonNull(Emoji)) {
 							addMessage = Emoji + "メンテナンスモードが無効になりました。\nまだまだ遊べるドン！";
 						} else {
 							addMessage = "メンテナンスモードが無効になりました。";
 						}
-						
 						createEmbed = discord.createEmbed (
 										addMessage,
 										ColorUtil.RED.getRGB()
@@ -295,7 +264,6 @@ public class MessageEditor implements MessageEditorInterface {
 						discord.sendBotMessage(createEmbed);
 						return CompletableFuture.completedFuture(null);
                     }
-	            		
 	            	case "Invader" -> {
 						// Invader専用の絵文字は追加する予定はないので、Emojiのnullチェックは不要
 						if (Objects.nonNull(FaceEmoji)) {
@@ -312,7 +280,6 @@ public class MessageEditor implements MessageEditorInterface {
 
 						return CompletableFuture.completedFuture(null);
                     }
-	            		
 	            	case "Chat" -> {
 						// Chat専用の絵文字は追加する予定はないので、Emojiのnullチェックは不要
 						if (Objects.nonNull(FaceEmoji)) {
@@ -353,10 +320,8 @@ public class MessageEditor implements MessageEditorInterface {
 								discord.sendWebhookMessage(builder);
 							}
 						}
-
 						return CompletableFuture.completedFuture(null);
                     }
-	            		
 	            	case "AddMember" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 							addMessage = Emoji + FaceEmoji +
@@ -364,7 +329,6 @@ public class MessageEditor implements MessageEditorInterface {
 						} else {
 							addMessage = playerName + "が新規FMCメンバーになりました！:congratulations: ";
 						}
-						
 						createEmbed = discord.createEmbed (
 											addMessage,
 											ColorUtil.PINK.getRGB()
@@ -449,10 +413,8 @@ public class MessageEditor implements MessageEditorInterface {
 								logger.error(element.toString());
 							}
 						}
-
 						return CompletableFuture.completedFuture(null);
                     }
-                        
 	                case "FirstJoin" -> {
 						String query = "INSERT INTO members (name, uuid, server, emid) VALUES (?, ?, ?, ?);";
 						try (Connection conn = db.getConnection();
@@ -489,10 +451,8 @@ public class MessageEditor implements MessageEditorInterface {
 								logger.error(element.toString());
 							}
 						}
-
 						return CompletableFuture.completedFuture(null);
                     }
-	
 	                case "RequestOK" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 							addMessage = Emoji + "管理者が" + FaceEmoji + playerName + "の" +
@@ -503,10 +463,8 @@ public class MessageEditor implements MessageEditorInterface {
 											);
 							discord.sendBotMessage(sendEmbed);
 						}
-
 						return CompletableFuture.completedFuture(null);
                     }
-	
 	                case "RequestCancel" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 							addMessage = Emoji + "管理者が" + FaceEmoji + playerName + "の" +
@@ -519,7 +477,6 @@ public class MessageEditor implements MessageEditorInterface {
 						}
 						return CompletableFuture.completedFuture(null);
                     }
-	
 	                case "RequestNoRes" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
 							addMessage = Emoji + "管理者が" + FaceEmoji + playerName + "の" +
@@ -532,7 +489,6 @@ public class MessageEditor implements MessageEditorInterface {
 						}
 						return CompletableFuture.completedFuture(null);
 					}
-	
 	                default -> {
 						return CompletableFuture.completedFuture(null);
 					}
