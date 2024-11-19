@@ -9,12 +9,12 @@ Freely to edit!<br>
 ## Linkage to Discord
 For Velocity Server, Velocity Server notifys Embed's message or plain-text-message under each events.<br>
 When server switching, joining, disconnecting like this.<br>
-![alt text](images/event_message.png)<br>
+![alt text](.images/event_message.png)<br>
 When chatting like this.<br>
-![alt text](images/chat_message2.png)
+![alt text](.images/chat_message2.png)
 ## Convert Romaji to Kanji
 This brings an automatic chat conversion Romaji to Kanji like this.<br>
-![alt text](images/chat_conv.png)
+![alt text](.images/chat_conv.png)
 ## Velocity Command list
 ### `/hub`
 ### `/fmcp hub`
@@ -22,7 +22,7 @@ Moving to hub server<br>
 ### `/fmcp cend`
 After executing, Velocity will be shutdown!<br>
 Before being shutdown, discord's embed editing like this.
-![alt text](images/proxy_shutdown.png)
+![alt text](.images/proxy_shutdown.png)
 ### `/fmcp maintenance <status | switch> discord <true | false>`
 This enable server to be maintenance mode, which is that for example, it is openable for only Admin who has permission:group.super-admin, others disconnecting.<br>
 If arg5 sets "true", server can notify to Discord whether maintenance mode is true or not.<br>
@@ -36,11 +36,11 @@ In FMC Server, using python script for getting minecrafts' status<br>
 Moving to specific server as server command
 ### `/fmcp req <server>`
 Requesting to let server start-up to Admin through discord like this.<br>
-![alt text](images/req_button.png)<br>
+![alt text](.images/req_button.png)<br>
 If someone presses `YES` button, here will be like this.<br>
-![alt text](images/reqsul_notification.png)<br>
+![alt text](.images/reqsul_notification.png)<br>
 Here is minecraft's player chat area.<br>
-![alt text](images/req_minecraft_chat.png)<br>
+![alt text](.images/req_minecraft_chat.png)<br>
 ### `/fmcp start <server>`
 Let server start by bat file of windows
 ### `/fmcp cancel`
@@ -51,9 +51,9 @@ Switching converting type of Romaji to Kanji, reloading romaji.csv from `plugins
 Switching the way of sending chating message to Discord. <br>
 There are Embed editing type or Plane text message type.<br>
 * Embed editing type (Using Bot)<br>
-![alt text](images/embed_editing_type.png)<br>
+![alt text](.images/embed_editing_type.png)<br>
 * Plane text message type (Using Webhook)<br>
-![alt text](images/plain_text_message_type.png)<br>
+![alt text](.images/plain_text_message_type.png)<br>
 ### `/fmcp debug`
 Switching debug mode. In details, this is only replacing config value each other. For example, Discord.ChannelId and Debug.ChannelId.
 ### `/fmcp reload`
