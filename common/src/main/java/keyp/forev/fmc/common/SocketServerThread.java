@@ -13,10 +13,12 @@ public class SocketServerThread extends Thread {
     public static AtomicReference<String> platform = new AtomicReference<>();
     public Logger logger;
     private final Socket socket;
+    private final SocketResponse response;
     
-    public SocketServerThread (Logger logger, Socket socket) {
+    public SocketServerThread(Logger logger, Socket socket, SocketResponse response) {
         this.logger = logger;
         this.socket = socket;
+        this.response = response;
     }
 
     @Override
@@ -30,13 +32,11 @@ public class SocketServerThread extends Thread {
             String receivedMessage = receivedMessageBuilder.toString();
             // プラットフォームによって、receivedMessageを処理するメソッドを分ける
             switch (SocketServerThread.platform.get()) {
-                case "velocity" -> {
-                    velocity.core.main.Main.getInjector().getInstance(velocity.core.main.SocketResponse.class).resaction(receivedMessage);
-                }
                 case "spigot" -> {
-                    spigot.core.main.Main.getInjector().getInstance(spigot.core.main.SocketResponse.class).resaction(receivedMessage);
+                    response.resaction(receivedMessage);
                 }
             }
+            response.resaction(receivedMessage);
         } catch (Exception e) {
             logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {

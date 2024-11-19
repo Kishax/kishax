@@ -23,15 +23,15 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
+import keyp.forev.fmc.common.Database;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
-import velocity.src.main.java.keyp.forev.fmc.core.main.GeyserMC;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.util.GeyserMC;
 
 public class EmojiManager {
     public static String beDefaultEmojiId = null;

@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import common.Database;
-import common.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.SocketSwitch;
 
 public class DoServerOffline {
 	private final Logger logger;

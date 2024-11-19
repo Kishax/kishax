@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.util.Objects;
 
@@ -6,12 +6,13 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 import com.google.inject.Inject;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class MCVC {
-	private final keyp.forev.fmc.spigot.Main plugin;
+	private final JavaPlugin plugin;
 	
 	@Inject
-	public MCVC(common.Main plugin) {
+	public MCVC(JavaPlugin plugin) {
 		this.plugin = plugin;
 	}
 	

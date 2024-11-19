@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -11,10 +11,10 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import common.Database;
-import common.Luckperms;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
 import net.md_5.bungee.api.ChatColor;
-import spigot.core.main.ServerHomeDir;
+import keyp.forev.fmc.spigot.util.ServerHomeDir;
 
 public class SetPoint {
     private final Logger logger;

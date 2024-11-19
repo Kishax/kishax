@@ -21,13 +21,12 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.SocketSwitch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class DoServerOnline {
-    private final Main plugin;
 	private final ConfigUtils cutils;
     private final Logger logger;
     private final ProxyServer server;
@@ -37,8 +36,7 @@ public class DoServerOnline {
 	private final Set<String> addedColumnSet = new HashSet<>();
     
     @Inject
-    public DoServerOnline(Main plugin, ConfigUtils cutils, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, Provider<SocketSwitch> sswProvider) {
-    	this.plugin = plugin;
+    public DoServerOnline(ConfigUtils cutils, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, Provider<SocketSwitch> sswProvider) {
 		this.cutils = cutils;
     	this.logger = logger;
     	this.db = db;
@@ -161,7 +159,7 @@ public class DoServerOnline {
 	}
 
 	private void updateDatabase(boolean isCmd) {
-		server.getScheduler().buildTask(plugin, () -> {
+		server.getScheduler().buildTask(server, () -> {
 			try (Connection conn = db.getConnection()) {
 				// コマンドから実行していなければ
 				if (!isCmd) {

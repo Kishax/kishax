@@ -15,12 +15,12 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.Luckperms;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
-import velocity.src.main.java.keyp.forev.fmc.core.main.DoServerOnline;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.util.DoServerOnline;
 
 public class ServerTeleport implements SimpleCommand {
     private final Logger logger;

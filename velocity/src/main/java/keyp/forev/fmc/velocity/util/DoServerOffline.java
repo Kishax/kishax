@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.SocketSwitch;
 
 public class DoServerOffline {
     private final Logger logger;

@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,16 +15,17 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class Rcon {
 	public static boolean isMCVC = false;
-	private final keyp.forev.fmc.spigot.Main plugin;
+	private final JavaPlugin plugin;
 	private final Logger logger;
 	private volatile boolean isRconActive = false;
 	private Thread rconMonitorThread;
 	
 	@Inject
-	public Rcon(common.Main plugin, Logger logger) {
+	public Rcon(JavaPlugin plugin, Logger logger) {
 		this.plugin = plugin;
 		this.logger = logger;
 	}

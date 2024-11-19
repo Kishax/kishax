@@ -1,4 +1,4 @@
-package keyp.forev.fmc.velocity.util;
+package keyp.forev.fmc.velocity.events;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,23 +37,30 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.PermSettings;
-import common.src.main.java.keyp.forev.fmc.main.PlayerUtils;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.PermSettings;
+import keyp.forev.fmc.common.PlayerUtils;
+import keyp.forev.fmc.velocity.util.BroadCast;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.util.FMCBoard;
+import keyp.forev.fmc.velocity.util.GeyserMC;
+import keyp.forev.fmc.velocity.util.MineStatus;
+import keyp.forev.fmc.velocity.util.PlayerDisconnect;
+import keyp.forev.fmc.velocity.util.RomaToKanji;
+import keyp.forev.fmc.velocity.util.RomajiConversion;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import velocity.src.main.java.keyp.forev.fmc.core.command.Maintenance;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.DiscordEventListener;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.MessageEditorInterface;
+import keyp.forev.fmc.velocity.cmd.Maintenance;
+import keyp.forev.fmc.velocity.discord.DiscordEventListener;
+import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
 
 public class EventListener {
 	public static Set<String> playerInputers = new HashSet<>();
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
 	public static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
-	public final Main plugin;
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -75,8 +82,7 @@ public class EventListener {
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 	@Inject
-	public EventListener (Main plugin, Logger logger, ProxyServer server, Config config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb) {
-		this.plugin = plugin;
+	public EventListener (Logger logger, ProxyServer server, Config config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb) {
 		this.logger = logger;
 		this.server = server;
 		this.config = config;
@@ -118,7 +124,7 @@ public class EventListener {
         for (int i = 0; i <= NameCount; i++) {
             space.append('\u0020');  // Unicodeのスペースを追加
         }
-        server.getScheduler().buildTask(plugin, () -> {
+        server.getScheduler().buildTask(server, () -> {
         	try {
         		// 正規表現パターンを定義（URLを見つけるための正規表現）
     		    String urlRegex = "https?://\\S+";
@@ -309,7 +315,7 @@ public class EventListener {
 		} else {
 			logger.info("Java player connected: " + playerName);
 		}
-		server.getScheduler().buildTask(plugin, () -> {
+		server.getScheduler().buildTask(server, () -> {
 			try (Connection conn = db.getConnection()) {
 				if (db.isMaintenance(conn)) {
 					List<String> menteAllowMembers = mt.getMenteAllowMembers();
@@ -541,7 +547,7 @@ public class EventListener {
 		});
     	Runnable task = () -> {
             // プレイヤーがReconnectしなかった場合に実行する処理
-    		server.getScheduler().buildTask(plugin, () -> {
+    		server.getScheduler().buildTask(server, () -> {
     			// プレイヤーが最後にいたサーバーを取得
     	        player.getCurrentServer().ifPresent(currentServer -> {
     	            RegisteredServer registeredServer = currentServer.getServer();

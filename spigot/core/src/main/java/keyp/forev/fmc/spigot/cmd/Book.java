@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,12 +13,14 @@ import org.bukkit.persistence.PersistentDataType;
 import com.google.inject.Inject;
 
 import net.md_5.bungee.api.ChatColor;
+import org.bukkit.plugin.java.JavaPlugin;
+import keyp.forev.fmc.common.FMCSettings;
 
 public class Book {
     public static final String PERSISTANT_KEY = "custom_book";
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     @Inject
-    public Book(common.Main plugin) {
+    public Book(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -33,7 +35,7 @@ public class Book {
     }
 
     public BookMeta setBookItemMeta(BookMeta meta) {
-        String rulebook = common.FMCSettings.RULEBOOK_CONTENT.getValue();
+        String rulebook = FMCSettings.RULEBOOK_CONTENT.getValue();
         if (rulebook != null) {
             List<String> pages = new ArrayList<>(List.of(rulebook.split("%%")));
             String title = "ルールガイド";
@@ -54,13 +56,6 @@ public class Book {
                         lines.set(j, formatText(line));
                     }
                 }
-                //pages.set(k + 1, String.join("\n", eachLine));
-                //meta.setPage(k + 1, String.join("\n", eachLine));
-                /*if (k < pages.size()) {
-                    pages.set(k, String.join("\n", eachLine));
-                } else {
-                    pages.add(String.join("\n", eachLine));
-                }*/
                 pages.set(i, String.join("\n", lines));
             }
             meta.getPersistentDataContainer().set(new NamespacedKey(plugin, PERSISTANT_KEY), PersistentDataType.STRING, "true");

@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +10,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import com.google.inject.Inject;
 
-import common.JavaUtils;
-import spigot.core.main.PortalsConfig;
+import keyp.forev.fmc.common.JavaUtils;
+import keyp.forev.fmc.spigot.util.PortalsConfig;
 
 public class PortalsRename {
     private final PortalsConfig psConfig;

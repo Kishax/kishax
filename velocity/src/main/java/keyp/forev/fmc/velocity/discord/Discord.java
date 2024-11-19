@@ -16,7 +16,7 @@ import com.google.inject.Inject;
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessage;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import common.src.main.java.keyp.forev.fmc.main.Database;
+import keyp.forev.fmc.common.Database;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -33,10 +33,10 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
-import velocity.src.main.java.keyp.forev.fmc.core.command.Request;
-import velocity.src.main.java.keyp.forev.fmc.core.command.RequestInterface;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Main;
+import keyp.forev.fmc.velocity.cmd.Request;
+import keyp.forev.fmc.velocity.cmd.RequestInterface;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.Main;
 
 public class Discord implements DiscordInterface {
 	public static JDA jda = null;
@@ -229,7 +229,7 @@ public class Discord implements DiscordInterface {
             MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
 
             messageAction.queue(
-                _p -> future.complete(null),
+                _ -> future.complete(null),
                 error -> {
                     future.completeExceptionally(error);
                     logger.info("Failed to edit message with ID: " + messageId);
@@ -309,7 +309,7 @@ public class Discord implements DiscordInterface {
         
         MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
         messageAction.queue(
-            _p -> {
+            _ -> {
                 //
             }, error -> {
                 logger.error("A editBotEmbedReplacedAll error occurred: " + error.getMessage());
@@ -446,7 +446,7 @@ public class Discord implements DiscordInterface {
     		// テキストメッセージを送信
             MessageCreateAction messageAction = channel.sendMessage(content);
             messageAction.queue(
-                _p -> {
+                _ -> {
                     //
                 }, failure -> logger.error("Failed to send text message: " + failure.getMessage())
             );

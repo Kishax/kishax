@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.util.List;
 import java.util.Map;
@@ -9,7 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import com.google.inject.Inject;
 
-import spigot.core.main.PortalsConfig;
+import keyp.forev.fmc.spigot.util.PortalsConfig;
 
 public class PortalsDelete {
     private final PortalsConfig psConfig;

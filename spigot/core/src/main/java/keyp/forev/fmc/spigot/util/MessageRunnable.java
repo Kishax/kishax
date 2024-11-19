@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 @FunctionalInterface
 public interface MessageRunnable {

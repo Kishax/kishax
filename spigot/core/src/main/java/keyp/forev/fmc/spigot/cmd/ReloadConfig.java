@@ -1,19 +1,20 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 import com.google.inject.Inject;
 
-import spigot.core.main.PortalsConfig;
+import keyp.forev.fmc.spigot.util.PortalsConfig;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class ReloadConfig {
 
-	private final keyp.forev.fmc.spigot.Main plugin;
+	private final JavaPlugin plugin;
 	private final PortalsConfig psConfig;
 
 	@Inject
-	public ReloadConfig(common.Main plugin, PortalsConfig psConfig) {
+	public ReloadConfig(JavaPlugin plugin, PortalsConfig psConfig) {
 		this.plugin = plugin;
 		this.psConfig = psConfig;
 	}

@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -56,16 +56,18 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
 
-import common.CalcUtil;
-import common.Database;
-import common.FMCSettings;
-import common.SocketSwitch;
+import keyp.forev.fmc.common.CalcUtil;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.FMCSettings;
+import keyp.forev.fmc.common.SocketSwitch;
+import keyp.forev.fmc.spigot.events.EventListener;
 import net.coobird.thumbnailator.Thumbnails;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import spigot.core.command.Menu;
+import keyp.forev.fmc.spigot.cmd.Menu;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class ImageMap {
     public static final String PERSISTANT_KEY = "custom_image";
@@ -76,14 +78,14 @@ public class ImageMap {
     public static List<String> imagesColumnsList = new ArrayList<>();
     public static List<Integer> thisServerMapIds = new ArrayList<>();
     public static List<String> args2 = new ArrayList<>(Arrays.asList("create", "q"));
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     private final Logger logger;
     private final Database db;
     private final Provider<SocketSwitch> sswProvider;
     private final String serverName;
     private final int inputPeriod = 60;
     @Inject
-    public ImageMap(common.Main plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
+    public ImageMap(JavaPlugin plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -151,7 +153,7 @@ public class ImageMap {
                 String columnName = rs.getMetaData().getColumnName(i);
                 rowMap.put(columnName, rs.getObject(columnName));
             }
-            imageInfo.computeIfAbsent(index, _p -> rowMap);
+            imageInfo.computeIfAbsent(index, _ -> rowMap);
             index++;
         }
         return imageInfo;
@@ -173,7 +175,7 @@ public class ImageMap {
                     rowMap.put(columnName, rs.getObject(columnName));
                 }
             }
-            serverImageInfo.computeIfAbsent(mapId, _p -> rowMap);
+            serverImageInfo.computeIfAbsent(mapId, _ -> rowMap);
         }
         return serverImageInfo;
     }
@@ -521,7 +523,7 @@ public class ImageMap {
                             });
                             addTaskRunnable(player, playerActions, ImageMap.ACTIONS_KEY);
                         });
-                        Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Menu.chooseColorInventoryName, playerMenuActions);
+                        Menu.menuActions.computeIfAbsent(player, _ -> new HashMap<>()).put(Menu.chooseColorInventoryName, playerMenuActions);
                         player.spigot().sendMessage(TCUtils.LATER_OPEN_INV_5.get());
                         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                             player.openInventory(inv);

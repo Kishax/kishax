@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.velocitypowered.api.proxy.Player;
@@ -18,20 +16,15 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 @Singleton
 public class FMCBoard {
-    private final Main plugin;
     private final ProxyServer server;
-    @SuppressWarnings("unused")
-    private final Logger logger;
     private final Map<UUID, VeloBoard> boards = new HashMap<>();
     @Inject
-    public FMCBoard(Main plugin, ProxyServer server, Logger logger) {
-        this.plugin = plugin;
+    public FMCBoard(ProxyServer server) {
         this.server = server;
-        this.logger = logger;
     }
 
     public void updateScheduler() {
-        server.getScheduler().buildTask(plugin, () -> {
+        server.getScheduler().buildTask(server, () -> {
             for (VeloBoard board : getBoards().values()) {
                 updateBoard(board);
             }

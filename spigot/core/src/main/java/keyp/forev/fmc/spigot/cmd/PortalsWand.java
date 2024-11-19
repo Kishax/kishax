@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -10,12 +10,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import com.google.inject.Inject;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class PortalsWand {
     public static final String PERSISTANT_KEY = "custom_wand";
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
 	@Inject
-	public PortalsWand(common.Main plugin) {
+	public PortalsWand(JavaPlugin plugin) {
         this.plugin = plugin;
 	}
 	

@@ -12,26 +12,27 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 import com.google.common.io.ByteArrayDataOutput;
-import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.Luckperms;
-import common.src.main.java.keyp.forev.fmc.main.PermSettings;
-import common.src.main.java.keyp.forev.fmc.main.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.PermSettings;
+import keyp.forev.fmc.common.SocketSwitch;
+import keyp.forev.fmc.velocity.events.EventListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import velocity.src.main.java.keyp.forev.fmc.core.command.CommandForwarder;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.MessageEditorInterface;
+import keyp.forev.fmc.velocity.cmd.CommandForwarder;
+import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
+import keyp.forev.fmc.common.SocketResponse;
 
-public class SocketResponse {
+public class VelocitySocketResponse implements SocketResponse {
 	private final Logger logger;
 	private final ProxyServer server;
 	private final Database db;
@@ -41,10 +42,10 @@ public class SocketResponse {
 	private final ConsoleCommandSource console;
 	private final MessageEditorInterface discordME;
 	private final Provider<SocketSwitch> sswProvider;
+	private final CommandForwarder cf;
 	private String mineName = null;
 	
-	@Inject
-	public SocketResponse (Logger logger, ProxyServer server, Database db, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider) {
+	public VelocitySocketResponse(Logger logger, ProxyServer server, Database db, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider, CommandForwarder cf) {
 		this.logger = logger;
 		this.server = server;
 		this.db = db;
@@ -54,8 +55,10 @@ public class SocketResponse {
         this.console = console;
         this.discordME = discordME;
 		this.sswProvider = sswProvider;
+		this.cf = cf;
 	}
 	
+	@Override
 	public void resaction(String res) {
     	if (Objects.isNull(res)) return;
 		res = res.replace("\n", "").replace("\r", "");
@@ -155,7 +158,7 @@ public class SocketResponse {
             	String execplayerName = m.group(1);
                 String playerName = m.group(2);
                 String command = m.group(3);
-                Main.getInjector().getInstance(CommandForwarder.class).forwardCommand(execplayerName, command, playerName);
+                cf.forwardCommand(execplayerName, command, playerName);
             }
     	} else if (res.contains("プレイヤー不在")) {
     		bc.broadCastMessage(Component.text(res).color(NamedTextColor.RED));

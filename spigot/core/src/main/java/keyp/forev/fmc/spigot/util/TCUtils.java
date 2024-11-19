@@ -1,6 +1,6 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
-import common.FMCSettings;
+import keyp.forev.fmc.common.FMCSettings;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
