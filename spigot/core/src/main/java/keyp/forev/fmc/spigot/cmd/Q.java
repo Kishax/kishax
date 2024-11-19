@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.util.Collections;
 
@@ -6,8 +6,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 
-import spigot.core.main.ImageMap;
-import spigot.core.main.Main;
+import keyp.forev.fmc.spigot.util.ImageMap;
+import keyp.forev.fmc.spigot.Main;
 
 public class Q implements TabExecutor {
     @Override

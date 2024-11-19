@@ -6,6 +6,7 @@
       <groupId>FMC-Plugin</groupId>
       <artifactId>spigot</artifactId>
       <version>1.0.0</version>
+      <relativePath>spigot/pom.xml</relativePath>
    </parent>
    <artifactId>v1_20_2</artifactId>
    <properties>

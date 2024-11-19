@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,22 +15,22 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.StringUtil;
 
 import com.google.inject.Inject;
-
+import keyp.forev.fmc.spigot.Main;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import spigot.core.main.ImageMap;
-import spigot.core.main.Main;
-import spigot.core.main.PortalsConfig;
+import keyp.forev.fmc.spigot.util.ImageMap;
+import keyp.forev.fmc.spigot.util.PortalsConfig;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class FMCCommand implements TabExecutor {
-	private final keyp.forev.fmc.spigot.Main plugin;
+	private final JavaPlugin plugin;
 	private final PortalsConfig psConfig;
 	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu", "button", "check", "setpoint", "confirm"));
 	@Inject
-	public FMCCommand(common.Main plugin, PortalsConfig psConfig) {
+	public FMCCommand(JavaPlugin plugin, PortalsConfig psConfig) {
 		this.plugin = plugin;
 		this.psConfig = psConfig;
 	}

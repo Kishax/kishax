@@ -10,10 +10,10 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
+import keyp.forev.fmc.common.Database;
 import net.kyori.adventure.text.Component;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
-import velocity.src.main.java.keyp.forev.fmc.core.main.DoServerOnline;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.util.DoServerOnline;
 
 public class ReloadConfig {
 	private final Database db;

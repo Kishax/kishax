@@ -21,18 +21,18 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.Luckperms;
-import common.src.main.java.keyp.forev.fmc.main.PlayerUtils;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.PlayerUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.DiscordInterface;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.EmojiManager;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.MessageEditorInterface;
-import velocity.src.main.java.keyp.forev.fmc.core.main.BroadCast;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
-import velocity.src.main.java.keyp.forev.fmc.core.main.DoServerOnline;
+import keyp.forev.fmc.velocity.discord.DiscordInterface;
+import keyp.forev.fmc.velocity.discord.EmojiManager;
+import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
+import keyp.forev.fmc.velocity.util.BroadCast;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.util.DoServerOnline;
 
 public class Request implements RequestInterface {
 	public static Map<String, Boolean> PlayerReqFlags = new HashMap<>();

@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.events;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -38,15 +38,25 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import common.Luckperms;
-import spigot.core.command.Confirm;
-import spigot.core.command.Menu;
+import keyp.forev.fmc.spigot.util.MessageRunnable;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.spigot.cmd.Confirm;
+import keyp.forev.fmc.spigot.cmd.Menu;
+import org.bukkit.plugin.java.JavaPlugin;
+import keyp.forev.fmc.spigot.util.FMCItemFrame;
+import keyp.forev.fmc.spigot.util.Inventory;
+import keyp.forev.fmc.spigot.util.PortalsConfig;
+import keyp.forev.fmc.spigot.util.ServerStatusCache;
+import keyp.forev.fmc.spigot.util.FMCCoords;
+import keyp.forev.fmc.spigot.util.ImageMap;
+import keyp.forev.fmc.spigot.util.Rcon;
+import keyp.forev.fmc.spigot.util.WandListener;
 
 public final class EventListener implements Listener {
     public static Map<Player, Map<String, MessageRunnable>> playerInputerMap = new HashMap<>();
     public static Map<Player, Map<String, BukkitTask>> playerTaskMap = new HashMap<>();
     public static final AtomicBoolean isHub = new AtomicBoolean(false);
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     private final Logger logger;
 	private final PortalsConfig psConfig;
     private final Menu menu;
@@ -57,7 +67,7 @@ public final class EventListener implements Listener {
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
 
     @Inject
-	public EventListener(common.Main plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv, FMCItemFrame fif) {
+	public EventListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv, FMCItemFrame fif) {
 		this.plugin = plugin;
         this.logger = logger;
 		this.psConfig = psConfig;

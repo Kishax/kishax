@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -11,12 +11,13 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import common.Database;
-import common.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.SocketSwitch;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class AutoShutdown {
 
-	private final keyp.forev.fmc.spigot.Main plugin;
+	private final JavaPlugin plugin;
 	private final Logger logger;
 	private final Database db;
 	private final Provider<SocketSwitch> sswProvider;
@@ -24,7 +25,7 @@ public class AutoShutdown {
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown (common.Main plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+	public AutoShutdown (JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.db = db;

@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,28 +20,29 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import common.Database;
-import common.Luckperms;
-import common.PermSettings;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.PermSettings;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import spigot.core.main.TCUtils;
+import keyp.forev.fmc.spigot.util.TCUtils;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class TeleportRequest implements TabExecutor {
     //public static Map<Player, Set<Player>> teleportMap = new ConcurrentHashMap<>();
     //public static final Map<Player, BukkitTask> teleportTasks = new ConcurrentHashMap<>();
     public static Map<Player, List<Map<Player, BukkitTask>>> teleportMap = new ConcurrentHashMap<>();
     public static Map<Player ,List<Map<Player, BukkitTask>>> teleportMeMap = new ConcurrentHashMap<>();
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
     private final Menu menu;
     @Inject
-    public TeleportRequest(common.Main plugin, Logger logger, Database db, Luckperms lp, Menu menu) {
+    public TeleportRequest(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, Menu menu) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;

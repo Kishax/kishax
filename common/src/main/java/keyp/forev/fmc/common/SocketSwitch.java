@@ -13,18 +13,20 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
-
+import com.google.inject.Provider;
 
 public class SocketSwitch {
     private final Logger logger;
+    private final Provider<SocketResponse> responseProvider;
     private final String hostname = "localhost";
     private ServerSocket serverSocket;
     private Thread clientThread, socketThread;
     private volatile boolean running = true;
     
     @Inject
-	public SocketSwitch(Logger logger) {
+	public SocketSwitch(Logger logger, Provider<SocketResponse> responseProvider) {
         this.logger = logger;
+        this.responseProvider = responseProvider;
 	}
     
     //Server side
@@ -40,8 +42,8 @@ public class SocketSwitch {
                             socket2.close();
                             break;
                         }
-                        // logger.info("New client connected()");
-                        new SocketServerThread(logger, socket2).start();
+                        SocketResponse response = responseProvider.get();
+                        new SocketServerThread(logger, socket2, response).start();
                     } catch (IOException e) {
                         if (running) {
                             logger.error("An IOException error occurred: {}", e.getMessage());

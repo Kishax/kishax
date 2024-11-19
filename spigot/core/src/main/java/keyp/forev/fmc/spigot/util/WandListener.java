@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,17 +30,18 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import spigot.core.command.PortalsWand;
+import keyp.forev.fmc.spigot.cmd.PortalsWand;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class WandListener implements Listener {
     public static boolean isMakePortal = false;
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     private final Logger logger;
     private final Map<Player, Location> firstCorner = new HashMap<>();
     private final PortalsConfig psConfig;
 
     @Inject
-    public WandListener(common.Main plugin, Logger logger, PortalsConfig psConfig) {
+    public WandListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig) {
         this.plugin = plugin;
         this.logger = logger;
         this.psConfig = psConfig;

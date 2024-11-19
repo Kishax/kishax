@@ -11,7 +11,7 @@ import com.velocitypowered.api.command.CommandSource;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
+import keyp.forev.fmc.velocity.util.Config;
 
 public class Debug {
 	private final Config config;

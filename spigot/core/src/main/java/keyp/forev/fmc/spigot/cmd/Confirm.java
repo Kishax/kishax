@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,29 +15,30 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import common.Database;
-import common.FMCSettings;
-import common.Luckperms;
-import common.OTPGenerator;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.FMCSettings;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.OTPGenerator;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import spigot.core.main.ImageMap;
-import spigot.core.main.ServerHomeDir;
-import spigot.core.main.TCUtils;
+import keyp.forev.fmc.spigot.util.ImageMap;
+import keyp.forev.fmc.spigot.util.ServerHomeDir;
+import keyp.forev.fmc.spigot.util.TCUtils;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class Confirm {
     public static final Set<Player> confirmMap = new HashSet<>();
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
     private final ImageMap im;
     private final String thisServerName;
     @Inject
-    public Confirm(common.Main plugin, Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
+    public Confirm(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;

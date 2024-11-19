@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -12,18 +12,21 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import common.Database;
-import common.Luckperms;
-import common.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.SocketSwitch;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import spigot.core.command.Menu;
+import keyp.forev.fmc.common.SocketResponse;
+import keyp.forev.fmc.spigot.cmd.Menu;
+import keyp.forev.fmc.spigot.events.EventListener;
+import org.bukkit.plugin.java.JavaPlugin;
 
-public class SocketResponse {
-    private final keyp.forev.fmc.spigot.Main plugin;
+public class SpigotSocketResponse implements SocketResponse {
+    private final JavaPlugin plugin;
     private final Logger logger;
     private final Database db;
     private final ServerStatusCache ssc;
@@ -34,7 +37,7 @@ public class SocketResponse {
     private final Luckperms lp;
     private final String thisServerName;
     @Inject
-    public SocketResponse(common.Main plugin, Logger logger, Database db, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, Luckperms lp) {
+    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, Luckperms lp) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -47,6 +50,7 @@ public class SocketResponse {
         this.lp = lp;
     }
 
+    @Override
     public void resaction(String res) {
     	if (res != null) {
             res = res.replace("\n", "").replace("\r", "");

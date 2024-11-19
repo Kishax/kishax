@@ -14,10 +14,10 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.Luckperms;
-import common.src.main.java.keyp.forev.fmc.main.OTPGenerator;
-import common.src.main.java.keyp.forev.fmc.main.PermSettings;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.OTPGenerator;
+import keyp.forev.fmc.common.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;

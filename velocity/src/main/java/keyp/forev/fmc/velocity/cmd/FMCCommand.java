@@ -12,14 +12,14 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.Luckperms;
-import common.src.main.java.keyp.forev.fmc.main.PlayerUtils;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.PlayerUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Main;
-import velocity.src.main.java.keyp.forev.fmc.core.main.RomajiConversion;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.Main;
+import keyp.forev.fmc.velocity.util.RomajiConversion;
 
 public class FMCCommand implements SimpleCommand {
     private final Config config;

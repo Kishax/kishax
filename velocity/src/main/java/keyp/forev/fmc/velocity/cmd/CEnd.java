@@ -13,12 +13,12 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import common.src.main.java.keyp.forev.fmc.main.Luckperms;
-import common.src.main.java.keyp.forev.fmc.main.PermSettings;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.MessageEditorInterface;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Main;
+import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
+import keyp.forev.fmc.velocity.Main;
 
 public class CEnd implements SimpleCommand {
 	

@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -6,16 +6,17 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import com.google.inject.Inject;
 
-import common.FMCSettings;
-import common.Luckperms;
+import keyp.forev.fmc.common.FMCSettings;
+import keyp.forev.fmc.common.Luckperms;
 import net.md_5.bungee.api.ChatColor;
-import spigot.core.main.FMCCoords;
+import keyp.forev.fmc.spigot.util.FMCCoords;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class Check {
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     private final Luckperms lp;
     @Inject
-    public Check(common.Main plugin, Luckperms lp) {
+    public Check(JavaPlugin plugin, Luckperms lp) {
         this.plugin = plugin;
         this.lp = lp;
     }

@@ -12,15 +12,13 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
+import keyp.forev.fmc.common.Database;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.MessageEditorInterface;
+import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
 
 public class PlayerDisconnect {
-	
-	public final Main plugin;
 	private final ProxyServer server;
 	private final Logger logger;
 	private final Database db;
@@ -28,8 +26,7 @@ public class PlayerDisconnect {
 	private final MessageEditorInterface discordME;
 	
 	@Inject
-	public PlayerDisconnect (Main plugin, Logger logger, ProxyServer server, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, MessageEditorInterface discordME) {
-		this.plugin = plugin;
+	public PlayerDisconnect (Logger logger, ProxyServer server, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, MessageEditorInterface discordME) {
 		this.logger = logger;
 		this.server = server;
 		this.db = db;

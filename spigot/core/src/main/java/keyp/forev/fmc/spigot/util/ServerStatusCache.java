@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,8 +19,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-import common.Database;
-import common.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.SocketSwitch;
 
 @Singleton
 public class ServerStatusCache {
@@ -75,7 +75,7 @@ public class ServerStatusCache {
 							rowMap.put(columnName, rs.getObject(columnName));
 						}
 					}
-                    newServerStatusMap.computeIfAbsent(serverType, _p -> new HashMap<>()).put(serverName, rowMap);
+                    newServerStatusMap.computeIfAbsent(serverType, _ -> new HashMap<>()).put(serverName, rowMap);
                 }
     
                 // サーバーネームをアルファベット順にソート
@@ -90,7 +90,7 @@ public class ServerStatusCache {
                         .collect(Collectors.toMap(
                             Map.Entry::getKey,
                             Map.Entry::getValue,
-                            (e1, _p) -> e1,
+                            (e1, _) -> e1,
                             LinkedHashMap::new
                         ));
     

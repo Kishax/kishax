@@ -1,16 +1,17 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.io.File;
 import java.util.Objects;
 
 import com.google.inject.Inject;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class ServerHomeDir {
 
 	private final File dataFolder;
 	
 	@Inject
-	public ServerHomeDir(common.Main plugin) {
+	public ServerHomeDir(JavaPlugin plugin) {
 		this.dataFolder = plugin.getDataFolder();
 	}
 	

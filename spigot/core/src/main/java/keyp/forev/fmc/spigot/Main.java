@@ -8,15 +8,14 @@ import java.util.TimeZone;
 
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.slf4j.Logger;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import common.Database;
-import common.Luckperms;
-import common.PlayerUtils;
-import common.SocketServerThread;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.PlayerUtils;
+import keyp.forev.fmc.common.SocketServerThread;
 import keyp.forev.fmc.spigot.util.AutoShutdown;
 import keyp.forev.fmc.spigot.util.DoServerOffline;
 import keyp.forev.fmc.spigot.util.ImageMap;
@@ -26,21 +25,22 @@ import keyp.forev.fmc.spigot.util.ServerHomeDir;
 import keyp.forev.fmc.spigot.util.ServerStatusCache;
 import keyp.forev.fmc.spigot.util.WandListener;
 import net.luckperms.api.LuckPermsProvider;
-import spigot.core.command.FMCCommand;
-import spigot.core.command.Q;
+import keyp.forev.fmc.spigot.cmd.FMCCommand;
+import keyp.forev.fmc.spigot.cmd.Q;
+import keyp.forev.fmc.spigot.util.Module;
+import keyp.forev.fmc.spigot.events.EventListener;
+import keyp.forev.fmc.spigot.cmd.TeleportAccept;
+import keyp.forev.fmc.spigot.cmd.TeleportRequest;
 
 public class Main extends JavaPlugin {
 	private static Injector injector = null;
-	private final keyp.forev.fmc.spigot.Main plugin;
 	private final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("FMC-Plugin");
-	public Main(common.Main plugin) {
-		this.plugin = plugin;
-	}
 	
+	@Override
 	public void onEnable() {
 		logger.info("detected spigot platform.");
 		SocketServerThread.platform.set("spigot");
-        injector = Guice.createInjector(new spigot.core.main.Module(plugin, logger));
+        injector = Guice.createInjector(new Module(this, logger));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 		Database db = getInjector().getInstance(Database.class);
 		try (Connection conn = db.getConnection()) {
@@ -49,19 +49,17 @@ public class Main extends JavaPlugin {
 		} catch (SQLException | ClassNotFoundException e) {
 			logger.error("An error occurred while updating the database: {}", e.getMessage());
 		}
-		/*plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-		}, 0L, 100L);*/
 		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
-	    plugin.saveDefaultConfig();
+	    saveDefaultConfig();
 		getInjector().getInstance(PortalsConfig.class).createPortalsConfig();
-    	plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(EventListener.class), plugin);
-        plugin.getServer().getPluginManager().registerEvents(getInjector().getInstance(WandListener.class), plugin);
-		PluginCommand fmcCmd = plugin.getCommand("fmc"),
-			qCmd = plugin.getCommand("q"),
-			tprCmd = plugin.getCommand("tpr"),
-			tprmCmd = plugin.getCommand("tprm"),
-			tprmaCmd = plugin.getCommand("tprma"),
-			tpraCmd = plugin.getCommand("tpra");
+    	getServer().getPluginManager().registerEvents(getInjector().getInstance(EventListener.class), this);
+        getServer().getPluginManager().registerEvents(getInjector().getInstance(WandListener.class), this);
+		PluginCommand fmcCmd = getCommand("fmc"),
+			qCmd = getCommand("q"),
+			tprCmd = getCommand("tpr"),
+			tprmCmd = getCommand("tprm"),
+			tprmaCmd = getCommand("tprma"),
+			tpraCmd = getCommand("tpra");
 		if (fmcCmd != null) {
 			fmcCmd.setExecutor(getInjector().getInstance(FMCCommand.class));
 		}
@@ -69,12 +67,12 @@ public class Main extends JavaPlugin {
 			qCmd.setExecutor(getInjector().getInstance(Q.class));
 		}
 		if (tprCmd != null && tprmCmd != null && tpraCmd != null && tprmaCmd != null) {
-			tprCmd.setExecutor(getInjector().getInstance(spigot.core.command.TeleportRequest.class));
-			tprmCmd.setExecutor(getInjector().getInstance(spigot.core.command.TeleportRequest.class));
-			tpraCmd.setExecutor(getInjector().getInstance(spigot.core.command.TeleportAccept.class));
-			tprmaCmd.setExecutor(getInjector().getInstance(spigot.core.command.TeleportAccept.class));
+			tprCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
+			tprmCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
+			tpraCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
+			tprmaCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
 		}
-    	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
+    	if (getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
 		}
 		getInjector().getInstance(Luckperms.class).triggerNetworkSync();
@@ -91,13 +89,14 @@ public class Main extends JavaPlugin {
         return injector;
     }
 	
+	@Override
     public void onDisable() {
 		try {
 			getInjector().getInstance(DoServerOffline.class).UpdateDatabase();
 		} catch (Exception e) {
 			logger.error( "An error occurred while updating the database: {}", e.getMessage());
 		}
-    	if (plugin.getConfig().getBoolean("MCVC.Mode",false)) {
+    	if (getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).stopMCVC();
 		}
     	getInjector().getInstance(AutoShutdown.class).stopCheckForPlayers();

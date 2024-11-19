@@ -17,8 +17,8 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
-import velocity.src.main.java.keyp.forev.fmc.core.main.RomajiConversion;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.util.RomajiConversion;
 
 public class SwitchRomajiConvType {
 

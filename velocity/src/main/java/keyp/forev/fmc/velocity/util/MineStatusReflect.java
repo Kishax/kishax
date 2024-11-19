@@ -22,13 +22,13 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
+import keyp.forev.fmc.common.Database;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.EmojiManager;
+import keyp.forev.fmc.velocity.discord.EmojiManager;
 
 public class MineStatusReflect {
 
@@ -70,7 +70,7 @@ public class MineStatusReflect {
         EmbedBuilder embed = new EmbedBuilder().setTitle("後にこれがステータスとなる").setColor(Color.GREEN);
         if (channel != null) {
             channel.sendMessageEmbeds(embed.build()).queue(
-                _p -> {},// logger.info("Embed sent successfully!")
+                _ -> {},// logger.info("Embed sent successfully!")
                 error -> logger.error("Failed to send embed: " + error.getMessage())
             );
         }
@@ -101,7 +101,7 @@ public class MineStatusReflect {
                     if (channel != null) {
                         Message message = channel.retrieveMessageById(messageId).complete();
                         message.editMessageEmbeds(statusEmbed).queue(
-                            _p -> {},// logger.info("Embed updated successfully!")
+                            _ -> {},// logger.info("Embed updated successfully!")
                             error -> logger.error("Failed to update embed: " + error.getMessage())
                         );
                     }

@@ -14,11 +14,11 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
+import keyp.forev.fmc.common.Database;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.MessageEditorInterface;
-import velocity.src.main.java.keyp.forev.fmc.core.main.PlayerDisconnect;
+import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
+import keyp.forev.fmc.velocity.util.PlayerDisconnect;
 
 public class Maintenance {
 	public static boolean isMente;

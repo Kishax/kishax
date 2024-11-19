@@ -1,4 +1,4 @@
-package keyp.forev.fmc.util;
+package keyp.forev.fmc.spigot.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,17 +12,18 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.bukkit.plugin.java.JavaPlugin;
 
 @Singleton
 public final class PortalsConfig {
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     private final Logger logger;
     private File portalsFile;
     private YamlConfiguration portalsConfig;
     private List<Map<?, ?>> portals;
 
     @Inject
-    public PortalsConfig(common.Main plugin, Logger logger) {
+    public PortalsConfig(JavaPlugin plugin, Logger logger) {
         this.plugin = plugin;
         this.logger = logger;
         if (Objects.isNull(portalsConfig)) {

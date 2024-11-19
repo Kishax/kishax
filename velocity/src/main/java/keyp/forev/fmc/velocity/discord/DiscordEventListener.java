@@ -24,10 +24,10 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.FMCSettings;
-import common.src.main.java.keyp.forev.fmc.main.OTPGenerator;
-import common.src.main.java.keyp.forev.fmc.main.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.FMCSettings;
+import keyp.forev.fmc.common.OTPGenerator;
+import keyp.forev.fmc.common.SocketSwitch;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.Role;
@@ -46,10 +46,10 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import velocity.src.main.java.keyp.forev.fmc.core.command.Request;
-import velocity.src.main.java.keyp.forev.fmc.core.command.RequestInterface;
-import velocity.src.main.java.keyp.forev.fmc.core.main.BroadCast;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
+import keyp.forev.fmc.velocity.cmd.Request;
+import keyp.forev.fmc.velocity.cmd.RequestInterface;
+import keyp.forev.fmc.velocity.util.BroadCast;
+import keyp.forev.fmc.velocity.util.Config;
 
 public class DiscordEventListener extends ListenerAdapter {
 	public static String PlayerChatMessageId = null;

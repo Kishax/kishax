@@ -1,4 +1,4 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,17 +16,18 @@ import org.bukkit.util.StringUtil;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
-
-import common.PermSettings;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.PermSettings;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class TeleportAccept implements TabExecutor {
-    private final keyp.forev.fmc.spigot.Main plugin;
+    private final JavaPlugin plugin;
     private final Logger logger;
-    private final common.Luckperms lp;
+    private final Luckperms lp;
     @Inject
-    public TeleportAccept(common.Main plugin, Logger logger, common.Luckperms lp) {
+    public TeleportAccept(JavaPlugin plugin, Logger logger, Luckperms lp) {
         this.plugin = plugin;
         this.logger = logger;
         this.lp = lp;

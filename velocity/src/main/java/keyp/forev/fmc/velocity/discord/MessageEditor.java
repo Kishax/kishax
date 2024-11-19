@@ -25,14 +25,14 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import common.src.main.java.keyp.forev.fmc.main.ColorUtil;
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.PlayerUtils;
+import keyp.forev.fmc.common.ColorUtil;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.PlayerUtils;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import velocity.src.main.java.keyp.forev.fmc.core.command.Maintenance;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Config;
-import velocity.src.main.java.keyp.forev.fmc.core.main.EventListener;
-import velocity.src.main.java.keyp.forev.fmc.core.main.Main;
+import keyp.forev.fmc.velocity.cmd.Maintenance;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.events.EventListener;
+import keyp.forev.fmc.velocity.Main;
 
 public class MessageEditor implements MessageEditorInterface {
 	public final Main plugin;
@@ -139,7 +139,7 @@ public class MessageEditor implements MessageEditorInterface {
             }
 		}
 	    return CompletableFuture.allOf(EmojiFutureId, FaceEmojiFutureId)
-				.thenCompose((var _p) -> {
+				.thenCompose((var _) -> {
 	        try {
 	            if (Objects.nonNull(serverInfo)) {
 	                currentServerName = serverInfo.getName();
@@ -214,7 +214,7 @@ public class MessageEditor implements MessageEditorInterface {
 								});
 								
 								// 編集を行う
-								return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
+								return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
 							} else if (Maintenance.isMente) {
 								// メンテのフラグが立っていたら
 								Maintenance.isMente = false;
@@ -230,7 +230,7 @@ public class MessageEditor implements MessageEditorInterface {
 								if (!player.hasPermission("group.super-admin")) {
 									EventListener.PlayerMessageIds.remove(uuid);
 									// 編集を行う
-									return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
+									return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
 								}
 							} else {
 								addMessage = String.format("""
@@ -243,11 +243,11 @@ public class MessageEditor implements MessageEditorInterface {
 
 								EventListener.PlayerMessageIds.remove(uuid);
 								// 編集を行う
-								return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
+								return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
 							}
 							
 							// 編集を行う
-							return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
+							return editFuture.thenCompose(_ -> discord.editBotEmbed(messageId, addMessage));
 						}
 
 						return CompletableFuture.completedFuture(null);

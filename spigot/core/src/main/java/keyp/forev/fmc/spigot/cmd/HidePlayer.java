@@ -1,14 +1,15 @@
-package keyp.forev.fmc.cmd;
+package keyp.forev.fmc.spigot.cmd;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import com.google.inject.Inject;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class HidePlayer {
-	private final keyp.forev.fmc.spigot.Main plugin;
+	private final JavaPlugin plugin;
 	@Inject
-	public HidePlayer(common.Main plugin) {
+	public HidePlayer(JavaPlugin plugin) {
 		this.plugin = plugin;
 	}
 	

@@ -18,20 +18,27 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import common.src.main.java.keyp.forev.fmc.main.Database;
-import common.src.main.java.keyp.forev.fmc.main.Luckperms;
-import common.src.main.java.keyp.forev.fmc.main.PlayerUtils;
-import common.src.main.java.keyp.forev.fmc.main.SocketServerThread;
-import common.src.main.java.keyp.forev.fmc.main.SocketSwitch;
+import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.PlayerUtils;
+import keyp.forev.fmc.common.SocketServerThread;
+import keyp.forev.fmc.common.SocketSwitch;
 import de.timongcraft.veloboard.VeloBoardRegistry;
 import net.luckperms.api.LuckPermsProvider;
-import velocity.src.main.java.keyp.forev.fmc.core.command.CEnd;
-import velocity.src.main.java.keyp.forev.fmc.core.command.FMCCommand;
-import velocity.src.main.java.keyp.forev.fmc.core.command.Hub;
-import velocity.src.main.java.keyp.forev.fmc.core.command.Retry;
-import velocity.src.main.java.keyp.forev.fmc.core.command.ServerTeleport;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.Discord;
-import velocity.src.main.java.keyp.forev.fmc.core.discord.EmojiManager;
+import keyp.forev.fmc.velocity.cmd.CEnd;
+import keyp.forev.fmc.velocity.cmd.FMCCommand;
+import keyp.forev.fmc.velocity.cmd.Hub;
+import keyp.forev.fmc.velocity.cmd.Retry;
+import keyp.forev.fmc.velocity.cmd.ServerTeleport;
+import keyp.forev.fmc.velocity.discord.Discord;
+import keyp.forev.fmc.velocity.discord.EmojiManager;
+import keyp.forev.fmc.velocity.util.Module;
+import keyp.forev.fmc.velocity.util.FMCBoard;
+import keyp.forev.fmc.velocity.util.MineStatusReflect;
+import keyp.forev.fmc.velocity.util.DoServerOnline;
+import keyp.forev.fmc.velocity.events.EventListener;
+import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.util.DoServerOffline;
 
 public class Main {
 	public static boolean isVelocity = true;
@@ -53,7 +60,7 @@ public class Main {
         SocketServerThread.platform.set("velocity");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
         VeloBoardRegistry.register();
-        injector = Guice.createInjector(new velocity.src.main.java.keyp.forev.fmc.core.main.Module(this, server, logger, dataDirectory));
+        injector = Guice.createInjector(new Module(this, server, logger, dataDirectory));
         getInjector().getInstance(FMCBoard.class).updateScheduler();
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
             if (jda != null) {
