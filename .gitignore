@@ -1,6 +1,12 @@
 /build/
 /.gradle/
 /target/
+/common/target/
+/common/build/
+/spigot/core/target/
+/spigot/core/build/
+/velocity/target/
+/velocity/build/
 /dependency-reduced-pom.xml
 /雑談.txt/
 /cp-home.sh

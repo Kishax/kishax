@@ -1,0 +1,35 @@
+name: ${project.parent.name}
+version: ${project.parent.version}
+description: ${project.description}
+main: ${project.parent.groupId}.spigot.Main
+author: Bella
+website: keypforev.ddns.net
+api-version: 1.18
+description: "§6§lThis plugin is provided by FMC Server!!"
+depend:
+  - LuckPerms
+commands:
+  fmc:
+    usage: /<command>
+    description: You can use FMC Spigot server command!
+    executor: spigot_command.FMCCommand
+  q:
+    usage: /<command>
+    description: You can confirm image map code generated at discord
+    executor: spigot_command.Q
+  tpr:
+    usage: /<command>
+    description: You can teleport to other player
+    executor: spigot_command.TeleportRequest
+  tprm:
+    usage: /<command>
+    description: You can teleport to other player
+    executor: spigot_command.TeleportRequest
+  tpra:
+    usage: /<command>
+    description: You can accept teleport request
+    executor: spigot_command.TeleportAccept
+  tprma:
+    usage: /<command>
+    description: You can accept teleport request
+    executor: spigot_command.TeleportAccept

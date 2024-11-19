@@ -1,0 +1,20 @@
+{
+  "id": "fmc",
+  "name": "${project.parent.name}",
+  "version": "${project.parent.version}",
+  "description": "${project.description}",
+  "main": "${project.parent.groupId}.velocity.Main",
+  "authors": [
+    "Bella"
+  ],
+  "dependencies": [
+      {
+        "id": "luckperms",
+        "optional": true
+      },
+      {
+        "id": "floodgate",
+        "optional": true
+      }
+   ]
+}
