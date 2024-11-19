@@ -53,7 +53,8 @@ public class SetPoint {
                         float yaw = location.getYaw();
                         float pitch = location.getPitch();
                         String world = null;
-                        if (location.getWorld() instanceof World playerWorld) {
+                        if (location.getWorld() instanceof World) {
+                            World playerWorld = location.getWorld();
                             world = playerWorld.getName();
                         }
                         player.sendMessage("""

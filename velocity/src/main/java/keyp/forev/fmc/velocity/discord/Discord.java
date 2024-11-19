@@ -229,7 +229,7 @@ public class Discord implements DiscordInterface {
             MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
 
             messageAction.queue(
-                _ -> future.complete(null),
+                _p -> future.complete(null),
                 error -> {
                     future.completeExceptionally(error);
                     logger.info("Failed to edit message with ID: " + messageId);
@@ -309,7 +309,7 @@ public class Discord implements DiscordInterface {
         
         MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
         messageAction.queue(
-            _ -> {
+            _p -> {
                 //
             }, error -> {
                 logger.error("A editBotEmbedReplacedAll error occurred: " + error.getMessage());
@@ -446,7 +446,7 @@ public class Discord implements DiscordInterface {
     		// テキストメッセージを送信
             MessageCreateAction messageAction = channel.sendMessage(content);
             messageAction.queue(
-                _ -> {
+                _p -> {
                     //
                 }, failure -> logger.error("Failed to send text message: " + failure.getMessage())
             );

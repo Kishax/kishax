@@ -1,4 +1,4 @@
-name: ${project.parent.name}
+name: FMC-Plugin
 version: ${project.parent.version}
 description: ${project.description}
 main: ${project.parent.groupId}.spigot.Main

@@ -70,7 +70,7 @@ public class MineStatusReflect {
         EmbedBuilder embed = new EmbedBuilder().setTitle("後にこれがステータスとなる").setColor(Color.GREEN);
         if (channel != null) {
             channel.sendMessageEmbeds(embed.build()).queue(
-                _ -> {},// logger.info("Embed sent successfully!")
+                _p -> {},// logger.info("Embed sent successfully!")
                 error -> logger.error("Failed to send embed: " + error.getMessage())
             );
         }
@@ -101,7 +101,7 @@ public class MineStatusReflect {
                     if (channel != null) {
                         Message message = channel.retrieveMessageById(messageId).complete();
                         message.editMessageEmbeds(statusEmbed).queue(
-                            _ -> {},// logger.info("Embed updated successfully!")
+                            _p -> {},// logger.info("Embed updated successfully!")
                             error -> logger.error("Failed to update embed: " + error.getMessage())
                         );
                     }

@@ -115,7 +115,7 @@ public class ServerTeleport implements SimpleCommand {
         try (Connection conn = db.getConnection()) {
             Map<String, Map<String, Object>> statusMap = dso.loadStatusTable(conn);
             statusMap.entrySet().stream()
-                .filter(entry -> entry.getKey() instanceof String serverName && serverName.equals(targetServerName))
+                .filter(entry -> entry.getKey() instanceof String && entry.getKey().equals(targetServerName))
                 .forEach(entry -> {
                     Map<String, Object> serverInfo = entry.getValue();
                     if (permLevel < 2 && serverInfo.get("enter") instanceof Boolean enter && !enter) {

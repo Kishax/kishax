@@ -8,17 +8,12 @@
       <version>1.0.0</version>
    </parent>
    <artifactId>core</artifactId>
+   <packaging>jar</packaging>
    <properties>
-        <maven.compiler.release>22</maven.compiler.release>
         <spigot.version>1.21.3-R0.1-SNAPSHOT</spigot.version>
         <paper.version>1.21.3-R0.1-SNAPSHOT</paper.version>
    </properties>
    <dependencies>
-      <dependency>
-			<groupId>keyp.forev.fmc</groupId>
-			<artifactId>common</artifactId>
-			<version>1.0.0</version>
-		</dependency>
       <dependency>
          <groupId>org.spigotmc</groupId>
          <artifactId>spigot-api</artifactId>
@@ -32,4 +27,47 @@
          <scope>provided</scope>
       </dependency>
    </dependencies>
+   <build>
+      <finalName>FMC</finalName>
+      <resources>
+         <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+         </resource>
+      </resources>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.13.0</version>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>3.2.4</version>
+            <executions>
+               <execution>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>shade</goal>
+                  </goals>
+                  <configuration>
+                     <createDependencyReducedPom>false</createDependencyReducedPom>
+                     <outputDirectory>./target</outputDirectory>
+                     <filters>
+                        <filter>
+                           <artifact>*:*</artifact>
+                           <excludes>
+                                 <exclude>META-INF/*.SF</exclude>
+                                 <exclude>META-INF/*.DSA</exclude>
+                                 <exclude>META-INF/*.RSA</exclude>
+                           </excludes>
+                        </filter>
+                     </filters>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
 </project>
