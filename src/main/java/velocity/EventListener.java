@@ -528,13 +528,12 @@ public class EventListener {
 		if (playerInputers.contains(playerName)) {
 			playerInputers.remove(playerName);
 		}
+		fb.removeBoard(player.getUniqueId());
 		if (gm.isGeyserPlayer(player)) {
 			logger.info("GeyserMC player disconnected: " + playerName);
-			return;
 		} else {
 			logger.info("Java player disconnected: " + playerName);
 		}
-		fb.removeBoard(player.getUniqueId());
 		player.getCurrentServer().ifPresent(serverConnection -> {
 			RegisteredServer registeredServer = serverConnection.getServer();
 			serverInfo = registeredServer.getServerInfo();

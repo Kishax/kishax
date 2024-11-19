@@ -31,6 +31,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 import velocity.Config;
+import velocity.GeyserMC;
 
 public class EmojiManager {
     public static String beDefaultEmojiId = null;
@@ -39,11 +40,14 @@ public class EmojiManager {
     private final Logger logger;
     private final Config config;
     private final Database db;
+    @SuppressWarnings("unused")
+    private final GeyserMC gm;
     @Inject
-    public EmojiManager (Logger logger, Config config, Database db) {
+    public EmojiManager (Logger logger, Config config, Database db, GeyserMC gm) {
         this.logger = logger;
         this.config = config;
         this.db = db;
+        this.gm = gm;
     }
 
     public void updateDefaultEmojiId() {
@@ -118,9 +122,8 @@ public class EmojiManager {
             //logger.info("Existing Emoji ID: " + emojiId);
             future.complete(emojiId);
         } else {
-            // 統合版プレイヤーはスキン情報を取得する方法が現状わからないため
-            // 一旦、統合版プレイヤーの絵文字は追加しない
-            // steveの絵文字で返す
+            // 統合版プレイヤーはdiscordにスキンがあれば、絵文字IDをとってくるようにするが、
+            // なければ、steveの絵文字で返す
             if (emojiName.startsWith(".")) {
                 return createOrgetEmojiId(config.getString("Discord.BEDefaultEmojiName", null));
             }

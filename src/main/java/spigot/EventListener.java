@@ -13,6 +13,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -230,6 +231,8 @@ public final class EventListener implements Listener {
                                         }
                                         case "waterGate" -> {
                                             if (block.getType() == Material.WATER) {
+                                                // 水面に入ったときの音を流す
+                                                player.playSound(player, Sound.AMBIENT_UNDERWATER_ENTER, 1.0f, 1.0f);
                                                 player.performCommand("fmc check");
                                             }
                                         }
