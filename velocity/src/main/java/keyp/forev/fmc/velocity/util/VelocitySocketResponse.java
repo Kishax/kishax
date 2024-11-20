@@ -1,6 +1,7 @@
 package keyp.forev.fmc.velocity.util;
 
 import java.sql.Connection;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.velocity.cmd.CommandForwarder;
 import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
 import keyp.forev.fmc.common.SocketResponse;
+import com.google.inject.Inject;
 
 public class VelocitySocketResponse implements SocketResponse {
 	private final Logger logger;
@@ -44,16 +46,16 @@ public class VelocitySocketResponse implements SocketResponse {
 	private final Provider<SocketSwitch> sswProvider;
 	private final CommandForwarder cf;
 	private String mineName = null;
-	
+	@Inject
 	public VelocitySocketResponse(Logger logger, ProxyServer server, Database db, Config config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditorInterface discordME, Provider<SocketSwitch> sswProvider, CommandForwarder cf) {
 		this.logger = logger;
 		this.server = server;
 		this.db = db;
-        this.config = config;
-        this.lp = lp;
-        this.bc = bc;
-        this.console = console;
-        this.discordME = discordME;
+		this.config = config;
+		this.lp = lp;
+		this.bc = bc;
+		this.console = console;
+		this.discordME = discordME;
 		this.sswProvider = sswProvider;
 		this.cf = cf;
 	}

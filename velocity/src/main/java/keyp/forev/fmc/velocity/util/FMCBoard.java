@@ -13,18 +13,21 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import de.timongcraft.veloboard.VeloBoard;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import keyp.forev.fmc.velocity.Main;
 
 @Singleton
 public class FMCBoard {
+	private final Main plugin;
     private final ProxyServer server;
     private final Map<UUID, VeloBoard> boards = new HashMap<>();
     @Inject
-    public FMCBoard(ProxyServer server) {
-        this.server = server;
+    public FMCBoard(Main plugin, ProxyServer server) {
+    	this.plugin = plugin;
+    	this.server = server;
     }
 
     public void updateScheduler() {
-        server.getScheduler().buildTask(server, () -> {
+        server.getScheduler().buildTask(plugin, () -> {
             for (VeloBoard board : getBoards().values()) {
                 updateBoard(board);
             }

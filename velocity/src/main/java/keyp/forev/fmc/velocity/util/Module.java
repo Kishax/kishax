@@ -66,7 +66,7 @@ public class Module extends AbstractModule {
     @Override
     protected void configure() {
         bind(Database.class).toInstance(db);
-    	bind(Main.class).toInstance(plugin);
+        bind(Main.class).toInstance(plugin);
         bind(ProxyServer.class).toInstance(server);
         bind(Logger.class).toInstance(logger);
         bind(Path.class).annotatedWith(DataDirectory.class).toInstance(dataDirectory);
@@ -74,7 +74,6 @@ public class Module extends AbstractModule {
         bind(Config.class).toInstance(config);
         bind(SocketSwitch.class);
         bind(BroadCast.class);
-        bind(VelocitySocketResponse.class);
         bind(PlayerUtils.class).toInstance(pu);
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
@@ -90,12 +89,13 @@ public class Module extends AbstractModule {
         bind(Maintenance.class);
         bind(FMCBoard.class).in(com.google.inject.Scopes.SINGLETON);
         bind(CommandForwarder.class);
-        bind(SocketResponse.class).to(VelocitySocketResponse.class).in(Singleton.class);
+        bind(Luckperms.class);
+        //bind(SocketResponse.class).to(VelocitySocketResponse.class).in(Singleton.class);
     }
 
     @Provides
     @Singleton
-    public VelocitySocketResponse provideVelocitySocketResponse(
+    public SocketResponse provideVelocitySocketResponse(
             Logger logger, 
             ProxyServer server, 
             Database db, 

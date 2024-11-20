@@ -1,6 +1,7 @@
 package keyp.forev.fmc.velocity.events;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -56,11 +57,13 @@ import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.velocity.cmd.Maintenance;
 import keyp.forev.fmc.velocity.discord.DiscordEventListener;
 import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
+import keyp.forev.fmc.velocity.Main;
 
 public class EventListener {
 	public static Set<String> playerInputers = new HashSet<>();
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
 	public static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
+	private final Main plugin;
 	private final ProxyServer server;
 	private final Config config;
 	private final Logger logger;
@@ -82,7 +85,8 @@ public class EventListener {
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 	@Inject
-	public EventListener (Logger logger, ProxyServer server, Config config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb) {
+	public EventListener(Main plugin, Logger logger, ProxyServer server, Config config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb) {
+		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
 		this.config = config;
@@ -124,7 +128,7 @@ public class EventListener {
         for (int i = 0; i <= NameCount; i++) {
             space.append('\u0020');  // Unicodeのスペースを追加
         }
-        server.getScheduler().buildTask(server, () -> {
+        server.getScheduler().buildTask(plugin, () -> {
         	try {
         		// 正規表現パターンを定義（URLを見つけるための正規表現）
     		    String urlRegex = "https?://\\S+";
@@ -314,7 +318,7 @@ public class EventListener {
 		} else {
 			logger.info("Java player connected: " + playerName);
 		}
-		server.getScheduler().buildTask(server, () -> {
+		server.getScheduler().buildTask(plugin, () -> {
 			try (Connection conn = db.getConnection()) {
 				if (db.isMaintenance(conn)) {
 					List<String> menteAllowMembers = mt.getMenteAllowMembers();
@@ -546,7 +550,7 @@ public class EventListener {
 		});
     	Runnable task = () -> {
             // プレイヤーがReconnectしなかった場合に実行する処理
-    		server.getScheduler().buildTask(server, () -> {
+    		server.getScheduler().buildTask(plugin, () -> {
     			// プレイヤーが最後にいたサーバーを取得
     	        player.getCurrentServer().ifPresent(currentServer -> {
     	            RegisteredServer registeredServer = currentServer.getServer();

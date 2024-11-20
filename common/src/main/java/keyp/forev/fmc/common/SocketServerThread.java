@@ -31,12 +31,12 @@ public class SocketServerThread extends Thread {
             }
             String receivedMessage = receivedMessageBuilder.toString();
             // プラットフォームによって、receivedMessageを処理するメソッドを分ける
-            switch (SocketServerThread.platform.get()) {
-                case "spigot" -> {
-                    response.resaction(receivedMessage);
-                }
-            }
             response.resaction(receivedMessage);
+            /*switch (SocketServerThread.platform.get()) {
+                case "spigot" -> {
+                    
+                }
+            }*/
         } catch (Exception e) {
             logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
