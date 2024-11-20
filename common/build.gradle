@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+group = 'keyp.forev.fmc'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "redis.clients:jedis:${rootProject.ext.versions.jedis}"
+    implementation "net.luckperms:api:${rootProject.ext.versions.luckperms}"
+    implementation "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
+    implementation "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
+    implementation "org.yaml:snakeyaml:${rootProject.ext.versions.snakeyaml}"
+    implementation "com.google.inject:guice:${rootProject.ext.versions.guice}"
+    implementation "mysql:mysql-connector-java:${rootProject.ext.versions.mysql}"
+    implementation "org.json:json:${rootProject.ext.versions.json}"
+    implementation "com.squareup.okhttp3:okhttp:${rootProject.ext.versions.okhttp}"
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+
+tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveBaseName.set('FMC')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+    exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+}
+
+tasks.build {
+    dependsOn tasks.shadowJar
+}

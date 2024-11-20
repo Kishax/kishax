@@ -1,7 +1,7 @@
 name: FMC-Plugin
-version: ${project.parent.version}
-description: ${project.description}
-main: ${project.parent.groupId}.spigot.Main
+version: ${projectName}
+description: ${projectDescription}
+main: ${projectGroup}.spigot.Main
 author: Bella
 website: keypforev.ddns.net
 api-version: 1.18

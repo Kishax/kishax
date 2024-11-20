@@ -2,11 +2,17 @@
 /.gradle/
 /target/
 /common/target/
+/common/build/
 /spigot/target/
+/spigot/build/
 /spigot/core/target/
+/spigot/core/build/
 /spigot/v1_20_2/target/
+/spigot/v1_20_2/build/
 /spigot/v1_21_1/target/
+/spigot/v1_21_1/build/
 /velocity/target/
+/velocity/build/
 /dependency-reduced-pom.xml
 /cp-home.sh
 /cp-velo.sh

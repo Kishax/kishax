@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+description = 'This is FMC plugin!'
+
+ext {
+    versions = [
+        jedis: '5.2.0',
+        luckperms: '5.4',
+        slf4j: '2.0.0-alpha1',
+        snakeyaml: '2.0',
+        guice: '5.1.0',
+        mysql: '8.0.30',
+        json: '20180813',
+        okhttp: '4.9.3'
+    ]
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    group = 'keyp.forev.fmc'
+    version = '1.0.0'
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation "net.luckperms:api:${versions.luckperms}"
+        implementation "redis.clients:jedis:${versions.jedis}"
+        implementation "org.slf4j:slf4j-api:${versions.slf4j}"
+        implementation "org.slf4j:slf4j-simple:${versions.slf4j}"
+        implementation "org.yaml:snakeyaml:${versions.snakeyaml}"
+        implementation "com.google.inject:guice:${versions.guice}"
+        implementation "mysql:mysql-connector-java:${versions.mysql}"
+        implementation "org.json:json:${versions.json}"
+        implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+}
+
+tasks.named('build').configure {
+    enabled = false
+}
+
+tasks.withType(Copy).configureEach {
+    enabled = false
+}
+
+tasks.withType(Delete).configureEach {
+    enabled = false
+}
+
+tasks.withType(Jar).configureEach {
+    enabled = false
+}
