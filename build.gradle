@@ -9,7 +9,7 @@ ext {
     versions = [
         jedis: '5.2.0',
         luckperms: '5.4',
-        slf4j: '2.0.0-alpha1',
+        slf4j: '2.0.9',
         snakeyaml: '2.0',
         guice: '5.1.0',
         mysql: '8.0.30',
