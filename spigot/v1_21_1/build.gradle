@@ -1,0 +1,37 @@
+project(':spigot:v1_21_1') {
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+    
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
+
+    dependencies {
+        implementation project(':spigot:core')
+        compileOnly 'org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT'
+        compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        sourceCompatibility = '22'
+        targetCompatibility = '22'
+    }
+
+    tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+        archiveBaseName.set('spigot-v1_21_1')
+        archiveClassifier.set('')
+        archiveVersion.set('')
+        destinationDirectory.set(file('./target'))
+        exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+        from(project(':spigot:core').sourceSets.main.output)
+    }
+
+    tasks.build {
+        dependsOn tasks.shadowJar
+    }
+}

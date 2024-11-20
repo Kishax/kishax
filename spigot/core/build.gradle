@@ -1,0 +1,59 @@
+project(':spigot:core') {
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+    group = 'keyp.forev.fmc'
+    version = '1.0.0'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+        maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    }
+
+    dependencies {
+        implementation project(':common')
+        // under section dependencies are included by common module
+        compileOnly 'org.spigotmc:spigot-api:1.21.3-R0.1-SNAPSHOT'
+        compileOnly 'io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT'
+        compileOnly 'com.google.inject:guice:5.1.0'
+        implementation 'net.coobird:thumbnailator:0.4.20'
+        implementation 'com.google.zxing:core:3.4.1'
+        implementation 'com.google.zxing:javase:3.4.1'
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        sourceCompatibility = '21'
+        targetCompatibility = '21'
+    }
+
+    tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+        archiveBaseName.set('FMC')
+        archiveClassifier.set('')
+        archiveVersion.set('')
+        exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+    }
+
+    tasks.build {
+        dependsOn tasks.shadowJar
+    }
+
+    processResources {
+        filesMatching('**/plugin.yml') {
+            expand(
+                project: project,
+                projectName: project.name,
+                projectVersion: project.version,
+                projectDescription: project.description,
+                projectGroup: project.group,
+                groupId: project.group
+            )
+        }
+    }
+}

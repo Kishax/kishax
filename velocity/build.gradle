@@ -1,0 +1,56 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+group = 'keyp.forev.fmc'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://repo.opencollab.dev/main/' }
+    maven { url 'https://repo.skyblocksquad.de/repo' }
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
+    compileOnly 'org.geysermc.geyser:api:2.4.2-SNAPSHOT'
+    compileOnly 'org.geysermc.floodgate:api:2.2.3-SNAPSHOT'
+    implementation 'de.timongcraft:VeloBoard:1.4.0-EXPERIMENTAL-CHANGES'
+    compileOnly 'com.google.inject:guice:5.1.0'
+    implementation 'net.dv8tion:JDA:5.2.0'
+    implementation 'club.minnced:discord-webhooks:0.8.0'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
+
+tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveBaseName.set('FMC')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+    exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+}
+
+tasks.build {
+    dependsOn tasks.shadowJar
+}
+
+processResources {
+    filesMatching('**/velocity-plugin.json') {
+        expand(
+            project: project,
+            projectName: project.name,
+            projectVersion: project.version,
+            projectDescription: project.description,
+            projectGroup: project.group,
+            groupId: project.group
+        )
+    }
+}

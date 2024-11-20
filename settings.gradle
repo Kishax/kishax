@@ -1,0 +1,8 @@
+rootProject.name = 'FMC'
+include (
+    'common',
+    'velocity',
+    ':spigot:core',
+    ':spigot:v1_20_2',
+    ':spigot:v1_21_1',
+)

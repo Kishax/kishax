@@ -1,9 +1,9 @@
 {
   "id": "fmc",
-  "name": "${project.parent.name}",
-  "version": "${project.parent.version}",
-  "description": "${project.description}",
-  "main": "${project.parent.groupId}.velocity.Main",
+  "name": "${projectName}",
+  "version": "${projectVersion}",
+  "description": "${projectDescription}",
+  "main": "${projectGroup}.velocity.Main",
   "authors": [
     "Bella"
   ],
