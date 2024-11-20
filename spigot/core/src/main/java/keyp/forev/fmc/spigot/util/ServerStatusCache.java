@@ -160,9 +160,11 @@ public class ServerStatusCache {
                 while (rs.next()) {
                     String uuid = rs.getString("uuid");
                     String name = rs.getString("name");
-                    newMemberMap.put(name, new HashMap<String, String>() {{
-                        put("uuid", uuid);
-                    }});
+                    newMemberMap.put(name, new HashMap<String, String>() {
+                    	private static final long serialVersionUID = 1L;
+						{
+						    put("uuid", uuid);
+						}});
                 }
                 this.memberMap = newMemberMap;
             }

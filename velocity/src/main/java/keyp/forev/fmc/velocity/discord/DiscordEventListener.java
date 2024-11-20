@@ -107,7 +107,6 @@ public class DiscordEventListener extends ListenerAdapter {
 		}
     }
 	
-	@SuppressWarnings("null")
 	@Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent e) {
 		User user = e.getUser();
@@ -265,7 +264,6 @@ public class DiscordEventListener extends ListenerAdapter {
 		}
     }
 
-	@SuppressWarnings("null")
 	@Override
 	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
         Member member = e.getMember();
@@ -282,7 +280,6 @@ public class DiscordEventListener extends ListenerAdapter {
         bc.broadCastMessage(component);
     }
 
-	@SuppressWarnings("null")
 	@Override
 	public void onButtonInteraction(ButtonInteractionEvent e) {
         String buttonId = e.getComponentId();
@@ -364,7 +361,6 @@ public class DiscordEventListener extends ListenerAdapter {
         }
     }
 
-	@SuppressWarnings("null")
 	@Override
     public void onMessageReceived(MessageReceivedEvent e) {
         // DMやBot、Webhookのメッセージには反応しないようにする// e.isFromType(ChannelType.PRIVATE)

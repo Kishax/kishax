@@ -106,7 +106,6 @@ public class MessageEditor implements MessageEditorInterface {
 		return AddEmbedSomeMessage(type, null, null, null, null, null, playerUUID);
 	}
 
-	@SuppressWarnings("null")
 	private CompletableFuture<Void> AddEmbedSomeMessage (String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName, String chatMessage, UUID playerUUID) {
 		if (Objects.isNull(player)) {
 			if (Objects.nonNull(alternativePlayerName)) {

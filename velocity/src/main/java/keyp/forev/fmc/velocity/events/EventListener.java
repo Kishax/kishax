@@ -273,7 +273,6 @@ public class EventListener {
 	}
 
 	@Subscribe
-    @SuppressWarnings("UnstableApiUsage")
     public void onServerPostConnect(ServerPostConnectEvent event) {
 		Player player = event.getPlayer();
         fb.resendBoard(player.getUniqueId());

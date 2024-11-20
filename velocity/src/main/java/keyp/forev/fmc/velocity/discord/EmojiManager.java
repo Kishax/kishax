@@ -75,7 +75,6 @@ public class EmojiManager {
             return future;
         }
         Map<String, String> emojiMap = new HashMap<>();
-        @SuppressWarnings("null")
         List<RichCustomEmoji> emojis = guild.getEmojis();
         for (String eachEmojiName : emojiNames) {
             String eachEmojiId = null;
@@ -112,7 +111,6 @@ public class EmojiManager {
             return future;
         }
         // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
-        @SuppressWarnings("null")
         Optional<RichCustomEmoji> existingEmote = guild.getEmojis().stream()
             .filter(emote -> emote.getName().equals(emojiName))
             .findFirst();

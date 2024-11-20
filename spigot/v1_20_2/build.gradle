@@ -9,7 +9,13 @@ project(':spigot:v1_20_2') {
 
     sourceCompatibility = '17'
     targetCompatibility = '17'
-
+	
+	repositories {
+        mavenCentral()
+        maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+        maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    }
+    
     dependencies {
         implementation project(':spigot:core')
         compileOnly 'org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT'
