@@ -100,22 +100,22 @@ public class Database {
     public void setPreparedStatementValue(PreparedStatement ps, int parameterIndex, Object value) throws SQLException {
         if (value == null) {
             ps.setNull(parameterIndex, java.sql.Types.NULL);
-		} else if (value instanceof Integer i) {
-			ps.setInt(parameterIndex, i);
-		} else if (value instanceof Long l) {
-			ps.setLong(parameterIndex, l);
-		} else if (value instanceof Boolean b) {
-			ps.setBoolean(parameterIndex, b);
-		} else if (value instanceof String s) {
-			ps.setString(parameterIndex, s);
-		} else if (value instanceof Double d) {
-			ps.setDouble(parameterIndex, d);
-		} else if (value instanceof Float f) {
-			ps.setFloat(parameterIndex, f);
-		} else if (value instanceof java.sql.Date d) {
-			ps.setDate(parameterIndex, d);
-		} else if (value instanceof java.sql.Timestamp t) {
-			ps.setTimestamp(parameterIndex, t);
+		} else if (value instanceof Integer) {
+			ps.setInt(parameterIndex, (Integer) value);
+		} else if (value instanceof Long) {
+			ps.setLong(parameterIndex, (Long) value);
+		} else if (value instanceof Boolean) {
+			ps.setBoolean(parameterIndex, (Boolean) value);
+		} else if (value instanceof String) {
+			ps.setString(parameterIndex, (String) value);
+		} else if (value instanceof Double) {
+			ps.setDouble(parameterIndex, (Double) value);
+		} else if (value instanceof Float) {
+			ps.setFloat(parameterIndex, (Float) value);
+		} else if (value instanceof java.sql.Date) {
+			ps.setDate(parameterIndex, (java.sql.Date) value);
+		} else if (value instanceof java.sql.Timestamp) {
+			ps.setTimestamp(parameterIndex, (java.sql.Timestamp) value);
         } else {
             throw new SQLException("Unsupported data type: " + value.getClass().getName());
         }
