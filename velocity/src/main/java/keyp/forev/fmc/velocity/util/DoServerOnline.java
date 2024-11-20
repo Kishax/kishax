@@ -25,8 +25,10 @@ import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.SocketSwitch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import keyp.forev.fmc.velocity.Main;
 
 public class DoServerOnline {
+	private final Main plugin;
 	private final ConfigUtils cutils;
     private final Logger logger;
     private final ProxyServer server;
@@ -36,7 +38,8 @@ public class DoServerOnline {
 	private final Set<String> addedColumnSet = new HashSet<>();
     
     @Inject
-    public DoServerOnline(ConfigUtils cutils, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, Provider<SocketSwitch> sswProvider) {
+    public DoServerOnline(Main plugin, ConfigUtils cutils, ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, Provider<SocketSwitch> sswProvider) {
+    	this.plugin = plugin;
 		this.cutils = cutils;
     	this.logger = logger;
     	this.db = db;
@@ -159,7 +162,7 @@ public class DoServerOnline {
 	}
 
 	private void updateDatabase(boolean isCmd) {
-		server.getScheduler().buildTask(server, () -> {
+		server.getScheduler().buildTask(plugin, () -> {
 			try (Connection conn = db.getConnection()) {
 				// コマンドから実行していなければ
 				if (!isCmd) {

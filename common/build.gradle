@@ -11,8 +11,8 @@ repositories {
 }
 
 dependencies {
+	compileOnly "net.luckperms:api:${versions.luckperms}"
     implementation "redis.clients:jedis:${rootProject.ext.versions.jedis}"
-    implementation "net.luckperms:api:${rootProject.ext.versions.luckperms}"
     implementation "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
     implementation "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
     implementation "org.yaml:snakeyaml:${rootProject.ext.versions.snakeyaml}"
