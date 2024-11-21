@@ -5,12 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 
 public class SocketServerThread extends Thread {
-    public static AtomicReference<String> platform = new AtomicReference<>();
     public Logger logger;
     private final Socket socket;
     private final SocketResponse response;
@@ -30,13 +28,8 @@ public class SocketServerThread extends Thread {
                 receivedMessageBuilder.append(line).append("\n");
             }
             String receivedMessage = receivedMessageBuilder.toString();
-            // プラットフォームによって、receivedMessageを処理するメソッドを分ける
+            	// プラットフォームによって、receivedMessageを処理するメソッドを分ける
             response.resaction(receivedMessage);
-            /*switch (SocketServerThread.platform.get()) {
-                case "spigot" -> {
-                    
-                }
-            }*/
         } catch (Exception e) {
             logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {

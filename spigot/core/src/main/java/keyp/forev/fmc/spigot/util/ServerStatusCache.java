@@ -20,6 +20,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.PortFinder;
 import keyp.forev.fmc.common.SocketSwitch;
 
 @Singleton
@@ -30,13 +31,13 @@ public class ServerStatusCache {
     private final PortFinder pf;
     private final DoServerOnline dso;
     private final Provider<SocketSwitch> sswProvider;
-    private final ServerHomeDir shd;
+    private final SpigotServerHomeDir shd;
     private final AtomicBoolean isFirstRefreshing = new AtomicBoolean(false);
     private Map<String, Map<String, Map<String, Object>>> statusMap = new ConcurrentHashMap<>();
     private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
     @Inject
-    public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+    public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, SpigotServerHomeDir shd) {
         this.logger = logger;
         this.db = db;
         this.pf = pf;
@@ -100,7 +101,7 @@ public class ServerStatusCache {
                 // 初回ループのみ
                 if (isFirstRefreshing.compareAndSet(false, true)) {
                     logger.info("Server status cache has been initialized.");
-                    pf.findAvailablePortAsync(statusMap).thenAccept(port -> {
+                    pf.findAvailablePortAsync(conn).thenAccept(port -> {
                         String serverName = shd.getServerName();
                         refreshManualOnlineServer(serverName);
                         dso.UpdateDatabase(port);
@@ -165,7 +166,7 @@ public class ServerStatusCache {
 						{
 						    put("uuid", uuid);
 						}});
-                }
+                	}
                 this.memberMap = newMemberMap;
             }
         } catch (SQLException | ClassNotFoundException e) {

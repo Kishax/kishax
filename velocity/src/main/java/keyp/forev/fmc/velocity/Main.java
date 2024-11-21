@@ -21,7 +21,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.Luckperms;
 import keyp.forev.fmc.common.PlayerUtils;
-import keyp.forev.fmc.common.SocketServerThread;
 import keyp.forev.fmc.common.SocketSwitch;
 import de.timongcraft.veloboard.VeloBoardRegistry;
 import net.luckperms.api.LuckPermsProvider;
@@ -57,7 +56,6 @@ public class Main {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent e) {
     	logger.info("detected velocity platform.");
-        SocketServerThread.platform.set("velocity");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
         VeloBoardRegistry.register();
         injector = Guice.createInjector(new Module(this, server, logger, dataDirectory));

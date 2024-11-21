@@ -41,7 +41,7 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
 import keyp.forev.fmc.spigot.util.ImageMap;
 import keyp.forev.fmc.spigot.Main;
-import keyp.forev.fmc.spigot.util.ServerHomeDir;
+import keyp.forev.fmc.spigot.util.SpigotServerHomeDir;
 import keyp.forev.fmc.spigot.util.ServerStatusCache;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -77,13 +77,13 @@ public class Menu {
     private final ServerStatusCache ssc;
     private final Luckperms lp;
     private final ImageMap im;
-    private final ServerHomeDir shd;
+    private final SpigotServerHomeDir shd;
     private final Book book;
     private final CommandForward cf;
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
-	public Menu(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf) {  
+	public Menu(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, SpigotServerHomeDir shd, Book book, CommandForward cf) {  
 		this.plugin = plugin;
         this.logger = logger;
         this.db = db;

@@ -15,13 +15,12 @@ import com.google.inject.Injector;
 import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.Luckperms;
 import keyp.forev.fmc.common.PlayerUtils;
-import keyp.forev.fmc.common.SocketServerThread;
 import keyp.forev.fmc.spigot.util.AutoShutdown;
 import keyp.forev.fmc.spigot.util.DoServerOffline;
 import keyp.forev.fmc.spigot.util.ImageMap;
 import keyp.forev.fmc.spigot.util.PortalsConfig;
 import keyp.forev.fmc.spigot.util.Rcon;
-import keyp.forev.fmc.spigot.util.ServerHomeDir;
+import keyp.forev.fmc.spigot.util.SpigotServerHomeDir;
 import keyp.forev.fmc.spigot.util.ServerStatusCache;
 import keyp.forev.fmc.spigot.util.WandListener;
 import net.luckperms.api.LuckPermsProvider;
@@ -39,7 +38,6 @@ public class Main extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		logger.info("detected spigot platform.");
-		SocketServerThread.platform.set("spigot");
         injector = Guice.createInjector(new Module(this, logger));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 		Database db = getInjector().getInstance(Database.class);
@@ -105,7 +103,7 @@ public class Main extends JavaPlugin {
     }
 
 	private void ifHubThenUpdate(Connection conn) throws SQLException, ClassNotFoundException {
-		String thisServerName = getInjector().getInstance(ServerHomeDir.class).getServerName();
+		String thisServerName = getInjector().getInstance(SpigotServerHomeDir.class).getServerName();
         String query = "SELECT hub FROM status WHERE name=? LIMIT 1;";
         PreparedStatement ps = conn.prepareStatement(query);
         ps.setString(1, thisServerName);

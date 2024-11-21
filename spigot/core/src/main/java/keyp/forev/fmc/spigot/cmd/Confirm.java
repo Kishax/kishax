@@ -25,7 +25,7 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import keyp.forev.fmc.spigot.util.ImageMap;
-import keyp.forev.fmc.spigot.util.ServerHomeDir;
+import keyp.forev.fmc.spigot.util.SpigotServerHomeDir;
 import keyp.forev.fmc.spigot.util.TCUtils;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -38,7 +38,7 @@ public class Confirm {
     private final ImageMap im;
     private final String thisServerName;
     @Inject
-    public Confirm(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
+    public Confirm(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, ImageMap im, SpigotServerHomeDir shd) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;

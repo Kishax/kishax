@@ -25,7 +25,7 @@ public class AutoShutdown {
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown (JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+	public AutoShutdown (JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, SpigotServerHomeDir shd) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.db = db;

@@ -10,6 +10,7 @@ import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.JedisProvider;
 import keyp.forev.fmc.common.Luckperms;
 import keyp.forev.fmc.common.PlayerUtils;
+import keyp.forev.fmc.common.PortFinder;
 import keyp.forev.fmc.common.SocketSwitch;
 import redis.clients.jedis.Jedis;
 import keyp.forev.fmc.spigot.cmd.Book;
@@ -47,7 +48,6 @@ public class Module extends AbstractModule {
 		bind(org.slf4j.Logger.class).toInstance(logger);
 		bind(Jedis.class).toProvider(JedisProvider.class);
 		bind(SocketSwitch.class);
-		bind(ServerHomeDir.class);
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);
 		bind(PortalsConfig.class).in(com.google.inject.Scopes.SINGLETON);
@@ -70,18 +70,24 @@ public class Module extends AbstractModule {
     }
 
 	@Provides
-    @Singleton
-    public SocketResponse provideSpigotSocketResponse(
-            JavaPlugin plugin,
-            Logger logger,
-            Database db,
-            ServerStatusCache ssc,
-            ServerHomeDir shd,
-            Provider<SocketSwitch> sswProvider,
-            AutoShutdown asd,
-            Inventory inv,
-            Menu menu,
-            Luckperms lp) {
-        return new SpigotSocketResponse(plugin, logger, db, ssc, shd, sswProvider, asd, inv, menu, lp);
-    }
+	@Singleton
+	public SocketResponse provideSpigotSocketResponse(
+	        JavaPlugin plugin,
+	        Logger logger,
+	        Database db,
+	        ServerStatusCache ssc,
+	        SpigotServerHomeDir shd,
+	        Provider<SocketSwitch> sswProvider,
+	        AutoShutdown asd,
+	        Inventory inv,
+	        Menu menu,
+	        Luckperms lp) {
+	    return new SpigotSocketResponse(plugin, logger, db, ssc, shd, sswProvider, asd, inv, menu, lp);
+	}
+	
+	@Provides
+	@Singleton
+	public SpigotServerHomeDir provideServerHomeDir(JavaPlugin plugin) {
+		return new SpigotServerHomeDir(plugin);
+	}
 }

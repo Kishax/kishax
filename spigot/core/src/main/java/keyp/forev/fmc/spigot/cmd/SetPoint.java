@@ -14,15 +14,15 @@ import com.google.inject.Inject;
 import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.Luckperms;
 import net.md_5.bungee.api.ChatColor;
-import keyp.forev.fmc.spigot.util.ServerHomeDir;
+import keyp.forev.fmc.spigot.util.SpigotServerHomeDir;
 
 public class SetPoint {
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
-    private final ServerHomeDir shd;
+    private final SpigotServerHomeDir shd;
     @Inject
-    public SetPoint(Logger logger, Database db, Luckperms lp, ServerHomeDir shd) {
+    public SetPoint(Logger logger, Database db, Luckperms lp, SpigotServerHomeDir shd) {
         this.logger = logger;
         this.db = db;
         this.lp = lp;

@@ -1,42 +1,22 @@
-project(':spigot:v1_20_2') {
-    apply plugin: 'com.github.johnrengelman.shadow'
+repositories {
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+}
 
-    java {
-      toolchain {
-            languageVersion = JavaLanguageVersion.of(17)
-        }
-    }
+dependencies {
+    implementation project(':spigot:core')
+    compileOnly 'org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT'
+}
 
-    sourceCompatibility = '17'
-    targetCompatibility = '17'
-	
-	repositories {
-        mavenCentral()
-        maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-        maven { url 'https://repo.papermc.io/repository/maven-public/' }
-    }
-    
-    dependencies {
-        implementation project(':spigot:core')
-        compileOnly 'org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT'
-        compileOnly 'io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT'
-    }
+shadowJar {
+    archiveBaseName.set('FMC-Spigot')
+    archiveClassifier.set('')
+    archiveVersion.set('1.20.2')
+    exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+    from(project(':spigot:core').sourceSets.main.output)
+}
 
-    tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
-        sourceCompatibility = '17'
-        targetCompatibility = '17'
-    }
-
-    tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-        archiveBaseName.set('FMC-Spigot')
-        archiveClassifier.set('')
-        archiveVersion.set('1.20.2')
-        exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-        from(project(':spigot:core').sourceSets.main.output)
-    }
-
-    tasks.build {
-        dependsOn tasks.shadowJar
-    }
+tasks.build {
+    dependsOn tasks.shadowJar
 }

@@ -37,7 +37,7 @@ public class SpigotSocketResponse implements SocketResponse {
     private final Luckperms lp;
     private final String thisServerName;
     @Inject
-    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, Luckperms lp) {
+    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, SpigotServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, Luckperms lp) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;

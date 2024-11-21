@@ -16,11 +16,11 @@ import keyp.forev.fmc.common.SocketSwitch;
 public class DoServerOnline {
 	private final Logger logger;
 	private final Provider<SocketSwitch> sswProvider;
-	private final ServerHomeDir shd;
+	private final SpigotServerHomeDir shd;
 	private final Database db;
 	
 	@Inject
-	public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
+	public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, SpigotServerHomeDir shd, Database db) {
 		this.logger = logger;
 		this.sswProvider = sswProvider;
 		this.shd = shd;
