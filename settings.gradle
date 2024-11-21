@@ -1,3 +1,17 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'Forge'
+            url = 'https://maven.minecraftforge.net/'
+        }
+    }
+}
+
 rootProject.name = 'FMC'
 include (
     'common',
@@ -5,4 +19,6 @@ include (
     'spigot:core',
     'spigot:v1_20_2',
     'spigot:v1_21_',
+    'fabric:v1_20_4',
+    'forge'
 )
