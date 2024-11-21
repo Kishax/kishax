@@ -34,9 +34,9 @@ project(':spigot:core') {
     }
 
     tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-        archiveBaseName.set('FMC')
+        archiveBaseName.set('FMC-Spigot')
         archiveClassifier.set('')
-        archiveVersion.set('')
+        archiveVersion.set('1.21-1.21.3')
         exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
     }
 

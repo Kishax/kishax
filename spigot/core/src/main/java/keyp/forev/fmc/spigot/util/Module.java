@@ -67,12 +67,11 @@ public class Module extends AbstractModule {
 		bind(Inventory.class);
 		bind(FMCItemFrame.class);
 		bind(CommandForward.class);
-		bind(SocketResponse.class).to(SpigotSocketResponse.class).in(Singleton.class);
     }
 
 	@Provides
     @Singleton
-    public SpigotSocketResponse provideSpigotSocketResponse(
+    public SocketResponse provideSpigotSocketResponse(
             JavaPlugin plugin,
             Logger logger,
             Database db,

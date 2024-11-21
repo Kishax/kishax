@@ -116,10 +116,19 @@ public class Confirm {
         forUser.setColor(ChatColor.GOLD);
         forUser.setBold(true);
         forUser.setUnderlined(true);
-        TextComponent javaUserAccess = new TextComponent("は、チャット欄よりサイトにアクセスしてね！\n");
+        TextComponent javaUserAccess = new TextComponent("は、");
         javaUserAccess.setColor(ChatColor.GRAY);
         javaUserAccess.setItalic(true);
-        TextComponent bedrockUserAccess = new TextComponent("は、QRコードを読み取ってアクセスしてね！");
+        TextComponent here = new TextComponent("ココ");
+        here.setColor(ChatColor.GOLD);
+        here.setUnderlined(true);
+        here.setItalic(true);
+        here.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, confirmUrl));
+        here.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてWEB認証ページを開く")));
+        TextComponent javaUserAccess2 = new TextComponent("をクリックしてアクセスしてね！\n");
+        javaUserAccess2.setColor(ChatColor.GRAY);
+        javaUserAccess2.setItalic(true);
+        TextComponent bedrockUserAccess = new TextComponent("は、配布されたQRコードを読み取ってアクセスしてね！");
         bedrockUserAccess.setColor(ChatColor.GRAY);
         bedrockUserAccess.setItalic(true);
         TextComponent authCode = new TextComponent("\n認証コードは ");
@@ -168,6 +177,8 @@ public class Confirm {
                     case 33 -> {
                         message.addExtra(TCUtils.JAVA_USER.get());
                         message.addExtra(javaUserAccess);
+                        message.addExtra(here);
+                        message.addExtra(javaUserAccess2);
                     }
                     case 30 -> {
                         message.addExtra(TCUtils.BEDROCK_USER.get());
