@@ -17,7 +17,7 @@ public class DoServerOffline {
 	private final Provider<SocketSwitch> sswProvider;
 	private final String thisServerName;
 	@Inject
-	public DoServerOffline (Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+	public DoServerOffline (Logger logger, Database db, Provider<SocketSwitch> sswProvider, SpigotServerHomeDir shd) {
 		this.logger = logger;
 		this.db = db;
 		this.sswProvider = sswProvider;

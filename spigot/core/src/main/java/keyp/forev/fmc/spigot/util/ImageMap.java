@@ -85,7 +85,7 @@ public class ImageMap {
     private final String serverName;
     private final int inputPeriod = 60;
     @Inject
-    public ImageMap(JavaPlugin plugin, Logger logger, Database db, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
+    public ImageMap(JavaPlugin plugin, Logger logger, Database db, SpigotServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -273,7 +273,8 @@ public class ImageMap {
         }
     }
 
-    private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2, Object[] inputs3) {
+    @SuppressWarnings("null")
+	private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2, Object[] inputs3) {
         if (sender instanceof Player player) {
             if (checkIsOtherInputMode(player)) {
                 player.sendMessage(ChatColor.RED + "他でインプットモード中です。");
@@ -810,7 +811,8 @@ public class ImageMap {
         executeImageMap(sender, args, dArgs, false);
     }
     
-    private void executeImageMap(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
+    @SuppressWarnings("null")
+	private void executeImageMap(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
         if (sender instanceof Player player) {
             if (args.length < 3) {
                 player.sendMessage("使用法: /fmc im <create|createqr> <url> [Optional: <title> <comment>]");
@@ -838,7 +840,7 @@ public class ImageMap {
                     return;
                 }
                 LocalDate localDate = LocalDate.now();
-                String now = fromDiscord ? (String) dArgs[1] : localDate.toString();
+				String now = fromDiscord ? (String) dArgs[1] : localDate.toString();
                 BufferedImage image;
                 if (isQr) {
                     ext = "png";
@@ -923,7 +925,8 @@ public class ImageMap {
         }
     }
 
-    private void executeQ(CommandSender sender, String[] args, boolean q, Object[] Args) {
+    @SuppressWarnings("null")
+	private void executeQ(CommandSender sender, String[] args, boolean q, Object[] Args) {
         if (sender instanceof Player player) {
             String otp, title, comment, url, date;
             boolean fromMenu = (Args != null);

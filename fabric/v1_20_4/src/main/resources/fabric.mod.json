@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "fabricmod",
+  "version": "${projectVersion}",
+  "name": "Fabric Mod Example",
+  "description": "A simple example mod using Fabric API",
+  "authors": [
+    "Bella"
+  ],
+  "contact": {
+    "homepage": "https://keypforev.ddns.net/",
+    "sources": "https://github.com/bella2391/FMC-Plugin"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "${projectGroup}.fabric.Main"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.14.0",
+    "fabric": "*",
+    "minecraft": ">=1.20.0",
+	"luckperms": "*"
+  }
+}

@@ -1,15 +1,3 @@
-plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
-}
-
-group = 'keyp.forev.fmc'
-version = '1.0.0'
-
-repositories {
-    mavenCentral()
-}
-
 dependencies {
 	compileOnly "net.luckperms:api:${rootProject.ext.versions.luckperms}"
     implementation "redis.clients:jedis:${rootProject.ext.versions.jedis}"
@@ -22,13 +10,7 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:${rootProject.ext.versions.okhttp}"
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-    sourceCompatibility = '17'
-    targetCompatibility = '17'
-}
-
-tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+shadowJar {
     archiveBaseName.set('FMC')
     archiveClassifier.set('')
     archiveVersion.set('')

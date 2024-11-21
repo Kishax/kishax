@@ -20,18 +20,20 @@ ext {
 
 subprojects {
     apply plugin: 'java'
-
+	apply plugin: 'com.github.johnrengelman.shadow'
+	
     group = 'keyp.forev.fmc'
     version = '1.0.0'
-
+	
+	sourceCompatibility = 17
+	targetCompatibility = 17
+	
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
     }
 
     repositories {
         mavenCentral()
-        //maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-        //maven { url 'https://repo.papermc.io/repository/maven-public/' }
     }
 
     dependencies {
@@ -45,26 +47,4 @@ subprojects {
 		implementation "org.json:json:${versions.json}"
 		implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     }
-
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(17)
-        }
-    }
-}
-
-tasks.named('build').configure {
-    enabled = false
-}
-
-tasks.withType(Copy).configureEach {
-    enabled = false
-}
-
-tasks.withType(Delete).configureEach {
-    enabled = false
-}
-
-tasks.withType(Jar).configureEach {
-    enabled = false
 }

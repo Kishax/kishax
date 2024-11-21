@@ -24,9 +24,9 @@ import net.luckperms.api.node.Node;
 import net.luckperms.api.node.types.InheritanceNode;
 
 public class Luckperms {
+	protected final LuckPerms lpapi = LuckPermsProvider.get();
 	private final Logger logger;
 	private final Database db;
-	private final LuckPerms lpapi = LuckPermsProvider.get();
 	private final PlayerUtils pu;
 	
 	@Inject

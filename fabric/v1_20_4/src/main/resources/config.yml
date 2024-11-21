@@ -1,0 +1,23 @@
+# FMC-Fabric-Mod Configuration File
+MySQL:
+    Host: "localhost"
+    Database: ""
+    Port: 3306
+    User: ""
+    Password: ""
+
+Socket:
+    Client_Port: 8766
+    Server_Port: 
+
+Discord:
+    Webhook_URL: ""
+
+MCVC:
+    Mode: false
+    Host: "localhost"
+    EXE_Path: ""
+
+AutoStop:
+    Mode: false
+    Interval: 3
