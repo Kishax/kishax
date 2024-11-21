@@ -2,7 +2,7 @@ project(':spigot:v1_20_2') {
     apply plugin: 'com.github.johnrengelman.shadow'
 
     java {
-        toolchain {
+      toolchain {
             languageVersion = JavaLanguageVersion.of(17)
         }
     }
