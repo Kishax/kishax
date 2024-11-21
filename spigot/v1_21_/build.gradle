@@ -1,12 +1,12 @@
-project(':spigot:v1_21_1') {
+project(':spigot:v1_21_') {
     apply plugin: 'com.github.johnrengelman.shadow'
 
     java {
-        toolchain {
+      toolchain {
             languageVersion = JavaLanguageVersion.of(21)
         }
     }
-    
+
     sourceCompatibility = '21'
     targetCompatibility = '21'
 	
@@ -18,21 +18,20 @@ project(':spigot:v1_21_1') {
     
     dependencies {
         implementation project(':spigot:core')
-        compileOnly 'org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT'
-        compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+        compileOnly 'org.spigotmc:spigot-api:1.21.3-R0.1-SNAPSHOT'
+        compileOnly 'io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT'
     }
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
-        sourceCompatibility = '22'
-        targetCompatibility = '22'
+        sourceCompatibility = '21'
+        targetCompatibility = '21'
     }
 
     tasks.withType(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
         archiveBaseName.set('FMC-Spigot')
         archiveClassifier.set('')
-        archiveVersion.set('1.20.2')
-        destinationDirectory.set(file('./target'))
+        archiveVersion.set('1.21_')
         exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
         from(project(':spigot:core').sourceSets.main.output)
     }
