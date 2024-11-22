@@ -6,7 +6,6 @@ repositories {
 }
 
 dependencies {
-    implementation project(':common')
     compileOnly "net.luckperms:api:${versions.luckperms}"
     compileOnly 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
     annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
@@ -16,6 +15,7 @@ dependencies {
     compileOnly 'com.google.inject:guice:5.1.0'
     implementation 'net.dv8tion:JDA:5.2.0'
     implementation 'club.minnced:discord-webhooks:0.8.0'
+    implementation project(':common')
 }
 
 shadowJar {
@@ -30,14 +30,16 @@ tasks.build {
 }
 
 processResources {
-    filesMatching('**/velocity-plugin.json') {
-        expand(
-            project: project,
-            projectName: project.name,
-            projectVersion: project.version,
-            projectDescription: project.description,
-            projectGroup: project.group,
-            groupId: project.group
-        )
-    }
+	filesMatching('**/velocity-plugin.json') {
+	    expand(
+	        project: project,
+	        projectName: project.name,
+	        projectVersion: project.version,
+	        projectDescription: rootProject.ext.processResources.description,
+	        projectGroup: project.group,
+	        groupId: project.group,
+	        projectHomePageUrl: rootProject.ext.processResources.homepageUrl,
+	        projectSourceUrl: rootProject.ext.processResources.sourceUrl
+	    )
+	}
 }

@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "id": "fabricmod",
   "version": "${projectVersion}",
-  "name": "Fabric Mod Example",
-  "description": "A simple example mod using Fabric API",
+  "name": "FMC-Fabric-Mod",
+  "description": "${projectDescription}",
   "authors": [
     "Bella"
   ],
   "contact": {
-    "homepage": "https://keypforev.ddns.net/",
-    "sources": "https://github.com/bella2391/FMC-Plugin"
+    "homepage": "${projectHomePageUrl}",
+    "sources": "${projectSourceUrl}"
   },
   "license": "MIT",
   "environment": "*",
