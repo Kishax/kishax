@@ -3,7 +3,7 @@ version: ${projectName}
 description: ${projectDescription}
 main: ${projectGroup}.spigot.Main
 author: Bella
-website: keypforev.ddns.net
+website: ${projectHomePageUrl}
 api-version: 1.18
 description: "§6§lThis plugin is provided by FMC Server!!"
 depend:

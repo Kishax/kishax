@@ -4,7 +4,6 @@ repositories {
 }
 
 dependencies {
-    implementation project(':common')
     compileOnly "net.luckperms:api:${versions.luckperms}"
     compileOnly 'org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT'
     compileOnly 'io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT'
@@ -12,6 +11,7 @@ dependencies {
     implementation 'net.coobird:thumbnailator:0.4.20'
     implementation 'com.google.zxing:core:3.4.1'
     implementation 'com.google.zxing:javase:3.4.1'
+    implementation project(':common')
 }
 
 shadowJar {
@@ -26,14 +26,16 @@ tasks.build {
 }
 
 processResources {
-    filesMatching('**/plugin.yml') {
-        expand(
-            project: project,
-            projectName: project.name,
-            projectVersion: project.version,
-            projectDescription: project.description,
-            projectGroup: project.group,
-            groupId: project.group
-        )
-    }
+	filesMatching('**/plugin.yml') {
+	    expand(
+	        project: project,
+	        projectName: project.name,
+	        projectVersion: project.version,
+	        projectDescription: rootProject.ext.processResources.description,
+	        projectGroup: project.group,
+	        groupId: project.group,
+	        projectHomePageUrl: rootProject.ext.processResources.homepageUrl,
+	        projectSourceUrl: rootProject.ext.processResources.sourceUrl
+	    )
+	}
 }
