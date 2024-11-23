@@ -1,7 +1,8 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.loom)
 }
 
 repositories {
@@ -14,13 +15,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:0.15.11"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:0.97.1+1.20.4"
 	compileOnly "net.luckperms:api:${rootProject.ext.versions.luckperms}"
-	
-	//runtimeOnly "com.google.guava:guava:31.1-jre"
 	implementation project(':common')
-	//modImplementation "com.llamalad7.mixinextras:mixinextras:0.5.0-beta.4"
-	/*implementation("com.github.oshi:oshi-core:6.4.5") {
-		exclude group: 'com.github.oshi', module: 'oshi-core'
-	}*/
 }
 
 processResources {
@@ -36,7 +31,6 @@ processResources {
 	        projectSourceUrl: rootProject.ext.processResources.sourceUrl
 	    )
 	}
-	exclude('**/unused_language.json')
 	exclude('assets/minecraft/**') 
 }
 
@@ -71,13 +65,13 @@ shadowJar {
 		exclude(dependency('org.lwjgl:lwjgl-stb'))
 		exclude(dependency('org.lwjgl:lwjgl-tinyfd'))
 		exclude(dependency('com.ibm.icu:icu4j'))
-		/*exclude(dependency('com.mojang:authlib'))
+		exclude(dependency('com.mojang:authlib'))
 		exclude(dependency('com.mojang:blocklist'))
 		exclude(dependency('com.mojang:brigadier'))
 		exclude(dependency('com.mojang:datafixerupper'))
 		exclude(dependency('com.mojang:logging'))
 		exclude(dependency('com.mojang:patchy'))
-		exclude(dependency('com.mojang:text2speech'))*/
+		exclude(dependency('com.mojang:text2speech'))
 		exclude(dependency('net.java.dev.jna:jna'))
 		exclude(dependency('net.java.dev.jna:jna-platform'))
 		exclude(dependency('net.sf.jopt-simple:jopt-simple'))
@@ -89,7 +83,7 @@ shadowJar {
 		exclude(dependency('org.apache.logging.log4j:log4j-core'))
 		exclude(dependency('org.apache.logging.log4j:log4j-slf4j2-impl'))
 		exclude(dependency('org.joml:joml'))
-		//exclude('net.fabricmc:.*')
+		exclude('net.fabricmc:.*')
 	}
 	exclude('**/*.kotlin_*')
 	exclude('/mappings/*')
