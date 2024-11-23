@@ -1,4 +1,5 @@
 /error/
+/.vscode/
 ### Gradle & IntelliJ ###
 .gradle/
 /.idea/
