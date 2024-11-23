@@ -1,3 +1,7 @@
+plugins {
+	alias(libs.plugins.shadow)
+}
+
 dependencies {
 	compileOnly "net.luckperms:api:${rootProject.ext.versions.luckperms}"
 	implementation "redis.clients:jedis:${rootProject.ext.versions.jedis}"
