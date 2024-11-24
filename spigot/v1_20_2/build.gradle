@@ -7,18 +7,25 @@ repositories {
     maven { url 'https://repo.papermc.io/repository/maven-public/' }
 }
 
+configurations {
+	shadowImpl
+	compileOnly.extendsFrom shadowImpl
+}
+
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT'
     compileOnly 'io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT'
     implementation project(':spigot:core')
+    shadowImpl project(':common')
 }
 
 shadowJar {
-    archiveBaseName.set('FMC-Spigot')
-    archiveClassifier.set('')
-    archiveVersion.set('1.20.2')
-    exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-    from(project(':spigot:core').sourceSets.main.output)
+	configurations = [project.configurations.shadowImpl]
+	archiveBaseName.set('FMC-Spigot')
+	archiveClassifier.set('')
+	archiveVersion.set('1.20.2')
+	from(project(':spigot:core').shadowJar.outputs.files)
+	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
 
 tasks.build {

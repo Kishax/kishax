@@ -99,22 +99,25 @@ public class ServerStatusCache {
                     sortedServerStatusMap.put(serverType, sortedServers);
                 }
                 this.statusMap = sortedServerStatusMap;
-                	// 初回ループのみ
                 if (isFirstRefreshing.compareAndSet(false, true)) {
                     logger.info("Server status cache has been initialized.");
-                    pf.findAvailablePortAsync(conn).thenAccept(port -> {
-                        String serverName = shd.getServerName();
-                        refreshManualOnlineServer(serverName);
-                        dso.UpdateDatabase(port);
-                        ssw.startSocketServer(port);
-                        logger.info(serverName + " server is online!");
-                    }).exceptionally(ex -> {
-                        logger.error("ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
-                        for (StackTraceElement element : ex.getStackTrace()) {
-                            logger.error(element.toString());
-                        }
-                        return null;
-                    });
+					try (Connection conn2 = conn == null || conn.isClosed() ? db.getConnection() : conn) {
+						pf.findAvailablePortAsync().thenAccept(port -> {
+						    String serverName = shd.getServerName();
+						    refreshManualOnlineServer(serverName);
+						    dso.UpdateDatabase(port);
+						    ssw.startSocketServer(port);
+						    logger.info(serverName + " server is online!");
+						}).exceptionally(ex -> {
+						    logger.error("ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
+						    for (StackTraceElement element : ex.getStackTrace()) {
+						    	logger.error(element.toString());
+						     }
+						    return null;
+						});
+					} catch (SQLException | ClassNotFoundException e) {
+						logger.error("An error occurred while updating the database: {}", e.getMessage());
+					}
                 }
             }
         } catch (SQLException | ClassNotFoundException e) {

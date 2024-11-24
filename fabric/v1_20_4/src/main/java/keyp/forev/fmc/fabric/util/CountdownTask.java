@@ -54,7 +54,6 @@ public class CountdownTask implements Runnable {
 
     private void shutdownServer() {
         if (isShutdown.get()) return;
-
         logger.info("サーバーを停止します。");
         isShutdown.set(true);
         server.stop(false);
