@@ -14,10 +14,11 @@ dependencies {
 }
 
 shadowJar {
-    archiveBaseName.set('FMC-Common')
-    archiveClassifier.set('')
-    archiveVersion.set('')
-    exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+	archiveBaseName.set('FMC-Common')
+	archiveClassifier.set('')
+	archiveVersion.set('')
+	exclude('**/*.kotlin_*')
+	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
 
 tasks.build {

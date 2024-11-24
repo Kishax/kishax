@@ -9,14 +9,17 @@ repositories {
     maven { url 'https://maven.fabricmc.net/' }
 }
 
+configurations {
+	shadowImpl
+	compileOnly.extendsFrom shadowImpl
+}
+
 dependencies {
 	minecraft 'com.mojang:minecraft:1.20.4'
 	mappings 'net.fabricmc:yarn:1.20.4+build.3:v2'
 	modImplementation 'net.fabricmc:fabric-loader:0.15.11'
 	modImplementation 'net.fabricmc.fabric-api:fabric-api:0.97.1+1.20.4'
-	//modImplementation 'io.github.llamalad7:mixinextras-fabric:0.3.5'
-	//annotationProcessor 'io.github.llamalad7:mixinextras-fabric:0.3.5'
-	implementation project(':common')
+	shadowImpl project(':common')
 }
 
 processResources {
@@ -36,65 +39,15 @@ processResources {
 }
 
 shadowJar {
+	configurations = [project.configurations.shadowImpl]
 	archiveBaseName.set('FMC-Fabric')
 	archiveClassifier.set('')
 	archiveVersion.set('1.20.4-shaded')
 	dependencies {
-		//minimize()
-		exclude(dependency('net.fabricmc.fabric-api:fabric-api'))
-		exclude(dependency('net.fabricmc:fabric-loader'))
-		exclude(dependency('io.github.llamalad7:mixinextras-fabric'))
-		exclude(dependency('net.fabricmc:sponge-mixin'))
-		exclude(dependency('org.ow2.asm:asm'))
-		exclude(dependency('org.ow2.asm:asm-analysis'))
-		exclude(dependency('org.ow2.asm:asm-cmmons'))
-		exclude(dependency('org.ow2.asm:asm-tree'))
-		exclude(dependency('org.ow2.asm:asm-util'))
-		exclude(dependency('com.github.oshi:oshi-core'))
-		exclude(dependency('org.jetbrains.kotlin:kotlin-stdlib'))
-		exclude(dependency('com.google.code.gson:gson'))
-		exclude(dependency('com.google.guava:guava'))
-		exclude(dependency('commons-codec:commons-codec'))
-		exclude(dependency('commons-io:commons-io'))
-		exclude(dependency('commons-logging:commons-logging'))
-		exclude(dependency('io.netty:netty-buffer'))
-		exclude(dependency('io.netty:netty-codec'))
-		exclude(dependency('io.netty:netty-common'))
-		exclude(dependency('io.netty:netty-handler'))
-		exclude(dependency('io.netty:netty-resolver'))
-		exclude(dependency('io.netty:netty-transport'))
-		exclude(dependency('io.netty:netty-transport-classes-epoll'))
-		exclude(dependency('io.netty:netty-transport-native-epoll'))
-		exclude(dependency('io.netty:netty-transport-native-unix-common'))
-		exclude(dependency('it.unimi.dsi:fastutil'))
-		exclude(dependency('org.lwjgl:lwjgl'))
-		exclude(dependency('org.lwjgl:lwjgl-glfw'))
-		exclude(dependency('org.lwjgl:lwjgl-jemalloc'))
-		exclude(dependency('org.lwjgl:lwjgl-openal'))
-		exclude(dependency('org.lwjgl:lwjgl-opengl'))
-		exclude(dependency('org.lwjgl:lwjgl-stb'))
-		exclude(dependency('org.lwjgl:lwjgl-tinyfd'))
-		exclude(dependency('com.ibm.icu:icu4j'))
-		exclude(dependency('com.mojang:authlib'))
-		exclude(dependency('com.mojang:blocklist'))
-		exclude(dependency('com.mojang:brigadier'))
-		exclude(dependency('com.mojang:datafixerupper'))
-		exclude(dependency('com.mojang:logging'))
-		exclude(dependency('com.mojang:patchy'))
-		exclude(dependency('com.mojang:text2speech'))
-		exclude(dependency('net.java.dev.jna:jna'))
-		exclude(dependency('net.java.dev.jna:jna-platform'))
-		exclude(dependency('net.sf.jopt-simple:jopt-simple'))
-		exclude(dependency('org.apache.commons:commons-compress'))
-		exclude(dependency('org.apache.commons:commons-lang3'))
-		exclude(dependency('org.apache.httpcomponents:httpclient'))
-		exclude(dependency('org.apache.httpcomponents:httpcore'))
-		exclude(dependency('org.apache.logging.log4j:log4j-api'))
-		exclude(dependency('org.apache.logging.log4j:log4j-core'))
+		exclude(dependency('com.google.guava:.*'))
+		exclude(dependency('org.slf4j:slf4j-simple'))
 		exclude(dependency('org.apache.logging.log4j:log4j-slf4j2-impl'))
-		exclude(dependency('org.joml:joml'))
 	}
-	exclude('**/*.kotlin_*')
 	exclude('/mappings/*')
 	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }

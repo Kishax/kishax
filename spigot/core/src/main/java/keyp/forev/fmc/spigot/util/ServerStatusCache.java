@@ -101,7 +101,7 @@ public class ServerStatusCache {
                 // 初回ループのみ
                 if (isFirstRefreshing.compareAndSet(false, true)) {
                     logger.info("Server status cache has been initialized.");
-                    pf.findAvailablePortAsync(conn).thenAccept(port -> {
+                    pf.findAvailablePortAsync().thenAccept(port -> {
                         String serverName = shd.getServerName();
                         refreshManualOnlineServer(serverName);
                         dso.UpdateDatabase(port);

@@ -19,6 +19,7 @@ import keyp.forev.fmc.common.PlayerUtils;
 import keyp.forev.fmc.fabric.cmd.FMCCommand;
 import keyp.forev.fmc.fabric.util.AutoShutdown;
 import keyp.forev.fmc.fabric.util.Config;
+import keyp.forev.fmc.fabric.util.DoServerOffline;
 import keyp.forev.fmc.fabric.util.FabricLuckperms;
 import keyp.forev.fmc.fabric.util.FabricServerHomeDir;
 import keyp.forev.fmc.fabric.util.Module;
@@ -37,11 +38,10 @@ public class Main implements ModInitializer {
     public static AtomicBoolean isHub = new AtomicBoolean(false);
 	private static Injector injector = null;
 	private final FabricLoader fabric;
-	private final Logger logger;
+	private final Logger logger = LoggerFactory.getLogger("FMC");
 	
 	public Main() {
 		this.fabric = FabricLoader.getInstance();
-		this.logger = LoggerFactory.getLogger("FMC");
 	}
 	
     @Override
@@ -77,6 +77,7 @@ public class Main implements ModInitializer {
         
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
         	server.sendMessage(Text.literal("サーバーが停止中です...").formatted(Formatting.RED));
+        	getInjector().getInstance(DoServerOffline.class).UpdateDatabase();
         	getInjector().getInstance(AutoShutdown.class).stop();
             if (getInjector().getInstance(Config.class).getBoolean("MCVC.Mode", false)) {
                 getInjector().getInstance(Rcon.class).stopMCVC();
