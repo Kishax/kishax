@@ -67,6 +67,7 @@ public class Module extends AbstractModule {
 		bind(Inventory.class);
 		bind(FMCItemFrame.class);
 		bind(CommandForward.class);
+		bind(BroadCast.class);
     }
 
 	@Provides
@@ -81,8 +82,9 @@ public class Module extends AbstractModule {
 	        AutoShutdown asd,
 	        Inventory inv,
 	        Menu menu,
-	        Luckperms lp) {
-	    return new SpigotSocketResponse(plugin, logger, db, ssc, shd, sswProvider, asd, inv, menu, lp);
+	        Luckperms lp,
+	        BroadCast bc) {
+	    return new SpigotSocketResponse(plugin, logger, db, ssc, shd, sswProvider, asd, inv, menu, lp, bc);
 	}
 	
 	@Provides

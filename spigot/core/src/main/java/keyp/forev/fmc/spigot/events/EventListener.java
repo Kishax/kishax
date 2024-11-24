@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -51,6 +50,7 @@ import keyp.forev.fmc.spigot.util.FMCCoords;
 import keyp.forev.fmc.spigot.util.ImageMap;
 import keyp.forev.fmc.spigot.util.Rcon;
 import keyp.forev.fmc.spigot.util.WandListener;
+import net.md_5.bungee.api.ChatColor;
 
 public final class EventListener implements Listener {
     public static Map<Player, Map<String, MessageRunnable>> playerInputerMap = new HashMap<>();
@@ -134,7 +134,8 @@ public final class EventListener implements Listener {
         }
     }
 
-    @EventHandler
+    @SuppressWarnings("deprecation")
+	@EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         fif.loadWorldsItemFrames();
         event.setJoinMessage(null);

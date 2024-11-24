@@ -8,8 +8,8 @@
     "Bella"
   ],
   "contact": {
-    "homepage": "${projectHomePageUrl}",
-    "sources": "${projectSourceUrl}"
+    "homepage": "${projectHP}",
+    "sources": "${projectSource}"
   },
   "license": "MIT",
   "environment": "*",
@@ -22,6 +22,6 @@
     "fabricloader": ">=0.14.0",
     "fabric": "*",
     "minecraft": ">=1.20.0",
-	"luckperms": "*"
+    "luckperms": "*"
   }
 }

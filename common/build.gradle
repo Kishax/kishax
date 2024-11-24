@@ -3,19 +3,18 @@ plugins {
 }
 
 dependencies {
-	compileOnly "net.luckperms:api:${rootProject.ext.versions.luckperms}"
-	implementation "redis.clients:jedis:${rootProject.ext.versions.jedis}"
-	compileOnly "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
-	compileOnly "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
-	implementation "org.yaml:snakeyaml:${rootProject.ext.versions.snakeyaml}"
-	implementation "com.google.inject:guice:${rootProject.ext.versions.guice}"
-	implementation "mysql:mysql-connector-java:${rootProject.ext.versions.mysql}"
-	implementation "org.json:json:${rootProject.ext.versions.json}"
-	implementation "com.squareup.okhttp3:okhttp:${rootProject.ext.versions.okhttp}"
+	implementation 'org.slf4j:slf4j-api:2.0.9'
+	implementation 'org.slf4j:slf4j-simple:2.0.9'
+	implementation 'redis.clients:jedis:5.2.0'
+	implementation 'org.yaml:snakeyaml:2.0'
+	implementation 'com.google.inject:guice:5.1.0'
+	implementation 'mysql:mysql-connector-java:8.0.30'
+	implementation 'org.json:json:20180813'
+	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 }
 
 shadowJar {
-    archiveBaseName.set('FMC')
+    archiveBaseName.set('FMC-Common')
     archiveClassifier.set('')
     archiveVersion.set('')
     exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')

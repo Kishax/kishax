@@ -8,24 +8,6 @@ java {
     }
 }
 
-ext {
-    versions = [
-        jedis: '5.2.0',
-        luckperms: '5.4',
-        slf4j: '2.0.9',
-        snakeyaml: '2.0',
-        guice: '5.1.0',
-        mysql: '8.0.30',
-        json: '20180813',
-        okhttp: '4.9.3'
-    ]
-	processResources = [
-		description: project.property('description'), 
-		homepageUrl: project.property('homepage_url'),
-		sourceUrl: project.property('source_url')
-	]
-}
-
 subprojects {
 	apply plugin: 'java'
 	
@@ -40,18 +22,18 @@ subprojects {
 	}
 	
 	repositories {
-	    mavenCentral()
+		mavenCentral()
 	}
 	
 	dependencies {
-		compileOnly "net.luckperms:api:${versions.luckperms}"
-		implementation "redis.clients:jedis:${versions.jedis}"
-		implementation "org.slf4j:slf4j-api:${versions.slf4j}"
-		implementation "org.slf4j:slf4j-simple:${versions.slf4j}"
-		implementation "org.yaml:snakeyaml:${versions.snakeyaml}"
-		implementation "com.google.inject:guice:${versions.guice}"
-		implementation "mysql:mysql-connector-java:${versions.mysql}"
-		implementation "org.json:json:${versions.json}"
-		implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
-	}
+		compileOnly 'net.luckperms:api:5.4'
+		compileOnly 'redis.clients:jedis:5.2.0'
+		compileOnly 'org.slf4j:slf4j-api:2.0.9'
+		compileOnly 'org.slf4j:slf4j-simple:2.0.9'
+		compileOnly 'org.yaml:snakeyaml:2.0'
+		compileOnly 'com.google.inject:guice:5.1.0'
+		compileOnly 'mysql:mysql-connector-java:8.0.30'
+		compileOnly 'org.json:json:20180813'
+		compileOnly 'com.squareup.okhttp3:okhttp:4.9.3'
+    }
 }

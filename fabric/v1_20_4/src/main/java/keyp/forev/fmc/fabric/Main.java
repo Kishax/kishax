@@ -30,7 +30,6 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -51,8 +50,7 @@ public class Main implements ModInitializer {
     	CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             new FMCCommand(logger).registerCommand(dispatcher, registryAccess, environment);
         });
-        ServerLifecycleEvents.SERVER_STARTED.register(serverStart -> {
-            MinecraftServer server = serverStart;
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             injector = Guice.createInjector(new Module(fabric, logger, server));
             TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
             Database db = getInjector().getInstance(Database.class);

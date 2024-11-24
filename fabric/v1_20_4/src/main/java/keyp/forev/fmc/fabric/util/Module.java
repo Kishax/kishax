@@ -1,6 +1,5 @@
 package keyp.forev.fmc.fabric.util;
 
-
 import java.io.IOException;
 
 import org.slf4j.Logger;
@@ -13,11 +12,11 @@ import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.PlayerUtils;
 import keyp.forev.fmc.common.PortFinder;
 import keyp.forev.fmc.common.ServerHomeDir;
+import keyp.forev.fmc.common.SocketResponse;
 import keyp.forev.fmc.common.SocketSwitch;
 import keyp.forev.fmc.fabric.cmd.CommandForward;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
-
 
 public class Module extends AbstractModule {
 	private final FabricLoader fabric;
@@ -26,7 +25,7 @@ public class Module extends AbstractModule {
 	private final Logger logger;
 	private final MinecraftServer server;
 	private final PlayerUtils pu;
-	public Module (FabricLoader fabric, Logger logger, MinecraftServer server) {
+	public Module(FabricLoader fabric, Logger logger, MinecraftServer server) {
 		this.fabric = fabric;
 		this.logger = logger;
 		this.server = server;
@@ -37,7 +36,7 @@ public class Module extends AbstractModule {
 		    defaultDatabase = null;
 		int port = 0;
 		try {
-		    config.loadConfig(); // 一度だけロードする
+		    config.loadConfig();
 		    host = config.getString("MySQL.Host", null);
 		    user = config.getString("MySQL.User", null);
 		    password = config.getString("MySQL.Password", null);
@@ -54,7 +53,7 @@ public class Module extends AbstractModule {
 	@Override
 	protected void configure() {
 		bind(FabricLoader.class).toInstance(fabric);
-		bind(org.slf4j.Logger.class).toInstance(logger);
+		bind(Logger.class).toInstance(logger);
 		bind(MinecraftServer.class).toInstance(server);
 		bind(Database.class).toInstance(db);
 		bind(Config.class).toInstance(config);
@@ -75,5 +74,11 @@ public class Module extends AbstractModule {
 	@Singleton
 	public ServerHomeDir provideServerHomeDir(FabricLoader fabric) {
 		return new FabricServerHomeDir(fabric);
+	}
+	
+	@Provides
+	@Singleton
+	public SocketResponse provideSocketResponse() {
+		return new FabricSocketResponse();
 	}
 }
