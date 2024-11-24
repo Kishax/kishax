@@ -14,9 +14,9 @@ dependencies {
 	mappings "net.fabricmc:yarn:1.20.4+build.3:v2"
 	modImplementation "net.fabricmc:fabric-loader:0.15.11"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:0.97.1+1.20.4"
-	modImplementation 'io.github.llamalad7:mixinextras-fabric:0.4.1'
-	annotationProcessor 'io.github.llamalad7:mixinextras-fabric:0.4.1'
 	compileOnly "net.luckperms:api:${rootProject.ext.versions.luckperms}"
+	implementation "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
+	implementation "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
 	implementation project(':common')
 }
 
@@ -42,9 +42,6 @@ shadowJar {
 	archiveVersion.set('1.20.4-shaded')
 	dependencies {
 		minimize()
-		//exclude(dependency('io.github.llamalad7:mixinextras-fabric'))
-		exclude 'com/llamalad7/mixinextras/platform/fabric/MixinExtrasConfigPlugin'
-		/*
 		exclude(dependency('com.github.oshi:oshi-core'))
 		exclude(dependency('org.jetbrains.kotlin:kotlin-stdlib'))
 		exclude(dependency('com.google.code.gson:gson'))
@@ -89,7 +86,6 @@ shadowJar {
 		exclude(dependency('org.apache.logging.log4j:log4j-slf4j2-impl'))
 		exclude(dependency('org.joml:joml'))
 		exclude('net.fabricmc:.*')
-		*/
 	}
 	exclude('**/*.kotlin_*')
 	exclude('/mappings/*')

@@ -106,8 +106,9 @@ public class MessageEditor implements MessageEditorInterface {
 		return AddEmbedSomeMessage(type, null, null, null, null, null, playerUUID);
 	}
 
+	@SuppressWarnings("null")
 	private CompletableFuture<Void> AddEmbedSomeMessage (String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName, String chatMessage, UUID playerUUID) {
-		if (Objects.isNull(player)) {
+		if (player == null) {
 			if (Objects.nonNull(alternativePlayerName)) {
 				uuid = pu.getPlayerUUIDByNameFromDB(alternativePlayerName);
 				playerName = alternativePlayerName;
@@ -177,7 +178,7 @@ public class MessageEditor implements MessageEditorInterface {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
 							int playTime = getPlayerTime(player);
 							try (Connection conn = db.getConnection()) {
-								db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);", new Object[] {playerName, playerUUID, serverInfo.getName(), true, playTime});
+								db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);", new Object[] {playerName, playerUUID, currentServerName, true, playTime});
 							} catch (SQLException | ClassNotFoundException e2) {
 								logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
 								for (StackTraceElement element : e2.getStackTrace()) {

@@ -15,6 +15,8 @@ dependencies {
     annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
     compileOnly 'org.geysermc.geyser:api:2.4.2-SNAPSHOT'
     compileOnly 'org.geysermc.floodgate:api:2.2.3-SNAPSHOT'
+    compileOnly "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
+    compileOnly "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
     implementation 'de.timongcraft:VeloBoard:1.4.0-EXPERIMENTAL-CHANGES'
     compileOnly 'com.google.inject:guice:5.1.0'
     implementation 'net.dv8tion:JDA:5.2.0'
