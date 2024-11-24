@@ -14,6 +14,8 @@ dependencies {
 	mappings 'net.fabricmc:yarn:1.20.4+build.3:v2'
 	modImplementation 'net.fabricmc:fabric-loader:0.15.11'
 	modImplementation 'net.fabricmc.fabric-api:fabric-api:0.97.1+1.20.4'
+	//modImplementation 'io.github.llamalad7:mixinextras-fabric:0.3.5'
+	//annotationProcessor 'io.github.llamalad7:mixinextras-fabric:0.3.5'
 	implementation project(':common')
 }
 
@@ -38,9 +40,10 @@ shadowJar {
 	archiveClassifier.set('')
 	archiveVersion.set('1.20.4-shaded')
 	dependencies {
-		minimize()
+		//minimize()
 		exclude(dependency('net.fabricmc.fabric-api:fabric-api'))
 		exclude(dependency('net.fabricmc:fabric-loader'))
+		//exclude(dependency('com.llamalad7:mixinextras'))
 		exclude(dependency('com.github.oshi:oshi-core'))
 		exclude(dependency('org.jetbrains.kotlin:kotlin-stdlib'))
 		exclude(dependency('com.google.code.gson:gson'))
