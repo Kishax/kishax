@@ -28,6 +28,7 @@ import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.FMCSettings;
 import keyp.forev.fmc.common.OTPGenerator;
 import keyp.forev.fmc.common.SocketSwitch;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.Role;
@@ -108,24 +109,29 @@ public class DiscordEventListener extends ListenerAdapter {
     }
 	
 	@Override
-    public void onSlashCommandInteraction(SlashCommandInteractionEvent e) {
+    public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent e) {
 		User user = e.getUser();
 		Member member = e.getMember();
 		String userMention = user.getAsMention();
+		Guild guild = e.getGuild();
 		MessageChannel channel = e.getChannel();
-		String userId = e.getMember().getId(),
-			userName = e.getMember().getNickname(),
+		if (member == null) return;
+		if (guild == null) return;
+		String userId = member.getId(),
+			userName = member.getNickname(),
 			userName2 = user.getName(),
 			channelId = channel.getId(),
-			guildId = e.getGuild().getId(),
+			guildId = guild.getId(),
 			channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId),
 			userName12 = userName != null ? userName : userName2;
 		List<Role> roles = member.getRoles();
 		if (e.getName().equals("fmc")) {
-			switch (e.getSubcommandName()) {
+			String cmd = e.getSubcommandName();
+			if (cmd == null) return;
+			switch (cmd) {
 				case "syncrulebook" -> {
 					discord.getMessageContent().thenAccept(content -> {
-						if (!roles.contains(e.getGuild().getRoleById(config.getLong("Discord.AdCraRoleId")))) {
+						if (!roles.contains(guild.getRoleById(config.getLong("Discord.AdCraRoleId")))) {
 							replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
 							e.reply(replyMessage).setEphemeral(true).queue();
 							return;
@@ -162,9 +168,11 @@ public class DiscordEventListener extends ListenerAdapter {
 							e.reply("1日の登録回数は"+limitUploadTimes+"回までです。").setEphemeral(true).queue();
 							return;
 						}
+						@SuppressWarnings("null")
 						String url = e.getOption("url") != null ? e.getOption("url").getAsString() : null,
 							title = (e.getOption("title") != null) ? e.getOption("title").getAsString() : "無名のタイトル",
 							comment = (e.getOption("comment") != null) ? e.getOption("comment").getAsString() : "コメントなし";
+						@SuppressWarnings("null")
 						Attachment attachment = e.getOption("image") != null ? e.getOption("image").getAsAttachment() : null;
 						if (url == null && attachment == null) {
 							e.reply("画像URLまたは画像を指定してください。").setEphemeral(true).queue();
@@ -193,6 +201,7 @@ public class DiscordEventListener extends ListenerAdapter {
 					
 				}
 				case "tera" -> {
+					@SuppressWarnings("null")
 					String teraType = e.getOption("action").getAsString();
 					if (!require) {
 						e.reply("コンフィグの設定が不十分なため、コマンドを実行できません。").setEphemeral(true).queue();
@@ -263,32 +272,36 @@ public class DiscordEventListener extends ListenerAdapter {
 			}
 		}
     }
-
+	
 	@Override
-	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
-        Member member = e.getMember();
-		if (member.getUser().isBot()) {
-			return;
+	public void onGuildVoiceUpdate(@Nonnull GuildVoiceUpdateEvent e) {
+		Member member = e.getMember();
+		User user = member.getUser();
+		if (user != null ) {
+			if (user.isBot()) {
+				return;
+			}
+			AudioChannel channel = e.getChannelJoined();
+			if (channel != null) {
+				String message = "(discord) " + member.getEffectiveName() + " がボイスチャットチャンネル " + channel.getName() + " に参加しました。";
+				TextComponent component = Component.text(message).color(NamedTextColor.GREEN);
+				bc.broadCastMessage(component);
+			}
 		}
-		AudioChannel channel = e.getChannelJoined();
-		if (channel == null) {
-            logger.error("chennel is null");
-            return;
-        }
-        String message = "(discord) " + member.getEffectiveName() + " がボイスチャットチャンネル " + channel.getName() + " に参加しました。";
-        TextComponent component = Component.text(message).color(NamedTextColor.GREEN);
-        bc.broadCastMessage(component);
     }
 
 	@Override
-	public void onButtonInteraction(ButtonInteractionEvent e) {
+	public void onButtonInteraction(@Nonnull ButtonInteractionEvent e) {
         String buttonId = e.getComponentId();
         String buttonMessage = e.getMessage().getContentRaw();
         if (Objects.isNull(buttonMessage) || Objects.isNull(buttonId)) return;
         User user = e.getUser();
         Member member = e.getMember();
+        Guild guild = e.getGuild();
+        if (member == null) return;
+        if (guild == null) return;
 		List<Role> roles = member.getRoles();
-		if (!roles.contains(e.getGuild().getRoleById(config.getLong("Discord.AdCraRoleId")))) {
+		if (!roles.contains(guild.getRoleById(config.getLong("Discord.AdCraRoleId")))) {
 			replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
 			e.reply(replyMessage).setEphemeral(true).queue();
 			return;
@@ -362,58 +375,45 @@ public class DiscordEventListener extends ListenerAdapter {
     }
 
 	@Override
-    public void onMessageReceived(MessageReceivedEvent e) {
-        // DMやBot、Webhookのメッセージには反応しないようにする// e.isFromType(ChannelType.PRIVATE)
-        if (
-        	e.getAuthor().isBot() || 
-        	e.getMessage().isWebhookMessage() || 
-        	!e.getChannel().getId().equals(Long.toString(config.getLong("Discord.ChatChannelId")))
-        ) {
+    public void onMessageReceived(@Nonnull MessageReceivedEvent e) {
+		if (
+			e.getAuthor().isBot() || 
+			e.getMessage().isWebhookMessage() || 
+			!e.getChannel().getId().equals(Long.toString(config.getLong("Discord.ChatChannelId")))
+		) {
 			return;
 		}
-        
-        // メッセージ内容を取得
-        String message = e.getMessage().getContentRaw();
-        String userName = e.getMember().getEffectiveName();
-        
-        // メッセージが空でないことを確認
-        if (!message.isEmpty()) {
-        	message = "(discord) " + userName + " -> " + message;
-        	sendMixUrl(message);
-        }
-        
-        DiscordEventListener.PlayerChatMessageId = null;
-        
-        // チャンネルIDやユーザーIDも取得可能
-        //String channelId = e.getChannel().getId();
-        
-        List <Attachment> attachments = e.getMessage().getAttachments();
-        int attachmentsSize = attachments.size();
-        if (attachmentsSize > 0) {
-        	TextComponent component = Component.text()
-        			.append(Component.text("(discord) " + userName+" -> Discordで画像か動画を上げています！").color(NamedTextColor.AQUA))
-        			.build();
-        			
-        	TextComponent additionalComponent;
-        	int i=0;
-        	// 添付ファイルを処理したい場合は、以下のようにできます
-            for (Attachment attachment : attachments) {
-            	additionalComponent = Component.text()
-            			.append(Component.text("\n"+attachment.getUrl())
-        						.color(NamedTextColor.GRAY)
-        						.decorate(TextDecoration.UNDERLINED))
-        						.clickEvent(ClickEvent.openUrl(attachment.getUrl()))
-        						.hoverEvent(HoverEvent.showText(Component.text("添付ファイル"+(i+1))))
-                                .build();
-            	
-                // ここで各添付ファイルに対する処理を実装できます
-            	component = component.append(additionalComponent);
-                i++;
-            }
-            
-            bc.broadCastMessage(component);
-        }
-    }
+		Member member = e.getMember();
+		if (member == null) return;
+		String message = e.getMessage().getContentRaw();
+		String userName = member.getEffectiveName();
+		if (!message.isEmpty()) {
+			message = "(discord) " + userName + " -> " + message;
+			sendMixUrl(message);
+		}
+		DiscordEventListener.PlayerChatMessageId = null;
+		List <Attachment> attachments = e.getMessage().getAttachments();
+		int attachmentsSize = attachments.size();
+		if (attachmentsSize > 0) {
+			TextComponent component = Component.text()
+					.append(Component.text("(discord) " + userName+" -> Discordで画像か動画を上げています！").color(NamedTextColor.AQUA))
+					.build();
+			TextComponent additionalComponent;
+			int i=0;
+		    for (Attachment attachment : attachments) {
+		    	additionalComponent = Component.text()
+		    			.append(Component.text("\n"+attachment.getUrl())
+								.color(NamedTextColor.GRAY)
+								.decorate(TextDecoration.UNDERLINED))
+								.clickEvent(ClickEvent.openUrl(attachment.getUrl()))
+								.hoverEvent(HoverEvent.showText(Component.text("添付ファイル"+(i+1))))
+		                            .build();
+		        	component = component.append(additionalComponent);
+		            i++;
+		        }
+		        bc.broadCastMessage(component);
+		    }
+		}
 
 	private int getDiscordUserTodayRegisterImageMetaTimes(Connection conn, String userId) throws SQLException, ClassNotFoundException {
         String query = "SELECT COUNT(*) FROM images WHERE did = ? AND DATE(date) = ?";

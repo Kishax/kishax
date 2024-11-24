@@ -5,8 +5,8 @@ plugins {
 dependencies {
 	compileOnly "net.luckperms:api:${rootProject.ext.versions.luckperms}"
 	implementation "redis.clients:jedis:${rootProject.ext.versions.jedis}"
-	implementation "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
-	implementation "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
+	compileOnly "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
+	compileOnly "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
 	implementation "org.yaml:snakeyaml:${rootProject.ext.versions.snakeyaml}"
 	implementation "com.google.inject:guice:${rootProject.ext.versions.guice}"
 	implementation "mysql:mysql-connector-java:${rootProject.ext.versions.mysql}"

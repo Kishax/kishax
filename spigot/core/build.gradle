@@ -15,6 +15,8 @@ dependencies {
     implementation 'net.coobird:thumbnailator:0.4.20'
     implementation 'com.google.zxing:core:3.4.1'
     implementation 'com.google.zxing:javase:3.4.1'
+    implementation "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
+    implementation "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
     implementation project(':common')
 }
 

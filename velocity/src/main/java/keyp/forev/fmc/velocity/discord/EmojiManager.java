@@ -69,7 +69,7 @@ public class EmojiManager {
         }
     	String guildId = Long.toString(config.getLong("Discord.GuildId"));
         Guild guild = jda.getGuildById(guildId);
-        if (Objects.isNull(guild)) {
+        if (guild == null) {
             //logger.info("Guild not found!");
             future.complete(null);
             return future;
@@ -105,7 +105,7 @@ public class EmojiManager {
         
     	String guildId = Long.toString(config.getLong("Discord.GuildId"));
         Guild guild = jda.getGuildById(guildId);
-        if (Objects.isNull(guild)) {
+        if (guild == null) {
             //logger.info("Guild not found!");
             future.complete(null);
             return future;
