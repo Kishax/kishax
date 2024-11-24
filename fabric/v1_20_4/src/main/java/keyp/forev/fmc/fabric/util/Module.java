@@ -1,6 +1,7 @@
 package keyp.forev.fmc.fabric.util;
 
 import java.io.IOException;
+import java.util.Base64;
 
 import org.slf4j.Logger;
 

@@ -41,7 +41,6 @@ shadowJar {
 		minimize()
 		exclude(dependency('net.fabricmc.fabric-api:fabric-api'))
 		exclude(dependency('net.fabricmc:fabric-loader'))
-		exclude(dependency('com.llamalad7:mixinextras'))
 		exclude(dependency('com.github.oshi:oshi-core'))
 		exclude(dependency('org.jetbrains.kotlin:kotlin-stdlib'))
 		exclude(dependency('com.google.code.gson:gson'))
