@@ -10,13 +10,10 @@ repositories {
 }
 
 dependencies {
-	minecraft "com.mojang:minecraft:1.20.4"
-	mappings "net.fabricmc:yarn:1.20.4+build.3:v2"
-	modImplementation "net.fabricmc:fabric-loader:0.15.11"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:0.97.1+1.20.4"
-	compileOnly "net.luckperms:api:${rootProject.ext.versions.luckperms}"
-	implementation "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
-	implementation "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
+	minecraft 'com.mojang:minecraft:1.20.4'
+	mappings 'net.fabricmc:yarn:1.20.4+build.3:v2'
+	modImplementation 'net.fabricmc:fabric-loader:0.15.11'
+	modImplementation 'net.fabricmc.fabric-api:fabric-api:0.97.1+1.20.4'
 	implementation project(':common')
 }
 
@@ -26,11 +23,11 @@ processResources {
 	        project: project,
 	        projectName: project.name,
 	        projectVersion: project.version,
-	        projectDescription: rootProject.ext.processResources.description,
+	        projectDescription: project.property('description'),
 	        projectGroup: project.group,
 	        groupId: project.group,
-	        projectHomePageUrl: rootProject.ext.processResources.homepageUrl,
-	        projectSourceUrl: rootProject.ext.processResources.sourceUrl
+	        projectHP: project.property('hp'),
+	        projectSource: project.property('source')
 	    )
 	}
 	exclude('assets/minecraft/**') 
@@ -42,6 +39,9 @@ shadowJar {
 	archiveVersion.set('1.20.4-shaded')
 	dependencies {
 		minimize()
+		exclude(dependency('net.fabricmc.fabric-api:fabric-api'))
+		exclude(dependency('net.fabricmc:fabric-loader'))
+		exclude(dependency('com.llamalad7:mixinextras'))
 		exclude(dependency('com.github.oshi:oshi-core'))
 		exclude(dependency('org.jetbrains.kotlin:kotlin-stdlib'))
 		exclude(dependency('com.google.code.gson:gson'))
@@ -85,7 +85,6 @@ shadowJar {
 		exclude(dependency('org.apache.logging.log4j:log4j-core'))
 		exclude(dependency('org.apache.logging.log4j:log4j-slf4j2-impl'))
 		exclude(dependency('org.joml:joml'))
-		exclude('net.fabricmc:.*')
 	}
 	exclude('**/*.kotlin_*')
 	exclude('/mappings/*')

@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 
-import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.slf4j.Logger;
 
@@ -13,6 +12,8 @@ import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.SocketSwitch;
+import net.md_5.bungee.api.ChatColor;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class AutoShutdown {
@@ -21,15 +22,17 @@ public class AutoShutdown {
 	private final Logger logger;
 	private final Database db;
 	private final Provider<SocketSwitch> sswProvider;
+	private final BroadCast bc;
 	private final String thisServerName;
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown (JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, SpigotServerHomeDir shd) {
+	public AutoShutdown (JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, SpigotServerHomeDir shd, BroadCast bc) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.db = db;
 		this.sswProvider = sswProvider;
+		this.bc = bc;
 		this.thisServerName = shd.getServerName();
 	}
 	
@@ -44,10 +47,10 @@ public class AutoShutdown {
 		long NO_PLAYER_THRESHOLD = plugin.getConfig().getInt("AutoStop.Interval",3) * 60 * 20;
 		
 		task = new BukkitRunnable() {
-	        @Override
-	        public void run() {
+		    @Override
+		    public void run() {
 				SocketSwitch ssw = sswProvider.get();
-	            if (plugin.getServer().getOnlinePlayers().isEmpty()) {
+		        if (plugin.getServer().getOnlinePlayers().isEmpty()) {
 					try (Connection conn = db.getConnection()) {
 						ssw.sendVelocityServer(conn, "プレイヤー不在のため、"+thisServerName+"サーバーを停止させます。");
 					} catch (SQLException | ClassNotFoundException e) {
@@ -56,12 +59,12 @@ public class AutoShutdown {
 							logger.error(element.toString());
 						}
 					}
-	                plugin.getServer().broadcastMessage(ChatColor.RED+"プレイヤー不在のため、"+thisServerName+"サーバーを5秒後に停止します。");
-	                countdownAndShutdown(5);
-	            }
-	        }
-	    };
-	    task.runTaskTimer(plugin, NO_PLAYER_THRESHOLD, NO_PLAYER_THRESHOLD);
+					bc.broadCastMessage(ChatColor.RED+"プレイヤー不在のため、"+thisServerName+"サーバーを5秒後に停止します。");
+					countdownAndShutdown(5);
+		        }
+		    }
+		};
+		task.runTaskTimer(plugin, NO_PLAYER_THRESHOLD, NO_PLAYER_THRESHOLD);
 	}
 
     public void countdownAndShutdown(int seconds) {
@@ -71,7 +74,7 @@ public class AutoShutdown {
             @Override
             public void run() {
                 if (countdown <= 0) {
-                    plugin.getServer().broadcastMessage(ChatColor.RED + "サーバーを停止します。");
+                	bc.broadCastMessage(ChatColor.RED + "サーバーを停止します。");
 					try (Connection conn = db.getConnection()) {
 						SocketSwitch ssw = sswProvider.get();
 						ssw.sendVelocityServer(conn, thisServerName + "サーバーが停止しました。");
@@ -87,7 +90,7 @@ public class AutoShutdown {
                     return;
                 }
 
-                plugin.getServer().broadcastMessage(String.valueOf(countdown));
+                bc.broadCastMessage(String.valueOf(countdown));
                 countdown--;
             }
         }.runTaskTimer(plugin, 0, 20);

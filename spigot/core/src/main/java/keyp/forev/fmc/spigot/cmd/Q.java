@@ -2,7 +2,7 @@ package keyp.forev.fmc.spigot.cmd;
 
 import java.util.Collections;
 
-import org.bukkit.ChatColor;
+import net.md_5.bungee.api.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 

@@ -8,15 +8,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly "net.luckperms:api:${versions.luckperms}"
     compileOnly 'org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT'
     compileOnly 'io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT'
-    compileOnly 'com.google.inject:guice:5.1.0'
     implementation 'net.coobird:thumbnailator:0.4.20'
     implementation 'com.google.zxing:core:3.4.1'
     implementation 'com.google.zxing:javase:3.4.1'
-    implementation "org.slf4j:slf4j-api:${rootProject.ext.versions.slf4j}"
-    implementation "org.slf4j:slf4j-simple:${rootProject.ext.versions.slf4j}"
     implementation project(':common')
 }
 
@@ -37,11 +33,10 @@ processResources {
 	        project: project,
 	        projectName: project.name,
 	        projectVersion: project.version,
-	        projectDescription: rootProject.ext.processResources.description,
+	        projectDescription: project.property('description'),
 	        projectGroup: project.group,
 	        groupId: project.group,
-	        projectHomePageUrl: rootProject.ext.processResources.homepageUrl,
-	        projectSourceUrl: rootProject.ext.processResources.sourceUrl
+	        projectHP: project.property('hp')
 	    )
 	}
 }

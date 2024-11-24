@@ -35,9 +35,10 @@ public class SpigotSocketResponse implements SocketResponse {
     private final Inventory inv;
     private final Menu menu;
     private final Luckperms lp;
+    private final BroadCast bc;
     private final String thisServerName;
     @Inject
-    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, SpigotServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, Luckperms lp) {
+    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, SpigotServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, Luckperms lp, BroadCast bc) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -48,6 +49,7 @@ public class SpigotSocketResponse implements SocketResponse {
         this.menu = menu;
         this.thisServerName = shd.getServerName();
         this.lp = lp;
+        this.bc = bc;
     }
 
     @Override
@@ -65,7 +67,7 @@ public class SpigotSocketResponse implements SocketResponse {
                             logger.error(element.toString());
                         }
                     }
-	                plugin.getServer().broadcastMessage(ChatColor.RED+"管理者の命令より、"+thisServerName+"サーバーを5秒後に停止します。");
+	                bc.broadCastMessage(ChatColor.RED+"管理者の命令より、"+thisServerName+"サーバーを5秒後に停止します。");
 	                asd.countdownAndShutdown(5);
                 }
             } else if (res.contains("起動")) {
