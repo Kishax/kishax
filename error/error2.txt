@@ -1,0 +1,215 @@
+bella@bella-H610MHP:/opt/mc/mod/universe$ ./u.sh
+Starting net.fabricmc.loader.impl.game.minecraft.BundlerClassPathCapture
+[14:43:18] [main/INFO]: Loading Minecraft 1.20.4 with Fabric Loader 0.15.11
+[14:43:18] [main/INFO]: Loading 67 mods:
+        - ad_astra 1.16.5
+           \-- javazoom_jlayer 1.0.1
+        - argonauts 1.2.4
+           \-- placeholder-api 2.3.0+1.20.3
+        - audioplayer 1.20.4-1.10.2
+           \-- admiral 0.4.4+1.20.4
+        - botarium 3.2.2
+           \-- team_reborn_energy 3.0.0
+        - cloth-config 13.0.121
+           \-- cloth-basic-math 0.6.1
+        - fabric-api 0.97.1+1.20.4
+           |-- fabric-api-base 0.4.37+78d798af4f
+           |-- fabric-api-lookup-api-v1 1.6.50+82b1bb3e4f
+           |-- fabric-biome-api-v1 13.0.17+78d798af4f
+           |-- fabric-block-api-v1 1.0.17+3e2216cb4f
+           |-- fabric-block-view-api-v2 1.0.5+78d798af4f
+           |-- fabric-blockrenderlayer-v1 1.1.47+78d798af4f
+           |-- fabric-client-tags-api-v1 1.1.8+78d798af4f
+           |-- fabric-command-api-v1 1.2.42+f71b366f4f
+           |-- fabric-command-api-v2 2.2.21+78d798af4f
+           |-- fabric-commands-v0 0.2.59+df3654b34f
+           |-- fabric-containers-v0 0.1.87+df3654b34f
+           |-- fabric-content-registries-v0 5.0.16+78d798af4f
+           |-- fabric-convention-tags-v1 1.5.11+78d798af4f
+           |-- fabric-crash-report-info-v1 0.2.24+78d798af4f
+           |-- fabric-data-attachment-api-v1 1.1.5+b90db5744f
+           |-- fabric-data-generation-api-v1 13.2.5+5c0133444f
+           |-- fabric-dimensions-v1 2.1.63+6605d1a84f
+           |-- fabric-entity-events-v1 1.6.2+09fc25014f
+           |-- fabric-events-interaction-v0 0.7.2+389931eb4f
+           |-- fabric-events-lifecycle-v0 0.2.75+df3654b34f
+           |-- fabric-game-rule-api-v1 1.0.47+78d798af4f
+           |-- fabric-item-api-v1 2.3.0+bcdd12964f
+           |-- fabric-item-group-api-v1 4.0.27+ee30b13a4f
+           |-- fabric-key-binding-api-v1 1.0.42+78d798af4f
+           |-- fabric-keybindings-v0 0.2.40+df3654b34f
+           |-- fabric-lifecycle-events-v1 2.3.1+a67ffb5d4f
+           |-- fabric-loot-api-v2 2.1.10+78d798af4f
+           |-- fabric-message-api-v1 6.0.6+78d798af4f
+           |-- fabric-mining-level-api-v1 2.1.66+78d798af4f
+           |-- fabric-model-loading-api-v1 1.0.9+78d798af4f
+           |-- fabric-models-v0 0.4.8+9386d8a74f
+           |-- fabric-networking-api-v1 3.1.8+2e5ac5484f
+           |-- fabric-object-builder-api-v1 13.1.0+dba1195c4f
+           |-- fabric-particles-v1 1.1.8+78d798af4f
+           |-- fabric-recipe-api-v1 2.0.21+78d798af4f
+           |-- fabric-registry-sync-v0 4.0.20+ee30b13a4f
+           |-- fabric-renderer-api-v1 3.2.5+78d798af4f
+           |-- fabric-renderer-indigo 1.5.6+d331d3144f
+           |-- fabric-renderer-registries-v1 3.2.54+df3654b34f
+           |-- fabric-rendering-data-attachment-v1 0.3.43+73761d2e4f
+           |-- fabric-rendering-fluids-v1 3.1.2+e761c6694f
+           |-- fabric-rendering-v0 1.1.57+df3654b34f
+           |-- fabric-rendering-v1 3.2.1+6fd945a04f
+           |-- fabric-resource-conditions-api-v1 2.3.15+78d798af4f
+           |-- fabric-resource-loader-v0 0.11.21+ee30b13a4f
+           |-- fabric-screen-api-v1 2.0.18+78d798af4f
+           |-- fabric-screen-handler-api-v1 1.3.56+78d798af4f
+           |-- fabric-sound-api-v1 1.0.18+78d798af4f
+           |-- fabric-transfer-api-v1 4.0.12+90f2d7b14f
+           \-- fabric-transitive-access-wideners-v1 5.0.15+78d798af4f
+        - fabricloader 0.15.11
+           \-- mixinextras 0.3.5
+        - fabricmod 1.0.0
+        - fallingtree 1.20.4.3
+        - java 17
+        - jei 17.3.1.3
+        - journeymap 5.10.0
+           \-- journeymap-api-fabric 1.20.4-1.9-fabric-SNAPSHOT
+        - luckperms 5.4.113
+           \-- fabric-permissions-api-v0 0.2-SNAPSHOT
+        - minecraft 1.20.4
+        - patchouli 1.20.4-85-FABRIC
+           \-- fiber 0.23.0-2
+        - resourcefulconfig 2.4.7
+        - resourcefullib 2.4.10
+           |-- com_teamresourceful_bytecodecs 1.0.2
+           \-- com_teamresourceful_yabn 1.0.3
+        - teleport_commands 1.1.0
+        - voicechat 1.20.4-2.5.20
+           \-- fabric-key-binding-api-v1 1.0.39+f4b7e42432
+[14:43:18] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=file:/opt/mc/mod/universe/libraries/net/fabricmc/sponge-mixin/0.13.3+mixin.0.8.5/sponge-mixin-0.13.3+mixin.0.8.5.jar Service=Knot/Fabric Env=SERVER
+[14:43:18] [main/INFO]: Compatibility level set to JAVA_17
+[14:43:19] [main/INFO]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.3.5).
+SLF4J: A SLF4J service provider failed to instantiate:
+org.slf4j.spi.SLF4JServiceProvider: Provider org.slf4j.simple.SimpleServiceProvider not found
+[14:43:25] [main/ERROR]: No data fixer registered for tier_1_rover
+[14:43:25] [main/ERROR]: No data fixer registered for tier_1_rocket
+[14:43:25] [main/ERROR]: No data fixer registered for tier_2_rocket
+[14:43:25] [main/ERROR]: No data fixer registered for tier_3_rocket
+[14:43:25] [main/ERROR]: No data fixer registered for tier_4_rocket
+[14:43:25] [main/ERROR]: No data fixer registered for lander
+[14:43:25] [main/ERROR]: No data fixer registered for lunarian
+[14:43:25] [main/ERROR]: No data fixer registered for corrupted_lunarian
+[14:43:25] [main/ERROR]: No data fixer registered for star_crawler
+[14:43:25] [main/ERROR]: No data fixer registered for martian_raptor
+[14:43:25] [main/ERROR]: No data fixer registered for pygro
+[14:43:25] [main/ERROR]: No data fixer registered for zombified_pygro
+[14:43:25] [main/ERROR]: No data fixer registered for pygro_brute
+[14:43:25] [main/ERROR]: No data fixer registered for mogler
+[14:43:25] [main/ERROR]: No data fixer registered for zombified_mogler
+[14:43:25] [main/ERROR]: No data fixer registered for lunarian_wandering_trader
+[14:43:25] [main/ERROR]: No data fixer registered for sulfur_creeper
+[14:43:25] [main/ERROR]: No data fixer registered for glacian_ram
+[14:43:25] [main/ERROR]: No data fixer registered for ice_spit
+[14:43:25] [main/INFO]: detected fabric platform.
+[14:43:25] [main/INFO]: Initializing ServerSide Packet Registries
+[14:43:25] [main/INFO]: [voicechat] Compatibility version 18
+[14:43:25] [main/INFO]: [voicechat] Loading plugins
+[14:43:25] [main/INFO]: [voicechat] Loaded 1 plugin(s)
+[14:43:25] [main/INFO]: [voicechat] Initializing plugins
+[14:43:25] [main/INFO]: [voicechat] Initialized 1 plugin(s)
+[14:43:25] [main/INFO]: [voicechat] Registering events for 'audioplayer'
+[14:43:25] [main/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[14:43:26] [main/INFO]: Registering fmc commands...
+[14:43:26] [main/INFO]: Loaded 14 recipes
+[14:43:27] [main/INFO]: Loaded 1833 advancements
+[14:43:28] [main/INFO]: Applied 0 biome modifications to 0 of 74 new biomes in 1.027 ms
+[14:43:28] [Server thread/INFO]:         __    
+[14:43:28] [Server thread/INFO]:   |    |__)   LuckPerms v5.4.113
+[14:43:28] [Server thread/INFO]:   |___ |      Running on Fabric - fabric@0.97.1+1.20.4
+[14:43:28] [Server thread/INFO]: 
+[14:43:28] [Server thread/INFO]: Loading configuration...
+[14:43:28] [Server thread/INFO]: Loading storage provider... [MYSQL]
+[14:43:28] [Server thread/INFO]: luckperms-hikari - Starting...
+[14:43:28] [Server thread/INFO]: luckperms-hikari - Start completed.
+[14:43:28] [Server thread/INFO]: Loading messaging service... [SQL]
+[14:43:28] [Server thread/INFO]: Loading internal permission managers...
+[14:43:28] [Server thread/INFO]: Performing initial data load...
+[14:43:28] [Server thread/INFO]: Successfully enabled. (took 390ms)
+[14:43:28] [Server thread/INFO]: Starting minecraft server version 1.20.4
+[14:43:28] [Server thread/INFO]: Loading properties
+[14:43:28] [Server thread/INFO]: Default game type: SURVIVAL
+[14:43:28] [Server thread/INFO]: Generating keypair
+[14:43:28] [Server thread/INFO]: Starting Minecraft server on *:25594
+[14:43:28] [Server thread/INFO]: Using epoll channel type
+[14:43:28] [Server thread/WARN]: **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[14:43:28] [Server thread/WARN]: The server will make no attempt to authenticate usernames. Beware.
+[14:43:28] [Server thread/WARN]: While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[14:43:28] [Server thread/WARN]: To change this, set "online-mode" to "true" in the server.properties file.
+[14:43:28] [Server thread/INFO]: Preparing level "world"
+[14:43:29] [Server thread/INFO]: Preparing start region for dimension minecraft:overworld
+[14:43:31] [Worker-Main-8/INFO]: Preparing spawn area: 0%
+[14:43:31] [Worker-Main-4/INFO]: Preparing spawn area: 0%
+[14:43:31] [Worker-Main-14/INFO]: Preparing spawn area: 0%
+[14:43:31] [Worker-Main-12/INFO]: Preparing spawn area: 0%
+[14:43:31] [Worker-Main-12/INFO]: Preparing spawn area: 0%
+[14:43:32] [Worker-Main-7/INFO]: Preparing spawn area: 83%
+[14:43:32] [Server thread/INFO]: Time elapsed: 2577 ms
+[14:43:32] [Server thread/INFO]: Done (3.409s)! For help, type "help"
+[14:43:32] [Server thread/INFO]: Loading audio file name mappings...
+[14:43:32] [Server thread/INFO]: YAML configuration loaded successfully.
+[14:43:32] [Server thread/ERROR]: An error occurred while updating the database: com.mysql.cj.jdbc.Driver
+[14:43:32] [pool-7-thread-1/INFO]: プレイヤー不在のため、サーバーを停止するタスクがスケジュールされました。
+[14:43:32] [Server thread/INFO]: LuckPerms network sync triggered.
+[14:43:32] [Server thread/INFO]: linking with LuckPerms...
+[14:43:32] [Server thread/INFO]: me.lucko.luckperms.common.api.implementation.ApiPlatform@7e7977a
+[14:43:32] [Server thread/ERROR]: A ClassNotFoundException | SQLException error occurred: com.mysql.cj.jdbc.Driver
+[14:43:32] [Server thread/ERROR]: java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+[14:43:32] [Server thread/ERROR]: java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+[14:43:32] [Server thread/ERROR]: net.fabricmc.loader.impl.launch.knot.KnotClassDelegate.loadClass(KnotClassDelegate.java:226)
+[14:43:32] [Server thread/ERROR]: net.fabricmc.loader.impl.launch.knot.KnotClassLoader.loadClass(KnotClassLoader.java:119)
+[14:43:32] [Server thread/ERROR]: java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+[14:43:32] [Server thread/ERROR]: java.base/java.lang.Class.forName0(Native Method)
+[14:43:32] [Server thread/ERROR]: java.base/java.lang.Class.forName(Class.java:375)
+[14:43:32] [luckperms-worker-8/INFO]: [Messaging] Sending ping with id: 04901fb6-bf5d-4a7d-ad6f-c2a51e8c7c00
+[14:43:32] [Server thread/ERROR]: keyp.forev.fmc.common.Database.getConnection(Database.java:46)
+[14:43:32] [Server thread/ERROR]: keyp.forev.fmc.common.Database.getConnection(Database.java:38)
+[14:43:32] [Server thread/ERROR]: keyp.forev.fmc.common.PlayerUtils.loadPlayers(PlayerUtils.java:42)
+[14:43:32] [Server thread/ERROR]: keyp.forev.fmc.fabric.Main.lambda$onInitialize$1(Main.java:72)
+[14:43:32] [Server thread/ERROR]: net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.lambda$static$2(ServerLifecycleEvents.java:49)
+[14:43:32] [Server thread/ERROR]: net.minecraft.server.MinecraftServer.handler$zgh000$fabric-lifecycle-events-v1$afterSetupServer(MinecraftServer.java:2414)
+[14:43:32] [Server thread/ERROR]: net.minecraft.server.MinecraftServer.method_29741(MinecraftServer.java:654)
+[14:43:32] [Server thread/ERROR]: net.minecraft.server.MinecraftServer.method_29739(MinecraftServer.java:270)
+[14:43:32] [Server thread/ERROR]: java.base/java.lang.Thread.run(Thread.java:842)
+[14:43:32] [Server thread/INFO]: fmc plugin has been enabled.
+[14:43:32] [Timer-1/ERROR]: An Exception error occurred: com.mysql.cj.jdbc.Driver
+[14:43:32] [Timer-1/ERROR]: java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+[14:43:32] [Timer-1/ERROR]: java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+[14:43:32] [Timer-1/ERROR]: net.fabricmc.loader.impl.launch.knot.KnotClassDelegate.loadClass(KnotClassDelegate.java:226)
+[14:43:32] [Timer-1/ERROR]: net.fabricmc.loader.impl.launch.knot.KnotClassLoader.loadClass(KnotClassLoader.java:119)
+[14:43:32] [Timer-1/ERROR]: java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+[14:43:32] [Timer-1/ERROR]: java.base/java.lang.Class.forName0(Native Method)
+[14:43:32] [Timer-1/ERROR]: java.base/java.lang.Class.forName(Class.java:375)
+[14:43:32] [Timer-1/ERROR]: keyp.forev.fmc.common.Database.getConnection(Database.java:46)
+[14:43:32] [Timer-1/ERROR]: keyp.forev.fmc.common.Database.getConnection(Database.java:38)
+[14:43:32] [Timer-1/ERROR]: keyp.forev.fmc.fabric.util.ServerStatusCache.refreshCache(ServerStatusCache.java:65)
+[14:43:32] [Timer-1/ERROR]: keyp.forev.fmc.fabric.util.ServerStatusCache$1.run(ServerStatusCache.java:55)
+[14:43:32] [Timer-1/ERROR]: java.base/java.util.TimerThread.mainLoop(Timer.java:566)
+[14:43:32] [Timer-1/ERROR]: java.base/java.util.TimerThread.run(Timer.java:516)
+[14:43:32] [Timer-1/ERROR]: An Exception error occurred: com.mysql.cj.jdbc.Driver
+[14:43:32] [Timer-1/ERROR]: java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+[14:43:32] [Timer-1/ERROR]: java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+[14:43:32] [Timer-1/ERROR]: net.fabricmc.loader.impl.launch.knot.KnotClassDelegate.loadClass(KnotClassDelegate.java:226)
+[14:43:32] [Timer-1/ERROR]: net.fabricmc.loader.impl.launch.knot.KnotClassLoader.loadClass(KnotClassLoader.java:119)
+[14:43:32] [Timer-1/ERROR]: java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:525)
+[14:43:32] [Timer-1/ERROR]: java.base/java.lang.Class.forName0(Native Method)
+[14:43:32] [Timer-1/ERROR]: java.base/java.lang.Class.forName(Class.java:375)
+[14:43:32] [Timer-1/ERROR]: keyp.forev.fmc.common.Database.getConnection(Database.java:46)
+[14:43:32] [Timer-1/ERROR]: keyp.forev.fmc.common.Database.getConnection(Database.java:38)
+[14:43:32] [Timer-1/ERROR]: keyp.forev.fmc.fabric.util.ServerStatusCache.refreshMemberInfo(ServerStatusCache.java:158)
+[14:43:32] [Timer-1/ERROR]: keyp.forev.fmc.fabric.util.ServerStatusCache$1.run(ServerStatusCache.java:56)
+[14:43:32] [Timer-1/ERROR]: java.base/java.util.TimerThread.mainLoop(Timer.java:566)
+[14:43:32] [Timer-1/ERROR]: java.base/java.util.TimerThread.run(Timer.java:516)
+[14:43:32] [Server thread/WARN]: [voicechat] Running in offline mode - Voice chat encryption is not secure!
+[14:43:32] [Server thread/INFO]: [voicechat] Using the Minecraft servers port as voice chat port
+[14:43:32] [VoiceChatServerThread/INFO]: [voicechat] Voice host is 'keypforev.ddns.net:24455'
+[14:43:32] [VoiceChatServerThread/INFO]: [voicechat] Voice chat server started at port 25594
+[14:43:32] [Server thread/INFO]: Initializing Teleport Commands! Hello Fabric!
+[14:43:32] [Server thread/INFO]: Cleaning and updating Storage!
+[14:43:32] [Server thread/INFO]: Success! Cleaned: 0B
