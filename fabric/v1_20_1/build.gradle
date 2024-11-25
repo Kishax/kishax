@@ -12,11 +12,27 @@ configurations {
 
 dependencies {
 	minecraft 'com.mojang:minecraft:1.20.1'
-    mappings 'net.fabricmc:yarn:1.20.1+build.3:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.14.11'
-    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.91.1+1.20.1'
-    shadowImpl project(':fabric:v1_20_4')
+	mappings 'net.fabricmc:yarn:1.20.1+build.3:v2'
+	modImplementation 'net.fabricmc:fabric-loader:0.14.11'
+	modImplementation 'net.fabricmc.fabric-api:fabric-api:0.91.1+1.20.1'
+	//shadowImpl project(':fabric:v1_20_4')
 	shadowImpl project(':common')
+}
+
+processResources {
+	filesMatching('**/fabric.mod.json') {
+	    expand(
+	        project: project,
+	        projectName: project.name,
+	        projectVersion: project.version,
+	        projectDescription: project.property('description'),
+	        projectGroup: project.group,
+	        groupId: project.group,
+	        projectHP: project.property('hp'),
+	        projectSource: project.property('source')
+	    )
+	}
+	exclude('assets/minecraft/**') 
 }
 
 shadowJar {
@@ -24,6 +40,7 @@ shadowJar {
 	archiveBaseName.set('FMC-Fabric')
 	archiveClassifier.set('')
 	archiveVersion.set('1.20.1-shaded')
+	from(project(':fabric:v1_20_4').sourceSets.main.output)
 	dependencies {
 		exclude(dependency('com.google.guava:.*'))
 		exclude(dependency('org.slf4j:slf4j-simple'))
