@@ -1,4 +1,4 @@
-package keyp.forev.fmc.fabric.util;
+package keyp.forev.fmc.common;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,25 +10,21 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import keyp.forev.fmc.common.Database;
-import keyp.forev.fmc.common.SocketSwitch;
-
 public class DoServerOnline {
 	private final Logger logger;
 	private final Provider<SocketSwitch> sswProvider;
-	private final FabricServerHomeDir shd;
+	private final ServerHomeDir shd;
 	private final Database db;
 	
 	@Inject
-	public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, FabricServerHomeDir shd, Database db) {
+	public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
 		this.logger = logger;
 		this.sswProvider = sswProvider;
 		this.shd = shd;
 		this.db = db;
 	}
 	
-	public void UpdateDatabase(int socketport) {
-		// "plugins"ディレクトリの親ディレクトリを取得
+	public void updateDatabase(int socketport) {
 		String serverName = shd.getServerName();
 		Objects.requireNonNull(serverName);
 		try (Connection conn = db.getConnection()) {

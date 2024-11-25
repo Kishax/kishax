@@ -37,12 +37,12 @@ import com.google.inject.Singleton;
 import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.FMCSettings;
 import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.ServerStatusCache;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
 import keyp.forev.fmc.spigot.util.ImageMap;
 import keyp.forev.fmc.spigot.Main;
 import keyp.forev.fmc.spigot.util.SpigotServerHomeDir;
-import keyp.forev.fmc.spigot.util.ServerStatusCache;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Singleton

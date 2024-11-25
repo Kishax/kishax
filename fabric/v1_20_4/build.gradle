@@ -5,10 +5,6 @@ plugins {
     alias(libs.plugins.loom)
 }
 
-repositories {
-    maven { url 'https://maven.fabricmc.net/' }
-}
-
 configurations {
 	shadowImpl
 	compileOnly.extendsFrom shadowImpl

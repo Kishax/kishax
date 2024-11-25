@@ -39,13 +39,13 @@ import com.google.inject.Inject;
 
 import keyp.forev.fmc.spigot.util.MessageRunnable;
 import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.ServerStatusCache;
 import keyp.forev.fmc.spigot.cmd.Confirm;
 import keyp.forev.fmc.spigot.cmd.Menu;
 import org.bukkit.plugin.java.JavaPlugin;
 import keyp.forev.fmc.spigot.util.FMCItemFrame;
 import keyp.forev.fmc.spigot.util.Inventory;
 import keyp.forev.fmc.spigot.util.PortalsConfig;
-import keyp.forev.fmc.spigot.util.ServerStatusCache;
 import keyp.forev.fmc.spigot.util.FMCCoords;
 import keyp.forev.fmc.spigot.util.ImageMap;
 import keyp.forev.fmc.spigot.util.Rcon;

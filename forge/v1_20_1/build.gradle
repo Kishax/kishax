@@ -1,0 +1,68 @@
+plugins {
+	alias(libs.plugins.shadow)
+	alias(libs.plugins.forgegradle)
+}
+
+sourceCompatibility = 17
+targetCompatibility = 21
+
+configurations {
+	shadowImpl
+	compileOnly.extendsFrom shadowImpl
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.21.3'
+}
+
+dependencies {
+	minecraft 'net.minecraftforge:forge:1.21.3-53.0.0'
+	shadowImpl project(':common')
+}
+
+processResources {
+	filesMatching('**/mods.toml') {
+	    expand(
+	        project: project,
+	        projectName: project.name,
+	        projectVersion: project.version,
+	        projectDescription: project.property('description'),
+	        projectGroup: project.group,
+	        groupId: project.group,
+	        projectHP: project.property('hp'),
+	        projectSource: project.property('source'),
+	        projectIssueTracker: project.property('issue')
+	    )
+	}
+	exclude('assets/minecraft/**') 
+}
+
+shadowJar {
+	configurations = [project.configurations.shadowImpl]
+	archiveBaseName.set('FMC-Forge')
+	archiveClassifier.set('')
+	archiveVersion.set('1.21.3-shaded')
+	dependencies {
+		exclude(dependency('com.google.guava:.*'))
+		exclude(dependency('org.slf4j:slf4j-simple'))
+		exclude(dependency('org.apache.logging.log4j:log4j-slf4j2-impl'))
+	}
+	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+}
+
+reobf {
+    shadowJar {
+		dependsOn shadowJar
+		doLast {
+			def reobfJar = file("${buildDir}/libs/FMC-Forge-1.21.3-shaded.jar")
+			def renamedJar = file("${buildDir}/libs/FMC-Forge-1.21.3-reobfed.jar")
+			if (reobfJar.exists()) {
+			    reobfJar.renameTo(renamedJar)
+			}
+        }
+    }
+}
+
+artifacts {
+	shadow shadowJar
+}
