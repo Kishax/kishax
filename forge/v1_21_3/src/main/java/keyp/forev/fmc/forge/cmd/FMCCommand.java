@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
@@ -27,32 +28,31 @@ public class FMCCommand {
     }
 
     public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
-        logger.info("Registering fmc commands...");
-
-        dispatcher.register(Commands.literal("fmc")
-            .then(Commands.literal("fv")
-                .then(Commands.argument("player", StringArgumentType.string())
-                    .suggests((context, builder) -> 
-                        SharedSuggestionProvider.suggest(
-                            context.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(player -> player.getGameProfile().getName()),
-                            builder))
-                    .then(Commands.argument("proxy_cmds", StringArgumentType.greedyString())
-                        .executes(context -> execute(context, "fv")))))
-            .then(Commands.literal("reload")
-                .executes(context -> execute(context, "reload")))
-            .then(Commands.literal("test")
-                .then(Commands.argument("arg", StringArgumentType.string())
-                    .suggests((context, builder) -> 
-                        SharedSuggestionProvider.suggest(
-                            context.getSource().getServer().getPlayerList().getPlayers().stream()
-                                .map(player -> player.getGameProfile().getName()),
-                            builder))
-                    .then(Commands.argument("option", StringArgumentType.string())
-                        .suggests((context, builder) -> 
-                            SharedSuggestionProvider.suggest(customList, builder))
-                        .executes(context -> execute(context, "test"))))
-        ));
+		logger.info("Registering fmc commands...");
+		LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("fmc")
+			.then(Commands.literal("fv")
+					.then(Commands.argument("player", StringArgumentType.string())
+							.suggests((context, builder) -> 
+								SharedSuggestionProvider.suggest(
+										context.getSource().getServer().getPlayerList().getPlayers().stream()
+										.map(player -> player.getGameProfile().getName()),
+										builder))
+							.then(Commands.argument("proxy_cmds", StringArgumentType.greedyString())
+									.executes(context -> execute(context, "fv")))))
+			.then(Commands.literal("reload")
+					.executes(context -> execute(context, "reload")))
+			.then(Commands.literal("test")
+					.then(Commands.argument("arg", StringArgumentType.string())
+							.suggests((context, builder) -> 
+								SharedSuggestionProvider.suggest(
+										context.getSource().getServer().getPlayerList().getPlayers().stream()
+										.map(player -> player.getGameProfile().getName()),
+										builder))
+							.then(Commands.argument("option", StringArgumentType.string())
+									.suggests((context, builder) -> 
+									SharedSuggestionProvider.suggest(customList, builder))
+									.executes(context -> execute(context, "test")))));
+		dispatcher.register(command);
     }
 
     public int execute(CommandContext<CommandSourceStack> context, String subcommand) throws CommandSyntaxException {

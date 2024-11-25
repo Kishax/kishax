@@ -16,7 +16,7 @@ minecraft {
 }
 
 dependencies {
-	minecraft 'net.minecraftforge:forge:1.21.3-53.0.0'
+	minecraft 'net.minecraftforge:forge:1.21.3-53.0.25'
 	shadowImpl project(':common')
 }
 
@@ -46,6 +46,8 @@ shadowJar {
 		exclude(dependency('com.google.guava:.*'))
 		exclude(dependency('org.slf4j:slf4j-simple'))
 		exclude(dependency('org.apache.logging.log4j:log4j-slf4j2-impl'))
+		exclude(dependency('com.google.code.gson:gson'))
+		exclude(dependency('org.slf4j:slf4j-api'))
 	}
 	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
