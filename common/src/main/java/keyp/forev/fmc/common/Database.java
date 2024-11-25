@@ -219,7 +219,7 @@ public class Database {
         }
         return rowMap;
     }
-
+    
     private Set<Object> getResultSetAsSet(ResultSet rs) throws SQLException {
         Set<Object> set = new java.util.HashSet<>();
         while (rs.next()) {

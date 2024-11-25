@@ -13,15 +13,15 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.DoServerOffline;
 import keyp.forev.fmc.common.Luckperms;
 import keyp.forev.fmc.common.PlayerUtils;
+import keyp.forev.fmc.common.ServerStatusCache;
 import keyp.forev.fmc.spigot.util.AutoShutdown;
-import keyp.forev.fmc.spigot.util.DoServerOffline;
 import keyp.forev.fmc.spigot.util.ImageMap;
 import keyp.forev.fmc.spigot.util.PortalsConfig;
 import keyp.forev.fmc.spigot.util.Rcon;
 import keyp.forev.fmc.spigot.util.SpigotServerHomeDir;
-import keyp.forev.fmc.spigot.util.ServerStatusCache;
 import keyp.forev.fmc.spigot.util.WandListener;
 import net.luckperms.api.LuckPermsProvider;
 import keyp.forev.fmc.spigot.cmd.FMCCommand;
@@ -90,7 +90,7 @@ public class Main extends JavaPlugin {
 	@Override
     public void onDisable() {
 		try {
-			getInjector().getInstance(DoServerOffline.class).UpdateDatabase();
+			getInjector().getInstance(DoServerOffline.class).updateDatabase();
 		} catch (Exception e) {
 			logger.error( "An error occurred while updating the database: {}", e.getMessage());
 		}

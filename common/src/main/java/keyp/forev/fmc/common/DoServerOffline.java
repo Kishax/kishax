@@ -1,4 +1,4 @@
-package keyp.forev.fmc.fabric.util;
+package keyp.forev.fmc.common;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -8,23 +8,20 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import keyp.forev.fmc.common.Database;
-import keyp.forev.fmc.common.SocketSwitch;
-
 public class DoServerOffline {
 	private final Logger logger;
 	private final Database db;
 	private final Provider<SocketSwitch> sswProvider;
 	private final String thisServerName;
 	@Inject
-	public DoServerOffline (Logger logger, Database db, Provider<SocketSwitch> sswProvider, FabricServerHomeDir shd) {
+	public DoServerOffline(Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
 		this.logger = logger;
 		this.db = db;
 		this.sswProvider = sswProvider;
 		this.thisServerName = shd.getServerName();
 	}
 	
-	public void UpdateDatabase() {
+	public void updateDatabase() {
 		try (Connection conn = db.getConnection()) {
 			db.updateLog(conn, "UPDATE status SET online=?, socketport=?, player_list=?, current_players=? WHERE name=?;", new Object[] {false, 0, null, 0, thisServerName});
 			SocketSwitch ssw = sswProvider.get();
@@ -32,9 +29,9 @@ public class DoServerOffline {
 			ssw.stopSocketServer();
 		} catch (SQLException | ClassNotFoundException e2) {
 			logger.error( "A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
-            for (StackTraceElement element : e2.getStackTrace()) {
-                logger.error(element.toString());
-            }
+			for (StackTraceElement element : e2.getStackTrace()) {
+				logger.error(element.toString());
+			}
 		}
 	}
 }

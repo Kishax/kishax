@@ -2,7 +2,7 @@
 ### Gradle & IntelliJ ###
 .gradle/
 /.idea/
-build/
+**/build/
 out/
 run/
 *.iml
@@ -60,7 +60,7 @@ Temporary Items
 
 ### NetBeans ###
 nbproject/private/
-build/
+#build/
 nbbuild/
 dist/
 nbdist/

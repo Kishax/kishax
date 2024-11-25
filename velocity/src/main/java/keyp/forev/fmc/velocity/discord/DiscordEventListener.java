@@ -168,11 +168,9 @@ public class DiscordEventListener extends ListenerAdapter {
 							e.reply("1日の登録回数は"+limitUploadTimes+"回までです。").setEphemeral(true).queue();
 							return;
 						}
-						@SuppressWarnings("null")
 						String url = e.getOption("url") != null ? e.getOption("url").getAsString() : null,
 							title = (e.getOption("title") != null) ? e.getOption("title").getAsString() : "無名のタイトル",
 							comment = (e.getOption("comment") != null) ? e.getOption("comment").getAsString() : "コメントなし";
-						@SuppressWarnings("null")
 						Attachment attachment = e.getOption("image") != null ? e.getOption("image").getAsAttachment() : null;
 						if (url == null && attachment == null) {
 							e.reply("画像URLまたは画像を指定してください。").setEphemeral(true).queue();
@@ -201,7 +199,6 @@ public class DiscordEventListener extends ListenerAdapter {
 					
 				}
 				case "tera" -> {
-					@SuppressWarnings("null")
 					String teraType = e.getOption("action").getAsString();
 					if (!require) {
 						e.reply("コンフィグの設定が不十分なため、コマンドを実行できません。").setEphemeral(true).queue();

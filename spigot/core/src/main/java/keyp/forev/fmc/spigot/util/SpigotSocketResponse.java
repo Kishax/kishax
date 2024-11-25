@@ -14,6 +14,7 @@ import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.Database;
 import keyp.forev.fmc.common.Luckperms;
+import keyp.forev.fmc.common.ServerStatusCache;
 import keyp.forev.fmc.common.SocketSwitch;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;

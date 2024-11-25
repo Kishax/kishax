@@ -1,6 +1,7 @@
-package keyp.forev.fmc.spigot.util;
+package keyp.forev.fmc.common;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,10 +20,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-import keyp.forev.fmc.common.Database;
-import keyp.forev.fmc.common.PortFinder;
-import keyp.forev.fmc.common.SocketSwitch;
-
 @Singleton
 public class ServerStatusCache {
     private static final long CACHE_REFRESH_INTERVAL = 60000;
@@ -31,13 +28,13 @@ public class ServerStatusCache {
     private final PortFinder pf;
     private final DoServerOnline dso;
     private final Provider<SocketSwitch> sswProvider;
-    private final SpigotServerHomeDir shd;
+    private final ServerHomeDir shd;
     private final AtomicBoolean isFirstRefreshing = new AtomicBoolean(false);
     private Map<String, Map<String, Map<String, Object>>> statusMap = new ConcurrentHashMap<>();
     private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
     @Inject
-    public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, SpigotServerHomeDir shd) {
+    public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
         this.logger = logger;
         this.db = db;
         this.pf = pf;
@@ -79,13 +76,13 @@ public class ServerStatusCache {
                     newServerStatusMap.computeIfAbsent(serverType, _p -> new HashMap<>()).put(serverName, rowMap);
                 }
     
-                // サーバーネームをアルファベット順にソート
+                	// サーバーネームをアルファベット順にソート
                 Map<String, Map<String, Map<String, Object>>> sortedServerStatusMap = new HashMap<>();
                 for (Map.Entry<String, Map<String, Map<String, Object>>> entry : newServerStatusMap.entrySet()) {
                     String serverType = entry.getKey();
                     Map<String, Map<String, Object>> servers = entry.getValue();
     
-                    // サーバーネームをソート
+                    	// サーバーネームをソート
                     Map<String, Map<String, Object>> sortedServers = servers.entrySet().stream()
                         .sorted(Map.Entry.comparingByKey())
                         .collect(Collectors.toMap(
@@ -98,22 +95,25 @@ public class ServerStatusCache {
                     sortedServerStatusMap.put(serverType, sortedServers);
                 }
                 this.statusMap = sortedServerStatusMap;
-                // 初回ループのみ
                 if (isFirstRefreshing.compareAndSet(false, true)) {
                     logger.info("Server status cache has been initialized.");
-                    pf.findAvailablePortAsync().thenAccept(port -> {
-                        String serverName = shd.getServerName();
-                        refreshManualOnlineServer(serverName);
-                        dso.UpdateDatabase(port);
-                        ssw.startSocketServer(port);
-                        logger.info(serverName + " server is online!");
-                    }).exceptionally(ex -> {
-                        logger.error("ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
-                        for (StackTraceElement element : ex.getStackTrace()) {
-                            logger.error(element.toString());
-                        }
-                        return null;
-                    });
+					try (Connection conn2 = conn == null || conn.isClosed() ? db.getConnection() : conn) {
+						pf.findAvailablePortAsync().thenAccept(port -> {
+						    String serverName = shd.getServerName();
+						    refreshManualOnlineServer(serverName);
+						    dso.updateDatabase(port);
+						    ssw.startSocketServer(port);
+						    logger.info(serverName + " server is online!");
+						}).exceptionally(ex -> {
+						    logger.error("ソケット利用可能ポートが見つからなかったため、サーバーをオンラインにできませんでした。", ex.getMessage());
+						    for (StackTraceElement element : ex.getStackTrace()) {
+						    	logger.error(element.toString());
+						     }
+						    return null;
+						});
+					} catch (SQLException | ClassNotFoundException e) {
+						logger.error("An error occurred while updating the database: {}", e.getMessage());
+					}
                 }
             }
         } catch (SQLException | ClassNotFoundException e) {
