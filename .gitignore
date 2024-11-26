@@ -8,7 +8,6 @@ run/
 *.iml
 .idea_modules/
 
-
 ### Eclipse ###
 .metadata
 bin/
