@@ -16,6 +16,10 @@ dependencies {
     compileOnly project(':common')
 }
 
+build {
+	dependsOn(":common:build")
+}
+
 shadowJar {
 	archiveBaseName.set('FMC-Spigot')
 	archiveClassifier.set('')

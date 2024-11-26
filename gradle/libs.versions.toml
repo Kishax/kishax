@@ -2,8 +2,10 @@
 shadow = "8.3.0"
 forgegradle = "[6.0,6.2)"
 loom = "1.7-SNAPSHOT"
+parchment = "1.+"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 forgegradle = { id = "net.minecraftforge.gradle", version.ref = "forgegradle" }
 loom = { id = "fabric-loom", version.ref = "loom" }
+parchment = { id = "org.parchmentmc.librarian.forgegradle", version.ref = "parchment" }

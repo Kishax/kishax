@@ -6,9 +6,26 @@ pluginManagement {
             url = 'https://maven.fabricmc.net/'
         }
         maven {
-            name = 'forge'
+            name = 'MinecraftForge'
             url = 'https://maven.minecraftforge.net/'
         }
+        maven { url = 'https://maven.parchmentmc.org' }
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven {
+            name = 'fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'MinecraftForge'
+            url = 'https://maven.minecraftforge.net/'
+        }
+        maven { url = 'https://maven.parchmentmc.org' }
     }
 }
 

@@ -25,6 +25,10 @@ dependencies {
 	shadowImpl project(':common')
 }
 
+build {
+	dependsOn(":common:build")
+}
+
 shadowJar {
 	configurations = [project.configurations.shadowImpl]
 	archiveBaseName.set('FMC-Velocity')

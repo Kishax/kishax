@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 
 import com.google.inject.Guice;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import keyp.forev.fmc.common.DoServerOffline;
 import keyp.forev.fmc.common.PlayerUtils;
@@ -18,6 +20,8 @@ import keyp.forev.fmc.forge.util.Rcon;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -28,8 +32,8 @@ import net.minecraftforge.fml.common.Mod;
 public class EventListener {
 	private static final Logger logger = Main.logger;
 	@SubscribeEvent
-	public static void onServerStarting(ServerStartingEvent e) {
-		Main.injector = Guice.createInjector(new Module(logger, e.getServer()));
+	public static void onServerStarting(ServerStartingEvent event) {
+		Main.injector = Guice.createInjector(new Module(logger, event.getServer()));
 		Main.getInjector().getInstance(AutoShutdown.class).start();
 		Main.getInjector().getInstance(Rcon.class).startMCVC();
 		try {
@@ -47,7 +51,7 @@ public class EventListener {
 	}
 	
 	@SubscribeEvent
-	public static void onServerStopping(ServerStoppingEvent e) {
+	public static void onServerStopping(ServerStoppingEvent event) {
 		Main.getInjector().getInstance(DoServerOffline.class).updateDatabase();
 		Main.getInjector().getInstance(AutoShutdown.class).stop();
 	    if (Main.getInjector().getInstance(Config.class).getBoolean("MCVC.Mode", false)) {
@@ -56,9 +60,33 @@ public class EventListener {
 	}
 	
 	@SubscribeEvent
-	public static void onRegisterCommands(RegisterCommandsEvent e) {
-		CommandDispatcher<CommandSourceStack> dispatcher = e.getDispatcher();
-		new FMCCommand(logger).registerCommand(dispatcher);
+	public static void onRegisterCommands(RegisterCommandsEvent event) {
+		CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+		logger.info("Registering fmc commands...");
+		LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("fmc")
+			.then(Commands.literal("fv")
+				.then(Commands.argument("player", StringArgumentType.string())
+					.suggests((context, builder) -> 
+						SharedSuggestionProvider.suggest(
+							context.getSource().getServer().getPlayerList().getPlayers().stream()
+							.map(player -> player.getGameProfile().getName()),
+						builder))
+					.then(Commands.argument("proxy_cmds", StringArgumentType.greedyString())
+						.executes(context -> FMCCommand.execute(context, "fv")))))
+			.then(Commands.literal("reload")
+				.executes(context -> FMCCommand.execute(context, "reload")))
+			.then(Commands.literal("test")
+				.then(Commands.argument("arg", StringArgumentType.string())
+					.suggests((context, builder) -> 
+						SharedSuggestionProvider.suggest(
+							context.getSource().getServer().getPlayerList().getPlayers().stream()
+							.map(player -> player.getGameProfile().getName()),
+						builder))
+					.then(Commands.argument("option", StringArgumentType.string())
+						.suggests((context, builder) -> 
+							SharedSuggestionProvider.suggest(FMCCommand.customList, builder))
+						.executes(context -> FMCCommand.execute(context, "test")))));
+		dispatcher.register(command);
 		logger.info("FMC command registered.");
 	}
 }
