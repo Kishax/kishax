@@ -13,6 +13,7 @@ import keyp.forev.fmc.common.JedisProvider;
 import keyp.forev.fmc.common.Luckperms;
 import keyp.forev.fmc.common.PlayerUtils;
 import keyp.forev.fmc.common.PortFinder;
+import keyp.forev.fmc.common.ServerHomeDir;
 import keyp.forev.fmc.common.ServerStatusCache;
 import keyp.forev.fmc.common.SocketSwitch;
 import redis.clients.jedis.Jedis;
@@ -92,7 +93,7 @@ public class Module extends AbstractModule {
 	
 	@Provides
 	@Singleton
-	public SpigotServerHomeDir provideServerHomeDir(JavaPlugin plugin) {
+	public ServerHomeDir provideServerHomeDir(JavaPlugin plugin) {
 		return new SpigotServerHomeDir(plugin);
 	}
 }

@@ -16,10 +16,11 @@ rootProject.name = 'FMC'
 include (
     'common',
     'velocity',
-    'spigot:core',
-    'spigot:v1_20_2',
-    'spigot:v1_21_',
-    'fabric:v1_20_1',
-    'fabric:v1_20_4',
-    'forge:v1_21_3'
+    'spigot:svcore',
+    'spigot:sv1_20_2',
+    'spigot:sv1_21_x',
+    'fabric:favcore',
+    'fabric:fav1_20_1',
+    'fabric:fav1_20_4',
+    'forge:fovcore'
 )

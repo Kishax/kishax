@@ -19,7 +19,7 @@ dependencies {
 shadowJar {
 	archiveBaseName.set('FMC-Spigot')
 	archiveClassifier.set('')
-	archiveVersion.set('1.20.2-core')
+	archiveVersion.set('core-shaded')
 	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
 
