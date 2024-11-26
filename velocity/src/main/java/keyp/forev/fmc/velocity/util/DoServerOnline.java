@@ -49,7 +49,7 @@ public class DoServerOnline {
     }
 	
 	public Map<String, Map<String, Object>> loadStatusTable(Connection conn) throws SQLException {
-        Map<String, Map<String, Object>> resultMap = new HashMap<>();
+        Map<String, Map<String, Object>> resultMap = new ConcurrentHashMap<>();
         String query = "SELECT * FROM status WHERE exception2!=?;";//SELECT * FROM status WHERE exception!=? AND exception2!=?;
         PreparedStatement ps = conn.prepareStatement(query);
 		ps.setBoolean(1, true);
@@ -172,7 +172,7 @@ public class DoServerOnline {
 				// Toml, Config情報, DB情報をすべて同期 (Tomlを主軸に)
 				Map<String, Map<String, Object>> configMap = cutils.getConfigMap("Servers");
 				Map<String, Integer> velocityToml = getServerFromToml();
-				Map<String, Map<String, Object>> dbStatusMap = loadStatusTable(conn);
+				Map<String, Map<String, Object>> dbStatusMap = new ConcurrentHashMap<>(loadStatusTable(conn));
 				// dbにあってTomlにないサーバーは削除対象
 				// Set(dbServersKeySet \ velocityTomlKeySet)
 				dbStatusMap.keySet().stream().filter(e -> !velocityToml.keySet().contains(e)).forEach(entry -> {
