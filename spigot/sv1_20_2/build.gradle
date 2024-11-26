@@ -19,6 +19,11 @@ dependencies {
     shadowImpl project(':common')
 }
 
+build {
+	dependsOn(":common:build")
+    dependsOn(":spigot:svcore:build")
+}
+
 shadowJar {
 	configurations = [project.configurations.shadowImpl]
 	archiveBaseName.set('FMC-Spigot')

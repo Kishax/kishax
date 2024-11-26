@@ -19,6 +19,11 @@ dependencies {
 	shadowImpl project(':common')
 }
 
+build {
+	dependsOn(":common:build")
+    dependsOn(":fabric:favcore:build")
+}
+
 processResources {
 	filesMatching('**/fabric.mod.json') {
 	    expand(
