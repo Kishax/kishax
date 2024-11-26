@@ -1,6 +1,4 @@
-<div style="text-align: center;">
-    <img src="https://github.com/bella2391/branding/blob/master/banner/fmc.png" alt="alt text" style="width:100%; height:auto; max-height:300px;">
-</div><br>
+![](https://github.com/bella2391/branding/blob/master/banner/fmc.png "Banner")
 # FMC Plugin/Mod
 ## Comment 
 This is able to use in both Velocity and Spigot.<br>
