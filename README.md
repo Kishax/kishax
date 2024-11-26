@@ -1,4 +1,4 @@
-![alt text](https://github.com/bella2391/branding/blob/master/banner/fmc.png)<br>
+<img src="https://github.com/bella2391/branding/blob/master/banner/fmc.png" alt="alt text" style="width:100%;"><br>
 # FMC Plugin/Mod
 ## Comment 
 This is able to use in both Velocity and Spigot.<br>
