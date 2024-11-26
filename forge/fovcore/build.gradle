@@ -3,8 +3,13 @@ plugins {
 	alias(libs.plugins.forgegradle)
 }
 
-sourceCompatibility = 17
-targetCompatibility = 21
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+	sourceCompatibility = 21
+	targetCompatibility = 21
+}
 
 configurations {
 	shadowImpl
@@ -41,7 +46,7 @@ shadowJar {
 	configurations = [project.configurations.shadowImpl]
 	archiveBaseName.set('FMC-Forge')
 	archiveClassifier.set('')
-	archiveVersion.set('1.21.3-shaded')
+	archiveVersion.set('core-shaded')
 	dependencies {
 		exclude(dependency('com.google.guava:.*'))
 		exclude(dependency('org.slf4j:slf4j-simple'))
@@ -56,8 +61,8 @@ reobf {
     shadowJar {
 		dependsOn shadowJar
 		doLast {
-			def reobfJar = file("${buildDir}/libs/FMC-Forge-1.21.3-shaded.jar")
-			def renamedJar = file("${buildDir}/libs/FMC-Forge-1.21.3-reobfed.jar")
+			def reobfJar = file("${buildDir}/libs/FMC-Forge-core-shaded.jar")
+			def renamedJar = file("${buildDir}/libs/FMC-Forge-core-reobfed.jar")
 			if (reobfJar.exists()) {
 			    reobfJar.renameTo(renamedJar)
 			}

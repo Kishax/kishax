@@ -7,7 +7,7 @@ out/
 run/
 *.iml
 .idea_modules/
-
+.vscode/
 ### Eclipse ###
 .metadata
 bin/

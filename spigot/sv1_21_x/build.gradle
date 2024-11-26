@@ -23,7 +23,7 @@ configurations {
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.21.3-R0.1-SNAPSHOT'
     compileOnly 'io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT'
-    implementation project(':spigot:core')
+    implementation project(':spigot:svcore')
     shadowImpl project(':common')
 }
 
@@ -32,7 +32,9 @@ shadowJar {
 	archiveBaseName.set('FMC-Spigot')
 	archiveClassifier.set('')
 	archiveVersion.set('1.21.x')
-	from(project(':spigot:core').shadowJar.outputs.files)
+	from {
+        project(':spigot:svcore').tasks.named('shadowJar').get().outputs.files
+    }
 	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
 
