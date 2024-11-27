@@ -12,11 +12,6 @@ java {
 	targetCompatibility = 21
 }
 
-configurations {
-	shadowImpl
-	compileOnly.extendsFrom shadowImpl
-}
-
 minecraft {
 	mappings channel: 'parchment', version: '2024.11.10-1.21'
 }
@@ -24,58 +19,9 @@ minecraft {
 dependencies {
 	minecraft 'net.minecraftforge:forge:1.21-51.0.32'
 	implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
-	shadowImpl project(':common')
+	compileOnly project(':common')
 }
 
 build {
-	dependsOn(":common:build")
-}
-
-processResources {
-	filesMatching('**/mods.toml') {
-	    expand(
-	        project: project,
-	        projectName: project.name,
-	        projectVersion: project.version,
-	        projectDescription: project.property('description'),
-	        projectGroup: project.group,
-	        groupId: project.group,
-	        projectHP: project.property('hp'),
-	        projectSource: project.property('source'),
-	        projectIssueTracker: project.property('issue')
-	    )
-	}
-	exclude('assets/minecraft/**') 
-}
-
-shadowJar {
-	configurations = [project.configurations.shadowImpl]
-	archiveBaseName.set('FMC-Forge')
-	archiveClassifier.set('')
-	archiveVersion.set('core-shaded')
-	dependencies {
-		exclude(dependency('com.google.guava:.*'))
-		exclude(dependency('org.slf4j:slf4j-simple'))
-		exclude(dependency('org.apache.logging.log4j:log4j-slf4j2-impl'))
-		exclude(dependency('com.google.code.gson:gson'))
-		exclude(dependency('org.slf4j:slf4j-api'))
-	}
-	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-}
-
-reobf {
-    shadowJar {
-		dependsOn shadowJar
-		doLast {
-			def reobfJar = file("${buildDir}/libs/FMC-Forge-core-shaded.jar")
-			def renamedJar = file("${buildDir}/libs/FMC-Forge-core-reobfed.jar")
-			if (reobfJar.exists()) {
-			    reobfJar.renameTo(renamedJar)
-			}
-        }
-    }
-}
-
-artifacts {
-	shadow shadowJar
+	dependsOn(':common:build')
 }

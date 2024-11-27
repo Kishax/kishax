@@ -4,7 +4,7 @@ description: ${projectDescription}
 main: ${projectGroup}.spigot.Main
 author: Bella
 website: ${projectHP}
-api-version: 1.18
+api-version: ${projectAPIVersion}
 description: ${projectDescription}
 depend:
   - LuckPerms

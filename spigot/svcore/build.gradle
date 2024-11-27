@@ -2,45 +2,15 @@ plugins {
 	alias(libs.plugins.shadow)
 }
 
-repositories {
-    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-    maven { url 'https://repo.papermc.io/repository/maven-public/' }
-}
-
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT'
     compileOnly 'io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT'
-    implementation 'net.coobird:thumbnailator:0.4.20'
-    implementation 'com.google.zxing:core:3.4.1'
-    implementation 'com.google.zxing:javase:3.4.1'
+    compileOnly 'net.coobird:thumbnailator:0.4.20'
+    compileOnly 'com.google.zxing:core:3.4.1'
+    compileOnly 'com.google.zxing:javase:3.4.1'
     compileOnly project(':common')
 }
 
 build {
-	dependsOn(":common:build")
-}
-
-shadowJar {
-	archiveBaseName.set('FMC-Spigot')
-	archiveClassifier.set('')
-	archiveVersion.set('core-shaded')
-	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-}
-
-tasks.build {
-    dependsOn tasks.shadowJar
-}
-
-processResources {
-	filesMatching('**/plugin.yml') {
-	    expand(
-	        project: project,
-	        projectName: project.name,
-	        projectVersion: project.version,
-	        projectDescription: project.property('description'),
-	        projectGroup: project.group,
-	        groupId: project.group,
-	        projectHP: project.property('hp')
-	    )
-	}
+	dependsOn(':common:build')
 }

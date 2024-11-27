@@ -6,6 +6,7 @@ import com.google.inject.Guice;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 
 import keyp.forev.fmc.common.DoServerOffline;
 import keyp.forev.fmc.common.PlayerUtils;
@@ -63,26 +64,26 @@ public class EventListener {
 	public static void onRegisterCommands(RegisterCommandsEvent event) {
 		CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 		logger.info("Registering fmc commands...");
-		LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("fmc")
-			.then(Commands.literal("fv")
-				.then(Commands.argument("player", StringArgumentType.string())
+		LiteralArgumentBuilder<CommandSourceStack> command = LiteralArgumentBuilder.<CommandSourceStack>literal("fmc")
+			.then(LiteralArgumentBuilder.<CommandSourceStack>literal("fv")
+				.then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("player", StringArgumentType.string())
 					.suggests((context, builder) -> 
 						SharedSuggestionProvider.suggest(
 							context.getSource().getServer().getPlayerList().getPlayers().stream()
 							.map(player -> player.getGameProfile().getName()),
 						builder))
-					.then(Commands.argument("proxy_cmds", StringArgumentType.greedyString())
+					.then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("proxy_cmds", StringArgumentType.greedyString())
 						.executes(context -> FMCCommand.execute(context, "fv")))))
-			.then(Commands.literal("reload")
+			.then(LiteralArgumentBuilder.<CommandSourceStack>literal("reload")
 				.executes(context -> FMCCommand.execute(context, "reload")))
-			.then(Commands.literal("test")
-				.then(Commands.argument("arg", StringArgumentType.string())
+			.then(LiteralArgumentBuilder.<CommandSourceStack>literal("test")
+				.then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("arg", StringArgumentType.string())
 					.suggests((context, builder) -> 
 						SharedSuggestionProvider.suggest(
 							context.getSource().getServer().getPlayerList().getPlayers().stream()
 							.map(player -> player.getGameProfile().getName()),
 						builder))
-					.then(Commands.argument("option", StringArgumentType.string())
+					.then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("option", StringArgumentType.string())
 						.suggests((context, builder) -> 
 							SharedSuggestionProvider.suggest(FMCCommand.customList, builder))
 						.executes(context -> FMCCommand.execute(context, "test")))));

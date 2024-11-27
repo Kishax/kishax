@@ -39,5 +39,6 @@ include (
     'fabric:favcore',
     'fabric:fav1_20_1',
     'fabric:fav1_20_4',
-    'forge:fovcore'
+    'forge:fovcore',
+    'forge:fov1_21'
 )

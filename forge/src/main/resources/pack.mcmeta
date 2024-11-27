@@ -1,6 +1,6 @@
 {
   "pack": {
     "description": "FMC resources",
-    "pack_format": 15
+    "pack_format": ${projectPackMCMeta}
   }
 }
