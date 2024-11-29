@@ -5,7 +5,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public enum VelocityPackageList implements PackageList {
-    JDA("maven", "net.dv8tion:JDA:5.2.0", "net.dv8tion.jda.api.JDA");
+    // ここはenum
+    // パッケージから、使うimportリストへの1対1のマップが作れる
+    // Map<PackageList, List<ClassLoader>>?
+    // このマップを作ったときのメリット
+    // 1. パッケージリストから、使うクラスローダーを取得できる
+    // 2. ?
+    JDA("maven", "net.dv8tion:JDA:5.2.0", "net.dv8tion.jda.api.JDA", );
     private final String repositoryType;
     private final String groupId;
     private final String artifactId;

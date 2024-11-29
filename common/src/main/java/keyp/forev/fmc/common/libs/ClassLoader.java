@@ -30,6 +30,13 @@ public class ClassLoader {
                 .collect(Collectors.toList()));
     }
 
+    // 仮に、パッケージが読み込まれたときに、
+    // すべての使うクラスを読み込む必要はなくって、
+    // 使うクラスを指定して読み込むことができるようにする
+    // それがClassManagerの役割
+    //  理想：
+    // Map<PackageList, >
+    // PackageList.JDA.
     public CompletableFuture<Class<?>> loadClassFromJar(Path jarPath, String className) {
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -46,6 +53,11 @@ public class ClassLoader {
         URLClassLoader sysLoader = (URLClassLoader) java.lang.ClassLoader.getSystemClassLoader();
         URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{url}, sysLoader);
         this.urlClassLoader = urlClassLoader;
+        //Class.forName("クラス名", true, urlClassLoader);
+    }
+
+    public URLClassLoader getUrlClassLoader() {
+        return urlClassLoader;
     }
 
     private String getFileNameFromURL(URL url) {
