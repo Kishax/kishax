@@ -19,7 +19,7 @@ dependencies {
 	annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
 	compileOnly 'org.geysermc.geyser:api:2.4.2-SNAPSHOT'
 	compileOnly 'org.geysermc.floodgate:api:2.2.3-SNAPSHOT'
-	shadowImpl 'net.dv8tion:JDA:5.2.0'
+	compileOnly 'net.dv8tion:JDA:5.2.0'
 	shadowImpl 'de.timongcraft:VeloBoard:1.4.0-EXPERIMENTAL-CHANGES'
 	shadowImpl 'club.minnced:discord-webhooks:0.8.0'
 	shadowImpl project(':common')
