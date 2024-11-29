@@ -23,27 +23,27 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.velocity.server.GeyserMC;
+import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
-import keyp.forev.fmc.velocity.util.Config;
-import keyp.forev.fmc.velocity.util.GeyserMC;
 
 public class EmojiManager {
     public static String beDefaultEmojiId = null;
     private JDA jda = null;
     private String emojiId = null;
     private final Logger logger;
-    private final Config config;
+    private final VelocityConfig config;
     private final Database db;
     @SuppressWarnings("unused")
     private final GeyserMC gm;
     @Inject
-    public EmojiManager (Logger logger, Config config, Database db, GeyserMC gm) {
+    public EmojiManager (Logger logger, VelocityConfig config, Database db, GeyserMC gm) {
         this.logger = logger;
         this.config = config;
         this.db = db;

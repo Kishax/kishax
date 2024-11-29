@@ -1,5 +1,6 @@
 package keyp.forev.fmc.velocity.events;
 
+import java.math.BigInteger;
 import java.sql.Connection;
 
 import java.sql.PreparedStatement;
@@ -38,34 +39,35 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
-import keyp.forev.fmc.common.Database;
-import keyp.forev.fmc.common.PermSettings;
-import keyp.forev.fmc.common.PlayerUtils;
-import keyp.forev.fmc.velocity.util.BroadCast;
-import keyp.forev.fmc.velocity.util.Config;
-import keyp.forev.fmc.velocity.util.FMCBoard;
-import keyp.forev.fmc.velocity.util.GeyserMC;
-import keyp.forev.fmc.velocity.util.MineStatus;
-import keyp.forev.fmc.velocity.util.PlayerDisconnect;
+import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.settings.PermSettings;
+import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.velocity.util.RomaToKanji;
 import keyp.forev.fmc.velocity.util.RomajiConversion;
+import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import keyp.forev.fmc.velocity.cmd.Maintenance;
 import keyp.forev.fmc.velocity.discord.DiscordEventListener;
-import keyp.forev.fmc.velocity.discord.MessageEditorInterface;
+import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
+import keyp.forev.fmc.velocity.server.BroadCast;
+import keyp.forev.fmc.velocity.server.FMCBoard;
+import keyp.forev.fmc.velocity.server.GeyserMC;
+import keyp.forev.fmc.velocity.server.MineStatus;
+import keyp.forev.fmc.velocity.server.PlayerDisconnect;
 import keyp.forev.fmc.velocity.Main;
+import keyp.forev.fmc.velocity.cmd.sub.Maintenance;
 
 public class EventListener {
 	public static Set<String> playerInputers = new HashSet<>();
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
 	public static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
+	public static final Map<Player, Integer> playerJoinHubIds = new HashMap<>();
 	private final Main plugin;
 	private final ProxyServer server;
-	private final Config config;
+	private final VelocityConfig config;
 	private final Logger logger;
 	private final Database db;
 	private final BroadCast bc;
@@ -76,7 +78,7 @@ public class EventListener {
 	private final PlayerUtils pu;
 	private final PlayerDisconnect pd;
 	private final RomajiConversion rc;
-	private final MessageEditorInterface discordME;
+	private final MessageEditor discordME;
 	private final MineStatus ms;
 	private final GeyserMC gm;
 	private final Maintenance mt;
@@ -85,7 +87,7 @@ public class EventListener {
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 	@Inject
-	public EventListener(Main plugin, Logger logger, ProxyServer server, Config config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditorInterface discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb) {
+	public EventListener(Main plugin, Logger logger, ProxyServer server, VelocityConfig config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditor discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
@@ -111,46 +113,34 @@ public class EventListener {
 		String playerName = player.getUsername();
 	    originalMessage = e.getMessage();
 		if (playerInputers.contains(playerName)) {
-			// プレイヤーの入力をキャンセル
-			//e.setResult(PlayerChatEvent.ChatResult.denied());
-			return;
+			return; // プレイヤーの入力をキャンセル
 		}
-	    // プレイヤーの現在のサーバーを取得
         player.getCurrentServer().ifPresent(serverConnection -> {
             RegisteredServer registeredServer = serverConnection.getServer();
             serverInfo = registeredServer.getServerInfo();
             chatServerName = serverInfo.getName();
         });
-        // マルチバイト文字の長さを取得
         int NameCount = playerName.length();
-        // スペースを生成
         StringBuilder space = new StringBuilder();
         for (int i = 0; i <= NameCount; i++) {
             space.append('\u0020');  // Unicodeのスペースを追加
         }
         server.getScheduler().buildTask(plugin, () -> {
         	try {
-        		// 正規表現パターンを定義（URLを見つけるための正規表現）
     		    String urlRegex = "https?://\\S+";
     		    Pattern pattern = Pattern.compile(urlRegex);
     		    Matcher matcher = pattern.matcher(originalMessage);
-    		    // URLリストを作成
     		    List<String> urls = new ArrayList<>();
     		    List<String> textParts = new ArrayList<>();
     		    int lastMatchEnd = 0;
     		    boolean isUrl = false;
     		    String mixtext = "";
-    		    // マッチするものをリストに追加
     		    while (matcher.find()) {
-    		        // URLが含まれていたら
     		        isUrl = true;
-    		        // マッチしたURLをリストに追加
     		        urls.add(matcher.group());
-    		        // URLの前のテキスト部分をリストに追加
     		        textParts.add(originalMessage.substring(lastMatchEnd, matcher.start()));
     		        lastMatchEnd = matcher.end();
     		    }
-
     		    component = Component.text(space+"(").color(NamedTextColor.GOLD);
     	        boolean isEnglish = false;
     	        if (originalMessage.length() >= 1) {
@@ -175,16 +165,11 @@ public class EventListener {
         	        	originalMessage = originalMessage.substring(3);
         	        }
     	        }
-    		    // URLが含まれてなかったら
     		    if (!isUrl) {
-    		    	// 漢字の検出
     		        String kanjiPattern = "[\\u4E00-\\u9FFF]+";
-    		        // ひらがなの検出
     		        String hiraganaPattern = "[\\u3040-\\u309F]+";
-    		        // カタカナの検出
     		        String katakanaPattern = "[\\u30A0-\\u30FF]+";
     		        if (detectMatches(originalMessage, kanjiPattern) || detectMatches(originalMessage, hiraganaPattern) || detectMatches(originalMessage, katakanaPattern) || isEnglish) {
-    		        	// 日本語であったら
     			        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, originalMessage);
     		        	return;
     		        }
@@ -205,14 +190,11 @@ public class EventListener {
 		        	}
     		        return;
     		    }
-		    	// 最後のURLの後のテキスト部分を追加
     		    if (lastMatchEnd < originalMessage.length()) {
     		        textParts.add(originalMessage.substring(lastMatchEnd));
     		    }
-    		    // テキスト部分を結合
     		    int textPartsSize = textParts.size();
     		    int urlsSize = urls.size();
-    		    //boolean isUrlLineBreak = false;
     		    for (int i = 0; i < textPartsSize; i++) {
     		        if (Objects.nonNull(textParts) && textPartsSize != 0) {
     		            String text = textParts.get(i);
@@ -240,14 +222,11 @@ public class EventListener {
     		            String getUrl;
     		            String getUrl2;
     		            if (textParts.get(i).isEmpty()) {
-    		                // textがなかったら、先頭の改行は無くす(=URLのみ)
     		                getUrl = urls.get(i);
     		                getUrl2 = urls.get(i);
     		            } else if (i != textPartsSize - 1) {
     		                getUrl = "\n" + urls.get(i) + "\n";
     		                getUrl2 = "\n" + space + urls.get(i);
-    		                //if(i = urlsSize)
-    		                //isUrlLineBreak = true;
     		            } else {
     		                getUrl = "\n" + urls.get(i);
     		                getUrl2 = "\n" + space + urls.get(i);
@@ -313,8 +292,6 @@ public class EventListener {
 			String playerXuid = gm.getGeyserPlayerXuid(player);
 			logger.info("Player XUID: " + playerXuid);
 			isBedrock.set(true);
-			//discordME.AddEmbedSomeMessage("Join", player, serverInfo);
-			//return;
 		} else {
 			logger.info("Java player connected: " + playerName);
 		}
@@ -375,13 +352,12 @@ public class EventListener {
 											}
 											beforejoin_sa_minute = Math.max(beforejoin_sa / 60, 0); // マイナス値を防ぐためにMath.maxを使用
 										}
-										if (playerName.equals(yuyu.getString("name"))) {
-											db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
-										} else {
+										String updatedName = null;
+										if (!playerName.equals(yuyu.getString("name"))) {
 											// 一番最初に登録した名前と一致しなかったら
 											// MOJANG-APIからとってきた名前でレコードを更新させる
-											String current_name = !isBedrock.get() ? pu.getPlayerNameFromUUID(player.getUniqueId()) : playerName;
-											if (Objects.isNull(current_name) || !(current_name.equals(playerName))) {
+											updatedName = !isBedrock.get() ? pu.getPlayerNameFromUUID(player.getUniqueId()) : playerName;
+											if (Objects.isNull(updatedName) || !(updatedName.equals(playerName))) {
 												pd.playerDisconnect (
 													true,
 													player,
@@ -391,7 +367,7 @@ public class EventListener {
 											}
 											String query5 = "UPDATE members SET name=?, old_name=? WHERE uuid=?;";
 											try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
-												ps5.setString(1, current_name);
+												ps5.setString(1, updatedName);
 												ps5.setString(2, yuyu.getString("name"));
 												ps5.setString(3, playerUUID);
 												int rsAffected5 = ps5.executeUpdate();
@@ -430,19 +406,19 @@ public class EventListener {
 											}
 										}
 										// AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
-										if (EventListener.PlayerMessageIds.containsKey(playerUUID)) {
+										if (EventListener.PlayerMessageIds.containsKey(playerUUID) && previousServerInfo.isPresent()) {
 											// どこからか移動してきたとき
-											if (previousServerInfo.isPresent()) {
-												RegisteredServer previousServer = previousServerInfo.get();
-												ServerInfo beforeServerInfo = previousServer.getServerInfo();
-												String beforeServerName = beforeServerInfo.getName();
-												ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
-												discordME.AddEmbedSomeMessage("Move", player, serverInfo);
-											}
+											RegisteredServer previousServer = previousServerInfo.get();
+											ServerInfo beforeServerInfo = previousServer.getServerInfo();
+											String beforeServerName = beforeServerInfo.getName();
+											db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
+											ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
+											discordME.AddEmbedSomeMessage("Move", player, serverInfo);
 										} else {
 											if (beforejoin_sa_minute>=config.getInt("Interval.Login",0)) {
 												if (previousServerInfo.isPresent()) {
 													// どこからか移動してきたとき
+													db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
 													RegisteredServer previousServer = previousServerInfo.get();
 													ServerInfo beforeServerInfo = previousServer.getServerInfo();
 													String beforeServerName = beforeServerInfo.getName();
@@ -450,6 +426,8 @@ public class EventListener {
 													discordME.AddEmbedSomeMessage("Move", player, currentServerName);
 												} else {
 													// 1回目のどこかのサーバーに上陸したとき
+													Object insertedId = db.insertLogAndGetColumnValue(1, conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
+													putJoinLogIdToMap(insertedId, player);
 													ms.updateJoinPlayers(playerName, currentServerName);
 													discordME.AddEmbedSomeMessage("Join", player, serverInfo);
 												}
@@ -567,8 +545,20 @@ public class EventListener {
                 task.run();
                 disconnectTasks.remove(player);
             }
-        }, 10, TimeUnit.SECONDS);  // 10秒の遅延
+        }, 10, TimeUnit.SECONDS);
     }
+
+	private void putJoinLogIdToMap(Object insertedValue, Player player) {
+		if (insertedValue instanceof BigInteger) {
+			int logId = ((BigInteger) insertedValue).intValue();
+			EventListener.playerJoinHubIds.put(player, logId);
+		} else if (insertedValue instanceof Integer) {
+			int logId = (Integer) insertedValue;
+			EventListener.playerJoinHubIds.put(player, logId);
+		} else {
+			logger.error("Unexpected type for insertedValue: " + insertedValue.getClass().getName());
+		}
+	}
 
 	private boolean detectMatches(String input, String pattern) {
         Pattern regex = Pattern.compile(pattern);

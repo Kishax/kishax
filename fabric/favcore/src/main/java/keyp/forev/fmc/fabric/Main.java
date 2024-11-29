@@ -10,15 +10,15 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import keyp.forev.fmc.common.DoServerOffline;
-import keyp.forev.fmc.common.PlayerUtils;
-import keyp.forev.fmc.common.ServerStatusCache;
-import keyp.forev.fmc.fabric.cmd.FMCCommand;
-import keyp.forev.fmc.fabric.util.AutoShutdown;
-import keyp.forev.fmc.fabric.util.Config;
-import keyp.forev.fmc.fabric.util.FabricLuckperms;
-import keyp.forev.fmc.fabric.util.Module;
-import keyp.forev.fmc.fabric.util.Rcon;
+import keyp.forev.fmc.common.server.DoServerOffline;
+import keyp.forev.fmc.common.server.ServerStatusCache;
+import keyp.forev.fmc.common.util.PlayerUtils;
+import keyp.forev.fmc.fabric.cmd.main.FMCCommand;
+import keyp.forev.fmc.fabric.module.Module;
+import keyp.forev.fmc.fabric.server.AutoShutdown;
+import keyp.forev.fmc.fabric.server.FabricLuckperms;
+import keyp.forev.fmc.fabric.server.Rcon;
+import keyp.forev.fmc.fabric.util.config.FabricConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -62,7 +62,7 @@ public class Main implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			getInjector().getInstance(DoServerOffline.class).updateDatabase();
 			getInjector().getInstance(AutoShutdown.class).stop();
-		    if (getInjector().getInstance(Config.class).getBoolean("MCVC.Mode", false)) {
+		    if (getInjector().getInstance(FabricConfig.class).getBoolean("MCVC.Mode", false)) {
 		        getInjector().getInstance(Rcon.class).stopMCVC();
 		    }
 		});

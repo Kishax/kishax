@@ -16,7 +16,7 @@ import com.google.inject.Inject;
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessage;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
-import keyp.forev.fmc.common.Database;
+import keyp.forev.fmc.common.database.Database;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -33,23 +33,23 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
-import keyp.forev.fmc.velocity.cmd.Request;
-import keyp.forev.fmc.velocity.cmd.RequestInterface;
-import keyp.forev.fmc.velocity.util.Config;
 import keyp.forev.fmc.velocity.Main;
+import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
+import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
 public class Discord implements DiscordInterface {
 	public static JDA jda = null;
 	public static boolean isDiscord = false;
     private final Logger logger;
-    private final Config config;
+    private final VelocityConfig config;
     private final Database db;
-    private final RequestInterface req;
+    private final Request req;
     private String channelId = null;
     private MessageChannel channel= null;
 	
     @Inject
-    public Discord (Logger logger, Config config, Database db, RequestInterface req) {
+    public Discord (Logger logger, VelocityConfig config, Database db, Request req) {
     	this.logger = logger;
     	this.config = config;
         this.db = db;
@@ -154,7 +154,7 @@ public class Discord implements DiscordInterface {
                 .setActionRow(button1, button2);
         action.queue(message -> {
             CompletableFuture.delayedExecutor(3, TimeUnit.MINUTES).execute(() -> {
-            	if (!Request.PlayerReqFlags.isEmpty()) {
+            	if (!VelocityRequest.PlayerReqFlags.isEmpty()) {
             		String buttonMessage2 = message.getContentRaw();
                     Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage2);
 				    if (!reqMap.isEmpty()) {

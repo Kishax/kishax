@@ -15,7 +15,6 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -37,19 +36,20 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import keyp.forev.fmc.spigot.util.MessageRunnable;
-import keyp.forev.fmc.common.Luckperms;
-import keyp.forev.fmc.common.ServerStatusCache;
-import keyp.forev.fmc.spigot.cmd.Confirm;
-import keyp.forev.fmc.spigot.cmd.Menu;
+import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.ServerStatusCache;
+import keyp.forev.fmc.spigot.cmd.sub.Confirm;
+import keyp.forev.fmc.spigot.cmd.sub.Menu;
+import keyp.forev.fmc.spigot.server.FMCItemFrame;
+import keyp.forev.fmc.spigot.server.ImageMap;
+import keyp.forev.fmc.spigot.server.Inventory;
+import keyp.forev.fmc.spigot.server.Rcon;
+import keyp.forev.fmc.spigot.settings.FMCCoords;
+
 import org.bukkit.plugin.java.JavaPlugin;
-import keyp.forev.fmc.spigot.util.FMCItemFrame;
-import keyp.forev.fmc.spigot.util.Inventory;
-import keyp.forev.fmc.spigot.util.PortalsConfig;
-import keyp.forev.fmc.spigot.util.FMCCoords;
-import keyp.forev.fmc.spigot.util.ImageMap;
-import keyp.forev.fmc.spigot.util.Rcon;
-import keyp.forev.fmc.spigot.util.WandListener;
+
+import keyp.forev.fmc.spigot.util.config.PortalsConfig;
+import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
 import net.md_5.bungee.api.ChatColor;
 
 public final class EventListener implements Listener {
@@ -61,13 +61,13 @@ public final class EventListener implements Listener {
 	private final PortalsConfig psConfig;
     private final Menu menu;
     private final ServerStatusCache ssc;
-    private final Luckperms lp;
+    private final DefaultLuckperms lp;
     private final Inventory inv;
     private final FMCItemFrame fif;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
 
     @Inject
-	public EventListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv, FMCItemFrame fif) {
+	public EventListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, DefaultLuckperms lp, Inventory inv, FMCItemFrame fif) {
 		this.plugin = plugin;
         this.logger = logger;
 		this.psConfig = psConfig;
@@ -204,23 +204,16 @@ public final class EventListener implements Listener {
     }
     
 	@EventHandler
-    @SuppressWarnings("unchecked")
     public void onPlayerMove(PlayerMoveEvent event) {
         if (plugin.getConfig().getBoolean("Portals.Move", false)) {
             Player player = event.getPlayer();
             Location loc = player.getLocation();
             if (loc != null) {
                 Block block = loc.getBlock();
-                FileConfiguration portalsConfig;
-                List<Map<?, ?>> portals;
                 if (WandListener.isMakePortal) {
                     WandListener.isMakePortal = false;
-                    portalsConfig = psConfig.getPortalsConfig();
-                    portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
-                } else {
-                    portalsConfig = psConfig.getPortalsConfig();
-                    portals = (List<Map<?, ?>>) portalsConfig.getList("portals");
                 }
+                List<Map<?, ?>> portals = psConfig.getListMap("portals");
                 boolean isInAnyPortal = false;
                 if (portals != null) {
                     for (Map<?, ?> portal : portals) {

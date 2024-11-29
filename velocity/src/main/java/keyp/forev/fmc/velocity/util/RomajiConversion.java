@@ -16,6 +16,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 
+import keyp.forev.fmc.velocity.server.BroadCast;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;

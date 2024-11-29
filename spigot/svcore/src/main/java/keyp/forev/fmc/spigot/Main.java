@@ -12,24 +12,23 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import keyp.forev.fmc.common.Database;
-import keyp.forev.fmc.common.DoServerOffline;
-import keyp.forev.fmc.common.Luckperms;
-import keyp.forev.fmc.common.PlayerUtils;
-import keyp.forev.fmc.common.ServerStatusCache;
-import keyp.forev.fmc.spigot.util.AutoShutdown;
-import keyp.forev.fmc.spigot.util.ImageMap;
-import keyp.forev.fmc.spigot.util.PortalsConfig;
-import keyp.forev.fmc.spigot.util.Rcon;
-import keyp.forev.fmc.spigot.util.SpigotServerHomeDir;
-import keyp.forev.fmc.spigot.util.WandListener;
+import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.DoServerOffline;
+import keyp.forev.fmc.common.server.ServerStatusCache;
+import keyp.forev.fmc.common.util.PlayerUtils;
 import net.luckperms.api.LuckPermsProvider;
-import keyp.forev.fmc.spigot.cmd.FMCCommand;
-import keyp.forev.fmc.spigot.cmd.Q;
-import keyp.forev.fmc.spigot.util.Module;
+import keyp.forev.fmc.spigot.cmd.main.FMCCommand;
+import keyp.forev.fmc.spigot.cmd.sub.Q;
+import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept;
+import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest;
 import keyp.forev.fmc.spigot.events.EventListener;
-import keyp.forev.fmc.spigot.cmd.TeleportAccept;
-import keyp.forev.fmc.spigot.cmd.TeleportRequest;
+import keyp.forev.fmc.spigot.events.WandListener;
+import keyp.forev.fmc.spigot.module.Module;
+import keyp.forev.fmc.spigot.server.AutoShutdown;
+import keyp.forev.fmc.spigot.server.ImageMap;
+import keyp.forev.fmc.spigot.server.Rcon;
+import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
 
 public class Main extends JavaPlugin {
 	private static Injector injector = null;
@@ -41,6 +40,7 @@ public class Main extends JavaPlugin {
         injector = Guice.createInjector(new Module(this, logger));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 		Database db = getInjector().getInstance(Database.class);
+		saveDefaultConfig();
 		try (Connection conn = db.getConnection()) {
 			ifHubThenUpdate(conn);
 			ImageMap.imagesColumnsList = db.defineImageColumnNamesList(conn, "images");
@@ -48,8 +48,6 @@ public class Main extends JavaPlugin {
 			logger.error("An error occurred while updating the database: {}", e.getMessage());
 		}
 		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
-	    saveDefaultConfig();
-		getInjector().getInstance(PortalsConfig.class).createPortalsConfig();
     	getServer().getPluginManager().registerEvents(getInjector().getInstance(EventListener.class), this);
         getServer().getPluginManager().registerEvents(getInjector().getInstance(WandListener.class), this);
 		PluginCommand fmcCmd = getCommand("fmc"),
@@ -73,7 +71,7 @@ public class Main extends JavaPlugin {
     	if (getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
 		}
-		getInjector().getInstance(Luckperms.class).triggerNetworkSync();
+		getInjector().getInstance(DefaultLuckperms.class).triggerNetworkSync();
 		logger.info("linking with LuckPerms...");
 		logger.info(LuckPermsProvider.get().getPlatform().toString());
 		getInjector().getInstance(PlayerUtils.class).loadPlayers();

@@ -1,0 +1,100 @@
+package keyp.forev.fmc.velocity.module;
+
+import java.nio.file.Path;
+
+import org.slf4j.Logger;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provider;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
+import com.velocitypowered.api.proxy.ProxyServer;
+
+import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.database.interfaces.DatabaseInfo;
+import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.socket.SocketSwitch;
+import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
+import keyp.forev.fmc.common.util.PlayerUtils;
+import keyp.forev.fmc.velocity.Main;
+import keyp.forev.fmc.velocity.cmd.sub.CommandForwarder;
+import keyp.forev.fmc.velocity.cmd.sub.Maintenance;
+import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.database.VelocityDatabaseInfo;
+import keyp.forev.fmc.velocity.discord.Discord;
+import keyp.forev.fmc.velocity.discord.DiscordEventListener;
+import keyp.forev.fmc.velocity.discord.DiscordInterface;
+import keyp.forev.fmc.velocity.discord.EmojiManager;
+import keyp.forev.fmc.velocity.discord.VelocityMessageEditor;
+import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
+import keyp.forev.fmc.velocity.server.BroadCast;
+import keyp.forev.fmc.velocity.server.FMCBoard;
+import keyp.forev.fmc.velocity.server.GeyserMC;
+import keyp.forev.fmc.velocity.server.MineStatus;
+import keyp.forev.fmc.velocity.server.PlayerDisconnect;
+import keyp.forev.fmc.velocity.socket.VelocitySocketResponse;
+import keyp.forev.fmc.velocity.util.RomaToKanji;
+import keyp.forev.fmc.velocity.util.RomajiConversion;
+import keyp.forev.fmc.velocity.util.config.ConfigUtils;
+import keyp.forev.fmc.velocity.util.config.VelocityConfig;
+
+public class Module extends AbstractModule {
+	private final Main plugin;
+    private final ProxyServer server;
+    private final Logger logger;
+    private final Path dataDirectory;
+    public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory) {
+    	this.plugin = plugin;
+        this.server = server;
+        this.logger = logger;
+        this.dataDirectory = dataDirectory;
+    }
+
+    @Override
+    protected void configure() {
+        bind(Main.class).toInstance(plugin);
+        bind(VelocityConfig.class);
+        bind(DatabaseInfo.class).to(VelocityDatabaseInfo.class).in(Singleton.class);
+        bind(Database.class);
+        bind(PlayerUtils.class);
+        bind(ProxyServer.class).toInstance(server);
+        bind(Logger.class).toInstance(logger);
+        bind(Path.class).annotatedWith(DataDirectory.class).toInstance(dataDirectory);
+        bind(ConsoleCommandSource.class).toInstance(server.getConsoleCommandSource());
+        bind(SocketSwitch.class);
+        bind(BroadCast.class);
+        bind(RomaToKanji.class);
+        bind(PlayerDisconnect.class);
+        bind(RomajiConversion.class);
+        bind(DiscordInterface.class).to(Discord.class);
+        bind(DiscordEventListener.class);
+        bind(EmojiManager.class);
+        bind(MessageEditor.class).to(VelocityMessageEditor.class);
+        bind(MineStatus.class);
+        bind(ConfigUtils.class);
+        bind(Request.class).to(keyp.forev.fmc.velocity.cmd.sub.VelocityRequest.class);
+        bind(GeyserMC.class);
+        bind(Maintenance.class);
+        bind(FMCBoard.class);
+        bind(CommandForwarder.class);
+        bind(DefaultLuckperms.class);
+    }
+
+    @Provides
+    @Singleton
+    public SocketResponse provideVelocitySocketResponse(
+            Logger logger, 
+            ProxyServer server, 
+            Database db, 
+            VelocityConfig config, 
+            DefaultLuckperms lp, 
+            BroadCast bc, 
+            ConsoleCommandSource console, 
+            MessageEditor discordME, 
+            Provider<SocketSwitch> sswProvider, 
+            CommandForwarder cf) {
+        return new VelocitySocketResponse(logger, server, db, config, lp, bc, console, discordME, sswProvider, cf);
+    }
+}
