@@ -48,7 +48,7 @@ public class MineStatusReflect {
         this.require = channelId != 0 && messageId != 0;
     }
 
-    public void start(JDA jda) {
+    public void start(/*JDA jda*/ Object jdaInstace) {
         if (!require) {
             logger.info("コンフィグの設定が不十分なため、ステータスをUPDATEできません。");
             return;
@@ -58,12 +58,12 @@ public class MineStatusReflect {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                updateStatus(jda);
+                updateStatus(jdaInstance);
             }
         }, 0, 1000*period);
     }
 
-    public void sendEmbedMessage(JDA jda) {
+    /*public void sendEmbedMessage(JDA jda) {
         TextChannel channel = jda.getTextChannelById(channelId);
         EmbedBuilder embed = new EmbedBuilder().setTitle("後にこれがステータスとなる").setColor(Color.GREEN);
         if (channel != null) {
@@ -72,9 +72,10 @@ public class MineStatusReflect {
                 error -> logger.error("Failed to send embed: " + error.getMessage())
             );
         }
-    }
+    }*/
 
-    private void updateStatus(JDA jda) {
+    private void updateStatus(/*JDA jda*/ Object jda) {
+        Class<?> textChannel = Class.forName("net.dv8tion.jda.api.entities.channel.concrete.TextChannel");
         TextChannel channel = jda.getTextChannelById(channelId);
         getPlayersMap().thenCompose(playersMap -> {
             if (playersMap != null) {

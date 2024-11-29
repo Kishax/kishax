@@ -16,30 +16,31 @@ import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessage;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.libs.ClassManager;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
-import keyp.forev.fmc.velocity.discord.interfaces.DiscordInterface;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-//import net.dv8tion.jda.api.JDABuilder;
-//import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.JDABuilder;//
+import net.dv8tion.jda.api.entities.Activity;//
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
-//import net.dv8tion.jda.api.interactions.commands.OptionType;
-//import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-//import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.commands.OptionType;//
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;//
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;//
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-//import net.dv8tion.jda.api.requests.GatewayIntent;
-//import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
+import net.dv8tion.jda.api.requests.GatewayIntent;//
+import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;//
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 
-public class Discord implements DiscordInterface {
-	public static JDA jda = null;
+public class Discord {
+    public static Object jdaInstance;
+	public static JDA jda = null; // あとでコメントアウト
 	public static boolean isDiscord = false;
     private final Logger logger;
     private final VelocityConfig config;
@@ -47,15 +48,15 @@ public class Discord implements DiscordInterface {
     private final Request req;
     private String channelId = null;
     private MessageChannel channel= null;
-	
+
     public Discord (Logger logger, VelocityConfig config, Database db, Request req) {
+        super();
     	this.logger = logger;
     	this.config = config;
         this.db = db;
         this.req = req;
     }
-    
-    @Override
+
     //public CompletableFuture<JDA> loginDiscordBotAsync() {
     public CompletableFuture<Object> loginDiscordBotAsync() {
         return CompletableFuture.supplyAsync(() -> {
@@ -67,7 +68,7 @@ public class Discord implements DiscordInterface {
                 //    .addEventListeners(Main.getInjector().getInstance(DiscordEventListener.class))
                 //    .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 //    .build();
-                Object jdaInstance = createJDAInstance();
+                jdaInstance = createJDAInstance();
 
                 //jda.awaitReady();
                 jdaInstance.getClass().getMethod("awaitReady").invoke(jdaInstance);
@@ -75,7 +76,7 @@ public class Discord implements DiscordInterface {
                 //CommandCreateAction createFMCCommand = jda.upsertCommand("fmc", "FMC commands");
                 jdaInstance.getClass().getMethod("upsertCommand", String.class, String.class)
                     .invoke(jdaInstance, "fmc", "FMC commands");
-                
+
                 //SubcommandData teraSubCommand = new SubcommandData("tera", "テラリアコマンド")
                 //    .addOptions(new OptionData(OptionType.STRING, "action", "選択してください。")
                 //        .addChoice("Start", "start")
@@ -84,12 +85,12 @@ public class Discord implements DiscordInterface {
                 //    );
                 Object createFMCCommand = jdaInstance.getClass().getMethod("upsertCommand", String.class, String.class)
                     .invoke(jdaInstance, "fmc", "FMC commands");
-                Class<?> subcommandDataClazz = Class.forName("net.dv8tion.jda.api.interactions.commands.build.SubcommandData");
+                //Class<?> subcommandDataClazz = Class.forName("net.dv8tion.jda.api.interactions.commands.build.SubcommandData");
                 Class<?> optionDataClazz = Class.forName("net.dv8tion.jda.api.interactions.commands.build.OptionData");
                 Class<?> optionTypeClazz = Class.forName("net.dv8tion.jda.api.interactions.commands.OptionType");
                 Object optionTypeStringEnum = optionDataClazz.getField("STRING").get(null);
                 Object optionTypeAttachmentEnum = optionDataClazz.getField("ATTACHMENT").get(null);
-                Object teraSubCommand = subcommandDataClazz.getConstructor(String.class, String.class)
+                Object teraSubCommand = ClassManager.SUB_COMMAND.getConstructor()
                     .newInstance("tera", "テラリアコマンド")
                         .getClass().getMethod("addOptions", optionDataClazz)
                             .invoke(
@@ -115,7 +116,7 @@ public class Discord implements DiscordInterface {
                     .newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)")
                         .getClass().getMethod("addOptions", optionDataClazz).invoke(
                             optionDataClazz.getConstructor(String.class, String.class)
-                            .newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)"), 
+                            .newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)"),
                             optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class)
                             .newInstance(optionTypeStringEnum, "url", "画像リンクの設定項目")
                                 .getClass().getMethod("setRequired", boolean.class)
@@ -163,7 +164,7 @@ public class Discord implements DiscordInterface {
             }
         });
     }
-    
+
     private Object createJDAInstance() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, ClassNotFoundException, InstantiationException, NoSuchFieldException {
         Class<?> jdabuilderClass = Class.forName("net.dv8tion.jda.api.JDABuilder");
         Object jdaBuilder = jdabuilderClass.getMethod("createDefault", String.class)
@@ -178,7 +179,7 @@ public class Discord implements DiscordInterface {
         return jdaBuilder.getClass().getMethod("build").invoke(jdaBuilder);
     }
 
-    @Override
+    
     public CompletableFuture<Void> logoutDiscordBot() {
     	return CompletableFuture.runAsync(() -> {
 	    	if (Objects.nonNull(jda)) {
@@ -188,13 +189,13 @@ public class Discord implements DiscordInterface {
 	        }
     	});
     }
+
     
-    @Override
-    public CompletableFuture<String> getMessageContent() {
+    public CompletableFuture<String> getMessageContent() throws ClassNotFoundException{
+        //TextChannel ruleChannel = jda.getTextChannelById(ruleChannelId);
         String ruleChannelId = Long.toString(config.getLong("Discord.Rule.ChannelId", 0));
         String ruleMessageId = Long.toString(config.getLong("Discord.Rule.MessageId", 0));
         CompletableFuture<String> future = new CompletableFuture<>();
-        TextChannel ruleChannel = jda.getTextChannelById(ruleChannelId);
         if (ruleChannel == null) {
             future.completeExceptionally(new IllegalArgumentException("チャンネルが見つかりませんでした。"));
             return future;
@@ -216,7 +217,7 @@ public class Discord implements DiscordInterface {
         return future;
     }
 
-    @Override
+    
     public void sendRequestButtonWithMessage(String buttonMessage) {
     	if (config.getLong("Discord.AdminChannelId", 0) == 0 || !isDiscord) return;
 		channelId = Long.toString(config.getLong("Discord.AdminChannelId"));
@@ -246,16 +247,16 @@ public class Discord implements DiscordInterface {
         });
     }
 
-    @Override
+    
     public void sendWebhookMessage(WebhookMessageBuilder builder) {
     	String webhookUrl = config.getString("Discord.Webhook_URL","");
     	if (webhookUrl.isEmpty()) return;
-    		
+
         WebhookClient client = WebhookClient.withUrl(webhookUrl);
-        
+
         //.addField(new EmbedField(true, "フィールド1", "値1"))
         WebhookMessage message = builder.build();
-        
+
         client.send(message).thenAccept(CompletableFuture::completedFuture).exceptionally(throwable -> {
             logger.error("A sendWebhookMessage error occurred: " + throwable.getMessage());
             for (StackTraceElement element : throwable.getStackTrace()) {
@@ -265,8 +266,8 @@ public class Discord implements DiscordInterface {
             return null;
         });
     }
+
     
-    @Override
     public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat) {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
@@ -314,12 +315,12 @@ public class Discord implements DiscordInterface {
         return future;
     }
 
-    @Override
+    
     public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription) {
     	return editBotEmbed(messageId, additionalDescription, false);
     }
+
     
-    @Override
     public void getBotMessage(String messageId, Consumer<MessageEmbed> embedConsumer, boolean isChat) {
     	if (isChat) {
     		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) return;
@@ -328,14 +329,14 @@ public class Discord implements DiscordInterface {
     		if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
     		channelId = Long.toString(config.getLong("Discord.ChannelId"));
     	}
-        
+
         channel = jda.getTextChannelById(channelId);
-        
+
         if (Objects.isNull(channel)) {
             //logger.info("Channel not found!");
             return;
         }
-        
+
         channel.retrieveMessageById(messageId).queue(
             message -> {
                 List<MessageEmbed> embeds = message.getEmbeds();
@@ -359,28 +360,28 @@ public class Discord implements DiscordInterface {
             }
         );
     }
+
     
-    @Override
     public MessageEmbed addDescriptionToEmbed(MessageEmbed embed, String additionalDescription) {
         EmbedBuilder builder = new EmbedBuilder(embed);
-        
+
         String existingDescription = embed.getDescription();
         String newDescription = (existingDescription != null ? existingDescription : "") + additionalDescription;
-        
+
         builder.setDescription(newDescription);
-        
+
         return builder.build();
     }
+
     
-    @Override
     public void editBotEmbedReplacedAll(String messageId, MessageEmbed newEmbed) {
     	if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
         // チャンネルIDは適切に設定してください
         channelId = Long.toString(config.getLong("Discord.ChannelId"));
         channel = jda.getTextChannelById(channelId);
-        
+
         if (Objects.isNull(channel)) return;
-        
+
         MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
         messageAction.queue(
             _p -> {
@@ -393,35 +394,35 @@ public class Discord implements DiscordInterface {
             }
         );
     }
+
     
-    @Override
     public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, MessageEmbed embed, boolean isChat) {
     	CompletableFuture<String> future = new CompletableFuture<>();
-    	
+
     	if (isChat) {
     		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) {
     			future.complete(null);
                 return future;
     		}
-    		
+
     		channelId = Long.toString(config.getLong("Discord.ChatChannelId"));
     	} else {
     		if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) {
             	future.complete(null);
                 return future;
             }
-    		
+
     		channelId = Long.toString(config.getLong("Discord.ChannelId"));
     	}
-        
+
         channel = jda.getTextChannelById(channelId);
-        
+
         if (Objects.isNull(channel)) {
         	logger.error("Channel not found!");
         	future.complete(null);
             return future;
         }
-        
+
     	if (Objects.nonNull(embed)) {
     		// 埋め込みメッセージを送信
             MessageCreateAction messageAction = channel.sendMessageEmbeds(embed);
@@ -436,7 +437,7 @@ public class Discord implements DiscordInterface {
                 future.complete(null);
             });
         }
-    	
+
     	if (Objects.nonNull(content) && !content.isEmpty()) {
     		// テキストメッセージを送信
             MessageCreateAction messageAction = channel.sendMessage(content);
@@ -452,31 +453,31 @@ public class Discord implements DiscordInterface {
             }
             );
     	}
-    	
+
     	return future;
     }
+
     
-    @Override
     public CompletableFuture<String> sendBotMessageAndgetMessageId(String content) {
     	return sendBotMessageAndgetMessageId(content, null, false);
     }
+
     
-    @Override
     public CompletableFuture<String> sendBotMessageAndgetMessageId(MessageEmbed embed) {
     	return sendBotMessageAndgetMessageId(null, embed, false);
     }
+
     
-    @Override
     public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, boolean isChat) {
     	return sendBotMessageAndgetMessageId(content, null, isChat);
     }
+
     
-    @Override
     public CompletableFuture<String> sendBotMessageAndgetMessageId(MessageEmbed embed, boolean isChat) {
     	return sendBotMessageAndgetMessageId(null, embed, isChat);
     }
+
     
-    @Override
     public MessageEmbed createEmbed(String description, int color) {
         return new MessageEmbed(
             null, // URL
@@ -494,8 +495,8 @@ public class Discord implements DiscordInterface {
             null  // Fields
         );
     }
+
     
-    @Override
     public void sendBotMessage(String content, MessageEmbed embed) {
     	CompletableFuture<String> future = new CompletableFuture<>();
         if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) {
@@ -526,13 +527,13 @@ public class Discord implements DiscordInterface {
             );
     	}
     }
+
     
-    @Override
     public void sendBotMessage(String content) {
     	sendBotMessage(content, null);
     }
+
     
-    @Override
     public void sendBotMessage(MessageEmbed embed) {
     	sendBotMessage(null, embed);
     }

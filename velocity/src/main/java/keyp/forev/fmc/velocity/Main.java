@@ -95,6 +95,7 @@ public class Main {
                     }
                 }
                 // すべての依存関係が解決された後にInjectorを作成
+                // discordパッケージで使用しているすべてのクラスがDiscordClassManagerにまとめる？
                 startApplication();
             }
         });
@@ -103,12 +104,13 @@ public class Main {
     private void startApplication() {
         injector = Guice.createInjector(new Module(this, server, logger, dataDirectory));
         getInjector().getInstance(FMCBoard.class).updateScheduler();
-    	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
-            if (jda != null) {
-                getInjector().getInstance(MineStatusReflect.class).start(jda);
-                getInjector().getInstance(EmojiManager.class).updateDefaultEmojiId();
-            }
-        }); 		
+    	getInjector().getInstance(Discord.class)
+            .loginDiscordBotAsync().thenAccept(jda -> {
+                if (jda != null) {
+                    getInjector().getInstance(MineStatusReflect.class).start(jda);
+                    getInjector().getInstance(EmojiManager.class).updateDefaultEmojiId();
+                }
+            }); 		
         Database db = getInjector().getInstance(Database.class);
 		try (Connection conn = db.getConnection()) {
             getInjector().getInstance(DoServerOnline.class).updateDatabase(conn);
