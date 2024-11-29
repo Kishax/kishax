@@ -29,6 +29,7 @@ import keyp.forev.fmc.common.util.PlayerUtils;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.Maintenance;
+import keyp.forev.fmc.velocity.discord.interfaces.DiscordInterface;
 import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
 import keyp.forev.fmc.velocity.events.EventListener;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
