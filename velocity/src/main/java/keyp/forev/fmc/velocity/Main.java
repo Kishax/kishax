@@ -70,8 +70,9 @@ public class Main {
         List<PackageList> packages = Arrays.asList(
             VelocityPackageList.JDA
         );
+        // パッケージのダウンロードとクラスのロードを同期的に行う
         CompletableFuture<List<Boolean>> downloadFuture = downloader.downloadPackages(packages, dataDirectory);
-        downloadFuture.thenAccept(results -> {
+        downloadFuture.thenCompose(results -> {
             for (int i = 0; i < results.size(); i++) {
                 if (!results.get(i)) {
                     logger.error("Failed to download: " + packages.get(i).getUrl());
@@ -79,19 +80,22 @@ public class Main {
             }
             if (results.contains(false)) {
                 logger.error("依存パッケージのダウンロードに失敗しました。\nプラグインを有効化できません。");
+                return CompletableFuture.completedFuture(null);
             } else {
                 logger.info("All packages downloaded successfully.");
-                CompletableFuture<List<Class<?>>> loadClassFuture = classLoader.loadClassesFromJars(packages, dataDirectory);
-                loadClassFuture.thenAccept(classes -> {
-                    for (Class<?> clazz : classes) {
-                        if (clazz != null) {
-                            logger.info("Class loaded successfully: " + clazz.getName());
-                        } else {
-                            logger.error("Failed to load class from JAR.");
-                        }
+                return classLoader.loadClassesFromJars(packages, dataDirectory);
+            }
+        }).thenAccept(classes -> {
+            if (classes != null) {
+                for (Class<?> clazz : classes) {
+                    if (clazz != null) {
+                        logger.info("Class loaded successfully: " + clazz.getName());
+                    } else {
+                        logger.error("Failed to load class from JAR.");
                     }
-                    startApplication();
-                });
+                }
+                // すべての依存関係が解決された後にInjectorを作成
+                startApplication();
             }
         });
     }

@@ -11,6 +11,12 @@ import java.util.stream.Collectors;
 import keyp.forev.fmc.common.libs.interfaces.PackageList;
 
 public class ClassLoader {
+    private URLClassLoader urlClassLoader;
+
+    public ClassLoader() {
+        this.urlClassLoader = (URLClassLoader) java.lang.ClassLoader.getSystemClassLoader();
+    }
+
     public CompletableFuture<List<Class<?>>> loadClassesFromJars(List<PackageList> packages, Path dataDirectory) {
         List<CompletableFuture<Class<?>>> futures = packages.stream()
             .map(pkg -> {
@@ -26,13 +32,20 @@ public class ClassLoader {
 
     public CompletableFuture<Class<?>> loadClassFromJar(Path jarPath, String className) {
         return CompletableFuture.supplyAsync(() -> {
-            try (URLClassLoader classLoader = new URLClassLoader(new URL[]{jarPath.toUri().toURL()})) {
-                return classLoader.loadClass(className);
+            try {
+                addURLToClassLoader(jarPath.toUri().toURL());
+                return urlClassLoader.loadClass(className);
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
                 return null;
             }
         });
+    }
+
+    private void addURLToClassLoader(URL url) throws IOException {
+        URLClassLoader sysLoader = (URLClassLoader) java.lang.ClassLoader.getSystemClassLoader();
+        URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{url}, sysLoader);
+        this.urlClassLoader = urlClassLoader;
     }
 
     private String getFileNameFromURL(URL url) {
