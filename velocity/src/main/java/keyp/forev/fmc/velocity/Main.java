@@ -3,7 +3,10 @@ package keyp.forev.fmc.velocity;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.CompletableFuture;
 
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.slf4j.Logger;
@@ -19,6 +22,8 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.libs.Downloader;
+import keyp.forev.fmc.common.libs.interfaces.PackageList;
 import keyp.forev.fmc.common.server.DefaultLuckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.PlayerUtils;
@@ -38,6 +43,8 @@ import keyp.forev.fmc.velocity.server.DoServerOffline;
 import keyp.forev.fmc.velocity.server.DoServerOnline;
 import keyp.forev.fmc.velocity.server.FMCBoard;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
+import keyp.forev.fmc.common.libs.ClassLoader;
+import keyp.forev.fmc.velocity.libs.VelocityPackageList;
 
 public class Main {
 	public static boolean isVelocity = true;
@@ -58,6 +65,38 @@ public class Main {
     	logger.info("detected velocity platform.");
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
         VeloBoardRegistry.register();
+        Downloader downloader = new Downloader();
+        ClassLoader classLoader = new ClassLoader();
+        List<PackageList> packages = Arrays.asList(
+            VelocityPackageList.JDA
+        );
+        CompletableFuture<List<Boolean>> downloadFuture = downloader.downloadPackages(packages, dataDirectory);
+        downloadFuture.thenAccept(results -> {
+            for (int i = 0; i < results.size(); i++) {
+                if (!results.get(i)) {
+                    logger.error("Failed to download: " + packages.get(i).getUrl());
+                }
+            }
+            if (results.contains(false)) {
+                logger.error("依存パッケージのダウンロードに失敗しました。\nプラグインを有効化できません。");
+            } else {
+                logger.info("All packages downloaded successfully.");
+                CompletableFuture<List<Class<?>>> loadClassFuture = classLoader.loadClassesFromJars(packages, dataDirectory);
+                loadClassFuture.thenAccept(classes -> {
+                    for (Class<?> clazz : classes) {
+                        if (clazz != null) {
+                            logger.info("Class loaded successfully: " + clazz.getName());
+                        } else {
+                            logger.error("Failed to load class from JAR.");
+                        }
+                    }
+                    startApplication();
+                });
+            }
+        });
+    }
+    
+    private void startApplication() {
         injector = Guice.createInjector(new Module(this, server, logger, dataDirectory));
         getInjector().getInstance(FMCBoard.class).updateScheduler();
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
