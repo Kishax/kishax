@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 
-import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
@@ -39,7 +38,6 @@ public class MineStatusReflect {
     private final Long channelId, messageId;
     private final boolean require;
 
-    @Inject
     public MineStatusReflect(Logger logger, VelocityConfig config, Database db, EmojiManager emoji) {
         this.logger = logger;
         this.config = config;

@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 
-import com.google.inject.Inject;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -50,7 +49,6 @@ public class VelocityMessageEditor implements MessageEditor {
 	private WebhookMessageBuilder builder = null;
 	private CompletableFuture<String> EmojiFutureId = null, FaceEmojiFutureId = null;
 
-	@Inject
 	public VelocityMessageEditor (
 		Main plugin, Logger logger, ProxyServer server,
 		VelocityConfig config, Database db, DiscordInterface discord,

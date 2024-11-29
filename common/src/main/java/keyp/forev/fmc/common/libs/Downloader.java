@@ -16,6 +16,7 @@ public class Downloader {
     public CompletableFuture<Boolean> downloadPackage(URL url, Path targetPath) {
         return CompletableFuture.supplyAsync(() -> {
             try {
+                System.out.println("Downloading: " + url + " to " + targetPath);
                 Files.createDirectories(targetPath.getParent());
                 try (InputStream in = url.openStream()) {
                     Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);

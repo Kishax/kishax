@@ -21,7 +21,6 @@ import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 
-import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
@@ -68,7 +67,6 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final boolean require;
 	private String replyMessage = null, restAPIUrl = null;
 
-	@Inject
 	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, DiscordInterface discord, Provider<SocketSwitch> sswProvider) {
 		this.logger = logger;
 		this.config = config;

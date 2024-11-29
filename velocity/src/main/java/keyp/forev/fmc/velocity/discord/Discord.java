@@ -1,5 +1,6 @@
 package keyp.forev.fmc.velocity.discord;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -11,32 +12,31 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 
-import com.google.inject.Inject;
-
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessage;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.velocity.Main;
+import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
+import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.discord.interfaces.DiscordInterface;
+import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Activity;
+//import net.dv8tion.jda.api.JDABuilder;
+//import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
-import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+//import net.dv8tion.jda.api.interactions.commands.OptionType;
+//import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+//import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
+//import net.dv8tion.jda.api.requests.GatewayIntent;
+//import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
-import keyp.forev.fmc.velocity.Main;
-import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
-import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
-import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
 public class Discord implements DiscordInterface {
 	public static JDA jda = null;
@@ -48,7 +48,6 @@ public class Discord implements DiscordInterface {
     private String channelId = null;
     private MessageChannel channel= null;
 	
-    @Inject
     public Discord (Logger logger, VelocityConfig config, Database db, Request req) {
     	this.logger = logger;
     	this.config = config;
@@ -57,53 +56,128 @@ public class Discord implements DiscordInterface {
     }
     
     @Override
-    public CompletableFuture<JDA> loginDiscordBotAsync() {
+    //public CompletableFuture<JDA> loginDiscordBotAsync() {
+    public CompletableFuture<Object> loginDiscordBotAsync() {
         return CompletableFuture.supplyAsync(() -> {
             if (config.getString("Discord.Token","").isEmpty()) {
-                return null;
+                return CompletableFuture.completedFuture(null);
             }
-            //server.getScheduler().buildTask(plugin, () -> {}).schedule();
             try {
-                jda = JDABuilder.createDefault(config.getString("Discord.Token"))
-                        .addEventListeners(Main.getInjector().getInstance(DiscordEventListener.class))
-                        .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
-                        // .enableCache(CacheFlag.MESSAGE_CONTENT)
-                        .build();
+                //jda = JDABuilder.createDefault(config.getString("Discord.Token"))
+                //    .addEventListeners(Main.getInjector().getInstance(DiscordEventListener.class))
+                //    .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+                //    .build();
+                Object jdaInstance = createJDAInstance();
 
-                // Botが完全に起動するのを待つ
-                jda.awaitReady();
-                CommandCreateAction createFMCCommand = jda.upsertCommand("fmc", "FMC commands");
-                SubcommandData teraSubCommand = new SubcommandData("tera", "テラリアコマンド")
-                    .addOptions(new OptionData(OptionType.STRING, "action", "選択してください。")
-                        .addChoice("Start", "start")
-                        .addChoice("Stop", "stop")
-                        .addChoice("Status", "status")
+                //jda.awaitReady();
+                jdaInstance.getClass().getMethod("awaitReady").invoke(jdaInstance);
+
+                //CommandCreateAction createFMCCommand = jda.upsertCommand("fmc", "FMC commands");
+                jdaInstance.getClass().getMethod("upsertCommand", String.class, String.class)
+                    .invoke(jdaInstance, "fmc", "FMC commands");
+                
+                //SubcommandData teraSubCommand = new SubcommandData("tera", "テラリアコマンド")
+                //    .addOptions(new OptionData(OptionType.STRING, "action", "選択してください。")
+                //        .addChoice("Start", "start")
+                //        .addChoice("Stop", "stop")
+                //        .addChoice("Status", "status")
+                //    );
+                Object createFMCCommand = jdaInstance.getClass().getMethod("upsertCommand", String.class, String.class)
+                    .invoke(jdaInstance, "fmc", "FMC commands");
+                Class<?> subcommandDataClazz = Class.forName("net.dv8tion.jda.api.interactions.commands.build.SubcommandData");
+                Class<?> optionDataClazz = Class.forName("net.dv8tion.jda.api.interactions.commands.build.OptionData");
+                Class<?> optionTypeClazz = Class.forName("net.dv8tion.jda.api.interactions.commands.OptionType");
+                Object optionTypeStringEnum = optionDataClazz.getField("STRING").get(null);
+                Object optionTypeAttachmentEnum = optionDataClazz.getField("ATTACHMENT").get(null);
+                Object teraSubCommand = subcommandDataClazz.getConstructor(String.class, String.class)
+                    .newInstance("tera", "テラリアコマンド")
+                        .getClass().getMethod("addOptions", optionDataClazz)
+                            .invoke(
+                                optionDataClazz.getConstructor(String.class, String.class)
+                                .newInstance("tera", "テラリアコマンド"), optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class)
+                                .newInstance(optionTypeStringEnum, "action", "選択してください。")
+                                .getClass().getMethod("addChoice", String.class, String.class)
+                                    .invoke(optionDataClazz, "Start", "start")
+                                .getClass().getMethod("addChoice", String.class, String.class)
+                                    .invoke(optionDataClazz, "Stop", "stop")
+                                .getClass().getMethod("addChoice", String.class, String.class)
+                                    .invoke(optionDataClazz, "Status", "status")
+                            );
+                //SubcommandData createImageSubcommand = new SubcommandData("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)")
+                //    .addOptions(
+                //        //new OptionData(OptionType.BOOLEAN, "isqr", "QRコードか否かを選択するオプション").setRequired(true), // QRコードか否かを選択するオプション
+                //       new OptionData(OptionType.STRING, "url", "画像リンクの設定項目").setRequired(false),
+                //        new OptionData(OptionType.ATTACHMENT, "image", "ファイルの添付項目").setRequired(false),
+                //        new OptionData(OptionType.STRING, "title", "画像マップのタイトル設定項目").setRequired(false),
+                //        new OptionData(OptionType.STRING, "comment", "画像マップのコメント設定項目").setRequired(false)
+                //    );
+                Object createImageSubcommand = subcommandDataClazz.getConstructor(String.class, String.class)
+                    .newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)")
+                        .getClass().getMethod("addOptions", optionDataClazz).invoke(
+                            optionDataClazz.getConstructor(String.class, String.class)
+                            .newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)"), 
+                            optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class)
+                            .newInstance(optionTypeStringEnum, "url", "画像リンクの設定項目")
+                                .getClass().getMethod("setRequired", boolean.class)
+                                .invoke(optionDataClazz, false),
+                            optionDataClazz.getConstructor(String.class, String.class)
+                            .newInstance(optionTypeAttachmentEnum, "image", "ファイルの添付項目")
+                                .getClass().getMethod("setRequired", boolean.class)
+                                .invoke(optionDataClazz, false),
+                            optionDataClazz.getConstructor(String.class, String.class)
+                            .newInstance(optionTypeStringEnum, "title", "画像マップのタイトル設定項目")
+                                .getClass().getMethod("setRequired", boolean.class)
+                                .invoke(optionDataClazz, false),
+                            optionDataClazz.getConstructor(String.class, String.class)
+                            .newInstance(optionTypeStringEnum, "comment", "画像マップのコメント設定項目")
+                                .getClass().getMethod("setRequired", boolean.class)
+                                .invoke(optionDataClazz, false)
+                        );
+
+                //SubcommandData syncRuleBookSubcommand = new SubcommandData("syncrulebook", "ルールブックの同期を行うコマンド");
+                Object createSyncRuleBookSubcommand = subcommandDataClazz.getConstructor(String.class, String.class)
+                    .newInstance("syncrulebook", "ルールブックの同期を行うコマンド");
+
+                //createFMCCommand.addSubcommands(teraSubCommand, createImageSubcommand, syncRuleBookSubcommand).queue();
+                createFMCCommand.getClass().getMethod("addSubcommands", subcommandDataClazz)
+                    .invoke(teraSubCommand, createImageSubcommand, createSyncRuleBookSubcommand);
+
+                //jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
+                Class<?> presenceActivityClazz = Class.forName("net.dv8tion.jda.api.managers.Presence");
+                Class<?> activityClazz = Class.forName("net.dv8tion.jda.api.entities.Activity");
+                jdaInstance.getClass().getMethod("getPresence").invoke(jdaInstance)
+                    .getClass().getMethod("setActivity", activityClazz)
+                    .invoke(
+                        presenceActivityClazz.getMethod("playing", String.class, String.class)
+                        .invoke(activityClazz, config.getString("Discord.Presence.Activity", "FMCサーバー"))
                     );
-                SubcommandData createImageSubcommand = new SubcommandData("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)")
-                    .addOptions(
-                        //new OptionData(OptionType.BOOLEAN, "isqr", "QRコードか否かを選択するオプション").setRequired(true), // QRコードか否かを選択するオプション
-                        new OptionData(OptionType.STRING, "url", "画像リンクの設定項目").setRequired(false),
-                        new OptionData(OptionType.ATTACHMENT, "image", "ファイルの添付項目").setRequired(false),
-                        new OptionData(OptionType.STRING, "title", "画像マップのタイトル設定項目").setRequired(false),
-                        new OptionData(OptionType.STRING, "comment", "画像マップのコメント設定項目").setRequired(false)
-                    );
-                SubcommandData syncRuleBookSubcommand = new SubcommandData("syncrulebook", "ルールブックの同期を行うコマンド");
-                createFMCCommand.addSubcommands(teraSubCommand, createImageSubcommand, syncRuleBookSubcommand).queue();
-                jda.getPresence().setActivity(Activity.playing(config.getString("Discord.Presence.Activity", "FMCサーバー")));
                 isDiscord = true;
                 logger.info("discord bot has been logged in.");
-                return jda;
-            } catch (InterruptedException e) {
-                // スタックトレースをログに出力
+                return jdaInstance;
+            } catch (/*InterruptedException*/NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | InstantiationException | NoSuchFieldException e) {
                 logger.error("An discord-bot-login error occurred: " + e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
                     logger.error(element.toString());
                 }
-                return null;
+                return CompletableFuture.completedFuture(null);
             }
         });
     }
     
+    private Object createJDAInstance() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, ClassNotFoundException, InstantiationException, NoSuchFieldException {
+        Class<?> jdabuilderClass = Class.forName("net.dv8tion.jda.api.JDABuilder");
+        Object jdaBuilder = jdabuilderClass.getMethod("createDefault", String.class)
+            .invoke(null, config.getString("Discord.Token"));
+        Class<?> gatewayIntentClass = Class.forName("net.dv8tion.jda.api.requests.GatewayIntent");
+        Object intent = gatewayIntentClass.getField("GUILD_MESSAGES").get(null);
+        Object intent2 = gatewayIntentClass.getField("MESSAGE_CONTENT").get(null);
+        jdaBuilder.getClass().getMethod("enableIntents", gatewayIntentClass)
+            .invoke(jdaBuilder, intent, intent2);
+        jdaBuilder.getClass().getMethod("addEventListeners", Object.class)
+            .invoke(jdaBuilder, Main.getInjector().getInstance(DiscordEventListener.class));
+        return jdaBuilder.getClass().getMethod("build").invoke(jdaBuilder);
+    }
+
     @Override
     public CompletableFuture<Void> logoutDiscordBot() {
     	return CompletableFuture.runAsync(() -> {
