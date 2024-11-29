@@ -18,26 +18,26 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import keyp.forev.fmc.common.Database;
-import keyp.forev.fmc.common.Luckperms;
-import keyp.forev.fmc.common.PlayerUtils;
-import keyp.forev.fmc.common.SocketSwitch;
+import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.socket.SocketSwitch;
+import keyp.forev.fmc.common.util.PlayerUtils;
 import de.timongcraft.veloboard.VeloBoardRegistry;
 import net.luckperms.api.LuckPermsProvider;
-import keyp.forev.fmc.velocity.cmd.CEnd;
-import keyp.forev.fmc.velocity.cmd.FMCCommand;
-import keyp.forev.fmc.velocity.cmd.Hub;
-import keyp.forev.fmc.velocity.cmd.Retry;
-import keyp.forev.fmc.velocity.cmd.ServerTeleport;
+import keyp.forev.fmc.velocity.cmd.main.FMCCommand;
+import keyp.forev.fmc.velocity.cmd.sub.CEnd;
+import keyp.forev.fmc.velocity.cmd.sub.Hub;
+import keyp.forev.fmc.velocity.cmd.sub.Retry;
+import keyp.forev.fmc.velocity.cmd.sub.ServerTeleport;
 import keyp.forev.fmc.velocity.discord.Discord;
 import keyp.forev.fmc.velocity.discord.EmojiManager;
-import keyp.forev.fmc.velocity.util.Module;
-import keyp.forev.fmc.velocity.util.FMCBoard;
-import keyp.forev.fmc.velocity.util.MineStatusReflect;
-import keyp.forev.fmc.velocity.util.DoServerOnline;
+import keyp.forev.fmc.velocity.discord.MineStatusReflect;
 import keyp.forev.fmc.velocity.events.EventListener;
-import keyp.forev.fmc.velocity.util.Config;
-import keyp.forev.fmc.velocity.util.DoServerOffline;
+import keyp.forev.fmc.velocity.module.Module;
+import keyp.forev.fmc.velocity.server.DoServerOffline;
+import keyp.forev.fmc.velocity.server.DoServerOnline;
+import keyp.forev.fmc.velocity.server.FMCBoard;
+import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
 public class Main {
 	public static boolean isVelocity = true;
@@ -62,7 +62,6 @@ public class Main {
         getInjector().getInstance(FMCBoard.class).updateScheduler();
     	getInjector().getInstance(Discord.class).loginDiscordBotAsync().thenAccept(jda -> {
             if (jda != null) {
-                //getInjector().getInstance(MineStatusReflect.class).sendEmbedMessage(jda);
                 getInjector().getInstance(MineStatusReflect.class).start(jda);
                 getInjector().getInstance(EmojiManager.class).updateDefaultEmojiId();
             }
@@ -74,7 +73,7 @@ public class Main {
 			logger.error("An error occurred while updating the database: {}", e1.getMessage());
 		}
     	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
-    	getInjector().getInstance(Luckperms.class).triggerNetworkSync();
+    	getInjector().getInstance(DefaultLuckperms.class).triggerNetworkSync();
  		logger.info("linking with LuckPerms...");
         logger.info(LuckPermsProvider.get().getPlatform().toString());
  		getInjector().getInstance(PlayerUtils.class).loadPlayers();
@@ -84,7 +83,7 @@ public class Main {
         commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
         commandManager.register(commandManager.metaBuilder("retry").build(), getInjector().getInstance(Retry.class));
         commandManager.register(commandManager.metaBuilder("stp").build(), getInjector().getInstance(ServerTeleport.class));
-        Config config = getInjector().getInstance(Config.class);
+        VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
         int port = config.getInt("Socket.Server_Port",0);
         if (port != 0) {
             getInjector().getProvider(SocketSwitch.class).get().startSocketServer(port);

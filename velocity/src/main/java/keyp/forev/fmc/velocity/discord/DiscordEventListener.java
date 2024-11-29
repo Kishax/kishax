@@ -24,10 +24,10 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import keyp.forev.fmc.common.Database;
-import keyp.forev.fmc.common.FMCSettings;
-import keyp.forev.fmc.common.OTPGenerator;
-import keyp.forev.fmc.common.SocketSwitch;
+import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.settings.FMCSettings;
+import keyp.forev.fmc.common.socket.SocketSwitch;
+import keyp.forev.fmc.common.util.OTPGenerator;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message.Attachment;
@@ -47,19 +47,20 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import keyp.forev.fmc.velocity.cmd.Request;
-import keyp.forev.fmc.velocity.cmd.RequestInterface;
-import keyp.forev.fmc.velocity.util.BroadCast;
-import keyp.forev.fmc.velocity.util.Config;
+import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
+import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
+import keyp.forev.fmc.velocity.server.BroadCast;
+import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
 public class DiscordEventListener extends ListenerAdapter {
 	public static String PlayerChatMessageId = null;
 	private final Logger logger;
-	private final Config config;
+	private final VelocityConfig config;
 	private final Database db;
 	private final BroadCast bc;
-	private final MessageEditorInterface discordME;
-	private final RequestInterface req;
+	private final MessageEditor discordME;
+	private final Request req;
 	private final DiscordInterface discord;
 	private final Provider<SocketSwitch> sswProvider;
 	private final String teraToken, teraExecFilePath;
@@ -68,7 +69,7 @@ public class DiscordEventListener extends ListenerAdapter {
 	private String replyMessage = null, restAPIUrl = null;
 
 	@Inject
-	public DiscordEventListener(Logger logger, Config config, Database db, BroadCast bc, MessageEditorInterface discordME, RequestInterface req, DiscordInterface discord, Provider<SocketSwitch> sswProvider) {
+	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, DiscordInterface discord, Provider<SocketSwitch> sswProvider) {
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
@@ -108,6 +109,7 @@ public class DiscordEventListener extends ListenerAdapter {
 		}
     }
 	
+	@SuppressWarnings("null")
 	@Override
     public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent e) {
 		User user = e.getUser();
@@ -325,7 +327,7 @@ public class DiscordEventListener extends ListenerAdapter {
 						processBuilder.start();
 						discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
 						bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
-						Request.PlayerReqFlags.remove(reqPlayerUUID);
+						VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
 					} catch (IOException e1) {
 						replyMessage = "内部エラーが発生しました。\nサーバーが起動できません。";
 						logger.error("An IOException error occurred: " + e1.getMessage());
@@ -359,7 +361,7 @@ public class DiscordEventListener extends ListenerAdapter {
 					}
 					discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
 					bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
-					Request.PlayerReqFlags.remove(reqPlayerUUID);
+					VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}

@@ -35,7 +35,7 @@ include (
     'velocity',
     'spigot:svcore',
     'spigot:sv1_20_2',
-    'spigot:sv1_21_x',
+    'spigot:sv1_21_3',
     'fabric:favcore',
     'fabric:fav1_20_1',
     'fabric:fav1_20_4',

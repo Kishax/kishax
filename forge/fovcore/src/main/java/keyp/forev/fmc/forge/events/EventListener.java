@@ -8,20 +8,19 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 
-import keyp.forev.fmc.common.DoServerOffline;
-import keyp.forev.fmc.common.PlayerUtils;
-import keyp.forev.fmc.common.ServerStatusCache;
+import keyp.forev.fmc.common.server.DoServerOffline;
+import keyp.forev.fmc.common.server.ServerStatusCache;
+import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.forge.Main;
-import keyp.forev.fmc.forge.cmd.FMCCommand;
-import keyp.forev.fmc.forge.util.AutoShutdown;
-import keyp.forev.fmc.forge.util.Config;
-import keyp.forev.fmc.forge.util.ForgeLuckperms;
-import keyp.forev.fmc.forge.util.Module;
-import keyp.forev.fmc.forge.util.Rcon;
+import keyp.forev.fmc.forge.cmd.main.FMCCommand;
+import keyp.forev.fmc.forge.module.Module;
+import keyp.forev.fmc.forge.server.AutoShutdown;
+import keyp.forev.fmc.forge.server.ForgeLuckperms;
+import keyp.forev.fmc.forge.server.Rcon;
+import keyp.forev.fmc.forge.util.config.ForgeConfig;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -55,7 +54,7 @@ public class EventListener {
 	public static void onServerStopping(ServerStoppingEvent event) {
 		Main.getInjector().getInstance(DoServerOffline.class).updateDatabase();
 		Main.getInjector().getInstance(AutoShutdown.class).stop();
-	    if (Main.getInjector().getInstance(Config.class).getBoolean("MCVC.Mode", false)) {
+	    if (Main.getInjector().getInstance(ForgeConfig.class).getBoolean("MCVC.Mode", false)) {
 	    	Main.getInjector().getInstance(Rcon.class).stopMCVC();
 	    }
 	}
