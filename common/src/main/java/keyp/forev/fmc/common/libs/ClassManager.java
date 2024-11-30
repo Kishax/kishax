@@ -8,7 +8,7 @@ public enum ClassManager {
     TEXT_CHANNEL("net.dv8tion.jda.api.entities.channel.concrete.TextChannel", String.class)
     ,;
     // 以下、どうにかして、ClassLoaderインスタンスを取得する
-    //private final ClassLoader classLoader = new ClassLoaderInterface();
+    //private final ClassLoader urlClassLoader = new ClassLoaderInterface();
     private Class<?> clazz;
     private Class<?>[] parameterTypes;
     ClassManager(String className, Class<?>... parameterTypes) {

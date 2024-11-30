@@ -5,19 +5,22 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
-import keyp.forev.fmc.common.libs.interfaces.PackageList;
+import java.util.HashMap;
+import keyp.forev.fmc.common.libs.interfaces.PackageManager;
 
 public class ClassLoader {
+    // メインクラスで、パッケージリストを読み込むときに
+    // すべてのパッケージリストに対して、クラスローダーを作成する
+    public static Map<PackageManager, URLClassLoader> classLoaders = new HashMap<>();
     private URLClassLoader urlClassLoader;
-
     public ClassLoader() {
         this.urlClassLoader = (URLClassLoader) java.lang.ClassLoader.getSystemClassLoader();
     }
 
-    public CompletableFuture<List<Class<?>>> loadClassesFromJars(List<PackageList> packages, Path dataDirectory) {
+    public CompletableFuture<List<Class<?>>> loadClassesFromJars(List<PackageManager> packages, Path dataDirectory) {
         List<CompletableFuture<Class<?>>> futures = packages.stream()
             .map(pkg -> {
                 Path jarPath = dataDirectory.resolve("libs/" + getFileNameFromURL(pkg.getUrl()));
@@ -34,9 +37,7 @@ public class ClassLoader {
     // すべての使うクラスを読み込む必要はなくって、
     // 使うクラスを指定して読み込むことができるようにする
     // それがClassManagerの役割
-    //  理想：
-    // Map<PackageList, >
-    // PackageList.JDA.
+    // 各パッケージが独自のクラスローダーを持てば、クラスの競合や依存関係の問題が回避できる
     public CompletableFuture<Class<?>> loadClassFromJar(Path jarPath, String className) {
         return CompletableFuture.supplyAsync(() -> {
             try {

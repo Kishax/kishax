@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import keyp.forev.fmc.common.libs.interfaces.PackageList;
+import keyp.forev.fmc.common.libs.interfaces.PackageManager;
 
 public class Downloader {
     public CompletableFuture<Boolean> downloadPackage(URL url, Path targetPath) {
@@ -29,7 +29,7 @@ public class Downloader {
         });
     }
 
-    public CompletableFuture<List<Boolean>> downloadPackages(List<PackageList> packages, Path dataDirectory) {
+    public CompletableFuture<List<Boolean>> downloadPackages(List<PackageManager> packages, Path dataDirectory) {
         List<CompletableFuture<Boolean>> futures = packages.stream()
             .map(pkg -> {
                 URL url = pkg.getUrl();
