@@ -33,6 +33,7 @@ public class Downloader {
         List<CompletableFuture<Boolean>> futures = packages.stream()
             .map(pkg -> {
                 URL url = pkg.getUrl();
+                // ダウンロードパスに依存
                 Path targetPath = dataDirectory.resolve("libs/" + getFileNameFromURL(url));
                 return downloadPackage(url, targetPath);
             })

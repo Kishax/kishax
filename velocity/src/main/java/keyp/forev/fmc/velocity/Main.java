@@ -44,6 +44,9 @@ import keyp.forev.fmc.velocity.server.DoServerOnline;
 import keyp.forev.fmc.velocity.server.FMCBoard;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import keyp.forev.fmc.common.libs.ClassLoader;
+import keyp.forev.fmc.common.libs.ClassManager;
+import keyp.forev.fmc.velocity.libs.VClassManager;
+import keyp.forev.fmc.velocity.libs.VClassManager.JDA;
 import keyp.forev.fmc.velocity.libs.VPackageManager;
 
 public class Main {
@@ -94,8 +97,19 @@ public class Main {
                         logger.error("Failed to load class from JAR.");
                     }
                 }
-                // すべての依存関係が解決された後にInjectorを作成
-                // discordパッケージで使用しているすべてのクラスがDiscordClassManagerにまとめる？
+                try {
+                    // urlClassLoaderがわかっているなら、このようにしてクラスを取得できる
+                    // VClassManager<JDA> manager = new VClassManager<>(JDA.class, new Class<?>[]{}, urlClassLoader);
+                    // しかし、このようにして取得することはない
+                    // なぜなら、urlClassLoaderは、VClassManagerクラスに格納されているから
+                    ClassManager<?> manager = VClassManager.JDA.SUB_COMMAND.get();
+                    logger.info("Class loaded successfully: " + manager.getClazz().getName());
+                    logger.info("Constructor loaded successfully: " + manager.getConstructor().getName());
+                    logger.info("Instance loaded successfully: " + manager.createInstance("", ""));
+                } catch (ClassNotFoundException e1) {
+                    logger.error("Failed to load class from JAR.");
+                }
+
                 startApplication();
             }
         });

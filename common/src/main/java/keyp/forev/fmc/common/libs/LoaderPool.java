@@ -1,5 +1,5 @@
 package keyp.forev.fmc.common.libs;
 
-public interface ClassHandler {
+public class LoaderPool {
     
 }
