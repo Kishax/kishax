@@ -23,7 +23,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.libs.Downloader;
-import keyp.forev.fmc.common.libs.interfaces.PackageList;
+import keyp.forev.fmc.common.libs.interfaces.PackageManager;
 import keyp.forev.fmc.common.server.DefaultLuckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.PlayerUtils;
@@ -44,7 +44,7 @@ import keyp.forev.fmc.velocity.server.DoServerOnline;
 import keyp.forev.fmc.velocity.server.FMCBoard;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import keyp.forev.fmc.common.libs.ClassLoader;
-import keyp.forev.fmc.velocity.libs.VelocityPackageList;
+import keyp.forev.fmc.velocity.libs.VPackageManager;
 
 public class Main {
 	public static boolean isVelocity = true;
@@ -67,8 +67,8 @@ public class Main {
         VeloBoardRegistry.register();
         Downloader downloader = new Downloader();
         ClassLoader classLoader = new ClassLoader();
-        List<PackageList> packages = Arrays.asList(
-            VelocityPackageList.JDA
+        List<PackageManager> packages = Arrays.asList(
+            VPackageManager.JDA
         );
         // パッケージのダウンロードとクラスのロードを同期的に行う
         CompletableFuture<List<Boolean>> downloadFuture = downloader.downloadPackages(packages, dataDirectory);
