@@ -9,11 +9,17 @@ public class ClassManager {
     protected Class<?>[] parameterTypes;
     protected URLClassLoader urlClassLoaderBase;
 
-    public Class<?> getClazz() {
+    public ClassManager(Class<?> clazz, Class<?>[] parameterTypes, URLClassLoader urlClassLoaderBase) {
+        this.clazz = clazz;
+        this.parameterTypes = parameterTypes;
+        this.urlClassLoaderBase = urlClassLoaderBase;
+    }
+
+    protected Class<?> getClazzBase() {
         return clazz;
     }
 
-    public Constructor<?> getConstructor() {
+    protected Constructor<?> getConstructorBase() {
         try {
             return clazz.getConstructor(parameterTypes);
         } catch (NoSuchMethodException e) {
@@ -22,9 +28,9 @@ public class ClassManager {
         }
     }
 
-    public Object createInstance(Object... initargs) {
+    protected Object createInstanceBase(Object... initargs) {
         try {
-            Constructor<?> constructor = getConstructor();
+            Constructor<?> constructor = getConstructorBase();
             if (constructor != null) {
                 return constructor.newInstance(initargs);
             }
@@ -32,5 +38,12 @@ public class ClassManager {
             e.printStackTrace();
         }
         return null;
+    }
+
+    //public EnumSet<ClassManager> getAll() {
+    //        return classManagers;
+    //}
+
+    public interface JDA {
     }
 }
