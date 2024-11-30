@@ -11,10 +11,6 @@ public class VClassManager extends ClassManager {
     public VClassManager(Class<?> clazz, Class<?>[] parameterTypes, URLClassLoader urlClassLoader) {
         super(clazz, parameterTypes, urlClassLoader);
         VClassManager.urlClassLoader = urlClassLoader;
-        //if (urlClassLoader == null) {
-        //    throw new IllegalStateException("URLClassLoader is not set");
-        //}
-        //initializeJDAClasses();
     }
 
     public enum JDA implements ClassManager.JDA  {
