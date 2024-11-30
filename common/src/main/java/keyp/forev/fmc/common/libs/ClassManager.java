@@ -2,24 +2,12 @@ package keyp.forev.fmc.common.libs;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URLClassLoader;
 
-public enum ClassManager {
-    SUB_COMMAND("net.dv8tion.jda.api.interactions.commands.build.SubcommandData", String.class, String.class),
-    TEXT_CHANNEL("net.dv8tion.jda.api.entities.channel.concrete.TextChannel", String.class)
-    ,;
-    // 以下、どうにかして、ClassLoaderインスタンスを取得する
-    //private final ClassLoader urlClassLoader = new ClassLoaderInterface();
-    private Class<?> clazz;
-    private Class<?>[] parameterTypes;
-    ClassManager(String className, Class<?>... parameterTypes) {
-        try {
-            //this.clazz = Class.forName(className); //←ココ
-            this.clazz = Class.forName(className, true, urlClassLoader);
-            this.parameterTypes = parameterTypes;
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+public class ClassManager {
+    protected Class<?> clazz;
+    protected Class<?>[] parameterTypes;
+    protected URLClassLoader urlClassLoaderBase;
 
     public Class<?> getClazz() {
         return clazz;
