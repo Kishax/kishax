@@ -102,7 +102,7 @@ public class Main {
                     // VClassManager<JDA> manager = new VClassManager<>(JDA.class, new Class<?>[]{}, urlClassLoader);
                     // しかし、このようにして取得することはない
                     // なぜなら、urlClassLoaderは、VClassManagerクラスに格納されているから
-                    ClassManager<?> manager = VClassManager.JDA.SUB_COMMAND.get();
+                    ClassManager manager = VClassManager.JDA.SUB_COMMAND.get();
                     logger.info("Class loaded successfully: " + manager.getClazz().getName());
                     logger.info("Constructor loaded successfully: " + manager.getConstructor().getName());
                     logger.info("Instance loaded successfully: " + manager.createInstance("", ""));
