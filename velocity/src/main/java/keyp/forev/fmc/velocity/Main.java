@@ -22,6 +22,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.libs.ClassManager;
 import keyp.forev.fmc.common.libs.Downloader;
 import keyp.forev.fmc.common.libs.interfaces.PackageManager;
 import keyp.forev.fmc.common.server.DefaultLuckperms;
@@ -68,9 +69,7 @@ public class Main {
         Downloader downloader = new Downloader();
         //ClassLoader classLoader = new ClassLoader();
         VClassLoader classLoader = new VClassLoader();
-        List<PackageManager> packages = Arrays.asList(
-            VPackageManager.JDA
-        );
+        List<PackageManager> packages = Arrays.asList(VPackageManager.values());
         // パッケージのダウンロードとクラスのロードを同期的に行う
         CompletableFuture<List<Boolean>> downloadFuture = downloader.downloadPackages(packages, dataDirectory);
         downloadFuture.thenCompose(results -> {
@@ -98,8 +97,11 @@ public class Main {
                     logger.info("URLClassLoader saved successfully: {}", pkg.getCoordinates());
                 } else {
                     logger.error("Failed to make ClassLoader from JAR");
+                    logger.error("Cannot start the server.");
+                    return;
                 }
             }
+            ClassManager.urlClassLoaderMap.putAll(urlClassLoader);
             startApplication();
         });
     }
