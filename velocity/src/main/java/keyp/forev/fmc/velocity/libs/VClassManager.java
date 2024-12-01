@@ -5,8 +5,6 @@ import java.net.URLClassLoader;
 import keyp.forev.fmc.common.libs.ClassManager;
 
 public class VClassManager {
-    public static URLClassLoader urlClassLoader;
-
     public enum JDA {
         SUB_COMMAND(
             "net.dv8tion.jda.api.interactions.commands.build.SubcommandData",
@@ -19,22 +17,24 @@ public class VClassManager {
 
         private String clazzName;
         private Class<?>[] parameterTypes;
-
+        private URLClassLoader urlClassLoader;
         JDA(String clazzName, Class<?>[] parameterTypes) {
             this.clazzName = clazzName;
             this.parameterTypes = parameterTypes;
-            Class<?> declaringClass = this.getDeclaringClass();
-            //declaringClass.getDeclaredMethod("get");
-            //declaringClass.getGenericInterfaces().clone();
-            //declaringClass.getDeclaredMethod("get");
-            // declaringClassをキーにしたマップよりurlClassLoaderが取得できれば...
+            // どうにかして、urlClassLoaderを取得できるようにする
+
+            
+            // ... this.urlClassLoader = urlClassLoader;
         }
         
         public ClassManager get() throws ClassNotFoundException {
-            Class<?> clazz = Class.forName(clazzName, true, VClassManager.urlClassLoader);
-            return new ClassManager(clazz, parameterTypes, VClassManager.urlClassLoader);
+            Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
+            return new ClassManager(clazz, parameterTypes);
         }
 
-        
+        // declaringClassをキーにしたマップよりurlClassLoaderが取得できれば...
+        public Class<?> getEnumClass() {
+            return this.getDeclaringClass();
+        }
     }
 }

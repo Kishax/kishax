@@ -43,10 +43,7 @@ import keyp.forev.fmc.velocity.server.DoServerOffline;
 import keyp.forev.fmc.velocity.server.DoServerOnline;
 import keyp.forev.fmc.velocity.server.FMCBoard;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
-import keyp.forev.fmc.common.libs.ClassLoader;
-import keyp.forev.fmc.common.libs.ClassManager;
-import keyp.forev.fmc.velocity.libs.VClassManager;
-import keyp.forev.fmc.velocity.libs.VClassManager.JDA;
+import keyp.forev.fmc.velocity.libs.VClassLoader;
 import keyp.forev.fmc.velocity.libs.VPackageManager;
 
 public class Main {
@@ -69,7 +66,8 @@ public class Main {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
         VeloBoardRegistry.register();
         Downloader downloader = new Downloader();
-        ClassLoader classLoader = new ClassLoader();
+        //ClassLoader classLoader = new ClassLoader();
+        VClassLoader classLoader = new VClassLoader();
         List<PackageManager> packages = Arrays.asList(
             VPackageManager.JDA
         );
@@ -82,36 +80,27 @@ public class Main {
                 }
             }
             if (results.contains(false)) {
-                logger.error("依存パッケージのダウンロードに失敗しました。\nプラグインを有効化できません。");
+                logger.error("Failed to download external package.");
                 return CompletableFuture.completedFuture(null);
             } else {
                 logger.info("All packages downloaded successfully.");
-                return classLoader.loadClassesFromJars(packages, dataDirectory);
+                return classLoader.makeURLClassLoaderFromJars(packages, dataDirectory);
             }
-        }).thenAccept(classes -> {
-            if (classes != null) {
-                for (Class<?> clazz : classes) {
-                    if (clazz != null) {
-                        logger.info("Class loaded successfully: " + clazz.getName());
-                    } else {
-                        logger.error("Failed to load class from JAR.");
-                    }
-                }
-                try {
-                    // urlClassLoaderがわかっているなら、このようにしてクラスを取得できる
-                    // VClassManager<JDA> manager = new VClassManager<>(JDA.class, new Class<?>[]{}, urlClassLoader);
-                    // しかし、このようにして取得することはない
-                    // なぜなら、urlClassLoaderは、VClassManagerクラスに格納されているから
-                    ClassManager manager = VClassManager.JDA.SUB_COMMAND.get();
-                    logger.info("Class loaded successfully: " + manager.getClazz().getName());
-                    logger.info("Constructor loaded successfully: " + manager.getConstructor().getName());
-                    logger.info("Instance loaded successfully: " + manager.createInstance("", ""));
-                } catch (ClassNotFoundException e1) {
-                    logger.error("Failed to load class from JAR.");
-                }
-
-                startApplication();
+        }).thenAccept(urlClassLoader -> {
+            if (urlClassLoader == null) {
+                logger.error("Failed to make ClassLoader from JAR.");
+                logger.error("Cannot start the server.");
+                return;
             }
+            // URLClassLoaderを別のクラスで保存する
+            for (PackageManager pkg : packages) {
+                if (pkg != null) {
+                    logger.info("URLClassLoader saved successfully: {}", pkg.getCoordinates());
+                } else {
+                    logger.error("Failed to make ClassLoader from JAR");
+                }
+            }
+            startApplication();
         });
     }
     
