@@ -51,7 +51,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.velocity.discord.DiscordEventListener;
-import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
+import keyp.forev.fmc.velocity.discord.MessageEditor;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.server.FMCBoard;
 import keyp.forev.fmc.velocity.server.GeyserMC;

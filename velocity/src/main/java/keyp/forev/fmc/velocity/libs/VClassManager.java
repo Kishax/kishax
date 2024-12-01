@@ -14,27 +14,20 @@ public class VClassManager {
             "net.dv8tion.jda.api.entities.channel.concrete.TextChannel",
             new Class<?>[]{String.class}
         );
-
         private String clazzName;
         private Class<?>[] parameterTypes;
         private URLClassLoader urlClassLoader;
         JDA(String clazzName, Class<?>[] parameterTypes) {
             this.clazzName = clazzName;
             this.parameterTypes = parameterTypes;
-            // どうにかして、urlClassLoaderを取得できるようにする
-
-            
-            // ... this.urlClassLoader = urlClassLoader;
+            if (ClassManager.urlClassLoaderMap != null) {
+                this.urlClassLoader = ClassManager.urlClassLoaderMap.get(VPackageManager.JDA);
+            }
         }
         
         public ClassManager get() throws ClassNotFoundException {
             Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
             return new ClassManager(clazz, parameterTypes);
-        }
-
-        // declaringClassをキーにしたマップよりurlClassLoaderが取得できれば...
-        public Class<?> getEnumClass() {
-            return this.getDeclaringClass();
         }
     }
 }

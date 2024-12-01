@@ -22,6 +22,11 @@ public enum VPackageManager implements PackageManager {
     }
 
     @Override
+    public String getName() {
+        return getDeclaringClass().getSimpleName();
+    }
+
+    @Override
     public URL getUrl() {
         try {
             switch (repositoryType) {

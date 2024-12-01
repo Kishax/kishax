@@ -1,19 +1,18 @@
-package keyp.forev.fmc.velocity.libs;
+package keyp.forev.fmc.common.libs;
 
-import java.util.Map;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import keyp.forev.fmc.common.libs.interfaces.PackageManager;
-import keyp.forev.fmc.common.libs.interfaces.ClassLoader;
 
-public class VClassLoader implements ClassLoader {
-    // Mainクラスで一番最初に呼び出し、URLClassLoaderを作成する
-    public CompletableFuture<Map<PackageManager, URLClassLoader>> makeURLClassLoaderFromJars(List<PackageManager> packages, Path dataDirectory) {
+import keyp.forev.fmc.common.libs.interfaces.PackageManager;
+
+public class JarLoader {
+    public static CompletableFuture<Map<PackageManager, URLClassLoader>> makeURLClassLoaderFromJars(List<PackageManager> packages, Path dataDirectory) {
         Map<PackageManager, CompletableFuture<URLClassLoader>> futures = packages.stream()
             .collect(Collectors.toMap(
                 pkg -> pkg,
@@ -40,7 +39,7 @@ public class VClassLoader implements ClassLoader {
                 )));
     }
 
-    private String getFileNameFromURL(URL url) {
+    private static String getFileNameFromURL(URL url) {
         String urlString = url.toString();
         return urlString.substring(urlString.lastIndexOf('/') + 1);
     }
