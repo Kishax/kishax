@@ -13,7 +13,6 @@ public class VClassManager<T extends Enum<T>> extends ClassManager<T> {
     // というかそもそも、URLClassLoaderについての知識が足りていない
     // それは、Jarの中のパスに依存しているのか？
     // dataDirecotry/plugins/libsに依存しているのは、確認済み
-    // 
     public VClassManager(Class<T> clazz, Class<?>[] parameterTypes, URLClassLoader urlClassLoader) {
         super(clazz, parameterTypes/*, urlClassLoader */);
         //VClassManager.urlClassLoader = urlClassLoader;
@@ -25,8 +24,14 @@ public class VClassManager<T extends Enum<T>> extends ClassManager<T> {
     }
 
     public enum JDA implements ClassManager.JDA {
-        SUB_COMMAND("net.dv8tion.jda.api.interactions.commands.build.SubcommandData", new Class<?>[]{String.class, String.class}),
-        TEXT_CHANNEL("net.dv8tion.jda.api.entities.channel.concrete.TextChannel", new Class<?>[]{String.class});
+        SUB_COMMAND(
+            "net.dv8tion.jda.api.interactions.commands.build.SubcommandData",
+            new Class<?>[]{String.class, String.class}
+        ),
+        TEXT_CHANNEL(
+            "net.dv8tion.jda.api.entities.channel.concrete.TextChannel",
+            new Class<?>[]{String.class}
+        );
 
         private String clazzName;
         private Class<?>[] parameterTypes;
