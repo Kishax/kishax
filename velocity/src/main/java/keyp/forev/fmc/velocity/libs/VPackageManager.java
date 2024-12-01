@@ -5,20 +5,20 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public enum VPackageManager implements PackageManager {
-    JDA("maven", "net.dv8tion:JDA:5.2.0", "net.dv8tion.jda.api.JDA")
+    JDA("maven", "net.dv8tion:JDA:5.2.0")
     ,;
     private final String repositoryType;
+    private final String coordinates;
     private final String groupId;
     private final String artifactId;
     private final String version;
-    private final String className;
-    VPackageManager(String repositryType, String coordinates, String className) {
+    VPackageManager(String repositryType, String coordinates) {
         this.repositoryType = repositryType;
+        this.coordinates = coordinates;
         String[] parts = coordinates.split(":");
         this.groupId = parts[0];
         this.artifactId = parts[1];
         this.version = parts[2];
-        this.className = className;
     }
 
     @Override
@@ -37,10 +37,10 @@ public enum VPackageManager implements PackageManager {
     }
 
     @Override
-    public String getClassName() {
-        return className;
+    public String getCoordinates() {
+        return coordinates;
     }
-
+    
     @Override
     public String getVersion() {
         return version;
