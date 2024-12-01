@@ -65,12 +65,14 @@ public class ClassManager<T> {
     }
 
     public interface JDA {
+        // VClassManagerからClassManagerのインスタンスを取得するならば必要ない
         ClassManager<SubCommand> SUB_COMMAND = new ClassManager<>(SubCommand.class, new Class<?>[]{String.class, String.class});
         //ClassManager<TextChannel> TEXT_CHANNEL = new ClassManager<>(TextChannel.class, new Class<?>[]{String.class}, null);
         // 継承先のクラスで定義されたパッケージ情報の変数を使い、ClassManagerクラスを生成
         ClassManager<?> get() throws ClassNotFoundException;
     }
 
+    // VClassManagerからClassManagerのインスタンスを取得するならば必要ない
     public enum SubCommand {
         COMMAND1, COMMAND2;
     }
