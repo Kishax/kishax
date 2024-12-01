@@ -54,6 +54,8 @@ public class ClassLoader {
         URLClassLoader sysLoader = (URLClassLoader) java.lang.ClassLoader.getSystemClassLoader();
         URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{url}, sysLoader);
         this.urlClassLoader = urlClassLoader;
+        // ここで、VClassManagerで取得できるClass<?>が必要
+        // Map<Class<?>, urlClassLoader>に格納できる
         //Class.forName("クラス名", true, urlClassLoader);
     }
 
