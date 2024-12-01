@@ -48,8 +48,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
-import keyp.forev.fmc.velocity.discord.interfaces.DiscordInterface;
-import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
@@ -61,14 +59,14 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final BroadCast bc;
 	private final MessageEditor discordME;
 	private final Request req;
-	private final DiscordInterface discord;
+	private final Discord discord;
 	private final Provider<SocketSwitch> sswProvider;
 	private final String teraToken, teraExecFilePath;
 	private final Long teraChannelId;
 	private final boolean require;
 	private String replyMessage = null, restAPIUrl = null;
 
-	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, DiscordInterface discord, Provider<SocketSwitch> sswProvider) {
+	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, Discord discord, Provider<SocketSwitch> sswProvider) {
 		this.logger = logger;
 		this.config = config;
 		this.db = db;

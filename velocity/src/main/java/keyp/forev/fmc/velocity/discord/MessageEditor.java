@@ -29,18 +29,16 @@ import keyp.forev.fmc.common.util.PlayerUtils;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.Maintenance;
-import keyp.forev.fmc.velocity.discord.interfaces.DiscordInterface;
-import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
 import keyp.forev.fmc.velocity.events.EventListener;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
-public class VelocityMessageEditor implements MessageEditor {
+public class MessageEditor {
 	public final Main plugin;
 	private final ProxyServer server;
 	private final Logger logger;
 	private final VelocityConfig config;
 	private final Database db;
-	private final DiscordInterface discord;
+	private final Discord discord;
 	private final EmojiManager emoji;
 	private final PlayerUtils pu;
 	private String avatarUrl = null, addMessage = null, 
@@ -50,9 +48,9 @@ public class VelocityMessageEditor implements MessageEditor {
 	private WebhookMessageBuilder builder = null;
 	private CompletableFuture<String> EmojiFutureId = null, FaceEmojiFutureId = null;
 
-	public VelocityMessageEditor (
+	public MessageEditor (
 		Main plugin, Logger logger, ProxyServer server,
-		VelocityConfig config, Database db, DiscordInterface discord,
+		VelocityConfig config, Database db, Discord discord,
 		EmojiManager emoji, PlayerUtils pu
 	) {
 		this.plugin = plugin;
@@ -65,42 +63,34 @@ public class VelocityMessageEditor implements MessageEditor {
 		this.pu = pu;
 	}
 	
-	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, String serverName) {
 		return AddEmbedSomeMessage(type, player, null, serverName, null, null, null);
 	}
 	
-	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo) {
 		return AddEmbedSomeMessage(type, player, serverInfo, null, null, null, null);
 	}
 	
-	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player) {
 		return AddEmbedSomeMessage(type, player, null, null, null, null, null);
 	}
 	
-	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName) {
 		return AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, null, null);
 	}
 	
-	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName) {
 		return AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, null, null);
 	}
 	
-	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage) {
 		return AddEmbedSomeMessage(type, player, serverInfo, null, null, chatMessage, null);
 	}
 	
-	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type) {
 		return AddEmbedSomeMessage(type, null, null, null, null, null, null);
 	}
 	
-	@Override
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, UUID playerUUID) {
 		return AddEmbedSomeMessage(type, null, null, null, null, null, playerUUID);
 	}

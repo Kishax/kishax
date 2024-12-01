@@ -44,7 +44,6 @@ import keyp.forev.fmc.velocity.server.DoServerOffline;
 import keyp.forev.fmc.velocity.server.DoServerOnline;
 import keyp.forev.fmc.velocity.server.FMCBoard;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
-import keyp.forev.fmc.velocity.libs.VClassLoader;
 import keyp.forev.fmc.velocity.libs.VPackageManager;
 
 public class Main {
@@ -68,7 +67,7 @@ public class Main {
         VeloBoardRegistry.register();
         Downloader downloader = new Downloader();
         //ClassLoader classLoader = new ClassLoader();
-        VClassLoader classLoader = new VClassLoader();
+        //ClassLoader classLoader = new keyp.forev.fmc.common.libs.ClassLoader();
         List<PackageManager> packages = Arrays.asList(VPackageManager.values());
         // パッケージのダウンロードとクラスのロードを同期的に行う
         CompletableFuture<List<Boolean>> downloadFuture = downloader.downloadPackages(packages, dataDirectory);
@@ -83,7 +82,7 @@ public class Main {
                 return CompletableFuture.completedFuture(null);
             } else {
                 logger.info("All packages downloaded successfully.");
-                return classLoader.makeURLClassLoaderFromJars(packages, dataDirectory);
+                return keyp.forev.fmc.common.libs.JarLoader.makeURLClassLoaderFromJars(packages, dataDirectory);
             }
         }).thenAccept(urlClassLoader -> {
             if (urlClassLoader == null) {

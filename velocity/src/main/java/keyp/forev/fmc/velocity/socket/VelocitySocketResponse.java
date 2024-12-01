@@ -32,7 +32,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.velocity.cmd.sub.CommandForwarder;
-import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
+import keyp.forev.fmc.velocity.discord.MessageEditor;
 import keyp.forev.fmc.velocity.events.EventListener;
 
 import com.google.inject.Inject;
