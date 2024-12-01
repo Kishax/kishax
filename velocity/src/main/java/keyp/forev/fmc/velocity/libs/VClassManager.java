@@ -23,7 +23,7 @@ public class VClassManager {
         JDA(String clazzName, Class<?>[] parameterTypes) {
             this.clazzName = clazzName;
             this.parameterTypes = parameterTypes;
-            //Class<?> declaringClass = this.getDeclaringClass();
+            Class<?> declaringClass = this.getDeclaringClass();
             //declaringClass.getDeclaredMethod("get");
             //declaringClass.getGenericInterfaces().clone();
             //declaringClass.getDeclaredMethod("get");
@@ -34,5 +34,7 @@ public class VClassManager {
             Class<?> clazz = Class.forName(clazzName, true, VClassManager.urlClassLoader);
             return new ClassManager(clazz, parameterTypes, VClassManager.urlClassLoader);
         }
+
+        
     }
 }
