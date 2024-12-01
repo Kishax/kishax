@@ -3,8 +3,12 @@ package keyp.forev.fmc.common.libs;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLClassLoader;
+import java.util.Map;
+
+import keyp.forev.fmc.common.libs.interfaces.PackageManager;
 
 public class ClassManager {
+    public static Map<PackageManager, URLClassLoader> urlClassLoaderMap;
     private Class<?> clazz;
     private Class<?>[] parameterTypes;
     // private URLClassLoader urlClassLoader;
