@@ -5,8 +5,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public enum VPackageManager implements PackageManager {
-    JDA("maven", "net.dv8tion:JDA:5.2.0")
-    ,;
+    // あとで、VPackageManagerより、VClassManagerの各要素にアクセスできるかどうか調べる
+    // したいこと
+    // Class<?> jda = VPackageManager.JDA.get();
+    // jda.SUB_COMMAND...
+    JDA("maven", "net.dv8tion:JDA:5.2.0"),
+    CLUB_MINNCED("maven", "club.minnced:discord-webhooks:0.8.0")
+    ;
     private final String repositoryType;
     private final String coordinates;
     private final String groupId;

@@ -1,6 +1,7 @@
 package keyp.forev.fmc.common.libs;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLClassLoader;
 import java.util.Map;
@@ -30,6 +31,15 @@ public class ClassManager {
         return clazz;
     }
 
+    public Field getField(String name) {
+        try {
+            return clazz.getField(name);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     public Constructor<?> getConstructor() {
         try {
             return clazz.getConstructor(parameterTypes);
@@ -39,7 +49,7 @@ public class ClassManager {
         }
     }
 
-    public Object createInstance(Object... initargs) {
+    public Object getInstance(Object... initargs) {
         try {
             Constructor<?> constructor = getConstructor();
             if (constructor != null) {
