@@ -234,7 +234,7 @@ public class Discord {
                 });
     }
     
-    public void sendWebhookMessage(WebhookMessageBuilder builder) {
+    public void sendWebhookMessage(Object builder) {
     	String webhookUrl = config.getString("Discord.Webhook_URL","");
     	if (webhookUrl.isEmpty()) return;
         CompletableFuture<?> sendFuture = (CompletableFuture<?>) webhookClientClazz.getClazz().getMethod("withUrl", String.class)
@@ -250,38 +250,34 @@ public class Discord {
         });
     }
 
-    
     public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-
         getBotMessage(messageId, currentEmbed -> {
-            if (Objects.isNull(currentEmbed)) {
+            if (currentEmbed == null) {
                 future.completeExceptionally(new RuntimeException("No embed found to edit."));
                 return;
             }
-
+            String channelId;
             if (isChat) {
-                if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) {
+                channelId = Long.toString(config.getLong("Discord.ChatChannelId", 0));
+                if (channelId == "0" || !isDiscord) {
                     future.completeExceptionally(new RuntimeException("Chat channel ID is invalid or Discord is not enabled."));
                     return;
                 }
-
-                channelId = Long.toString(config.getLong("Discord.ChatChannelId"));
             } else {
-                if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) {
+                channelId = Long.toString(config.getLong("Discord.ChannelId", 0));
+                if (channelId == "0" || !isDiscord) {
                     future.completeExceptionally(new RuntimeException("Channel ID is invalid or Discord is not enabled."));
                     return;
                 }
-
-                channelId = Long.toString(config.getLong("Discord.ChannelId"));
             }
-
-            channel = jda.getTextChannelById(channelId);
-            if (Objects.isNull(channel)) {
+            //channel = jda.getTextChannelById(channelId);
+            Object channel = jdaInstance.getClass().getMethod("getTextChannelById", String.class)
+                .invoke(jdaInstance, channelId);
+            if (channel == null) {
                 future.completeExceptionally(new RuntimeException("Channel not found!"));
                 return;
             }
-
             // 現在のEmbedに新しい説明を追加
             MessageEmbed newEmbed = addDescriptionToEmbed(currentEmbed, additionalDescription);
             MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
