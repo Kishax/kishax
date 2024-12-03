@@ -13,14 +13,9 @@ public class ClassManager {
     // このクラスにアクセスするときは、
     // このクラスを継承しているEnumクラス郡を媒介にすることで、
     // このクラスを取得することができる
-    // 例として、velocity/Mainクラスに記載
+    // 例として、velocity/src/main/java/keyp/forev/fmc/velocity/discord/Discord.javaクラスに記載
     public ClassManager(Class<?> clazz) {
         this.clazz = clazz;
-    }
-
-    // 複数コンストラクタで、URLClassLoaderを使う場合
-    public ClassManager(URLClassLoader urlClassLoaderBase) {
-        this((Class<?>) null);
     }
 
     public Class<?> getClazz() {

@@ -20,6 +20,7 @@ public class VClassManager {
         BUTTON("net.dv8tion.jda.api.interactions.components.buttons.Button"),
         PRESENCE("net.dv8tion.jda.api.managers.Presence"),
         ERROR_RESPONSE_EXCEPTION("net.dv8tion.jda.api.exceptions.ErrorResponseException"),
+        EVENT_MESSAGE_UPDATE("net.dv8tion.jda.api.events.message.MessageUpdateEvent"),
         ;
         private String clazzName;
         private URLClassLoader urlClassLoader;
@@ -32,6 +33,9 @@ public class VClassManager {
         public ClassManager get() throws ClassNotFoundException {
             Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
             return new ClassManager(clazz);
+        }
+        public URLClassLoader getLoader() {
+            return urlClassLoader;
         }
     }
     public enum CLUB_MINNCED {
@@ -49,6 +53,9 @@ public class VClassManager {
         public ClassManager get() throws ClassNotFoundException {
             Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
             return new ClassManager(clazz);
+        }
+        public URLClassLoader getLoader() {
+            return urlClassLoader;
         }
     }
 }

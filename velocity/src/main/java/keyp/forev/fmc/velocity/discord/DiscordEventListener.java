@@ -1,10 +1,7 @@
 package keyp.forev.fmc.velocity.discord;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,18 +24,6 @@ import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.OTPGenerator;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message.Attachment;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -48,11 +33,11 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
 public class DiscordEventListener extends ListenerAdapter {
-	public static String PlayerChatMessageId = null;
 	private final Logger logger;
 	private final VelocityConfig config;
 	private final Database db;
@@ -61,7 +46,6 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final Request req;
 	private final Discord discord;
 	private final Provider<SocketSwitch> sswProvider;
-	private String replyMessage = null;
 
 	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, Discord discord, Provider<SocketSwitch> sswProvider) {
 		this.logger = logger;
@@ -73,77 +57,146 @@ public class DiscordEventListener extends ListenerAdapter {
 		this.discord = discord;
 		this.sswProvider = sswProvider;
 	}
-	
-	@Override
+
+	/*@Override
 	public void onMessageUpdate(@Nonnull MessageUpdateEvent event) {
-        String ruleChannelId = Long.toString(config.getLong("Discord.Rule.ChannelId", 0));
-        String ruleMessageId = Long.toString(config.getLong("Discord.Rule.MessageId", 0));
-        if (event.getChannel().getId().equals(ruleChannelId) && event.getMessageId().equals(ruleMessageId)) {
-            String newContent = event.getMessage().getContentDisplay();
-			try (Connection conn = db.getConnection()) {
-				db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {newContent, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
-				SocketSwitch ssw = sswProvider.get();
-				ssw.sendSpigotServer(conn, "RulebookSync");
-				logger.info("detecting rulebook update.");
-				logger.info("updated rulebook content: {}", newContent);
-			} catch (SQLException | ClassNotFoundException e) {
-				logger.error("An SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-				for (StackTraceElement element : e.getStackTrace()) {
-					logger.error(element.toString());
-				}
-			}
-		}
+		// ...
+    }*/
+	@ReflectionHandler(event = "net.dv8tion.jda.api.events.message.MessageUpdateEvent")
+	public void onMessageUpdate(@Nonnull Object event) {
+        try {
+            String ruleChannelId = Long.toString(config.getLong("Discord.Rule.ChannelId", 0));
+            String ruleMessageId = Long.toString(config.getLong("Discord.Rule.MessageId", 0));
+
+            // getChannelメソッドを呼び出し
+            Method getChannelMethod = event.getClass().getMethod("getChannel");
+            Object channel = getChannelMethod.invoke(event);
+
+            // getIdメソッドを呼び出し
+            Method getIdMethod = channel.getClass().getMethod("getId");
+            String channelId = (String) getIdMethod.invoke(channel);
+
+            // getMessageIdメソッドを呼び出し
+            Method getMessageIdMethod = event.getClass().getMethod("getMessageId");
+            String messageId = (String) getMessageIdMethod.invoke(event);
+
+            if (channelId.equals(ruleChannelId) && messageId.equals(ruleMessageId)) {
+                // getMessageメソッドを呼び出し
+                Method getMessageMethod = event.getClass().getMethod("getMessage");
+                Object message = getMessageMethod.invoke(event);
+
+                // getContentDisplayメソッドを呼び出し
+                Method getContentDisplayMethod = message.getClass().getMethod("getContentDisplay");
+                String newContent = (String) getContentDisplayMethod.invoke(message);
+
+                try (Connection conn = db.getConnection()) {
+                    db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[]{newContent, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
+                    SocketSwitch ssw = sswProvider.get();
+                    ssw.sendSpigotServer(conn, "RulebookSync");
+                    logger.info("detecting rulebook update.");
+                    logger.info("updated rulebook content: {}", newContent);
+                } catch (SQLException | ClassNotFoundException e) {
+                    logger.error("An SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) {
+                        logger.error(element.toString());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("An error occurred: " + e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
     }
-	
-	@SuppressWarnings("null")
-	@Override
-    public void onSlashCommandInteraction(@Nonnull SlashCommandInteractionEvent e) {
-		User user = e.getUser();
-		Member member = e.getMember();
-		String userMention = user.getAsMention();
-		Guild guild = e.getGuild();
-		MessageChannel channel = e.getChannel();
+
+	private void replyMessage(Method m, String message, boolean isEphemeral) throws Exception {
+		Object replyResult = m.invoke(m, message);
+		Method setEphemeralMethod = replyResult.getClass().getMethod("setEphemeral", boolean.class);
+		Object ephemeralReplyResult = setEphemeralMethod.invoke(replyResult, true);
+		Method queueMethod = ephemeralReplyResult.getClass().getMethod("queue");
+		queueMethod.invoke(ephemeralReplyResult);
+	}
+
+	@ReflectionHandler(event = "net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent")
+    public void onSlashCommandInteraction(@Nonnull Object event) throws Exception {
+		Method replyMethod = event.getClass().getMethod("reply", String.class);
+		Method getUserMethod = event.getClass().getMethod("getUser");
+		Method getMemberMethod = event.getClass().getMethod("getMember");
+		Method getGuildMethod = event.getClass().getMethod("getGuild");
+
+		Object user = getUserMethod.invoke(event);
+		Object member = getMemberMethod.invoke(event);
+		Object guild = getGuildMethod.invoke(event);
+
+		Method getAsMentationMethod = user.getClass().getMethod("getAsMention");
+		String userMention = (String) getAsMentationMethod.invoke(user);
+
 		if (member == null) return;
 		if (guild == null) return;
-		String userId = member.getId(),
-			userName = member.getNickname(),
-			userName2 = user.getName(),
-			channelId = channel.getId(),
-			guildId = guild.getId(),
-			channelLink = String.format("https://discord.com/channels/%s/%s", guildId, teraChannelId),
+
+		Method getIdMethod = member.getClass().getMethod("getId");
+		Method getNicknameMethod = member.getClass().getMethod("getNickname");
+		Method getNameMethod = user.getClass().getMethod("getName");
+
+		String userId = (String) getIdMethod.invoke(member),
+			userName = (String) getNicknameMethod.invoke(member),
+			userName2 = (String) getNameMethod.invoke(user),
 			userName12 = userName != null ? userName : userName2;
-		List<Role> roles = member.getRoles();
-		if (e.getName().equals("fmc")) {
-			String cmd = e.getSubcommandName();
-			if (cmd == null) return;
-			switch (cmd) {
+
+		Method getRolesMethod = member.getClass().getMethod("getRoles");
+
+		List<?> roles = (List<?>) getRolesMethod.invoke(member);
+
+		Method getcmdName = event.getClass().getMethod("getName");
+		String cmdName = (String) getcmdName.invoke(event);
+
+		if (cmdName.equals("fmc")) {
+			Method getSubcommandName = event.getClass().getMethod("getSubcommandName");
+			String subcommandName = (String) getSubcommandName.invoke(event);
+			if (subcommandName == null) return;
+			switch (subcommandName) {
 				case "syncrulebook" -> {
 					discord.getMessageContent().thenAccept(content -> {
-						if (!roles.contains(guild.getRoleById(config.getLong("Discord.AdCraRoleId")))) {
-							replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
-							e.reply(replyMessage).setEphemeral(true).queue();
-							return;
-						}
-						logger.info("メッセージの内容: {}", content);
-						if (content != null) {
-							try (Connection conn = db.getConnection()) {
-								db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {content, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
-								e.reply("ルールブックを更新しました。").setEphemeral(true).queue();
-								SocketSwitch ssw = sswProvider.get();
-								ssw.sendSpigotServer(conn, "RulebookSync");
-							} catch (SQLException | ClassNotFoundException e1) {
-								e.reply("データベースに接続できませんでした。").setEphemeral(true).queue();
-								logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
-								for (StackTraceElement element : e1.getStackTrace()) {
-									logger.error(element.toString());
-								}
+						try {
+							Method getRoleByIdMethod = guild.getClass().getMethod("getRoleById", long.class);
+							Object adCraRole = getRoleByIdMethod.invoke(guild, config.getLong("Discord.AdCraRoleId"));
+							if (!roles.contains(adCraRole)) {
+								replyMessage(replyMethod, userMention + " あなたはこの操作を行う権限がありません。", true);
+								return;
 							}
-						} else {
-							e.reply("メッセージの内容が取得できませんでした。").setEphemeral(true).queue();
+							logger.info("メッセージの内容: {}", content);
+							if (content != null) {
+								try (Connection conn = db.getConnection()) {
+									db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {content, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
+									SocketSwitch ssw = sswProvider.get();
+									ssw.sendSpigotServer(conn, "RulebookSync");
+									replyMessage(replyMethod, "ルールブックを更新しました。", true);
+								} catch (SQLException | ClassNotFoundException e1) {
+									replyMessage(replyMethod, "データベースに接続できませんでした。", true);
+									logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
+									for (StackTraceElement element : e1.getStackTrace()) {
+										logger.error(element.toString());
+									}
+								}
+							} else {
+								replyMessage(replyMethod, "メッセージの内容が取得できませんでした。", true);
+							}
+						} catch (Exception e1) {
+							logger.error("An error occurred: " + e1.getMessage());
+							for (StackTraceElement element : e1.getStackTrace()) {
+								logger.error(element.toString());
+							}
 						}
 					}).exceptionally(throwable -> {
-						e.reply("エラーが発生しました。").setEphemeral(true).queue();
-						logger.error("エラーが発生しました: {}", throwable.getMessage());
+						try {
+							replyMessage(replyMethod, "メッセージの取得に失敗しました。", true);
+						} catch (Exception e1) {
+							logger.error("An error occurred: " + e1.getMessage());
+							for (StackTraceElement element : e1.getStackTrace()) {
+								logger.error(element.toString());
+							}
+						}
 						return null;
 					});
 				}
@@ -153,79 +206,122 @@ public class DiscordEventListener extends ListenerAdapter {
 							userUploadTimes = getDiscordUserTodayRegisterImageMetaTimes(conn, userId),
 							thisTimes = userUploadTimes + 1;
 						if (thisTimes >= limitUploadTimes) {
-							e.reply("1日の登録回数は"+limitUploadTimes+"回までです。").setEphemeral(true).queue();
+							replyMessage(replyMethod, "1日の登録回数は"+limitUploadTimes+"回までです。", true);
 							return;
 						}
-						String url = e.getOption("url") != null ? e.getOption("url").getAsString() : null,
-							title = (e.getOption("title") != null) ? e.getOption("title").getAsString() : "無名のタイトル",
-							comment = (e.getOption("comment") != null) ? e.getOption("comment").getAsString() : "コメントなし";
-						Attachment attachment = e.getOption("image") != null ? e.getOption("image").getAsAttachment() : null;
+						Method getOptionMethod = event.getClass().getMethod("getOption", String.class);
+						Object urlObj = getOptionMethod.invoke(event, "url"),
+							titleObj = getOptionMethod.invoke(event, "title"),
+							commentObj = getOptionMethod.invoke(event, "comment"),
+							imageObj = getOptionMethod.invoke(event, "image");
+
+						String url = urlObj != null ? (String) urlObj.getClass().getMethod("getAsString").invoke(urlObj) : null,
+							title = titleObj != null ? (String) titleObj.getClass().getMethod("getAsString").invoke(urlObj) : "無名のタイトル",
+							comment = commentObj != null ? (String) commentObj.getClass().getMethod("getAsString").invoke(urlObj) : "コメントなし";
+						Object attachment = imageObj != null ? imageObj.getClass().getMethod("getAsAttachment").invoke(imageObj) : null;
+
 						if (url == null && attachment == null) {
-							e.reply("画像URLまたは画像を指定してください。").setEphemeral(true).queue();
+							replyMessage(replyMethod, "画像URLまたは画像を指定してください。", true);
 							return;
 						}
 						if (url != null && attachment != null) {
-							e.reply("画像URLと画像の両方を指定することはできません。").setEphemeral(true).queue();
+							replyMessage(replyMethod, "画像URLと画像の両方を指定することはできません。", true);
 							return;
 						}
 						if (attachment != null) {
-							url = attachment.getUrl();
+							Method getUrlMethod = attachment.getClass().getMethod("getUrl");
+							url = (String) getUrlMethod.invoke(attachment);
 						}
 						LocalDate now = LocalDate.now();
 						String otp = OTPGenerator.generateOTP(6);
 						db.insertLog(conn, "INSERT INTO images (name, title, url, comment, otp, d, dname, did, date, locked, locked_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName12, title, url, comment, otp, true, userName12, userId, java.sql.Date.valueOf(now), true, false});
-						e.reply("画像メタデータを登録しました。(" + thisTimes + "/" + limitUploadTimes + ")\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```").setEphemeral(true).queue();
+
+						replyMessage(replyMethod, "画像メタデータを登録しました。(" + thisTimes + "/" + limitUploadTimes + ")\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```", true);
+
 						logger.info("(Discord) 画像メタデータを登録しました。");
 						logger.info("ユーザー: {}\n試行: {}", (userName != null ? userName : userName2),"("+thisTimes+"/10)");
 					} catch (SQLException | ClassNotFoundException e1) {
-						e.reply("データベースに接続できませんでした。").setEphemeral(true).queue();
+						replyMessage(replyMethod, "データベースに接続できませんでした。", true);
 						logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
 						for (StackTraceElement element : e1.getStackTrace()) {
 							logger.error(element.toString());
 						}
 					}
-					
 				}
 			}
 		}
     }
-	
-	@Override
-	public void onGuildVoiceUpdate(@Nonnull GuildVoiceUpdateEvent e) {
-		Member member = e.getMember();
-		User user = member.getUser();
-		if (user != null ) {
-			if (user.isBot()) {
+
+	@ReflectionHandler(event = "net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent")
+	public void onGuildVoiceUpdate(@Nonnull Object event) throws Exception {
+		Method getMemberMethod = event.getClass().getMethod("getMember");
+		Method getChannelJoinedMethod = event.getClass().getMethod("getChannelJoined");
+
+		Object member = getMemberMethod.invoke(event);
+		Object channel = getChannelJoinedMethod.invoke(event);
+
+		Method getNameMethod = channel.getClass().getMethod("getName");
+		String channelName = (String) getNameMethod.invoke(channel);
+
+		Method getUserMethod = member.getClass().getMethod("getUser");
+		Object user = getUserMethod.invoke(member);
+		
+		Method getEffectiveNameMethod = member.getClass().getMethod("getEffectiveName");
+		String memberName = (String) getEffectiveNameMethod.invoke(member);
+		if (user != null) {
+			Method isBotMethod = user.getClass().getMethod("isBot");
+			if ((boolean) isBotMethod.invoke(user)) {
 				return;
 			}
-			AudioChannel channel = e.getChannelJoined();
 			if (channel != null) {
-				String message = "(discord) " + member.getEffectiveName() + " がボイスチャットチャンネル " + channel.getName() + " に参加しました。";
+				String message = "(discord) " + memberName + " がボイスチャットチャンネル " + channelName + " に参加しました。";
 				TextComponent component = Component.text(message).color(NamedTextColor.GREEN);
 				bc.broadCastMessage(component);
 			}
 		}
     }
 
-	@Override
-	public void onButtonInteraction(@Nonnull ButtonInteractionEvent e) {
-        String buttonId = e.getComponentId();
-        String buttonMessage = e.getMessage().getContentRaw();
-        if (Objects.isNull(buttonMessage) || Objects.isNull(buttonId)) return;
-        User user = e.getUser();
-        Member member = e.getMember();
-        Guild guild = e.getGuild();
+	@ReflectionHandler(event = "net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent")
+	public void onButtonInteraction(@Nonnull Object event) throws Exception {
+		Method replyMethod = event.getClass().getMethod("reply", String.class);
+		Method getComponentIdMethod = event.getClass().getMethod("getComponentId");
+		Method getMessageMethod = event.getClass().getMethod("getMessage");
+		Method getUserMethod = event.getClass().getMethod("getUser");
+		Method getMemberMethod = event.getClass().getMethod("getMember");
+		Method getGuildMethod = event.getClass().getMethod("getGuild");
+
+		String buttonId = (String) getComponentIdMethod.invoke(event);
+		Object message = getMessageMethod.invoke(event);
+		String buttonMessage = (String) message.getClass().getMethod("getContentRaw").invoke(message);
+
+        if (buttonMessage == null || buttonId == null) return;
+
+		Object user = getUserMethod.invoke(event);
+		Object member = getMemberMethod.invoke(event);
+		Object guild = getGuildMethod.invoke(event);
+
         if (member == null) return;
         if (guild == null) return;
-		List<Role> roles = member.getRoles();
-		if (!roles.contains(guild.getRoleById(config.getLong("Discord.AdCraRoleId")))) {
-			replyMessage = user.getAsMention() + " あなたはこの操作を行う権限がありません。";
-			e.reply(replyMessage).setEphemeral(true).queue();
+
+		Method getAsMentionMethod = user.getClass().getMethod("getAsMention");
+		Method getRolesMethod = member.getClass().getMethod("getRoles");
+
+		String userMention = (String) getAsMentionMethod.invoke(user);
+		List<?> roles = (List<?>) getRolesMethod.invoke(member);
+
+		Method getRoleByIdMethod = guild.getClass().getMethod("getRoleById", long.class);
+		Object adCraRole = getRoleByIdMethod.invoke(guild, config.getLong("Discord.AdCraRoleId"));
+
+		if (!roles.contains(adCraRole)) {
+			replyMessage(replyMethod, userMention + " あなたはこの操作を行う権限がありません。", false);
 			return;
 		}
+		String replyMessage = null;
+		Method editMessageComponentsMethod = message.getClass().getMethod("editMessageComponents");
+
         switch (buttonId) {
         	case "reqOK" -> {
-				replyMessage = user.getAsMention() + " リクエストを受諾しました。";
+				replyMessage = userMention + " リクエストを受諾しました。";
 				Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage);
 				if (!reqMap.isEmpty()) {
 					String reqPlayerName = reqMap.get("playerName"),
@@ -255,15 +351,15 @@ public class DiscordEventListener extends ListenerAdapter {
 					}
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
-					e.reply(replyMessage).queue();
 				}
 				if (replyMessage != null) {
-					e.reply(replyMessage).queue();
+					replyMessage(replyMethod, replyMessage, false);
 				}
-				e.getMessage().editMessageComponents().queue();
+				Object edit = editMessageComponentsMethod.invoke(message);
+				edit.getClass().getMethod("queue").invoke(edit);
             }
         	case "reqCancel" -> {
-				replyMessage = user.getAsMention() + " リクエストを拒否しました。";
+				replyMessage = userMention + " リクエストを拒否しました。";
 				Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage);
 				if (!reqMap.isEmpty()) {
 					String reqPlayerName = reqMap.get("playerName"),
@@ -284,32 +380,51 @@ public class DiscordEventListener extends ListenerAdapter {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
 				if (replyMessage != null) {
-					e.reply(replyMessage).queue();
+					replyMessage(replyMethod, replyMessage, false);
 				}
-				e.getMessage().editMessageComponents().queue();
+				Object edit = editMessageComponentsMethod.invoke(message);
+				edit.getClass().getMethod("queue").invoke(edit);
             }
         }
     }
 
-	@Override
-    public void onMessageReceived(@Nonnull MessageReceivedEvent e) {
-		if (
-			e.getAuthor().isBot() || 
-			e.getMessage().isWebhookMessage() || 
-			!e.getChannel().getId().equals(Long.toString(config.getLong("Discord.ChatChannelId")))
-		) {
+	@ReflectionHandler(event = "net.dv8tion.jda.api.events.message.MessageReceivedEvent")
+    public void onMessageReceived(@Nonnull Object event) throws Exception{
+		Method getAuthorMethod = event.getClass().getMethod("getAuthor");
+		Method getMemberMethod = event.getClass().getMethod("getMember");
+		Method getChannelMethod = event.getClass().getMethod("getChannel");
+		Method getMessageMethod = event.getClass().getMethod("getMessage");
+		Method getAttachmentsMethod = getMessageMethod.getReturnType().getMethod("getAttachments");
+		Method getContentRawMethod = getMessageMethod.getReturnType().getMethod("getContentRaw");
+
+		Object author = getAuthorMethod.invoke(event);
+		Object member = getMemberMethod.invoke(event);
+		Object channel = getChannelMethod.invoke(event);
+		Object message = getMessageMethod.invoke(event);
+		List<?> attachments = (List<?>) getAttachmentsMethod.invoke(message);
+		String content = (String) getContentRawMethod.invoke(message);
+
+		Method authorIsBotMethod = author.getClass().getMethod("isBot");
+		Method isWebhookMessageMethod = getMessageMethod.getReturnType().getMethod("isWebhookMessage");
+		Method getChannelIdMethod = channel.getClass().getMethod("getId");
+
+		String channelId = (String) getChannelIdMethod.invoke(channel);
+		if ((boolean) authorIsBotMethod.invoke(author) || 
+			(boolean) isWebhookMessageMethod.invoke(getMessageMethod) || 
+			!channelId.equals(Long.toString(config.getLong("Discord.ChatChannelId")))) {
 			return;
 		}
-		Member member = e.getMember();
+
 		if (member == null) return;
-		String message = e.getMessage().getContentRaw();
-		String userName = member.getEffectiveName();
-		if (!message.isEmpty()) {
-			message = "(discord) " + userName + " -> " + message;
-			sendMixUrl(message);
+
+		Method getEffectiveNameMethod = member.getClass().getMethod("getEffectiveName");
+		String userName = (String) getEffectiveNameMethod.invoke(member);
+
+		if (!content.isEmpty()) {
+			content = "(discord) " + userName + " -> " + content;
+			sendMixUrl(content);
 		}
-		DiscordEventListener.PlayerChatMessageId = null;
-		List <Attachment> attachments = e.getMessage().getAttachments();
+
 		int attachmentsSize = attachments.size();
 		if (attachmentsSize > 0) {
 			TextComponent component = Component.text()
@@ -317,20 +432,29 @@ public class DiscordEventListener extends ListenerAdapter {
 					.build();
 			TextComponent additionalComponent;
 			int i=0;
-		    for (Attachment attachment : attachments) {
-		    	additionalComponent = Component.text()
-		    			.append(Component.text("\n"+attachment.getUrl())
-								.color(NamedTextColor.GRAY)
-								.decorate(TextDecoration.UNDERLINED))
-								.clickEvent(ClickEvent.openUrl(attachment.getUrl()))
-								.hoverEvent(HoverEvent.showText(Component.text("添付ファイル"+(i+1))))
-		                            .build();
-		        	component = component.append(additionalComponent);
-		            i++;
-		        }
-		        bc.broadCastMessage(component);
+		    for (Object attachment : attachments) {
+				try {
+					Method getUrlMethod = attachment.getClass().getMethod("getUrl");
+					String url = (String) getUrlMethod.invoke(attachment);
+					additionalComponent = Component.text()
+						.append(Component.text("\n"+url)
+							.color(NamedTextColor.GRAY)
+							.decorate(TextDecoration.UNDERLINED))
+							.clickEvent(ClickEvent.openUrl(url))
+							.hoverEvent(HoverEvent.showText(Component.text("添付ファイル"+(i+1))))
+						.build();
+					component = component.append(additionalComponent);
+					i++;
+					bc.broadCastMessage(component);
+				} catch (Exception e) {
+					logger.error("An error occurred: " + e.getMessage());
+					for (StackTraceElement element : e.getStackTrace()) {
+						logger.error(element.toString());
+					}
+				}
 		    }
 		}
+	}
 
 	private int getDiscordUserTodayRegisterImageMetaTimes(Connection conn, String userId) throws SQLException, ClassNotFoundException {
         String query = "SELECT COUNT(*) FROM images WHERE did = ? AND DATE(date) = ?";
@@ -376,9 +500,9 @@ public class DiscordEventListener extends ListenerAdapter {
         		text = textParts.get(i);
         		TextComponent additionalComponent;
         		additionalComponent = Component.text()
-        				.append(Component.text(text))
-        				.color(NamedTextColor.AQUA)
-        				.build();
+					.append(Component.text(text))
+					.color(NamedTextColor.AQUA)
+					.build();
         		component = component.append(additionalComponent);
         	} else {
         		isText = true;
