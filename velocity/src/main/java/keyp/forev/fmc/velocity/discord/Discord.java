@@ -24,6 +24,8 @@ import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.libs.VPackageManager;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import com.google.inject.Singleton;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 @Singleton
 public class Discord {
@@ -32,17 +34,18 @@ public class Discord {
     private final Logger logger;
     private final VelocityConfig config;
     private final Database db;
-    private final Request req;
+    private final Provider<Request> reqProvider;
     private final Class<?> jdaBuilderClazz, gatewayIntentsClazz, subcommandDataClazz,
         optionDataClazz, optionTypeClazz, entityMessageClazz,
         entityActivityClazz, entityMessageEmbedClazz, buttonClazz,
         presenceActivityClazz, webhookClientClazz, webhookMessageClazz,
         webhookBuilderClazz, embedBuilderClazz, errorResponseExceptionClazz;
-    public Discord(Logger logger, VelocityConfig config, Database db, Request req) throws ClassNotFoundException {
+    @Inject
+    public Discord(Logger logger, VelocityConfig config, Database db, Provider<Request> reqProvider) throws ClassNotFoundException {
     	this.logger = logger;
     	this.config = config;
         this.db = db;
-        this.req = req;
+        this.reqProvider = reqProvider;
         this.jdaBuilderClazz = VClassManager.JDA.JDA_BUILDER.get().getClazz();
         this.gatewayIntentsClazz = VClassManager.JDA.GATEWAY_INTENTS.get().getClazz();
         this.subcommandDataClazz = VClassManager.JDA.SUB_COMMAND.get().getClazz();
@@ -254,6 +257,7 @@ public class Discord {
                     if (!VelocityRequest.PlayerReqFlags.isEmpty()) {
                         try {
                             String buttonMessage2 = (String) entityMessageClazz.getMethod("getContentRaw").invoke(message);
+                            Request req = reqProvider.get();
                             Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage2);
                             if (!reqMap.isEmpty()) {
                                 try (Connection conn = db.getConnection()) {

@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
+import com.google.inject.Inject;
 
 public class MineStatusReflect {
     private final Logger logger;
@@ -35,7 +36,7 @@ public class MineStatusReflect {
     private final Class<?> embedBuilderClazz, entityMessageClazz;
     private final Long channelId, messageId;
     private final boolean require;
-
+    @Inject
     public MineStatusReflect(Logger logger, VelocityConfig config, Database db, EmojiManager emoji) throws ClassNotFoundException {
         this.logger = logger;
         this.config = config;

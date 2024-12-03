@@ -2,6 +2,7 @@ package keyp.forev.fmc.velocity.module;
 
 import java.nio.file.Path;
 
+import org.checkerframework.checker.units.qual.t;
 import org.slf4j.Logger;
 
 import com.google.inject.AbstractModule;
@@ -21,6 +22,7 @@ import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.CommandForwarder;
 import keyp.forev.fmc.velocity.cmd.sub.Maintenance;
+import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.database.VelocityDatabaseInfo;
 import keyp.forev.fmc.velocity.discord.Discord;
@@ -28,6 +30,7 @@ import keyp.forev.fmc.velocity.discord.DiscordEventListener;
 import keyp.forev.fmc.velocity.discord.EmojiManager;
 import keyp.forev.fmc.velocity.discord.MessageEditor;
 import keyp.forev.fmc.velocity.server.BroadCast;
+import keyp.forev.fmc.velocity.server.DoServerOnline;
 import keyp.forev.fmc.velocity.server.FMCBoard;
 import keyp.forev.fmc.velocity.server.GeyserMC;
 import keyp.forev.fmc.velocity.server.MineStatus;
@@ -66,18 +69,51 @@ public class Module extends AbstractModule {
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
         bind(RomajiConversion.class);
-        bind(Discord.class);
+        //bind(Discord.class);
         bind(DiscordEventListener.class);
         bind(EmojiManager.class);
-        bind(MessageEditor.class).to(MessageEditor.class);
+        bind(MessageEditor.class);
         bind(MineStatus.class);
         bind(ConfigUtils.class);
-        bind(Request.class).to(keyp.forev.fmc.velocity.cmd.sub.VelocityRequest.class);
+        //bind(Request.class).to(VelocityRequest.class);
         bind(GeyserMC.class);
         bind(Maintenance.class);
         bind(FMCBoard.class);
         bind(CommandForwarder.class);
         bind(DefaultLuckperms.class);
+    }
+
+    @Provides
+    @Singleton
+    public Request provideRequest(
+        ProxyServer server, 
+        Logger logger, 
+        VelocityConfig config, 
+        Database db, 
+        BroadCast bc, 
+        Discord discord, 
+        MessageEditor discordME, 
+        EmojiManager emoji, 
+        DefaultLuckperms lp, 
+        PlayerUtils pu, 
+        DoServerOnline dso
+    ) {
+        return new VelocityRequest(server, logger, config, db, bc, discord, discordME, emoji, lp, pu, dso);
+    }
+
+    @Provides
+    @Singleton
+    public Discord provideDiscord(
+        Logger logger, 
+        VelocityConfig config, 
+        Database db, 
+        Provider<Request> req
+    ) {
+        try {
+            return new Discord(logger, config, db, req);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Provides
