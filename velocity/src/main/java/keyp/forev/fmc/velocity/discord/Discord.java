@@ -16,22 +16,24 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.libs.ClassManager;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.libs.VClassManager;
+import keyp.forev.fmc.velocity.libs.VPackageManager;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import com.google.inject.Singleton;
 
 @Singleton
 public class Discord {
-    public static Object jdaInstance = null; // JDAインスタンス
+    public static Object jdaInstance = null; // JDAインスタンス // ログイン時に代入される
 	public static boolean isDiscord = false;
     private final Logger logger;
     private final VelocityConfig config;
     private final Database db;
     private final Request req;
-    private final Class<?> jdaBuilderClazz, gatewayIntentsClazz, subcommandDataClazz, 
+    private final Class<?> jdaBuilderClazz, gatewayIntentsClazz, subcommandDataClazz,
         optionDataClazz, optionTypeClazz, entityMessageClazz,
         entityActivityClazz, entityMessageEmbedClazz, buttonClazz,
         presenceActivityClazz, webhookClientClazz, webhookMessageClazz,
@@ -72,8 +74,21 @@ public class Discord {
                 Method createDefaultMethod = jdaBuilderClazz.getMethod("createDefault", String.class);
                 Object jdaBuilder = createDefaultMethod.invoke(null, config.getString("Discord.Token"));
 
-                Method addEventListenersMethod = jdaBuilder.getClass().getMethod("addEventListeners", Object.class);
-                jdaBuilder = addEventListenersMethod.invoke(jdaBuilder, Main.getInjector().getInstance(DiscordEventListener.class));
+                // リスナーの登録は、独自アノテーションクラスを使用して動的に行う
+                // Method addEventListenersMethod = jdaBuilder.getClass().getMethod("addEventListeners", Object[].class);
+                // jdaBuilder = addEventListenersMethod.invoke(jdaBuilder, Main.getInjector().getInstance(DiscordEventListener.class));
+                try {
+                    DynamicEventRegister.registerListeners(
+                        Main.getInjector().getInstance(DiscordEventListener.class),
+                        jdaInstance,
+                        ClassManager.urlClassLoaderMap.get(VPackageManager.JDA)
+                    );
+                } catch (Exception e) {
+                    logger.error("An error occurred: " + e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) {
+                        logger.error(element.toString());
+                    }
+                }
 
                 Method enableIntentsMethod = jdaBuilder.getClass().getMethod("enableIntents", gatewayIntentsClazz, gatewayIntentsClazz);
                 jdaBuilder = enableIntentsMethod.invoke(jdaBuilder, intent, intent2);
@@ -209,7 +224,7 @@ public class Discord {
         return future;
     }
 
-    
+
     public void sendRequestButtonWithMessage(String buttonMessage) throws Exception {
     	if (config.getLong("Discord.AdminChannelId", 0) == 0 || !isDiscord) return;
 		String channelId = Long.toString(config.getLong("Discord.AdminChannelId"));
@@ -253,7 +268,7 @@ public class Discord {
                                 | NoSuchMethodException | SecurityException e) {
                             e.printStackTrace();
                         }
-                        
+
                     }
                 });
             } catch (Exception e) {
@@ -264,7 +279,7 @@ public class Discord {
             }
         });
     }
-    
+
     public void sendWebhookMessage(Object builder) throws Exception {
     	String webhookUrl = config.getString("Discord.Webhook_URL","");
 
@@ -355,12 +370,12 @@ public class Discord {
         return future;
     }
 
-    
+
     public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription) throws Exception {
     	return editBotEmbed(messageId, additionalDescription, false);
     }
 
-    
+
     public void getBotMessage(String messageId, Consumer<Object> embedConsumer, boolean isChat) throws Exception {
         String channelId;
     	if (isChat) {
@@ -416,7 +431,7 @@ public class Discord {
         );
     }
 
-    
+
     public Object addDescriptionToEmbed(Object embed, String additionalDescription) throws Exception {
         Method getDescriptionMethod = embed.getClass().getMethod("getDescription");
         String description = (String) getDescriptionMethod.invoke(embed);
@@ -432,7 +447,7 @@ public class Discord {
 
         return buildMethod.invoke(builder);
     }
-    
+
     public void editBotEmbedReplacedAll(String messageId, Object newEmbed) throws Exception {
     	if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
         String channelId = Long.toString(config.getLong("Discord.ChannelId"));
@@ -458,7 +473,7 @@ public class Discord {
         );
     }
 
-    
+
     public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, Object embed, boolean isChat) throws Exception {
     	CompletableFuture<String> future = new CompletableFuture<>();
         String channelId;
@@ -533,41 +548,41 @@ public class Discord {
     	return future;
     }
 
-    
+
     public CompletableFuture<String> sendBotMessageAndgetMessageId(String content) throws Exception {
     	return sendBotMessageAndgetMessageId(content, null, false);
     }
 
-    
+
     public CompletableFuture<String> sendBotMessageAndgetMessageId(Object embed) throws Exception {
     	return sendBotMessageAndgetMessageId(null, embed, false);
     }
 
-    
+
     public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, boolean isChat) throws Exception {
     	return sendBotMessageAndgetMessageId(content, null, isChat);
     }
 
-    
+
     public CompletableFuture<String> sendBotMessageAndgetMessageId(Object embed, boolean isChat) throws Exception {
     	return sendBotMessageAndgetMessageId(null, embed, isChat);
     }
 
-    
+
     public Object createEmbed(String description, int color) throws Exception {
         // "net.dv8tion.jda.api.entities.MessageEmbed"の内部クラスを取得
         ClassLoader loader = entityMessageEmbedClazz.getClassLoader();
         Constructor<?> messageEmbedC = entityMessageEmbedClazz.getConstructor(
-            String.class, String.class, String.class, 
+            String.class, String.class, String.class,
             Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$EmbedType", true, loader),
-            Class.forName("java.time.OffsetDateTime"), 
-            int.class, 
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Thumbnail", true, loader), 
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Provider", true, loader), 
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$AuthorInfo", true, loader), 
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$VideoInfo", true, loader), 
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Footer", true, loader), 
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$ImageInfo", true, loader), 
+            Class.forName("java.time.OffsetDateTime"),
+            int.class,
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Thumbnail", true, loader),
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Provider", true, loader),
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$AuthorInfo", true, loader),
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$VideoInfo", true, loader),
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Footer", true, loader),
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$ImageInfo", true, loader),
             List.class
         );
         return messageEmbedC.newInstance(
@@ -587,7 +602,7 @@ public class Discord {
         );
     }
 
-    
+
     public void sendBotMessage(String content, Object embed) throws Exception {
     	CompletableFuture<String> future = new CompletableFuture<>();
         if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) {
@@ -595,7 +610,7 @@ public class Discord {
             return;
         }
     	String channelId = Long.toString(config.getLong("Discord.ChannelId"));
-        
+
         Method getTextChannelByIdMethod = jdaInstance.getClass().getMethod("getTextChannelById", String.class);
         Object channel = getTextChannelByIdMethod.invoke(jdaInstance, channelId);
 
@@ -629,12 +644,12 @@ public class Discord {
     	}
     }
 
-    
+
     public void sendBotMessage(String content) throws Exception {
     	sendBotMessage(content, null);
     }
 
-    
+
     public void sendBotMessage(Object embed) throws Exception {
     	sendBotMessage(null, embed);
     }
