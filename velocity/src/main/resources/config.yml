@@ -72,10 +72,4 @@ Conv:
     Host: "localhost"
     EXE_Path: ""
 
-Terraria:
-    RestApiUrl: "http://localhost:7878"
-    Token: ""
-    ChannelId: 
-    Exec_Path: ""
-
 MaxMemory: 0
