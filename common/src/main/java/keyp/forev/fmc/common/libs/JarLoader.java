@@ -21,8 +21,7 @@ public class JarLoader {
                     return CompletableFuture.supplyAsync(() -> {
                         try {
                             URL url = jarPath.toUri().toURL();
-                            URLClassLoader sysLoader = (URLClassLoader) java.lang.ClassLoader.getSystemClassLoader();
-                            return new URLClassLoader(new URL[]{url}, sysLoader);
+                            return new URLClassLoader(new URL[]{url}, JarLoader.class.getClassLoader());
                         } catch (IOException e) {
                             e.printStackTrace();
                             return null;
@@ -30,7 +29,6 @@ public class JarLoader {
                     });
                 }
             ));
-
         return CompletableFuture.allOf(futures.values().toArray(new CompletableFuture[0]))
             .thenApply(v -> futures.entrySet().stream()
                 .collect(Collectors.toMap(

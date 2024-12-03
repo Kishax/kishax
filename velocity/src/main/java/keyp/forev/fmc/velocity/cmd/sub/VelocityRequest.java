@@ -51,7 +51,7 @@ public class VelocityRequest implements Request {
 	private String currentServerName = null;
 	
 	@Inject
-	public VelocityRequest (ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc, Discord discord, MessageEditor discordME, EmojiManager emoji, DefaultLuckperms lp, PlayerUtils pu, DoServerOnline dso) {
+	public VelocityRequest(ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc, Discord discord, MessageEditor discordME, EmojiManager emoji, DefaultLuckperms lp, PlayerUtils pu, DoServerOnline dso) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;

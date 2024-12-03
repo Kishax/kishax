@@ -12,12 +12,10 @@ public class DynamicEventRegister {
 
     public static void registerListeners(Object target, Object jdaInstance, URLClassLoader jdaURLClassLoader) throws Exception {
         Class<?> eventListenerClass = Class.forName("net.dv8tion.jda.api.hooks.ListenerAdapter", true, jdaURLClassLoader);
-
         for (Method method : target.getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(ReflectionHandler.class)) {
                 ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
                 Class<?> eventClass = Class.forName(annotation.event(), true, jdaURLClassLoader);
-
                 Object proxy = Proxy.newProxyInstance(
                     eventListenerClass.getClassLoader(),
                     new Class<?>[]{eventListenerClass},
@@ -31,7 +29,6 @@ public class DynamicEventRegister {
                         }
                     }
                 );
-
                 Method addEventListenerMethod = jdaInstance.getClass().getMethod("addEventListener", eventListenerClass);
                 addEventListenerMethod.invoke(jdaInstance, proxy);
             }

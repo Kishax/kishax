@@ -29,6 +29,7 @@ import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.Maintenance;
 import keyp.forev.fmc.velocity.events.EventListener;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
+import com.google.inject.Inject;
 
 public class MessageEditor {
 	public final Main plugin;
@@ -43,7 +44,7 @@ public class MessageEditor {
 			Emoji = null, FaceEmoji = null, targetServerName = null,
 			uuid = null, playerName = null, currentServerName = null;
 	private CompletableFuture<String> EmojiFutureId = null, FaceEmojiFutureId = null;
-
+	@Inject
 	public MessageEditor (
 		Main plugin, Logger logger, ProxyServer server,
 		VelocityConfig config, Database db, Discord discord,

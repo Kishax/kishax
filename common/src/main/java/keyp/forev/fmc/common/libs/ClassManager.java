@@ -2,12 +2,13 @@ package keyp.forev.fmc.common.libs;
 
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
+import java.util.HashMap;
 import java.util.Map;
 
 import keyp.forev.fmc.common.libs.interfaces.PackageManager;
 
 public class ClassManager {
-    public static Map<PackageManager, URLClassLoader> urlClassLoaderMap;
+    public static Map<PackageManager, URLClassLoader> urlClassLoaderMap = new HashMap<>();
     private Class<?> clazz;
     // private URLClassLoader urlClassLoader;
     // このクラスにアクセスするときは、

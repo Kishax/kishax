@@ -24,6 +24,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.libs.ClassManager;
 import keyp.forev.fmc.common.libs.Downloader;
+import keyp.forev.fmc.common.libs.JarLoader;
 import keyp.forev.fmc.common.libs.interfaces.PackageManager;
 import keyp.forev.fmc.common.server.DefaultLuckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
@@ -81,27 +82,35 @@ public class Main {
                 logger.error("Failed to download external package.");
                 return CompletableFuture.completedFuture(null);
             } else {
-                logger.info("All packages downloaded successfully.");
-                return keyp.forev.fmc.common.libs.JarLoader.makeURLClassLoaderFromJars(packages, dataDirectory);
+                logger.info("All packages loaded successfully.");
+                return JarLoader.makeURLClassLoaderFromJars(packages, dataDirectory);
             }
         }).thenAccept(urlClassLoader -> {
-            if (urlClassLoader == null) {
-                logger.error("Failed to make ClassLoader from JAR.");
-                logger.error("Cannot start the server.");
-                return;
-            }
-            // URLClassLoaderを別のクラスで保存する
-            for (PackageManager pkg : packages) {
-                if (pkg != null) {
-                    logger.info("URLClassLoader saved successfully: {}", pkg.getCoordinates());
-                } else {
-                    logger.error("Failed to make ClassLoader from JAR");
+            try {
+                if (urlClassLoader.isEmpty()) {
+                    logger.error("Failed to make ClassLoader from JAR.");
                     logger.error("Cannot start the server.");
                     return;
                 }
+                // URLClassLoaderを別のクラスで保存する
+                for (PackageManager pkg : packages) {
+                    if (pkg != null) {
+                        logger.info("URLClassLoader saved successfully: {}", pkg.getCoordinates());
+                    } else {
+                        logger.error("Failed to make ClassLoader from JAR");
+                        logger.error("Cannot start the server.");
+                        return;
+                    }
+                }
+                ClassManager.urlClassLoaderMap.putAll(urlClassLoader);
+                startApplication();
+            } catch (Exception e1) {
+                logger.error("Failed to make ClassLoader from JAR: {}", e1.getMessage());
+                for (StackTraceElement ste : e1.getStackTrace()) {
+                    logger.error(ste.toString());
+                }
+                logger.error("Cannot start the server.");
             }
-            ClassManager.urlClassLoaderMap.putAll(urlClassLoader);
-            startApplication();
         });
     }
     

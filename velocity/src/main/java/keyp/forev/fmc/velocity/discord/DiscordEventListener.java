@@ -35,6 +35,7 @@ import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
+import com.google.inject.Inject;
 
 public class DiscordEventListener {
 	public static String playerChatMessageId = null;
@@ -46,7 +47,7 @@ public class DiscordEventListener {
 	private final Request req;
 	private final Discord discord;
 	private final Provider<SocketSwitch> sswProvider;
-
+	@Inject
 	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, Discord discord, Provider<SocketSwitch> sswProvider) {
 		this.logger = logger;
 		this.config = config;
