@@ -18,7 +18,7 @@ import keyp.forev.fmc.common.settings.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import keyp.forev.fmc.velocity.Main;
-import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
+import keyp.forev.fmc.velocity.discord.MessageEditor;
 
 public class CEnd implements SimpleCommand {
 	

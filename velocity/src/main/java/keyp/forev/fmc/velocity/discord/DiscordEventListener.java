@@ -61,10 +61,7 @@ public class DiscordEventListener extends ListenerAdapter {
 	private final Request req;
 	private final Discord discord;
 	private final Provider<SocketSwitch> sswProvider;
-	private final String teraToken, teraExecFilePath;
-	private final Long teraChannelId;
-	private final boolean require;
-	private String replyMessage = null, restAPIUrl = null;
+	private String replyMessage = null;
 
 	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, Discord discord, Provider<SocketSwitch> sswProvider) {
 		this.logger = logger;
@@ -75,14 +72,6 @@ public class DiscordEventListener extends ListenerAdapter {
 		this.req = req;
 		this.discord = discord;
 		this.sswProvider = sswProvider;
-		this.teraToken = config.getString("Terraria.Token", "");
-		this.teraExecFilePath = config.getString("Terraria.Exec_Path", "");
-		this.teraChannelId = config.getLong("Terraria.ChannelId", 0);
-		this.restAPIUrl = config.getString("Terraria.RestApiUrl");
-		this.require = !restAPIUrl.isEmpty() && 
-			!teraToken.isEmpty() && 
-			!teraExecFilePath.isEmpty() && 
-			teraChannelId != 0;
 	}
 	
 	@Override
@@ -196,74 +185,6 @@ public class DiscordEventListener extends ListenerAdapter {
 						}
 					}
 					
-				}
-				case "tera" -> {
-					String teraType = e.getOption("action").getAsString();
-					if (!require) {
-						e.reply("コンフィグの設定が不十分なため、コマンドを実行できません。").setEphemeral(true).queue();
-						return;
-					}
-					String teraChannelId2 = Long.toString(teraChannelId);
-					if (!channelId.equals(teraChannelId2)) {
-						e.reply("テラリアのコマンドは " + channelLink + " で実行してください。").setEphemeral(true).queue();
-						return;
-					}
-					switch (teraType.toLowerCase()) {
-						case "start" -> {
-							if (isTera()) {
-								e.reply("Terrariaサーバーは既にオンラインです！").setEphemeral(true).queue();
-							} else {
-								try {
-									ProcessBuilder teraprocessBuilder = new ProcessBuilder(teraExecFilePath);
-									teraprocessBuilder.start();
-									e.reply(userMention + " Terrariaサーバーを起動させました。\nまもなく起動します。").setEphemeral(false).queue();
-								} catch (IOException e1) {
-									e.reply(userMention + " 内部エラーが発生しました。\nサーバーが起動できません。").setEphemeral(false).queue();
-									logger.error("An IOException error occurred: " + e1.getMessage());
-									for (StackTraceElement element : e1.getStackTrace()) {
-										logger.error(element.toString());
-									}
-								}
-							}
-						}
-						case "stop" -> {
-							if (isTera()) {
-								try {
-									String urlString = restAPIUrl + "/v2/server/off?token=" + teraToken + "&confirm=true&nosave=false";
-									URI uri = new URI(urlString);
-									URL url = uri.toURL();
-									HttpURLConnection con = (HttpURLConnection) url.openConnection();
-									con.setRequestMethod("GET");
-									con.setRequestProperty("Content-Type", "application/json; utf-8");
-									int code = con.getResponseCode();
-									switch (code) {
-										case 200 -> {
-											e.reply(userMention + " Terrariaサーバーを正常に停止させました。").setEphemeral(false).queue();
-										}
-										default -> {
-											e.reply(userMention + " 内部エラーが発生しました。\nサーバーが正常に停止できなかった可能性があります。").setEphemeral(false).queue();
-										}
-									}
-								} catch (IOException | URISyntaxException e2) {
-									logger.error("An IOException | URISyntaxException error occurred: " + e2.getMessage());
-									for (StackTraceElement element : e2.getStackTrace()) {
-										logger.error(element.toString());
-									}
-									e.reply(userMention + " 内部エラーが発生しました。\nサーバーが正常に停止できなかった可能性があります。").setEphemeral(false).queue();
-								}
-							} else {
-								e.reply("Terrariaサーバーは現在オフラインです！").setEphemeral(true).queue();
-							}
-						}
-						case "status" -> {
-							if (isTera()) {
-								e.reply("Terrariaサーバーは現在オンラインです。").setEphemeral(true).queue();
-							} else {
-								e.reply("Terrariaサーバーは現在オフラインです。").setEphemeral(true).queue();
-							}
-						}
-						default -> throw new AssertionError();
-					}
 				}
 			}
 		}
@@ -421,28 +342,6 @@ public class DiscordEventListener extends ListenerAdapter {
 			return rs.getInt(1);
 		}
         return 0;
-    }
-
-	private boolean isTera() {
-        try {
-            String urlString = restAPIUrl + "/status?token=" + teraToken;
-            URI uri = new URI(urlString);
-            URL url = uri.toURL();
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
-            con.setRequestProperty("Content-Type", "application/json; utf-8");
-            int code = con.getResponseCode();
-            switch (code) {
-                case 200 -> {
-                    return true;
-                }
-                default -> {
-                    return false;
-                }
-            }
-        } catch (IOException | URISyntaxException e) {
-            return false;
-		}
     }
 
 	private void sendMixUrl(String string) {

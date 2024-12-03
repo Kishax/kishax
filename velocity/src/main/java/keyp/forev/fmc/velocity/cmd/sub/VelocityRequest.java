@@ -28,8 +28,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.discord.Discord;
 import keyp.forev.fmc.velocity.discord.EmojiManager;
-import keyp.forev.fmc.velocity.discord.interfaces.MessageEditor;
+import keyp.forev.fmc.velocity.discord.MessageEditor;
 import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.server.DoServerOnline;
@@ -42,7 +43,7 @@ public class VelocityRequest implements Request {
 	private final Logger logger;
 	private final Database db;
 	private final BroadCast bc;
-	private final DiscordInterface discord;
+	private final Discord discord;
 	private final MessageEditor discordME;
 	private final EmojiManager emoji;
 	private final DefaultLuckperms lp;
@@ -51,7 +52,7 @@ public class VelocityRequest implements Request {
 	private String currentServerName = null;
 	
 	@Inject
-	public VelocityRequest (ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc, DiscordInterface discord, MessageEditor discordME, EmojiManager emoji, DefaultLuckperms lp, PlayerUtils pu, DoServerOnline dso) {
+	public VelocityRequest (ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc, Discord discord, MessageEditor discordME, EmojiManager emoji, DefaultLuckperms lp, PlayerUtils pu, DoServerOnline dso) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;

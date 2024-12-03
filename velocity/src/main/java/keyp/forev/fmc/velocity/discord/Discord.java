@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -16,43 +15,17 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 
-//import club.minnced.discord.webhook.WebhookClient;
-//import club.minnced.discord.webhook.send.WebhookMessage;
-//import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.libs.ClassManager;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.libs.VClassManager;
-import keyp.forev.fmc.velocity.libs.VPackageManager;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
-//import net.dv8tion.jda.api.EmbedBuilder;
-//import net.dv8tion.jda.api.JDA;
-//import net.dv8tion.jda.api.JDABuilder;
-//import net.dv8tion.jda.api.entities.Activity;
-//import net.dv8tion.jda.api.entities.MessageEmbed;
-//import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-//import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-//import net.dv8tion.jda.api.exceptions.ErrorResponseException;
-//import net.dv8tion.jda.api.interactions.commands.OptionType;
-//import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-//import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-//import net.dv8tion.jda.api.interactions.components.buttons.Button;
-//import net.dv8tion.jda.api.requests.GatewayIntent;
-//import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
-//import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
-//import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
-//import net.dv8tion.jda.api.entities.MessageEmbed;
-//import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
-//import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
-import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
+import com.google.inject.Singleton;
 
+@Singleton
 public class Discord {
-    public static Object jdaInstance = null;
-	//public static JDA jda = null;
+    public static Object jdaInstance = null; // JDAインスタンス
 	public static boolean isDiscord = false;
     private final Logger logger;
     private final VelocityConfig config;
@@ -121,25 +94,11 @@ public class Discord {
                 Object attachmentType = optionTypeAttachmentField.get(null);
 
                 Constructor<?> subcommandC = subcommandDataClazz.getConstructor(String.class, String.class);
-                Object teraSubCommand = subcommandC.newInstance("tera", "テラリアコマンド");
+                Object createImageSubcommand = subcommandC.newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)");
+                Object createSyncRuleBookSubcommand = subcommandC.newInstance("syncrulebook", "ルールブックの同期を行うコマンド");
 
-                Method addOptionsMethod = teraSubCommand.getClass().getMethod("addOptions", optionDataClazz);
-                Object optionDataInstance = optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class)
-                    .newInstance(stringType, "action", "選択してください。");
-
-                Method addChoiceMethod = optionDataInstance.getClass().getMethod("addChoice", String.class, String.class);
-                addChoiceMethod.invoke(optionDataInstance, "Start", "start");
-                addChoiceMethod.invoke(optionDataInstance, "Stop", "stop");
-                addChoiceMethod.invoke(optionDataInstance, "Status", "status");
-
-                addOptionsMethod.invoke(teraSubCommand, optionDataInstance);
-
-                Object createImageSubcommand = subcommandDataClazz.getConstructor(String.class, String.class)
-                    .newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)");
-
+                Method addOptionsMethod = createImageSubcommand.getClass().getMethod("addOptions", optionDataClazz);
                 Constructor<?> optionDataC = optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class);
-
-                addOptionsMethod = createImageSubcommand.getClass().getMethod("addOptions", optionDataClazz);
                 addOptionsMethod.invoke(createImageSubcommand,
                     optionDataC.newInstance(stringType, "url", "画像リンクの設定項目"),
                     optionDataC.newInstance(attachmentType, "image", "ファイルの添付項目"),
@@ -147,11 +106,8 @@ public class Discord {
                     optionDataC.newInstance(stringType, "comment", "画像マップのコメント設定項目")
                 );
 
-                Object createSyncRuleBookSubcommand = subcommandDataClazz.getConstructor(String.class, String.class)
-                    .newInstance("syncrulebook", "ルールブックの同期を行うコマンド");
-
                 Method addSubcommandsMethod = createFMCCommand.getClass().getMethod("addSubcommands", subcommandDataClazz.arrayType());
-                addSubcommandsMethod.invoke(createFMCCommand, new Object[]{teraSubCommand, createImageSubcommand, createSyncRuleBookSubcommand});
+                addSubcommandsMethod.invoke(createFMCCommand, new Object[]{createImageSubcommand, createSyncRuleBookSubcommand});
 
                 Method queueMethod = createFMCCommand.getClass().getMethod("queue");
                 queueMethod.invoke(createFMCCommand);
@@ -254,110 +210,96 @@ public class Discord {
     }
 
     
-    public void sendRequestButtonWithMessage(String buttonMessage) {
+    public void sendRequestButtonWithMessage(String buttonMessage) throws Exception {
     	if (config.getLong("Discord.AdminChannelId", 0) == 0 || !isDiscord) return;
 		String channelId = Long.toString(config.getLong("Discord.AdminChannelId"));
 
-        try {
-            Method getTextChannelByIdMethod = jdaInstance.getClass().getMethod("getTextChannelById", String.class);
-            Object channel = getTextChannelByIdMethod.invoke(jdaInstance, channelId);
+        Method getTextChannelByIdMethod = jdaInstance.getClass().getMethod("getTextChannelById", String.class);
+        Object channel = getTextChannelByIdMethod.invoke(jdaInstance, channelId);
 
-            if (channel == null) return;
+        if (channel == null) return;
 
-            Method successButtonMethod = buttonClazz.getMethod("success", String.class, String.class);
-            Method dangerButtonMethod = buttonClazz.getMethod("danger", String.class, String.class);
+        Method successButtonMethod = buttonClazz.getMethod("success", String.class, String.class);
+        Method dangerButtonMethod = buttonClazz.getMethod("danger", String.class, String.class);
 
-            Object button1 = successButtonMethod.invoke(buttonClazz, "reqOK", "YES");
-            Object button2 = dangerButtonMethod.invoke(buttonClazz, "reqCancel", "NO");
+        Object button1 = successButtonMethod.invoke(buttonClazz, "reqOK", "YES");
+        Object button2 = dangerButtonMethod.invoke(buttonClazz, "reqCancel", "NO");
 
-            Method sendMessageMethod = channel.getClass().getMethod("sendMessage", String.class);
-            Object sendMessageResult = sendMessageMethod.invoke(channel, buttonMessage);
+        Method sendMessageMethod = channel.getClass().getMethod("sendMessage", String.class);
+        Object sendMessageResult = sendMessageMethod.invoke(channel, buttonMessage);
 
-            Method setActionRowMethod = sendMessageResult.getClass().getMethod("setActionRow", buttonClazz, buttonClazz);
-            Object setActionRowResult = setActionRowMethod.invoke(sendMessageResult, button1, button2);
+        Method setActionRowMethod = sendMessageResult.getClass().getMethod("setActionRow", buttonClazz, buttonClazz);
+        Object setActionRowResult = setActionRowMethod.invoke(sendMessageResult, button1, button2);
 
-            Method queueMethod = setActionRowResult.getClass().getMethod("queue", Consumer.class);
-            queueMethod.invoke(setActionRowResult, (Consumer<Object>) message -> {
-                try {
-                    CompletableFuture.delayedExecutor(3, TimeUnit.MINUTES).execute(() -> {
-                        if (!VelocityRequest.PlayerReqFlags.isEmpty()) {
-                            try {
-                                String buttonMessage2 = (String) entityMessageClazz.getMethod("getContentRaw").invoke(message);
-                                Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage2);
-                                if (!reqMap.isEmpty()) {
-                                    try (Connection conn = db.getConnection()) {
-                                        db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqMap.get("playerName"), reqMap.get("playerUUID"), true, reqMap.get("serverName"), "nores"});
-                                    } catch (SQLException | ClassNotFoundException e) {
-                                        logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                                        for (StackTraceElement element : e.getStackTrace()) {
-                                            logger.error(element.toString());
-                                        }
+        Method queueMethod = setActionRowResult.getClass().getMethod("queue", Consumer.class);
+        queueMethod.invoke(setActionRowResult, (Consumer<Object>) message -> {
+            try {
+                CompletableFuture.delayedExecutor(3, TimeUnit.MINUTES).execute(() -> {
+                    if (!VelocityRequest.PlayerReqFlags.isEmpty()) {
+                        try {
+                            String buttonMessage2 = (String) entityMessageClazz.getMethod("getContentRaw").invoke(message);
+                            Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage2);
+                            if (!reqMap.isEmpty()) {
+                                try (Connection conn = db.getConnection()) {
+                                    db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqMap.get("playerName"), reqMap.get("playerUUID"), true, reqMap.get("serverName"), "nores"});
+                                } catch (SQLException | ClassNotFoundException e) {
+                                    logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                                    for (StackTraceElement element : e.getStackTrace()) {
+                                        logger.error(element.toString());
                                     }
                                 }
-                            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                                    | NoSuchMethodException | SecurityException e) {
-                                e.printStackTrace();
                             }
-                            
+                        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                                | NoSuchMethodException | SecurityException e) {
+                            e.printStackTrace();
                         }
-                    });
-                } catch (Exception e) {
-                    logger.error("An error occurred: " + e.getMessage());
-                    for (StackTraceElement element : e.getStackTrace()) {
-                        logger.error(element.toString());
+                        
                     }
+                });
+            } catch (Exception e) {
+                logger.error("An error occurred: " + e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.error(element.toString());
                 }
-            });
-        } catch (Exception e) {
-            logger.error("An error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
             }
-        }
+        });
     }
     
-    public void sendWebhookMessage(Object builder) {
+    public void sendWebhookMessage(Object builder) throws Exception {
     	String webhookUrl = config.getString("Discord.Webhook_URL","");
 
     	if (webhookUrl.isEmpty()) return;
 
-        try {
-            Method withUrlMethod = webhookClientClazz.getMethod("withUrl", String.class);
-            Object webhookClient = withUrlMethod.invoke(webhookClientClazz, webhookUrl);
+        Method withUrlMethod = webhookClientClazz.getMethod("withUrl", String.class);
+        Object webhookClient = withUrlMethod.invoke(webhookClientClazz, webhookUrl);
 
-            Method buildMethod = builder.getClass().getMethod("build");
-            Object buildResult = buildMethod.invoke(builder);
+        Method buildMethod = builder.getClass().getMethod("build");
+        Object buildResult = buildMethod.invoke(builder);
 
-            Method sendMethod = webhookClient.getClass().getMethod("send", webhookMessageClazz);
-            Object sendResult = sendMethod.invoke(webhookClient, buildResult);
+        Method sendMethod = webhookClient.getClass().getMethod("send", webhookMessageClazz);
+        Object sendResult = sendMethod.invoke(webhookClient, buildResult);
 
-            Method thenAcceptMethod = sendResult.getClass().getMethod("thenAccept", Consumer.class);
-            thenAcceptMethod.invoke(sendResult, (Consumer<Object>) _p -> {
-                try {
-                    Method exceptionallyMethod = sendResult.getClass().getMethod("exceptionally", Function.class);
-                    exceptionallyMethod.invoke(sendResult, (Function<Throwable, Object>) throwable -> {
-                        logger.error("A sendWebhookMessage error occurred: " + throwable.getMessage());
-                        for (StackTraceElement element : throwable.getStackTrace()) {
-                            logger.error(element.toString());
-                        }
-                        return null;
-                    });
-                } catch (Exception e) {
-                    logger.error("An error occurred: " + e.getMessage());
-                    for (StackTraceElement element : e.getStackTrace()) {
+        Method thenAcceptMethod = sendResult.getClass().getMethod("thenAccept", Consumer.class);
+        thenAcceptMethod.invoke(sendResult, (Consumer<Object>) _p -> {
+            try {
+                Method exceptionallyMethod = sendResult.getClass().getMethod("exceptionally", Function.class);
+                exceptionallyMethod.invoke(sendResult, (Function<Throwable, Object>) throwable -> {
+                    logger.error("A sendWebhookMessage error occurred: " + throwable.getMessage());
+                    for (StackTraceElement element : throwable.getStackTrace()) {
                         logger.error(element.toString());
                     }
+                    return null;
+                });
+            } catch (Exception e) {
+                logger.error("An error occurred: " + e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.error(element.toString());
                 }
-            });
-        } catch (Exception e) {
-            logger.error("An error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
             }
-        }
+        });
     }
 
-    public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat) {
+    public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat) throws Exception {
         CompletableFuture<Void> future = new CompletableFuture<>();
         getBotMessage(messageId, currentEmbed -> {
             if (currentEmbed == null) {
@@ -414,12 +356,12 @@ public class Discord {
     }
 
     
-    public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription) {
+    public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription) throws Exception {
     	return editBotEmbed(messageId, additionalDescription, false);
     }
 
     
-    public void getBotMessage(String messageId, Consumer<Object> embedConsumer, boolean isChat) {
+    public void getBotMessage(String messageId, Consumer<Object> embedConsumer, boolean isChat) throws Exception {
         String channelId;
     	if (isChat) {
     		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) return;
@@ -428,97 +370,86 @@ public class Discord {
     		if (config.getLong("Discord.ChannelId", 0) == 0 || !isDiscord) return;
     		channelId = Long.toString(config.getLong("Discord.ChannelId"));
     	}
+        Object channel = jdaInstance.getClass().getMethod("getTextChannelById", String.class).invoke(jdaInstance, channelId);
 
-        try {
-            Object channel = jdaInstance.getClass().getMethod("getTextChannelById", String.class).invoke(jdaInstance, channelId);
+        if (channel == null) return;
 
-            if (channel == null) return;
+        Method retrieveMessageByIdMethod = channel.getClass().getMethod("retrieveMessageById", String.class);
+        retrieveMessageByIdMethod.invoke(channel, messageId);
 
-            Method retrieveMessageByIdMethod = channel.getClass().getMethod("retrieveMessageById", String.class);
-            retrieveMessageByIdMethod.invoke(channel, messageId);
-
-            Method queueMethod = retrieveMessageByIdMethod.getReturnType().getMethod("queue", Consumer.class, Consumer.class);
-            queueMethod.invoke(retrieveMessageByIdMethod.invoke(channel, messageId),
-                (Consumer<Object>) message -> {
-                    try {
-                        Method getEmbedsMethod = entityMessageClazz.getMethod("getEmbeds");
-                        Object embeds = getEmbedsMethod.invoke(message);
-                        if (embeds instanceof List<?>) {
-                            // embedsがList<Object>型であることを保証しなければならない
-                            boolean isList = ((List<?>) embeds).stream().allMatch(e -> e instanceof Object);
-                            if (isList) {
-                                @SuppressWarnings("unchecked")
-                                List<Object> embedList = (List<Object>) embeds;
-                                if (!embedList.isEmpty()) {
-                                    embedConsumer.accept(embedList.get(0));
-                                } else {
-                                    embedConsumer.accept(null);
-                                }
+        Method queueMethod = retrieveMessageByIdMethod.getReturnType().getMethod("queue", Consumer.class, Consumer.class);
+        queueMethod.invoke(retrieveMessageByIdMethod.invoke(channel, messageId),
+            (Consumer<Object>) message -> {
+                try {
+                    Method getEmbedsMethod = entityMessageClazz.getMethod("getEmbeds");
+                    Object embeds = getEmbedsMethod.invoke(message);
+                    if (embeds instanceof List<?>) {
+                        // embedsがList<Object>型であることを保証しなければならない
+                        boolean isList = ((List<?>) embeds).stream().allMatch(e -> e instanceof Object);
+                        if (isList) {
+                            @SuppressWarnings("unchecked")
+                            List<Object> embedList = (List<Object>) embeds;
+                            if (!embedList.isEmpty()) {
+                                embedConsumer.accept(embedList.get(0));
+                            } else {
+                                embedConsumer.accept(null);
                             }
-                        } else {
-                            embedConsumer.accept(null);
                         }
-                    } catch (Exception e) {
-                        logger.error("An error occurred: " + e.getMessage());
-                        for (StackTraceElement element : e.getStackTrace()) {
-                            logger.error(element.toString());
-                        }
+                    } else {
+                        embedConsumer.accept(null);
                     }
-                },
-                (Consumer<Throwable>) error -> {
-                    logger.error("A getBotMessage error occurred: " + error.getMessage());
-                    for (StackTraceElement element : error.getStackTrace()) {
+                } catch (Exception e) {
+                    embedConsumer.accept(null);
+                    logger.error("An error occurred: " + e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) {
                         logger.error(element.toString());
                     }
-                    embedConsumer.accept(null);
                 }
-            );
-        } catch (Exception e) {
-            logger.error("An error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
+            },
+            (Consumer<Throwable>) error -> {
+                logger.error("A getBotMessage error occurred: " + error.getMessage());
+                for (StackTraceElement element : error.getStackTrace()) {
+                    logger.error(element.toString());
+                }
+                embedConsumer.accept(null);
             }
-        }
+        );
     }
 
     
-    public Object addDescriptionToEmbed(Object embed, String additionalDescription) {
-        try {
-            Method getDescriptionMethod = embed.getClass().getMethod("getDescription");
-            String description = (String) getDescriptionMethod.invoke(embed);
+    public Object addDescriptionToEmbed(Object embed, String additionalDescription) throws Exception {
+        Method getDescriptionMethod = embed.getClass().getMethod("getDescription");
+        String description = (String) getDescriptionMethod.invoke(embed);
 
-            Constructor<?> embedBuilderC = embedBuilderClazz.getConstructor(entityMessageEmbedClazz);
-            Object builder = embedBuilderC.newInstance(embed);
+        Constructor<?> embedBuilderC = embedBuilderClazz.getConstructor(entityMessageEmbedClazz);
+        Object builder = embedBuilderC.newInstance(embed);
 
-            String newDescription = (description != null ? description : "") + additionalDescription;
-            Method setDescriptionMethod = embedBuilderClazz.getMethod("setDescription", CharSequence.class);
-            setDescriptionMethod.invoke(builder, newDescription);
+        String newDescription = (description != null ? description : "") + additionalDescription;
+        Method setDescriptionMethod = embedBuilderClazz.getMethod("setDescription", CharSequence.class);
+        setDescriptionMethod.invoke(builder, newDescription);
 
-            Method buildMethod = embedBuilderClazz.getMethod("build");
+        Method buildMethod = embedBuilderClazz.getMethod("build");
 
-            return buildMethod.invoke(builder);
-        } catch (Exception e) {
-            logger.error("An error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-            return null;
-        }
+        return buildMethod.invoke(builder);
     }
     
-    public void editBotEmbedReplacedAll(String messageId, Object newEmbed) {
+    public void editBotEmbedReplacedAll(String messageId, Object newEmbed) throws Exception {
     	if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) return;
-        // チャンネルIDは適切に設定してください
-        channelId = Long.toString(config.getLong("Discord.ChannelId"));
-        channel = jda.getTextChannelById(channelId);
+        String channelId = Long.toString(config.getLong("Discord.ChannelId"));
+        Method getTextChannelByIdMethod = jdaInstance.getClass().getMethod("getTextChannelById", String.class);
+        Object channel = getTextChannelByIdMethod.invoke(jdaInstance, channelId);
 
-        if (Objects.isNull(channel)) return;
+        if (channel == null) return;
 
-        MessageEditAction messageAction = channel.editMessageEmbedsById(messageId, newEmbed);
-        messageAction.queue(
-            _p -> {
-                //
-            }, error -> {
+        Method editMessageEmbedsByIdMethod = channel.getClass().getMethod("editMessageEmbedsById", String.class, entityMessageEmbedClazz);
+        Object messageAction = editMessageEmbedsByIdMethod.invoke(channel, messageId, newEmbed);
+
+        Method queueMethod = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
+        queueMethod.invoke(messageAction,
+            (Consumer<Object>) _p -> {
+                // 特に何もしない
+            },
+            (Consumer<Throwable>) error -> {
                 logger.error("A editBotEmbedReplacedAll error occurred: " + error.getMessage());
                 for (StackTraceElement element : error.getStackTrace()) {
                     logger.error(element.toString());
@@ -528,90 +459,118 @@ public class Discord {
     }
 
     
-    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, MessageEmbed embed, boolean isChat) {
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, Object embed, boolean isChat) throws Exception {
     	CompletableFuture<String> future = new CompletableFuture<>();
-
+        String channelId;
     	if (isChat) {
-    		if (config.getLong("Discord.ChatChannelId", 0) == 0 || !isDiscord) {
+            channelId = Long.toString(config.getLong("Discord.ChatChannelId", 0));
+    		if (channelId == "0" || !isDiscord) {
     			future.complete(null);
                 return future;
     		}
-
-    		channelId = Long.toString(config.getLong("Discord.ChatChannelId"));
     	} else {
-    		if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) {
+            channelId = Long.toString(config.getLong("Discord.ChannelId"));
+    		if (channelId == "0" || !isDiscord) {
             	future.complete(null);
                 return future;
             }
-
-    		channelId = Long.toString(config.getLong("Discord.ChannelId"));
     	}
 
-        channel = jda.getTextChannelById(channelId);
+        Method getTextChannelByIdMethod = jdaInstance.getClass().getMethod("getTextChannelById", String.class);
+        Object channel = getTextChannelByIdMethod.invoke(jdaInstance, channelId);
 
-        if (Objects.isNull(channel)) {
+        if (channel == null) {
         	logger.error("Channel not found!");
         	future.complete(null);
             return future;
         }
 
-    	if (Objects.nonNull(embed)) {
-    		// 埋め込みメッセージを送信
-            MessageCreateAction messageAction = channel.sendMessageEmbeds(embed);
-            messageAction.queue(response -> {
-                // メッセージIDとチャンネルIDを取得
-                String messageId = response.getId();
-                future.complete(messageId);
-                //logger.info("Message ID: " + messageId);
-                //logger.info("Channel ID: " + channel.getId());
-            }, failure -> {
-            	logger.error("Failed to send embedded message: " + failure.getMessage());
-                future.complete(null);
-            });
+    	if (embed != null) {
+            Method sendMessageEmbedsMethod = channel.getClass().getMethod("sendMessageEmbeds", entityMessageEmbedClazz);
+            Object messageAction = sendMessageEmbedsMethod.invoke(channel, embed);
+
+            Method queueMethod = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
+            queueMethod.invoke(messageAction,
+                (Consumer<Object>) response -> {
+                    try {
+                        Method getIdMethod = entityMessageClazz.getMethod("getId");
+                        String messageId = (String) getIdMethod.invoke(response);
+                        future.complete(messageId);
+                    } catch (Exception e) {
+                        logger.error("Failed to send embedded message: " + e.getMessage());
+                        future.complete(null);
+                    }
+                },
+                (Consumer<Throwable>) failure -> {
+                    logger.error("Failed to send embedded message: " + failure.getMessage());
+                    future.complete(null);
+                }
+            );
         }
 
-    	if (Objects.nonNull(content) && !content.isEmpty()) {
-    		// テキストメッセージを送信
-            MessageCreateAction messageAction = channel.sendMessage(content);
-            messageAction.queue(response -> {
-                // メッセージIDとチャンネルIDを取得
-                String messageId = response.getId();
-                //logger.info("Message ID: " + messageId);
-            	//logger.info("Channel ID: " + channel.getId());
-            	future.complete(messageId);
-            }, failure -> {
-            	logger.error("Failed to send text message: " + failure.getMessage());
-                future.complete(null);
-            }
-            );
-    	}
+        if (content != null && !content.isEmpty()) {
+            Method sendMessageMethod = channel.getClass().getMethod("sendMessage", String.class);
+            Object messageAction = sendMessageMethod.invoke(channel, content);
 
+            Method queueMethod = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
+            queueMethod.invoke(messageAction,
+                (Consumer<Object>) response -> {
+                    try {
+                        Method getIdMethod = entityMessageClazz.getMethod("getId");
+                        String messageId = (String) getIdMethod.invoke(response);
+                        future.complete(messageId);
+                    } catch (Exception e) {
+                        logger.error("Failed to send text message: " + e.getMessage());
+                        future.complete(null);
+                    }
+                },
+                (Consumer<Throwable>) failure -> {
+                    logger.error("Failed to send text message: " + failure.getMessage());
+                    future.complete(null);
+                }
+            );
+        }
     	return future;
     }
 
     
-    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content) {
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content) throws Exception {
     	return sendBotMessageAndgetMessageId(content, null, false);
     }
 
     
-    public CompletableFuture<String> sendBotMessageAndgetMessageId(MessageEmbed embed) {
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(Object embed) throws Exception {
     	return sendBotMessageAndgetMessageId(null, embed, false);
     }
 
     
-    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, boolean isChat) {
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(String content, boolean isChat) throws Exception {
     	return sendBotMessageAndgetMessageId(content, null, isChat);
     }
 
     
-    public CompletableFuture<String> sendBotMessageAndgetMessageId(MessageEmbed embed, boolean isChat) {
+    public CompletableFuture<String> sendBotMessageAndgetMessageId(Object embed, boolean isChat) throws Exception {
     	return sendBotMessageAndgetMessageId(null, embed, isChat);
     }
 
     
-    public MessageEmbed createEmbed(String description, int color) {
-        return new MessageEmbed(
+    public Object createEmbed(String description, int color) throws Exception {
+        // "net.dv8tion.jda.api.entities.MessageEmbed"の内部クラスを取得
+        ClassLoader loader = entityMessageEmbedClazz.getClassLoader();
+        Constructor<?> messageEmbedC = entityMessageEmbedClazz.getConstructor(
+            String.class, String.class, String.class, 
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$EmbedType", true, loader),
+            Class.forName("java.time.OffsetDateTime"), 
+            int.class, 
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Thumbnail", true, loader), 
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Provider", true, loader), 
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$AuthorInfo", true, loader), 
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$VideoInfo", true, loader), 
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Footer", true, loader), 
+            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$ImageInfo", true, loader), 
+            List.class
+        );
+        return messageEmbedC.newInstance(
             null, // URL
             null, // Title
             description, // Description
@@ -623,50 +582,60 @@ public class Discord {
             null, // Author
             null, // VideoInfo
             null, // Footer
-            null, // Image(Example: new MessageEmbed.ImageInfo(imageUrl, null, 0, 0))
+            null, // Image
             null  // Fields
         );
     }
 
     
-    public void sendBotMessage(String content, MessageEmbed embed) {
+    public void sendBotMessage(String content, Object embed) throws Exception {
     	CompletableFuture<String> future = new CompletableFuture<>();
         if (config.getLong("Discord.ChannelId", 0)==0 || !isDiscord) {
         	future.complete(null);
             return;
         }
-    	channelId = Long.toString(config.getLong("Discord.ChannelId"));
-        channel = jda.getTextChannelById(channelId);
-        if (Objects.isNull(channel)) {
-        	//logger.error("Channel not found!");
+    	String channelId = Long.toString(config.getLong("Discord.ChannelId"));
+        
+        Method getTextChannelByIdMethod = jdaInstance.getClass().getMethod("getTextChannelById", String.class);
+        Object channel = getTextChannelByIdMethod.invoke(jdaInstance, channelId);
+
+        if (channel == null) {
         	future.complete(null);
             return;
         }
-    	if (Objects.nonNull(embed)) {
-    		// 埋め込みメッセージを送信
-            MessageCreateAction messageAction = channel.sendMessageEmbeds(embed);
-            messageAction.queue(
-                CompletableFuture::completedFuture, failure -> logger.error("Failed to send embedded message: " + failure.getMessage())
+    	if (embed != null) {
+            Method sendMessageEmbedsMethod = channel.getClass().getMethod("sendMessageEmbeds", entityMessageEmbedClazz);
+            Object messageAction = sendMessageEmbedsMethod.invoke(channel, embed);
+
+            Method queueMethod = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
+            queueMethod.invoke(messageAction,
+                (Consumer<Object>) response -> {
+                    // 特に何もしない
+                },
+                (Consumer<Throwable>) failure -> logger.error("Failed to send embedded message: " + failure.getMessage())
             );
         }
-    	if (Objects.nonNull(content) && !content.isEmpty()) {
-    		// テキストメッセージを送信
-            MessageCreateAction messageAction = channel.sendMessage(content);
-            messageAction.queue(
-                _p -> {
-                    //
-                }, failure -> logger.error("Failed to send text message: " + failure.getMessage())
+    	if (content != null && !content.isEmpty()) {
+            Method sendMessageMethod = channel.getClass().getMethod("sendMessage", String.class);
+            Object messageAction = sendMessageMethod.invoke(channel, content);
+
+            Method queueMethod = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
+            queueMethod.invoke(messageAction,
+                (Consumer<Object>) response -> {
+                    // 特に何もしない
+                },
+                (Consumer<Throwable>) failure -> logger.error("Failed to send text message: " + failure.getMessage())
             );
     	}
     }
 
     
-    public void sendBotMessage(String content) {
+    public void sendBotMessage(String content) throws Exception {
     	sendBotMessage(content, null);
     }
 
     
-    public void sendBotMessage(MessageEmbed embed) {
+    public void sendBotMessage(Object embed) throws Exception {
     	sendBotMessage(null, embed);
     }
 }
