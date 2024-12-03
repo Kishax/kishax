@@ -24,7 +24,6 @@ import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.OTPGenerator;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -37,7 +36,8 @@ import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
-public class DiscordEventListener extends ListenerAdapter {
+public class DiscordEventListener {
+	public static String playerChatMessageId = null;
 	private final Logger logger;
 	private final VelocityConfig config;
 	private final Database db;

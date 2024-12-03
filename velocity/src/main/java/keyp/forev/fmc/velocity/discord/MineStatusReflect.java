@@ -1,6 +1,8 @@
 package keyp.forev.fmc.velocity.discord;
 
 import java.awt.Color;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,28 +19,24 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 
-
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 public class MineStatusReflect {
-
     private final Logger logger;
     private final VelocityConfig config;
     private final Database db;
     private final EmojiManager emoji;
+    private final Class<?> embedBuilderClazz, entityMessageClazz;
     private final Long channelId, messageId;
     private final boolean require;
 
-    public MineStatusReflect(Logger logger, VelocityConfig config, Database db, EmojiManager emoji) {
+    public MineStatusReflect(Logger logger, VelocityConfig config, Database db, EmojiManager emoji) throws ClassNotFoundException {
         this.logger = logger;
         this.config = config;
         this.db = db;
@@ -46,9 +44,11 @@ public class MineStatusReflect {
         this.channelId = config.getLong("Discord.Status.ChannelId", 0);
         this.messageId = config.getLong("Discord.Status.MessageId", 0);
         this.require = channelId != 0 && messageId != 0;
+        this.embedBuilderClazz = VClassManager.JDA.EMBED_BUILDER.get().getClazz();
+        this.entityMessageClazz = VClassManager.JDA.ENTITYS_MESSAGE.get().getClazz();
     }
 
-    public void start(/*JDA jda*/ Object jdaInstace) {
+    public void start(Object jdaInstace) {
         if (!require) {
             logger.info("コンフィグの設定が不十分なため、ステータスをUPDATEできません。");
             return;
@@ -58,25 +58,18 @@ public class MineStatusReflect {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                updateStatus(jdaInstance);
+                try {
+                    updateStatus();
+                } catch (Exception e) {
+                    logger.error("Failed to update status: " + e.getMessage());
+                }
             }
         }, 0, 1000*period);
     }
 
-    /*public void sendEmbedMessage(JDA jda) {
-        TextChannel channel = jda.getTextChannelById(channelId);
-        EmbedBuilder embed = new EmbedBuilder().setTitle("後にこれがステータスとなる").setColor(Color.GREEN);
-        if (channel != null) {
-            channel.sendMessageEmbeds(embed.build()).queue(
-                _p -> {},// logger.info("Embed sent successfully!")
-                error -> logger.error("Failed to send embed: " + error.getMessage())
-            );
-        }
-    }*/
-
-    private void updateStatus(/*JDA jda*/ Object jda) {
-        Class<?> textChannel = Class.forName("net.dv8tion.jda.api.entities.channel.concrete.TextChannel");
-        TextChannel channel = jda.getTextChannelById(channelId);
+    private void updateStatus() throws Exception {
+        Method getTextChannelById = Discord.jdaInstance.getClass().getMethod("getTextChannelById", long.class);
+        Object channel = getTextChannelById.invoke(Discord.jdaInstance, channelId);
         getPlayersMap().thenCompose(playersMap -> {
             if (playersMap != null) {
                 Set<String> uniquePlayersSet = new HashSet<>();
@@ -89,20 +82,37 @@ public class MineStatusReflect {
                 }
                 List<String> uniquePlayersList = new ArrayList<>(uniquePlayersSet);
                 // 例えば、"home"->nullとかであれば、getEmojiIdsはnullを返す
-                return emoji.getEmojiIds(uniquePlayersList).thenApply(emojiIds -> {
-                    return createStatusEmbed(channel, playersMap, emojiIds);
-                });
+                try {
+                    return emoji.getEmojiIds(uniquePlayersList).thenApply(emojiIds -> {
+                        try {
+                            return createStatusEmbed(channel, playersMap, emojiIds);
+                        } catch (Exception e) {
+                            logger.error("Failed to create status embed: " + e.getMessage());
+                            return null;
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("Failed to update status: " + e.getMessage());
+                }
             }
             return CompletableFuture.completedFuture(null);
         }).thenAccept(statusEmbedFuture -> {
             if (statusEmbedFuture != null) {
                 statusEmbedFuture.thenAccept(statusEmbed -> {
                     if (channel != null) {
-                        Message message = channel.retrieveMessageById(messageId).complete();
-                        message.editMessageEmbeds(statusEmbed).queue(
-                            _p -> {},// logger.info("Embed updated successfully!")
-                            error -> logger.error("Failed to update embed: " + error.getMessage())
-                        );
+                        try {
+                            Method retrieveMessageById = channel.getClass().getMethod("retrieveMessageById", long.class);
+                            Object message = retrieveMessageById.invoke(channel, messageId);
+                            Method editMessageEmbeds = message.getClass().getMethod("editMessageEmbeds", entityMessageClazz);
+                            editMessageEmbeds.invoke(message, statusEmbed);
+                            Method queue = editMessageEmbeds.getClass().getMethod("queue", Consumer.class, Consumer.class);
+                            queue.invoke(editMessageEmbeds, (Consumer<Object>) _p -> {}, (Consumer<Throwable>) error -> logger.error("Failed to update embed: " + error.getMessage()));
+                        } catch (Exception e) {
+                            logger.error("Failed to update embed: " + e.getMessage());
+                            for (StackTraceElement ste : e.getStackTrace()) {
+                                logger.error(ste.toString());
+                            }
+                        }
                     }
                 });
             }
@@ -132,20 +142,27 @@ public class MineStatusReflect {
         } catch (SQLException | ClassNotFoundException e) {
             logger.info("MySQLサーバーに再接続を試みています。");
             future.completeExceptionally(e);
-            // これが、exceptionallyにいくなら、exceptionallyで、
-            // discordメッセージ編集で、「MySQLサーバーにアクセスできません」と出せば、エラー発見しやすい
         }
         return future;
     }
 
-    public CompletableFuture<MessageEmbed> createStatusEmbed(TextChannel channel, Map<String, String> playersMap, Map<String, String> emojiMap) {
-        CompletableFuture<MessageEmbed> future = new CompletableFuture<>();
-        EmbedBuilder embed = new EmbedBuilder();
+    public CompletableFuture<Object> createStatusEmbed(Object channel, Map<String, String> playersMap, Map<String, String> emojiMap) throws Exception {
+        CompletableFuture<Object> future = new CompletableFuture<>();
+        Constructor<?> embedBuilderC = embedBuilderClazz.getConstructor();
+        Object embed = embedBuilderC.newInstance();
+
         boolean maintenance = false, isOnline = false;
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         String formattedNow = now.format(formatter);
-        embed.setFooter("最終更新日時: " + formattedNow, null);
+
+        Method setTitle = embedBuilderClazz.getMethod("setTitle", String.class);
+        Method setFooter = embedBuilderClazz.getMethod("setFooter", String.class, String.class);
+        Method addField = embedBuilderClazz.getMethod("addField", String.class, String.class, boolean.class);
+        Method setColor = embedBuilderClazz.getMethod("setColor", Color.class);
+        Method build = embedBuilderClazz.getMethod("build");
+        setFooter.invoke(embed, "最終更新日時: " + formattedNow, null);
+
         for (Map.Entry<String, String> entry : playersMap.entrySet()) {
             isOnline = true;
             String serverName = entry.getKey(),
@@ -163,7 +180,6 @@ public class MineStatusReflect {
                 playersList.addAll(Arrays.asList(playerArray));
             }
             int currentPlayers = playersList.size();
-            //if (index != 0) embed.addField("", "", false);
             if (!playersList.isEmpty()) {
                 playersList.sort(String.CASE_INSENSITIVE_ORDER);
                 List<String> playersListWithEmoji = new ArrayList<>();
@@ -174,22 +190,22 @@ public class MineStatusReflect {
                     playersListWithEmoji.add(emojiString + playerName);
                 }
                 String playersWithEmoji = String.join("\n\n", playersListWithEmoji);
-                embed.addField(":green_circle: " + serverName + "  " +  currentPlayers + "/10", playersWithEmoji, false);
+                addField.invoke(embed, ":green_circle: " + serverName + "  " +  currentPlayers + "/10", playersWithEmoji, false);
             } else {
-                embed.addField(":green_circle: " + serverName + "  0/10", "No Player", false);
+                addField.invoke(embed, ":green_circle: " + serverName + "  0/10", "No Player", false);
             }
         }
         if (maintenance) {
-            embed.setTitle(":tools: 現在サーバーメンテナンス中");
-            embed.setColor(Color.ORANGE);
+            setTitle.invoke(embed, ":tools: 現在サーバーメンテナンス中");
+            setColor.invoke(embed, Color.ORANGE);
         } else if (!isOnline) {
-            embed.setTitle(":red_circle: すべてのサーバーがオフライン");
-            embed.setColor(Color.RED);
+            setTitle.invoke(embed, ":red_circle: すべてのサーバーがオフライン");
+            setColor.invoke(embed, Color.RED);
         } else {
-            embed.setTitle(":white_check_mark: 現在サーバー開放中");
-            embed.setColor(Color.GREEN);
+            setTitle.invoke(embed, ":white_check_mark: 現在サーバー開放中");
+            setColor.invoke(embed, Color.GREEN);
         }
-        future.complete(embed.build());
+        future.complete(build.invoke(embed));
         return future;
     }
 }

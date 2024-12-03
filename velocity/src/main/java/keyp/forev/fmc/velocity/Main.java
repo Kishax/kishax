@@ -112,7 +112,14 @@ public class Main {
             .loginDiscordBotAsync().thenAccept(jda -> {
                 if (jda != null) {
                     getInjector().getInstance(MineStatusReflect.class).start(jda);
-                    getInjector().getInstance(EmojiManager.class).updateDefaultEmojiId();
+                    try {
+                        getInjector().getInstance(EmojiManager.class).updateDefaultEmojiId();
+                    } catch (Exception e) {
+                        logger.error("Failed to update default emoji ID: {}", e.getMessage());
+                        for (StackTraceElement ste : e.getStackTrace()) {
+                            logger.error(ste.toString());
+                        }
+                    }
                 }
             }); 		
         Database db = getInjector().getInstance(Database.class);

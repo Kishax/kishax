@@ -62,7 +62,14 @@ public class PlayerDisconnect {
 			ps.setString(2, player.getUniqueId().toString());
 			int rsAffected = ps.executeUpdate();
 			if (rsAffected > 0) {
-				discordME.AddEmbedSomeMessage("Invader", player);
+				try {
+					discordME.AddEmbedSomeMessage("Invader", player);
+				} catch (Exception e) {
+					logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+					for (StackTraceElement ste : e.getStackTrace()) {
+						logger.error(ste.toString());
+					}
+				}
 			}
 		} catch (SQLException | ClassNotFoundException e) {
 			// スタックトレースをログに出力

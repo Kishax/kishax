@@ -121,7 +121,14 @@ public class VelocitySocketResponse implements SocketResponse {
 							player.sendMessage(component);
                     	}
                 	}
-                	discordME.AddEmbedSomeMessage("AddMember", mineName);
+					try {
+                		discordME.AddEmbedSomeMessage("AddMember", mineName);
+					} catch (Exception e) {
+						logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+						for (StackTraceElement ste : e.getStackTrace()) {
+							logger.error(ste.toString());
+						}
+					}
                 }
     		}
     	} else if (res.contains("停止")) {

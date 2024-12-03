@@ -3,6 +3,7 @@ package keyp.forev.fmc.velocity.discord;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -13,9 +14,9 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import javax.imageio.ImageIO;
 
@@ -24,64 +25,72 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.velocity.server.GeyserMC;
+import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Icon;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
-import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
-import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
 
 public class EmojiManager {
     public static String beDefaultEmojiId = null;
-    private JDA jda = null;
-    private String emojiId = null;
     private final Logger logger;
     private final VelocityConfig config;
     private final Database db;
-    @SuppressWarnings("unused")
-    private final GeyserMC gm;
+    private final Class<?> iconClazz;
     @Inject
-    public EmojiManager (Logger logger, VelocityConfig config, Database db, GeyserMC gm) {
+    public EmojiManager(Logger logger, VelocityConfig config, Database db) throws ClassNotFoundException {
         this.logger = logger;
         this.config = config;
         this.db = db;
-        this.gm = gm;
+        this.iconClazz = VClassManager.JDA.ENTITYS_ICON.get().getClazz();
     }
 
-    public void updateDefaultEmojiId() {
+    public void updateDefaultEmojiId() throws Exception {
         CompletableFuture<String> future = createOrgetEmojiId(config.getString("Discord.BEDefaultEmojiName"));
         future.thenAccept(id -> EmojiManager.beDefaultEmojiId = id);
     }
 
-    public CompletableFuture<Map<String, String>> getEmojiIds(List<String> emojiNames) {
+    public CompletableFuture<Map<String, String>> getEmojiIds(List<String> emojiNames) throws Exception {
         CompletableFuture<Map<String, String>> future = new CompletableFuture<>();
         if (emojiNames.isEmpty()) {
             future.complete(null);
             return future;
         }
 
-    	this.jda = Discord.jda;
-        if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0 || emojiNames.isEmpty()) {
+        if (Discord.jdaInstance == null || config.getLong("Discord.GuildId", 0) == 0 || emojiNames.isEmpty()) {
         	future.complete(null);
             return future;
         }
+
     	String guildId = Long.toString(config.getLong("Discord.GuildId"));
-        Guild guild = jda.getGuildById(guildId);
+
+        Method getGuildById = Discord.jdaInstance.getClass().getMethod("getGuildById", String.class);
+        Object guild = getGuildById.invoke(Discord.jdaInstance, guildId);
+
         if (guild == null) {
-            //logger.info("Guild not found!");
             future.complete(null);
             return future;
         }
+
         Map<String, String> emojiMap = new HashMap<>();
-        List<RichCustomEmoji> emojis = guild.getEmojis();
+
+        Method getEmojis = guild.getClass().getMethod("getEmojis");
+        List<?> emojis = (List<?>) getEmojis.invoke(guild);
+
         for (String eachEmojiName : emojiNames) {
             String eachEmojiId = null;
-            for (RichCustomEmoji emoji : emojis) {
-                if (emoji.getName().equals(eachEmojiName)) {
-                    eachEmojiId = emoji.getId();
-                    break;
+            for (Object emoji : emojis) {
+                try {
+                    Method getName = emoji.getClass().getMethod("getName");
+                    String emojiName = (String) getName.invoke(emoji);
+
+                    if (emojiName.equals(eachEmojiName)) {
+                        Method getId = emoji.getClass().getMethod("getId");
+                        eachEmojiId = getId.invoke(emoji).toString();
+                        break;
+                    }
+                } catch (Exception e) {
+                    logger.error("An error occurred while getting emoji ID: " + e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) {
+                        logger.error(element.toString());
+                    }
                 }
             }
             emojiMap.put(eachEmojiName, eachEmojiId);
@@ -90,42 +99,56 @@ public class EmojiManager {
         return future;
     }
 
-    public CompletableFuture<String> createOrgetEmojiId(String emojiName, String imageUrl) throws URISyntaxException {
+    public CompletableFuture<String> createOrgetEmojiId(String emojiName, String imageUrl) throws Exception {
     	CompletableFuture<String> future = new CompletableFuture<>();
-    	this.jda = Discord.jda;
-        if (Objects.isNull(jda) || config.getLong("Discord.GuildId", 0) == 0) {
+        if (Discord.jdaInstance == null || config.getLong("Discord.GuildId", 0) == 0) {
         	future.complete(null);
             return future;
         }
-        // emojiNameが空白かnullだった場合
-        if (Objects.isNull(emojiName) || emojiName.isEmpty()) {
+
+        if (emojiName == null || emojiName.isEmpty()) {
         	future.complete(null);
             return future;
         }
         
     	String guildId = Long.toString(config.getLong("Discord.GuildId"));
-        Guild guild = jda.getGuildById(guildId);
+        //Guild guild = jda.getGuildById(guildId);
+        Method getGuildById = Discord.jdaInstance.getClass().getMethod("getGuildById", String.class);
+        Object guild = getGuildById.invoke(Discord.jdaInstance, guildId);
+
         if (guild == null) {
-            //logger.info("Guild not found!");
             future.complete(null);
             return future;
         }
-        // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
-        Optional<RichCustomEmoji> existingEmote = guild.getEmojis().stream()
-            .filter(emote -> emote.getName().equals(emojiName))
+
+        Method getEmojis = guild.getClass().getMethod("getEmojis");
+        List<?> emojis = (List<?>) getEmojis.invoke(guild);
+        
+        Optional<?> existingEmote = emojis.stream()
+            .filter(emote -> {
+                try {
+                    Method getName = emote.getClass().getMethod("getName");
+                    String existedEmojiName = (String) getName.invoke(emote);
+                    return existedEmojiName.equals(emojiName);
+                } catch (Exception e) {
+                    logger.error("An error occurred while getting emoji ID: " + e.getMessage());
+                    for (StackTraceElement element : e.getStackTrace()) {
+                        logger.error(element.toString());
+                    }
+                    return false;
+                }
+            })
             .findFirst();
+
         if (existingEmote.isPresent()) {
-            emojiId = existingEmote.get().getId();
-            //logger.info(emojiName + "の絵文字はすでに追加されています。");
-            //logger.info("Existing Emoji ID: " + emojiId);
-            future.complete(emojiId);
+            Object emojiInfo = existingEmote.get();
+            Method getId = emojiInfo.getClass().getMethod("getId");
+            future.complete(getId.invoke(emojiInfo).toString());
         } else {
-            // 統合版プレイヤーはdiscordにスキンがあれば、絵文字IDをとってくるようにするが、
-            // なければ、steveの絵文字で返す
             if (emojiName.startsWith(".")) {
                 return createOrgetEmojiId(config.getString("Discord.BEDefaultEmojiName", null));
             }
-        	if (Objects.isNull(imageUrl)) {
+        	if (imageUrl == null) {
         		future.complete(null);
                 return future;
         	}
@@ -134,7 +157,7 @@ public class EmojiManager {
                 URL url = uri.toURL();
             
                 BufferedImage bufferedImage = ImageIO.read(url);
-                if (Objects.isNull(bufferedImage)) {
+                if (bufferedImage == null) {
                     logger.error("Failed to read image from URL: " + imageUrl);
                     future.complete(null);
                     return future;
@@ -143,22 +166,33 @@ public class EmojiManager {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(bufferedImage, "png", baos);
                 byte[] imageBytes = baos.toByteArray();
-                Icon icon = Icon.from(imageBytes);
+                Object icon = iconClazz.getMethod("from", byte[].class).invoke(null, imageBytes);
             
-                // Create the emote with the specified name and icon
-                AuditableRestAction<RichCustomEmoji> action = guild.createEmoji(emojiName, icon);
-                action.queue(
-                    success -> {
+                Method createEmoji = guild.getClass().getMethod("createEmoji", String.class, iconClazz);;
+                Object action = createEmoji.invoke(guild, emojiName, icon);
+
+                Method queue = action.getClass().getMethod("queue", Consumer.class, Consumer.class);
+                queue.invoke(action, new Object[] {
+                    (Consumer<Object>) success -> {
                         logger.info(emojiName + "を絵文字に追加しました。");
-                        emojiId = success.getId(); // 絵文字IDを取得
-                        future.complete(emojiId);
-                    }, failure -> {
+                        try {
+                            Method getId = success.getClass().getMethod("getId");
+                            future.complete(getId.invoke(success).toString());
+                        } catch (Exception e) {
+                            logger.error("An error occurred while getting emoji ID: " + e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace()) {
+                                logger.error(element.toString());
+                            }
+                            future.complete(null);
+                        }
+                    }, 
+                    (Consumer<Throwable>) failure -> {
                         logger.error("Failed to create emoji: " + failure.getMessage());
                         future.complete(null);
                     }
-                );
-            } catch (IOException | URISyntaxException e) {
-                logger.error("A createEmoji error occurred: " + e.getMessage());
+                });
+            } catch (IOException e) {
+                logger.error("Failed to download image: " + e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
                     logger.error(element.toString());
                 }
@@ -170,14 +204,9 @@ public class EmojiManager {
     
     public String getEmojiString(String emojiName, String emojiId) {
         if (emojiName == null && emojiId == null) return null;
-        // 非同期メソッドMineStatusReflect.updateStatusの中で、
-        // EmojiManager.getEmojiIdsより取得したemojiMapの中に統合版プレイヤーがいた場合、
-        // MineStatusReflect.createStatusEmbedメソッドで、
-        //  ".key100011138" -> nullとなることがあるため
         if (emojiName != null && emojiId == null) {
             if (emojiName.startsWith(".")) {
                 if (EmojiManager.beDefaultEmojiId != null) {
-                    // MineStatusReflect.createStatusEmbedメソッドの簡潔なコードの都合上、最後に空白
                     return "<:" + config.getString("Discord.BEDefaultEmojiName") + ":" + EmojiManager.beDefaultEmojiId + "> "; // steveの絵文字で返す
                 } else {
                     return "";
@@ -186,7 +215,6 @@ public class EmojiManager {
         }
         if (emojiName != null && emojiId != null) {
             if (emojiName.isEmpty() || emojiId.isEmpty()) return null;
-            // Join時のAddEmbedSomeMessageメソッドで、絵文字が追加されていない場合に通るので必要
             if (EmojiManager.beDefaultEmojiId instanceof String && emojiId.equals(EmojiManager.beDefaultEmojiId)) {
                 if (emojiName.startsWith(".")) {
                     return "<:" + config.getString("Discord.BEDefaultEmojiName") + ":" + EmojiManager.beDefaultEmojiId + ">"; // steveの絵文字で返す
@@ -196,41 +224,53 @@ public class EmojiManager {
     	return "<:" + emojiName + ":" + emojiId + ">";
     }
     
-    public void updateEmojiIdsToDatabase() {
-        this.jda = Discord.jda;
-        if (Objects.isNull(jda) || config.getLong("Discord.ChannelId", 0) == 0) return;
+    public void updateEmojiIdsToDatabase() throws Exception {
+        if (Discord.jdaInstance == null || config.getLong("Discord.ChannelId", 0) == 0) return;
 
-        MessageChannel channel = jda.getTextChannelById(config.getLong("Discord.ChannelId"));
-        if (Objects.isNull(channel)) {
-            //logger.info("Channel not found!");
-            return;
-        }
+        Method getTextChannelById = Discord.jdaInstance.getClass().getMethod("getTextChannelById", long.class);
+        Object channel = getTextChannelById.invoke(Discord.jdaInstance, config.getLong("Discord.ChannelId"));
 
-        Guild guild = jda.getGuilds().get(0); // 最初のギルドを取得（適切なギルドを選択する必要があります）
+        if (channel == null) return;
+
+        Method getGuild = Discord.jdaInstance.getClass().getMethod("getGuilds");
+        List<?> guilds = (List<?>) getGuild.invoke(Discord.jdaInstance);
+        Object guild = guilds.get(0);
         String query = "SELECT * FROM members;";
         try (Connection conn = db.getConnection();
             PreparedStatement ps = conn.prepareStatement(query);) {
             try (ResultSet minecrafts = ps.executeQuery()) {
+                String emojiId = null;
                 while (minecrafts.next()) {
-                    emojiId = null; // while文の中で、最初にemojiIDを初期化しておく
-                    
+                    emojiId = null;
+
                     String mineName = minecrafts.getString("name");
                     String uuid = minecrafts.getString("uuid");
                     String dbEmojiId = minecrafts.getString("emid");
-                    
-                    // 絵文字が既に存在するかをチェックし、存在する場合はIDを取得
-                    Optional<RichCustomEmoji> existingEmote = guild.getEmojis().stream()
-                        .filter(emote -> emote.getName().equals(mineName))
+
+                    Method getEmojis = guild.getClass().getMethod("getEmojis");
+                    List<?> emojis = (List<?>) getEmojis.invoke(guild);
+                    Optional<?> existingEmote = emojis.stream()
+                        .filter(emote -> {
+                            try {
+                                Method getName = emote.getClass().getMethod("getName");
+                                String existedEmojiName = (String) getName.invoke(emote);
+                                return existedEmojiName.equals(mineName);
+                            } catch (Exception e) {
+                                logger.error("An error occurred while getting emoji ID: " + e.getMessage());
+                                for (StackTraceElement element : e.getStackTrace()) {
+                                    logger.error(element.toString());
+                                }
+                                return false;
+                            }
+                        })
                         .findFirst();
-    
+
                     if (existingEmote.isPresent()) {
-                        emojiId = existingEmote.get().getId();
-                        //logger.info(mineName + "の絵文字はすでに追加されています。");
-                        //logger.info("Existing Emoji ID: " + emojiId);
-                        
-                        // もし、emojiIdがminecrafts.getString("emid")と違ったら更新する
-                        // データベース保存処理
-                        if(Objects.nonNull(emojiId) && !emojiId.equals(dbEmojiId)) {
+                        Object emojiInfo = existingEmote.get();
+                        Method getId = emojiInfo.getClass().getMethod("getId");
+                        emojiId = getId.invoke(emojiInfo).toString();
+
+                        if(emojiId != null && !emojiId.equals(dbEmojiId)) {
                             String query2 = "UPDATE members SET emid=? WHERE uuid=?;";
                             try (PreparedStatement ps2 = conn.prepareStatement(query2);) {
                                 ps2.setString(1, emojiId);
@@ -240,13 +280,11 @@ public class EmojiManager {
                         }
                     } else {
                         String imageUrl = "https://minotar.net/avatar/" + uuid;
-                        //logger.info("Downloading image from URL: " + imageUrl); // 画像URLをログに出力
                         try {
-                            //logger.info("Downloading image from URL: " + imageUrl);
                             URI uri = new URI(imageUrl);
                             URL url = uri.toURL();
                             BufferedImage bufferedImage = ImageIO.read(url);
-                            if (Objects.isNull(bufferedImage)) {
+                            if (bufferedImage == null) {
                                 logger.error("Failed to read image from URL: " + imageUrl);
                                 continue;
                             }
@@ -254,28 +292,36 @@ public class EmojiManager {
                             ByteArrayOutputStream baos = new ByteArrayOutputStream();
                             ImageIO.write(bufferedImage, "png", baos);
                             byte[] imageBytes = baos.toByteArray();
-                            Icon icon = Icon.from(imageBytes);
-    
-                            // Create the emote with the specified name and icon
-                            AuditableRestAction<RichCustomEmoji> action = guild.createEmoji(mineName, icon);
-                            action.queue(
-                                success -> {
+
+                            Object icon = iconClazz.getMethod("from", byte[].class).invoke(null, imageBytes);
+            
+                            Method createEmoji = guild.getClass().getMethod("createEmoji", String.class, iconClazz);;
+                            Object action = createEmoji.invoke(guild, mineName, icon);
+
+                            Method queue = action.getClass().getMethod("queue", Consumer.class, Consumer.class);
+                            queue.invoke(action, new Object[] {
+                                (Consumer<Object>) success -> {
                                     logger.info(mineName + "を絵文字に追加しました。");
-                                    emojiId = success.getId(); // 絵文字IDを取得
-                                    //logger.info("Emoji ID: " + emojiId);
-                                }, failure -> logger.error("Failed to create emoji: " + failure.getMessage())
-                            );
-                            
-                            // データベース更新処理
-                            if (Objects.nonNull(emojiId)) {
-                                String query2 = "UPDATE members SET emid=? WHERE uuid=?;";
-                                try (Connection conn2 = db.getConnection();
-                                    PreparedStatement ps2 = conn2.prepareStatement(query2);) {
-                                    ps2.setString(1, emojiId);
-                                    ps2.setString(2, uuid);
-                                    ps2.executeUpdate();
+                                    try {
+                                        Method getId = success.getClass().getMethod("getId");
+                                        String query2 = "UPDATE members SET emid=? WHERE uuid=?;";
+                                        try (Connection conn2 = db.getConnection();
+                                            PreparedStatement ps2 = conn2.prepareStatement(query2);) {
+                                            ps2.setString(1, getId.invoke(success).toString());
+                                            ps2.setString(2, uuid);
+                                            ps2.executeUpdate();
+                                        }
+                                    } catch (Exception e) {
+                                        logger.error("An error occurred while getting emoji ID: " + e.getMessage());
+                                        for (StackTraceElement element : e.getStackTrace()) {
+                                            logger.error(element.toString());
+                                        }
+                                    }
+                                }, 
+                                (Consumer<Throwable>) failure -> {
+                                    logger.error("Failed to create emoji: " + failure.getMessage());
                                 }
-                            }
+                            });
                         } catch (IOException | URISyntaxException e) {
                             logger.error("Failed to download image: " + e.getMessage());
                             for (StackTraceElement element : e.getStackTrace()) {
@@ -293,16 +339,7 @@ public class EmojiManager {
         }
     }
     
-    public CompletableFuture<String> createOrgetEmojiId(String emojiName) {
-    	try {
-            return createOrgetEmojiId(emojiName, null);
-        } catch (URISyntaxException e) {
-            logger.error("A URISyntaxException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-            
-            return null;
-        }
+    public CompletableFuture<String> createOrgetEmojiId(String emojiName) throws Exception {
+        return createOrgetEmojiId(emojiName, null);
     }
 }

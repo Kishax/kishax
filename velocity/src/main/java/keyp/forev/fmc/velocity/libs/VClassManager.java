@@ -17,6 +17,7 @@ public class VClassManager {
         ENTITYS_MESSAGE("net.dv8tion.jda.api.entities.Message"),
         ENTITYES_MESSAGE_EMBED("net.dv8tion.jda.api.entities.MessageEmbed"),
         ENTITYS_ACTIVITY("net.dv8tion.jda.api.entities.Activity"),
+        ENTITYS_ICON("net.dv8tion.jda.api.entities.Icon"),
         BUTTON("net.dv8tion.jda.api.interactions.components.buttons.Button"),
         PRESENCE("net.dv8tion.jda.api.managers.Presence"),
         ERROR_RESPONSE_EXCEPTION("net.dv8tion.jda.api.exceptions.ErrorResponseException"),
@@ -41,6 +42,7 @@ public class VClassManager {
     public enum CLUB_MINNCED {
         WEBHOOK_CLIENT("club.minnced.discord.webhook.WebhookClient"),
         WEBHOOK_MESSAGE("club.minnced.discord.webhook.send.WebhookMessage"),
+        WEBHOOK_MESSAGE_BUILDER("club.minnced.discord.webhook.send.WebhookMessageBuilder"),
         ;
         private String clazzName;
         private URLClassLoader urlClassLoader;

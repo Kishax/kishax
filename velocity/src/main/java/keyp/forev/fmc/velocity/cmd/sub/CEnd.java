@@ -50,7 +50,16 @@ public class CEnd implements SimpleCommand {
 		Main.isVelocity = false; //フラグをfalseに
 		// 非同期処理を実行
 		//discordME.AddEmbedSomeMessage("End");
-	    CompletableFuture<Void> addEmbedFuture = CompletableFuture.runAsync(() -> discordME.AddEmbedSomeMessage("End"));
+	    CompletableFuture<Void> addEmbedFuture = CompletableFuture.runAsync(() -> {
+			try {
+				discordME.AddEmbedSomeMessage("End");
+			} catch (Exception e) {
+				logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+				for (StackTraceElement ste : e.getStackTrace()) {
+					logger.error(ste.toString());
+				}
+			}
+		});
 
 	    // 両方の非同期処理が完了した後にシャットダウンを実行
 	    CompletableFuture<Void> allTasks = CompletableFuture.allOf(addEmbedFuture);

@@ -154,7 +154,7 @@ public class EventListener {
     	        	String firstTwoChars = originalMessage.substring(0, 2);
     	        	if("@n".equalsIgnoreCase(firstTwoChars)) {
         	        	// 新しいEmbedをDiscordに送る(通知を鳴らす)
-        	        	DiscordEventListener.PlayerChatMessageId = null;
+        	        	DiscordEventListener.playerChatMessageId = null;
         	        	originalMessage = originalMessage.substring(2);
         	        }
     	        }
@@ -413,7 +413,14 @@ public class EventListener {
 											String beforeServerName = beforeServerInfo.getName();
 											db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
 											ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
-											discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+											try {
+												discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+											} catch (Exception ex) {
+												logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", ex.getMessage());
+												for (StackTraceElement ste : ex.getStackTrace()) {
+													logger.error(ste.toString());
+												}
+											}
 										} else {
 											if (beforejoin_sa_minute>=config.getInt("Interval.Login",0)) {
 												if (previousServerInfo.isPresent()) {
@@ -423,13 +430,27 @@ public class EventListener {
 													ServerInfo beforeServerInfo = previousServer.getServerInfo();
 													String beforeServerName = beforeServerInfo.getName();
 													ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
-													discordME.AddEmbedSomeMessage("Move", player, currentServerName);
+													try {
+														discordME.AddEmbedSomeMessage("Move", player, currentServerName);
+													} catch (Exception ex) {
+														logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", ex.getMessage());
+														for (StackTraceElement ste : ex.getStackTrace()) {
+															logger.error(ste.toString());
+														}
+													}
 												} else {
 													// 1回目のどこかのサーバーに上陸したとき
 													Object insertedId = db.insertLogAndGetColumnValue(1, conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true});
 													putJoinLogIdToMap(insertedId, player);
 													ms.updateJoinPlayers(playerName, currentServerName);
-													discordME.AddEmbedSomeMessage("Join", player, serverInfo);
+													try {
+														discordME.AddEmbedSomeMessage("Join", player, serverInfo);
+													} catch (Exception ex) {
+														logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", ex.getMessage());
+														for (StackTraceElement ste : ex.getStackTrace()) {
+															logger.error(ste.toString());
+														}
+													}
 												}
 											}
 										}
@@ -478,7 +499,14 @@ public class EventListener {
 										player.sendMessage(component);
 									}
 									ms.updateJoinPlayers(playerName, currentServerName);
-									discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
+									try {
+										discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
+									} catch (Exception ex) {
+										logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", ex.getMessage());
+										for (StackTraceElement ste : ex.getStackTrace()) {
+											logger.error(ste.toString());
+										}
+									}
 									if (config.getBoolean("Servers." + currentServerName + ".hub")) {
 										component = Component.text(playerName+"がhomeサーバーに初めてやってきました！").color(NamedTextColor.AQUA);
 										bc.sendExceptServerMessage(component, currentServerName);
@@ -534,7 +562,14 @@ public class EventListener {
     	            RegisteredServer registeredServer = currentServer.getServer();
     	            serverInfo = registeredServer.getServerInfo();
     	            console.sendMessage(Component.text("Player " + playerName + " disconnected from server: " + serverInfo.getName()).color(NamedTextColor.GREEN));
-    	            discordME.AddEmbedSomeMessage("Exit", player, serverInfo);
+					try {
+    	            	discordME.AddEmbedSomeMessage("Exit", player, serverInfo);
+					} catch (Exception ex) {
+						logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", ex.getMessage());
+						for (StackTraceElement ste : ex.getStackTrace()) {
+							logger.error(ste.toString());
+						}
+					}
     	        });
         	}).schedule();
         };
