@@ -21,12 +21,10 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
-import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.util.ColorUtil;
 import keyp.forev.fmc.common.util.JavaUtils;
 import keyp.forev.fmc.common.util.PlayerUtils;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.Maintenance;
 import keyp.forev.fmc.velocity.events.EventListener;
@@ -44,8 +42,6 @@ public class MessageEditor {
 	private String avatarUrl = null, addMessage = null, 
 			Emoji = null, FaceEmoji = null, targetServerName = null,
 			uuid = null, playerName = null, currentServerName = null;
-	private MessageEmbed sendEmbed = null, createEmbed = null;
-	private WebhookMessageBuilder builder = null;
 	private CompletableFuture<String> EmojiFutureId = null, FaceEmojiFutureId = null;
 
 	public MessageEditor (
@@ -63,39 +59,39 @@ public class MessageEditor {
 		this.pu = pu;
 	}
 	
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, String serverName) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, String serverName) throws Exception {
 		return AddEmbedSomeMessage(type, player, null, serverName, null, null, null);
 	}
 	
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo) throws Exception {
 		return AddEmbedSomeMessage(type, player, serverInfo, null, null, null, null);
 	}
 	
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player) throws Exception {
 		return AddEmbedSomeMessage(type, player, null, null, null, null, null);
 	}
 	
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName) throws Exception {
 		return AddEmbedSomeMessage(type, null, null, null, alternativePlayerName, null, null);
 	}
 	
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, String alternativePlayerName, String serverName) throws	Exception {
 		return AddEmbedSomeMessage(type, null, null, serverName, alternativePlayerName, null, null);
 	}
 	
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String chatMessage) throws Exception {
 		return AddEmbedSomeMessage(type, player, serverInfo, null, null, chatMessage, null);
 	}
 	
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type) throws Exception {
 		return AddEmbedSomeMessage(type, null, null, null, null, null, null);
 	}
 	
-	public CompletableFuture<Void> AddEmbedSomeMessage(String type, UUID playerUUID) {
+	public CompletableFuture<Void> AddEmbedSomeMessage(String type, UUID playerUUID) throws Exception {
 		return AddEmbedSomeMessage(type, null, null, null, null, null, playerUUID);
 	}
 
-	private CompletableFuture<Void> AddEmbedSomeMessage (String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName, String chatMessage, UUID playerUUID) {
+	private CompletableFuture<Void> AddEmbedSomeMessage (String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName, String chatMessage, UUID playerUUID) throws Exception{
 		boolean discordMessageType = config.getBoolean("Discord.MessageType", false);
 		if (player == null) {
 			if (Objects.nonNull(alternativePlayerName)) {
@@ -141,26 +137,34 @@ public class MessageEditor {
 	            Emoji = emoji.getEmojiString(EmojiName, EmojiId);
 	            FaceEmoji = emoji.getEmojiString(playerName, FaceEmojiId);
 	            String messageId = EventListener.PlayerMessageIds.getOrDefault(uuid, null);
-	            String chatMessageId = DiscordEventListener.PlayerChatMessageId;
+	            String chatMessageId = DiscordEventListener.playerChatMessageId;
 	            addMessage = null;
 	            switch (type) {
 	            	case "End" -> {
 						List<CompletableFuture<Void>> futures = new ArrayList<>();
 						for (Player eachPlayer : server.getAllPlayers()) {
 							CompletableFuture<Void> future = eachPlayer.getCurrentServer()
-									.map(serverConnection -> {
-										RegisteredServer registerServer = serverConnection.getServer();
-										ServerInfo playerServerInfo = registerServer.getServerInfo();
-										// AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
+								.map(serverConnection -> {
+									RegisteredServer registerServer = serverConnection.getServer();
+									ServerInfo playerServerInfo = registerServer.getServerInfo();
+									// AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
+									try {
 										return AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo);
-									}).orElse(CompletableFuture.completedFuture(null)); // サーバーが取得できない場合は即完了するFuture
+									} catch (Exception e) {
+										logger.error("An onConnection error occurred: " + e.getMessage());
+										for (StackTraceElement element : e.getStackTrace()) {
+											logger.error(element.toString());
+										}
+										throw new RuntimeException(e);
+									}
+								}).orElse(CompletableFuture.completedFuture(null)); // サーバーが取得できない場合は即完了するFuture
 							futures.add(future);
 						}
 						CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-								.thenRun(() -> {
-									// 全てのAddEmbedSomeMessageの処理が完了した後に実行される
-									discord.logoutDiscordBot().thenRun(() -> server.shutdown());
-								});
+							.thenRun(() -> {
+								// 全てのAddEmbedSomeMessageの処理が完了した後に実行される
+								discord.logoutDiscordBot().thenRun(() -> server.shutdown());
+							});
 						return CompletableFuture.completedFuture(null);
                     }
 	            	case "Exit" -> {
@@ -173,30 +177,79 @@ public class MessageEditor {
 									db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, quit, playtime) VALUES (?,?,?,?,?);", new Object[] {playerName, playerUUID, currentServerName, true, playTime});
 									String convStringTime = JavaUtils.secondsToStr(playTime);
 									CompletableFuture<Void> editFuture = CompletableFuture.completedFuture(null);
-									if (!Main.isVelocity) {
-										String EndEmojiName = config.getString("Discord.EndEmojiName","");
-										editFuture = emoji.createOrgetEmojiId(EndEmojiName).thenAccept(EndEmojiId -> {
-											if (Objects.nonNull(EndEmojiId)) {
-												String EndEmoji = emoji.getEmojiString(EndEmojiName, EndEmojiId);
-												addMessage = MessageFormat.format("\n\n{0}プロキシサーバーが停止しました。\n\n{1}{2}{3}が{4}サーバーから退出しました。\n\n:alarm_clock: プレイ時間: {5}", EndEmoji, Emoji, FaceEmoji, playerName, currentServerName, convStringTime);
+									try {
+										if (!Main.isVelocity) {
+											String EndEmojiName = config.getString("Discord.EndEmojiName","");
+											editFuture = emoji.createOrgetEmojiId(EndEmojiName)
+												.thenAccept(EndEmojiId -> {
+													if (Objects.nonNull(EndEmojiId)) {
+														String EndEmoji = emoji.getEmojiString(EndEmojiName, EndEmojiId);
+														addMessage = MessageFormat.format("\n\n{0}プロキシサーバーが停止しました。\n\n{1}{2}{3}が{4}サーバーから退出しました。\n\n:alarm_clock: プレイ時間: {5}", EndEmoji, Emoji, FaceEmoji, playerName, currentServerName, convStringTime);
+													}
+												});
+											return editFuture.thenCompose(_pp -> {
+												try {
+													return discord.editBotEmbed(messageId, addMessage);
+												} catch (Exception e) {
+													logger.error("An Exception error occurred: " + e.getMessage());
+													for (StackTraceElement element : e.getStackTrace()) {
+														logger.error(element.toString());
+													}
+												}
+												return CompletableFuture.completedFuture(null);
+											});
+										} else if (Maintenance.isMente) {
+											Maintenance.isMente = false;
+											addMessage = MessageFormat.format("\n\n:red_circle: メンテナンスモードが有効になりました。\n\n{0}{1}{2}が{3}サーバーから退出しました。\n\n:alarm_clock: プレイ時間: {4}", Emoji, FaceEmoji, playerName, currentServerName, convStringTime);
+											if (player instanceof Player) {
+												if (!player.hasPermission("group.super-admin")) {
+													EventListener.PlayerMessageIds.remove(uuid);
+													return editFuture.thenCompose(_pp -> {
+														try {
+															return discord.editBotEmbed(messageId, addMessage);
+														} catch (Exception e) {
+															logger.error("An Exception error occurred: " + e.getMessage());
+															for (StackTraceElement element : e.getStackTrace()) {
+																logger.error(element.toString());
+															}
+														}
+														return CompletableFuture.completedFuture(null);
+													});
+												}
 											}
-										});
-										return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
-									} else if (Maintenance.isMente) {
-										Maintenance.isMente = false;
-										addMessage = MessageFormat.format("\n\n:red_circle: メンテナンスモードが有効になりました。\n\n{0}{1}{2}が{3}サーバーから退出しました。\n\n:alarm_clock: プレイ時間: {4}", Emoji, FaceEmoji, playerName, currentServerName, convStringTime);
-										if (player instanceof Player) {
-											if (!player.hasPermission("group.super-admin")) {
-												EventListener.PlayerMessageIds.remove(uuid);
-												return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
-											}
+										} else {
+											addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーから退出しました。\n\n:alarm_clock: プレイ時間: {4}", Emoji, FaceEmoji, playerName, currentServerName, convStringTime);
+											EventListener.PlayerMessageIds.remove(uuid);
+											return editFuture.thenCompose(_pp -> {
+												try {
+													return discord.editBotEmbed(messageId, addMessage);
+												} catch (Exception e) {
+													logger.error("An Exception error occurred: " + e.getMessage());
+													for (StackTraceElement element : e.getStackTrace()) {
+														logger.error(element.toString());
+													}
+												}
+												return CompletableFuture.completedFuture(null);
+											});
 										}
-									} else {
-										addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーから退出しました。\n\n:alarm_clock: プレイ時間: {4}", Emoji, FaceEmoji, playerName, currentServerName, convStringTime);
-										EventListener.PlayerMessageIds.remove(uuid);
-										return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
+										return editFuture.thenCompose(_pp -> {
+											try {
+												return discord.editBotEmbed(messageId, addMessage);
+											} catch (Exception e) {
+												logger.error("An Exception error occurred: " + e.getMessage());
+												for (StackTraceElement element : e.getStackTrace()) {
+													logger.error(element.toString());
+												}
+											}
+											return CompletableFuture.completedFuture(null);
+										});
+									} catch (Exception e) {
+										logger.error("An Exception error occurred: " + e.getMessage());
+										for (StackTraceElement element : e.getStackTrace()) {
+											logger.error(element.toString());
+										}
+										return CompletableFuture.completedFuture(null);
 									}
-									return editFuture.thenCompose(_pp -> discord.editBotEmbed(messageId, addMessage));
 								}
 							}
 						} catch (SQLException | ClassNotFoundException e1) {
@@ -213,17 +266,31 @@ public class MessageEditor {
 						} else {
 							addMessage = "メンテナンスモードが有効になりました。";
 						}
-						createEmbed = discord.createEmbed(addMessage, ColorUtil.RED.getRGB());
-						discord.sendBotMessage(createEmbed);
-						for (Player eachPlayer : server.getAllPlayers()) {
-							// プレイヤーの現在のサーバーを取得
-							Optional<ServerConnection> optionalServerConnection = eachPlayer.getCurrentServer();
-							if (optionalServerConnection.isPresent()) {
-								ServerConnection serverConnection = optionalServerConnection.get();
-								RegisteredServer registerServer = serverConnection.getServer();
-								ServerInfo playerServerInfo = registerServer.getServerInfo();
-								// AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
-								AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo);
+						try {
+							Object createEmbed = discord.createEmbed(addMessage, ColorUtil.RED.getRGB());
+							discord.sendBotMessage(createEmbed);
+							for (Player eachPlayer : server.getAllPlayers()) {
+								// プレイヤーの現在のサーバーを取得
+								Optional<ServerConnection> optionalServerConnection = eachPlayer.getCurrentServer();
+								if (optionalServerConnection.isPresent()) {
+									ServerConnection serverConnection = optionalServerConnection.get();
+									RegisteredServer registerServer = serverConnection.getServer();
+									ServerInfo playerServerInfo = registerServer.getServerInfo();
+									// AddEmbedSomeMessageがCompletableFuture<Void>を返すと仮定
+									try {
+										AddEmbedSomeMessage("Exit", eachPlayer, playerServerInfo);
+									} catch (Exception e) {
+										logger.error("An onConnection error occurred: " + e.getMessage());
+										for (StackTraceElement element : e.getStackTrace()) {
+											logger.error(element.toString());
+										}
+									}
+								}
+							}
+						} catch (Exception e) {
+							logger.error("An Exception error occurred: " + e.getMessage());
+							for (StackTraceElement element : e.getStackTrace()) {
+								logger.error(element.toString());
 							}
 						}
 						return CompletableFuture.completedFuture(null);
@@ -234,43 +301,59 @@ public class MessageEditor {
 						} else {
 							addMessage = "メンテナンスモードが無効になりました。";
 						}
-						createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
-						discord.sendBotMessage(createEmbed);
+						try {
+							Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
+							discord.sendBotMessage(createEmbed);
+						} catch (Exception e) {
+							logger.error("An Exception error occurred: " + e.getMessage());
+							for (StackTraceElement element : e.getStackTrace()) {
+								logger.error(element.toString());
+							}
+						}
 						return CompletableFuture.completedFuture(null);
                     }
 	            	case "Invader" -> {
 						// Invader専用の絵文字は追加する予定はないので、Emojiのnullチェックは不要
 						if (Objects.nonNull(FaceEmoji)) {
 							addMessage = MessageFormat.format("侵入者が現れました。\n\n:arrow_down: 侵入者情報:arrow_down:\nフェイスアイコン: {0}\n\nプレイヤーネーム: {1}\n\nプレイヤーUUID: {2}", FaceEmoji, playerName, uuid);
-							createEmbed = discord.createEmbed(addMessage, ColorUtil.RED.getRGB());
-							discord.sendBotMessage(createEmbed);
+							try {
+								Object createEmbed = discord.createEmbed(addMessage, ColorUtil.RED.getRGB());
+								discord.sendBotMessage(createEmbed);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
 						}
 						return CompletableFuture.completedFuture(null);
                     }
 	            	case "Chat" -> {
 						// Chat専用の絵文字は追加する予定はないので、Emojiのnullチェックは不要
 						if (Objects.nonNull(FaceEmoji)) {
-							if (discordMessageType) {
-								// 編集embedによるChatメッセージ送信
-								if (Objects.isNull(chatMessageId)) {
-									// 直前にEmbedによるChatメッセージを送信しなかった場合
-									// EmbedChatMessageを送って、MessageIdを
-									addMessage = MessageFormat.format("<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
-									createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
-									discord.sendBotMessageAndgetMessageId(createEmbed, true).thenAccept(messageId2 -> {
-										DiscordEventListener.PlayerChatMessageId = messageId2;
-									});
+							try {
+								if (discordMessageType) {
+									// 編集embedによるChatメッセージ送信
+									if (Objects.isNull(chatMessageId)) {
+										// 直前にEmbedによるChatメッセージを送信しなかった場合
+										// EmbedChatMessageを送って、MessageIdを
+										addMessage = MessageFormat.format("<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
+										Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
+										discord.sendBotMessageAndgetMessageId(createEmbed, true).thenAccept(messageId2 -> {
+											DiscordEventListener.playerChatMessageId = messageId2;
+										});
+									} else {
+										addMessage = MessageFormat.format("<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
+										discord.editBotEmbed(chatMessageId, addMessage, true);
+									}
 								} else {
-									addMessage = MessageFormat.format("<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
-									discord.editBotEmbed(chatMessageId, addMessage, true);
+									discord.sendWebhookMessage(playerName, avatarUrl, chatMessage);
 								}
-							} else {
-								// デフォルトのChatメッセージ送信(Webhook送信)
-								builder = new WebhookMessageBuilder();
-								builder.setUsername(playerName);
-								builder.setAvatarUrl(avatarUrl);
-								builder.setContent(chatMessage);
-								discord.sendWebhookMessage(builder);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
 							}
 						}
 						return CompletableFuture.completedFuture(null);
@@ -281,35 +364,70 @@ public class MessageEditor {
 						} else {
 							addMessage = MessageFormat.format("{0}が新規FMCメンバーになりました！:congratulations:", playerName);
 						}
-						createEmbed = discord.createEmbed (addMessage, ColorUtil.PINK.getRGB());
-						discord.sendBotMessage(createEmbed);
+						try {
+							Object createEmbed = discord.createEmbed (addMessage, ColorUtil.PINK.getRGB());
+							discord.sendBotMessage(createEmbed);
+						} catch (Exception e) {
+							logger.error("An Exception error occurred: " + e.getMessage());
+							for (StackTraceElement element : e.getStackTrace()) {
+								logger.error(element.toString());
+							}
+						}
 						return CompletableFuture.completedFuture(null);
                     }
 	            	case "Stop" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
 							addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーを停止させました。", Emoji, FaceEmoji, playerName, targetServerName);
-							discord.editBotEmbed(messageId, addMessage);
+							try {
+								discord.editBotEmbed(messageId, addMessage);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
 						}
 						return CompletableFuture.completedFuture(null);
 					}
 	                case "Start" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
 							addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーを起動させました。", Emoji, FaceEmoji, playerName, targetServerName);
-							discord.editBotEmbed(messageId, addMessage);
+							try {
+								discord.editBotEmbed(messageId, addMessage);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
 						}
 						return CompletableFuture.completedFuture(null);
                     }
 	                case "Move" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
 							addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーへ移動しました。", Emoji, FaceEmoji, playerName, currentServerName);
-							discord.editBotEmbed(messageId, addMessage);
+							try {
+								discord.editBotEmbed(messageId, addMessage);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
 						}
 						return CompletableFuture.completedFuture(null);
                     }
 	                case "Request" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
-							addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーの起動リクエストを送りました。", Emoji, FaceEmoji, playerName, targetServerName);
-							discord.editBotEmbed(messageId, addMessage);
+							try {
+								addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーの起動リクエストを送りました。", Emoji, FaceEmoji, playerName, targetServerName);
+								discord.editBotEmbed(messageId, addMessage);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
 						}
 						return CompletableFuture.completedFuture(null);
                     }
@@ -327,10 +445,17 @@ public class MessageEditor {
 							ps.setString(2, uuid);
 							int rsAffected = ps.executeUpdate();
 							if (rsAffected > 0) {
-								createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
-								discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
-									EventListener.PlayerMessageIds.put(uuid, messageId2);
-								});
+								try {
+									Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
+									discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+										EventListener.PlayerMessageIds.put(uuid, messageId2);
+									});
+								} catch (Exception e) {
+									logger.error("An Exception error occurred: " + e.getMessage());
+									for (StackTraceElement element : e.getStackTrace()) {
+										logger.error(element.toString());
+									}
+								}
 							}
 						} catch (SQLException | ClassNotFoundException e1) {
 							logger.error("An onConnection error occurred: " + e1.getMessage());
@@ -356,10 +481,17 @@ public class MessageEditor {
 							}
 							int rsAffected = ps.executeUpdate();
 							if (rsAffected > 0) {
-								createEmbed = discord.createEmbed(addMessage, ColorUtil.ORANGE.getRGB());
-								discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
-									EventListener.PlayerMessageIds.put(uuid, messageId2);
-								});
+								try {
+									Object createEmbed = discord.createEmbed(addMessage, ColorUtil.ORANGE.getRGB());
+									discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+										EventListener.PlayerMessageIds.put(uuid, messageId2);
+									});
+								} catch (Exception e) {
+									logger.error("An Exception error occurred: " + e.getMessage());
+									for (StackTraceElement element : e.getStackTrace()) {
+										logger.error(element.toString());
+									}
+								}
 							}
 						} catch (SQLException | ClassNotFoundException e1) {
 							logger.error("An onConnection error occurred: " + e1.getMessage());
@@ -371,25 +503,46 @@ public class MessageEditor {
                     }
 	                case "RequestOK" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
-							addMessage = MessageFormat.format("{0}管理者が{1}{2}の{3}サーバー起動リクエストを受諾しました。", Emoji, FaceEmoji, playerName, targetServerName);
-							sendEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
-							discord.sendBotMessage(sendEmbed);
+							try {
+								addMessage = MessageFormat.format("{0}管理者が{1}{2}の{3}サーバー起動リクエストを受諾しました。", Emoji, FaceEmoji, playerName, targetServerName);
+								Object sendEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
+								discord.sendBotMessage(sendEmbed);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
 						}
 						return CompletableFuture.completedFuture(null);
                     }
 	                case "RequestCancel" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
-							addMessage = MessageFormat.format("{0}管理者が{1}{2}の{3}サーバー起動リクエストをキャンセルしました。", Emoji, FaceEmoji, playerName, targetServerName);
-							sendEmbed = discord.createEmbed(addMessage, ColorUtil.RED.getRGB());
-							discord.sendBotMessage(sendEmbed);
+							try {
+								addMessage = MessageFormat.format("{0}管理者が{1}{2}の{3}サーバー起動リクエストをキャンセルしました。", Emoji, FaceEmoji, playerName, targetServerName);
+								Object sendEmbed = discord.createEmbed(addMessage, ColorUtil.RED.getRGB());
+								discord.sendBotMessage(sendEmbed);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
 						}
 						return CompletableFuture.completedFuture(null);
                     }
 	                case "RequestNoRes" -> {
 						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
-							addMessage = MessageFormat.format("{0}管理者が{1}{2}の{3}サーバー起動リクエストに対して、応答しませんでした。", Emoji, FaceEmoji, playerName, targetServerName);
-							sendEmbed = discord.createEmbed(addMessage, ColorUtil.BLUE.getRGB());
-							discord.sendBotMessage(sendEmbed);
+							try {
+								addMessage = MessageFormat.format("{0}管理者が{1}{2}の{3}サーバー起動リクエストに対して、応答しませんでした。", Emoji, FaceEmoji, playerName, targetServerName);
+								Object sendEmbed = discord.createEmbed(addMessage, ColorUtil.BLUE.getRGB());
+								discord.sendBotMessage(sendEmbed);
+							} catch (Exception e) {
+								logger.error("An Exception error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
 						}
 						return CompletableFuture.completedFuture(null);
 					}

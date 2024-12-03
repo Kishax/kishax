@@ -142,7 +142,14 @@ public class Maintenance {
 									if (ismente.getBoolean("online")) {
 										Maintenance.isMente = false; // フラグをtrueに
 										if (isDiscord) {
-											discordME.AddEmbedSomeMessage("MenteOff");
+											try {
+												discordME.AddEmbedSomeMessage("MenteOff");
+											} catch (Exception e) {
+												logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+												for (StackTraceElement ste : e.getStackTrace()) {
+													logger.error(ste.toString());
+												}
+											}
 										}
 										// メンテナンスモードが有効の場合
 										String query3 = "UPDATE status SET online=? WHERE name=?;";
@@ -157,7 +164,14 @@ public class Maintenance {
 									} else {
 										Maintenance.isMente = true; // フラグをtrueに
 										if (isDiscord) {
-											discordME.AddEmbedSomeMessage("MenteOn");
+											try {
+												discordME.AddEmbedSomeMessage("MenteOn");
+											} catch (Exception e) {
+												logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+												for (StackTraceElement ste : e.getStackTrace()) {
+													logger.error(ste.toString());
+												}
+											}
 										}
 										// メンテナンスモードが無効の場合
 										String query3 = "UPDATE status SET online=? WHERE name=?;";

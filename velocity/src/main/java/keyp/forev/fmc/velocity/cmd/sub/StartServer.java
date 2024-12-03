@@ -151,7 +151,14 @@ public class StartServer {
 																logger.error(element.toString());
 															}
 														}
-														discordME.AddEmbedSomeMessage("Start", player, targetServerName);
+														try {
+															discordME.AddEmbedSomeMessage("Start", player, targetServerName);
+														} catch (Exception e) {
+															logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+															for (StackTraceElement ste : e.getStackTrace()) {
+																logger.error(ste.toString());
+															}
+														}
 														TextComponent component = Component.text()
 																	.append(Component.text("WEB認証...PASS\nアドミン認証...PASS\n\nALL CORRECT\n").color(NamedTextColor.GREEN))
 																	.append(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))

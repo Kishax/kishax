@@ -31,7 +31,6 @@ import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.discord.Discord;
 import keyp.forev.fmc.velocity.discord.EmojiManager;
 import keyp.forev.fmc.velocity.discord.MessageEditor;
-import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.server.DoServerOnline;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
@@ -149,38 +148,59 @@ public class VelocityRequest implements Request {
 								int rsAffected2 = ps2.executeUpdate();
 								if (rsAffected2 > 0) {
 									VelocityRequest.PlayerReqFlags.put(player.getUniqueId().toString(), true); // フラグを設定
-									emoji.createOrgetEmojiId(playerName).thenApply(success -> {
-										if (success != null && !success.isEmpty()) {
-											String playerEmoji = emoji.getEmojiString(playerName, success);
-											discord.sendRequestButtonWithMessage(playerEmoji+playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。\n起動しますか？\n(管理者のみ実行可能です。)");
-											player.sendMessage(Component.text("送信されました。\n管理者が3分以内に対応しますのでしばらくお待ちくださいませ。").color(NamedTextColor.GREEN));
-											TextComponent notifyComponent = Component.text()
-												.append(Component.text(playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。").color(NamedTextColor.AQUA))
-												.build();
-											bc.sendExceptPlayerMessage(notifyComponent, playerName);
-											discordME.AddEmbedSomeMessage("Request", player, targetServerName);
-											try (Connection connection = db.getConnection()) {
-												db.insertLog(connection, "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);" , new Object[] {playerName, playerUUID, currentServerName, true, targetServerName});
-											} catch (SQLException | ClassNotFoundException e) {
-												logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-												for (StackTraceElement element : e.getStackTrace()) {
-													logger.error(element.toString());
+									try {
+										emoji.createOrgetEmojiId(playerName).thenApply(success -> {
+											if (success != null && !success.isEmpty()) {
+												String playerEmoji = emoji.getEmojiString(playerName, success);
+												try {
+													discord.sendRequestButtonWithMessage(playerEmoji+playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。\n起動しますか？\n(管理者のみ実行可能です。)");
+												} catch (Exception e) {
+													logger.error("An exception occurred while executing the sendRequestButtonWithMessage method: {}", e.getMessage());
+													for (StackTraceElement ste : e.getStackTrace()) {
+														logger.error(ste.toString());
+													}
 												}
-											}											
-											return true;
-										} else {
-											return false;
+												player.sendMessage(Component.text("送信されました。\n管理者が3分以内に対応しますのでしばらくお待ちくださいませ。").color(NamedTextColor.GREEN));
+												TextComponent notifyComponent = Component.text()
+													.append(Component.text(playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。").color(NamedTextColor.AQUA))
+													.build();
+												bc.sendExceptPlayerMessage(notifyComponent, playerName);
+												try {
+													discordME.AddEmbedSomeMessage("Request", player, targetServerName);
+												} catch (Exception e) {
+													logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+													for (StackTraceElement ste : e.getStackTrace()) {
+														logger.error(ste.toString());
+													}
+												}
+												try (Connection connection = db.getConnection()) {
+													db.insertLog(connection, "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);" , new Object[] {playerName, playerUUID, currentServerName, true, targetServerName});
+												} catch (SQLException | ClassNotFoundException e) {
+													logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+													for (StackTraceElement element : e.getStackTrace()) {
+														logger.error(element.toString());
+													}
+												}											
+												return true;
+											} else {
+												return false;
+											}
+										}).thenAccept(result -> {
+											if (result) {
+												logger.info(playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。");
+											} else {
+												logger.error("Start Error: Emoji is null or empty.");
+											}
+										}).exceptionally(ex -> {
+											logger.error("Start Error: " + ex.getMessage());
+											return null;
+										});
+									} catch (Exception e) {
+										logger.error("An exception occurred while executing the createOrgetEmojiId method: {}", e.getMessage());
+										for (StackTraceElement ste : e.getStackTrace()) {
+											logger.error(ste.toString());
 										}
-									}).thenAccept(result -> {
-										if (result) {
-											logger.info(playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。");
-										} else {
-											logger.error("Start Error: Emoji is null or empty.");
-										}
-									}).exceptionally(ex -> {
-										logger.error("Start Error: " + ex.getMessage());
-										return null;
-									});
+									}
 								}
 							} catch (SQLException e) {
 								logger.error("A SQLException error occurred: " + e.getMessage());
