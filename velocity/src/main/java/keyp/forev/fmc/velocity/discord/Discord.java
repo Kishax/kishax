@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.libs.ClassManager;
+import keyp.forev.fmc.common.util.EncryptionUtil;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
@@ -35,17 +37,20 @@ public class Discord {
     private final VelocityConfig config;
     private final Database db;
     private final Provider<Request> reqProvider;
-    private final Class<?> jdaBuilderClazz, gatewayIntentsClazz, subcommandDataClazz,
+    // JDA
+    private final Class<?> jdaClazz, jdaBuilderClazz, gatewayIntentsClazz, subcommandDataClazz,
         optionDataClazz, optionTypeClazz, entityMessageClazz,
         entityActivityClazz, entityMessageEmbedClazz, buttonClazz,
-        presenceActivityClazz, webhookClientClazz, webhookMessageClazz,
-        webhookBuilderClazz, embedBuilderClazz, errorResponseExceptionClazz;
+        presenceActivityClazz, embedBuilderClazz, errorResponseExceptionClazz;
+    // Club Minnced
+    private final Class<?> webhookBuilderClazz, webhookClientClazz, webhookMessageClazz;
     @Inject
     public Discord(Logger logger, VelocityConfig config, Database db, Provider<Request> reqProvider) throws ClassNotFoundException {
     	this.logger = logger;
     	this.config = config;
         this.db = db;
         this.reqProvider = reqProvider;
+        this.jdaClazz = VClassManager.JDA.JDA.get().getClazz();
         this.jdaBuilderClazz = VClassManager.JDA.JDA_BUILDER.get().getClazz();
         this.gatewayIntentsClazz = VClassManager.JDA.GATEWAY_INTENTS.get().getClazz();
         this.subcommandDataClazz = VClassManager.JDA.SUB_COMMAND.get().getClazz();
@@ -56,9 +61,9 @@ public class Discord {
         this.entityMessageEmbedClazz = VClassManager.JDA.ENTITYES_MESSAGE_EMBED.get().getClazz();
         this.buttonClazz = VClassManager.JDA.BUTTON.get().getClazz();
         this.presenceActivityClazz = VClassManager.JDA.PRESENCE.get().getClazz();
-        this.webhookClientClazz = VClassManager.CLUB_MINNCED.WEBHOOK_CLIENT.get().getClazz();
-        this.webhookMessageClazz = VClassManager.CLUB_MINNCED.WEBHOOK_MESSAGE.get().getClazz();
-        this.webhookBuilderClazz = VClassManager.CLUB_MINNCED.WEBHOOK_MESSAGE_BUILDER.get().getClazz();
+        this.webhookClientClazz = VClassManager.CLUB_MINNCED_WEBHOOK.WEBHOOK_CLIENT.get().getClazz();
+        this.webhookMessageClazz = VClassManager.CLUB_MINNCED_WEBHOOK.WEBHOOK_MESSAGE.get().getClazz();
+        this.webhookBuilderClazz = VClassManager.CLUB_MINNCED_WEBHOOK.WEBHOOK_MESSAGE_BUILDER.get().getClazz();
         this.embedBuilderClazz = VClassManager.JDA.EMBED_BUILDER.get().getClazz();
         this.errorResponseExceptionClazz = VClassManager.JDA.ERROR_RESPONSE_EXCEPTION.get().getClazz();
     }
@@ -69,87 +74,97 @@ public class Discord {
                 return CompletableFuture.completedFuture(null);
             }
             try {
-                Field gatewayIntent = gatewayIntentsClazz.getField("GUILD_MESSAGES");
-                Field gatewayIntent2 = gatewayIntentsClazz.getField("MESSAGE_CONTENT");
-
-                Enum<?> intent = (Enum<?>) gatewayIntent.get(null);
-                Enum<?> intent2 = (Enum<?>) gatewayIntent2.get(null);
+                logger.info("Discord-Bot is logging in...");
+                
+                String token = config.getString("Discord.Token");
+                logger.info("token: " + EncryptionUtil.encrypt(token));
 
                 Method createDefault = jdaBuilderClazz.getMethod("createDefault", String.class);
-                Object jdaBuilder = createDefault.invoke(null, config.getString("Discord.Token"));
+                Object jdaBuilder = createDefault.invoke(null, token);
 
+                @SuppressWarnings("unchecked")
+                Object intent = Enum.valueOf((Class<Enum>) gatewayIntentsClazz, "GUILD_MESSAGES"),
+                    intent2 = Enum.valueOf((Class<Enum>) gatewayIntentsClazz, "MESSAGE_CONTENT");
+                Object[] intentsArray = { intent2 };
+
+                jdaBuilder = jdaBuilderClazz.getMethod("enableIntents", gatewayIntentsClazz, gatewayIntentsClazz.arrayType())
+                    .invoke(jdaBuilder, intent, intentsArray);
+                logger.info("intent enabled.");
                 // リスナーの登録は、独自アノテーションクラスを使用して動的に行う
                 // Method addEventListeners = jdaBuilder.getClass().getMethod("addEventListeners", Object[].class);
                 // jdaBuilder = addEventListeners.invoke(jdaBuilder, Main.getInjector().getInstance(DiscordEventListener.class));
-                try {
-                    DynamicEventRegister.registerListeners(
-                        Main.getInjector().getInstance(DiscordEventListener.class),
-                        jdaInstance,
-                        ClassManager.urlClassLoaderMap.get(VPackageManager.JDA)
-                    );
-                } catch (Exception e) {
+                return DynamicEventRegister.registerListeners(
+                    Main.getInjector().getInstance(DiscordEventListener.class),
+                    jdaBuilder,
+                    ClassManager.urlClassLoaderMap.get(VPackageManager.VPackage.JDA)
+                ).thenCompose(jdaBuilderHasEventListener -> {
+                    try {
+                        jdaInstance = jdaBuilderHasEventListener.getClass().getMethod("build").invoke(jdaBuilderHasEventListener);
+
+                        Method awaitReady = jdaClazz.getMethod("awaitReady");
+                        awaitReady.invoke(jdaInstance);
+                        
+                        Method upsertCommand = jdaClazz.getMethod("upsertCommand", String.class, String.class);
+                        Object createFMCCommand = upsertCommand.invoke(jdaInstance, "fmc", "FMC commands");
+
+                        Field optionTypeStringField = optionTypeClazz.getField("STRING");
+                        Field optionTypeAttachmentField = optionTypeClazz.getField("ATTACHMENT");
+
+                        Object stringType = optionTypeStringField.get(null);
+                        Object attachmentType = optionTypeAttachmentField.get(null);
+
+                        Constructor<?> subcommandC = subcommandDataClazz.getConstructor(String.class, String.class);
+                        Object createImageSubcommand = subcommandC.newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)");
+                        Object createSyncRuleBookSubcommand = subcommandC.newInstance("syncrulebook", "ルールブックの同期を行うコマンド");
+
+                        Method addOptions = createImageSubcommand.getClass().getMethod("addOptions", optionDataClazz);
+                        Constructor<?> optionDataC = optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class);
+                        addOptions.invoke(createImageSubcommand,
+                            optionDataC.newInstance(stringType, "url", "画像リンクの設定項目"),
+                            optionDataC.newInstance(attachmentType, "image", "ファイルの添付項目"),
+                            optionDataC.newInstance(stringType, "title", "画像マップのタイトル設定項目"),
+                            optionDataC.newInstance(stringType, "comment", "画像マップのコメント設定項目")
+                        );
+
+                        Method addSubcommands = createFMCCommand.getClass().getMethod("addSubcommands", subcommandDataClazz.arrayType());
+                        addSubcommands.invoke(createFMCCommand, new Object[]{createImageSubcommand, createSyncRuleBookSubcommand});
+
+                        Method queue = createFMCCommand.getClass().getMethod("queue");
+                        queue.invoke(createFMCCommand);
+
+                        Method getPresence = jdaInstance.getClass().getMethod("getPresence");
+                        Object presence = getPresence.invoke(jdaInstance);
+
+                        Method setActivity = presence.getClass().getMethod("setActivity", entityActivityClazz);
+                        Method playing = presenceActivityClazz.getMethod("playing", String.class);
+                        Object activity = playing.invoke(null, config.getString("Discord.Presence.Activity", "FMCサーバー"));
+                        setActivity.invoke(presence, activity);
+
+                        isDiscord = true;
+                        logger.info("discord bot has been logged in.");
+                        return CompletableFuture.completedFuture(jdaInstance);
+                    } catch (Exception e) {
+                        logger.error("An error occurred: " + e.getMessage());
+                        for (StackTraceElement element : e.getStackTrace()) {
+                            logger.error(element.toString());
+                        }
+                    }
+                    return CompletableFuture.completedFuture(null);
+                }).exceptionally(e -> {
                     logger.error("An error occurred: " + e.getMessage());
                     for (StackTraceElement element : e.getStackTrace()) {
                         logger.error(element.toString());
                     }
-                }
-
-                Method enableIntents = jdaBuilder.getClass().getMethod("enableIntents", gatewayIntentsClazz, gatewayIntentsClazz);
-                jdaBuilder = enableIntents.invoke(jdaBuilder, intent, intent2);
-
-                Method build = jdaBuilder.getClass().getMethod("build");
-                jdaInstance = build.invoke(jdaBuilder);
-
-                Method awaitReady = jdaInstance.getClass().getMethod("awaitReady");
-                awaitReady.invoke(jdaInstance);
-
-                Method upsertCommand = jdaInstance.getClass().getMethod("upsertCommand", String.class, String.class);
-                Object createFMCCommand = upsertCommand.invoke(jdaInstance, "fmc", "FMC commands");
-
-                Field optionTypeStringField = optionTypeClazz.getField("STRING");
-                Field optionTypeAttachmentField = optionTypeClazz.getField("ATTACHMENT");
-
-                Object stringType = optionTypeStringField.get(null);
-                Object attachmentType = optionTypeAttachmentField.get(null);
-
-                Constructor<?> subcommandC = subcommandDataClazz.getConstructor(String.class, String.class);
-                Object createImageSubcommand = subcommandC.newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)");
-                Object createSyncRuleBookSubcommand = subcommandC.newInstance("syncrulebook", "ルールブックの同期を行うコマンド");
-
-                Method addOptions = createImageSubcommand.getClass().getMethod("addOptions", optionDataClazz);
-                Constructor<?> optionDataC = optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class);
-                addOptions.invoke(createImageSubcommand,
-                    optionDataC.newInstance(stringType, "url", "画像リンクの設定項目"),
-                    optionDataC.newInstance(attachmentType, "image", "ファイルの添付項目"),
-                    optionDataC.newInstance(stringType, "title", "画像マップのタイトル設定項目"),
-                    optionDataC.newInstance(stringType, "comment", "画像マップのコメント設定項目")
-                );
-
-                Method addSubcommands = createFMCCommand.getClass().getMethod("addSubcommands", subcommandDataClazz.arrayType());
-                addSubcommands.invoke(createFMCCommand, new Object[]{createImageSubcommand, createSyncRuleBookSubcommand});
-
-                Method queue = createFMCCommand.getClass().getMethod("queue");
-                queue.invoke(createFMCCommand);
-
-                Method getPresence = jdaInstance.getClass().getMethod("getPresence");
-                Object presence = getPresence.invoke(jdaInstance);
-
-                Method setActivity = presence.getClass().getMethod("setActivity", entityActivityClazz);
-                Method playing = presenceActivityClazz.getMethod("playing", String.class);
-                Object activity = playing.invoke(null, config.getString("Discord.Presence.Activity", "FMCサーバー"));
-                setActivity.invoke(presence, activity);
-
-                isDiscord = true;
-                logger.info("discord bot has been logged in.");
-                return jdaInstance;
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException | NoSuchFieldException e) {
+                    return null;
+                });
+            } catch (Exception e) {
                 logger.error("An discord-bot-login error occurred: " + e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
                     logger.error(element.toString());
                 }
                 return CompletableFuture.completedFuture(null);
             }
-        });
+        }, Executors.newSingleThreadExecutor());
     }
 
     public CompletableFuture<Void> logoutDiscordBot() {

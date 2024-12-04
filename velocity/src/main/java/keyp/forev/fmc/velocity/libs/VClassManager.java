@@ -6,6 +6,7 @@ import keyp.forev.fmc.common.libs.ClassManager;
 
 public class VClassManager {
     public enum JDA {
+        JDA("net.dv8tion.jda.api.JDA"),
         JDA_BUILDER("net.dv8tion.jda.api.JDABuilder"),
         EMBED_BUILDER("net.dv8tion.jda.api.EmbedBuilder"),
         GATEWAY_INTENTS("net.dv8tion.jda.api.requests.GatewayIntent"),
@@ -28,36 +29,32 @@ public class VClassManager {
         JDA(String clazzName) {
             this.clazzName = clazzName;
             if (ClassManager.urlClassLoaderMap != null) {
-                this.urlClassLoader = ClassManager.urlClassLoaderMap.get(VPackageManager.JDA);
+                this.urlClassLoader = ClassManager.urlClassLoaderMap.get(VPackageManager.VPackage.JDA);
             }
         }
         public ClassManager get() throws ClassNotFoundException {
-            Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
+            //Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
+            Class<?> clazz = urlClassLoader.loadClass(clazzName);
             return new ClassManager(clazz);
         }
-        public URLClassLoader getLoader() {
-            return urlClassLoader;
-        }
     }
-    public enum CLUB_MINNCED {
+    public enum CLUB_MINNCED_WEBHOOK {
         WEBHOOK_CLIENT("club.minnced.discord.webhook.WebhookClient"),
         WEBHOOK_MESSAGE("club.minnced.discord.webhook.send.WebhookMessage"),
         WEBHOOK_MESSAGE_BUILDER("club.minnced.discord.webhook.send.WebhookMessageBuilder"),
         ;
         private String clazzName;
         private URLClassLoader urlClassLoader;
-        CLUB_MINNCED(String clazzName) {
+        CLUB_MINNCED_WEBHOOK(String clazzName) {
             this.clazzName = clazzName;
             if (ClassManager.urlClassLoaderMap != null) {
-                this.urlClassLoader = ClassManager.urlClassLoaderMap.get(VPackageManager.CLUB_MINNCED);
+                this.urlClassLoader = ClassManager.urlClassLoaderMap.get(VPackageManager.VPackage.CLUB_MINNCED_WEBHOOK);
             }
         }
         public ClassManager get() throws ClassNotFoundException {
-            Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
+            //Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
+            Class<?> clazz = urlClassLoader.loadClass(clazzName);
             return new ClassManager(clazz);
-        }
-        public URLClassLoader getLoader() {
-            return urlClassLoader;
         }
     }
 }

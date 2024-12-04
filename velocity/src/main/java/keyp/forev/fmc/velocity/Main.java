@@ -54,6 +54,7 @@ public class Main {
 	private final ProxyServer server;
 	private final Logger logger;
 	private final Path dataDirectory;
+    private boolean isEnable = false;
     @Inject
     public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory) {
         this.server = serverinstance;
@@ -67,10 +68,7 @@ public class Main {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
         VeloBoardRegistry.register();
         Downloader downloader = new Downloader();
-        //ClassLoader classLoader = new ClassLoader();
-        //ClassLoader classLoader = new keyp.forev.fmc.common.libs.ClassLoader();
-        List<PackageManager> packages = Arrays.asList(VPackageManager.values());
-        // パッケージのダウンロードとクラスのロードを同期的に行う
+        List<PackageManager> packages = Arrays.asList(VPackageManager.VPackage.values());
         CompletableFuture<List<Boolean>> downloadFuture = downloader.downloadPackages(packages, dataDirectory);
         downloadFuture.thenCompose(results -> {
             for (int i = 0; i < results.size(); i++) {
@@ -82,35 +80,43 @@ public class Main {
                 logger.error("Failed to download external package.");
                 return CompletableFuture.completedFuture(null);
             } else {
-                logger.info("All packages loaded successfully.");
+                logger.info("All packages downloaded successfully.");
                 return JarLoader.makeURLClassLoaderFromJars(packages, dataDirectory);
             }
         }).thenAccept(urlClassLoader -> {
             try {
                 if (urlClassLoader.isEmpty()) {
                     logger.error("Failed to make ClassLoader from JAR.");
-                    logger.error("Cannot start the server.");
+                    logger.error("Cannot start fmc plugin.");
                     return;
                 }
                 // URLClassLoaderを別のクラスで保存する
                 for (PackageManager pkg : packages) {
                     if (pkg != null) {
-                        logger.info("URLClassLoader saved successfully: {}", pkg.getCoordinates());
+                        // logger.info("URLClassLoader saved successfully: {}", pkg.getCoordinates());
                     } else {
                         logger.error("Failed to make ClassLoader from JAR");
-                        logger.error("Cannot start the server.");
+                        logger.error("Cannot start fmc plugin.");
                         return;
                     }
                 }
                 ClassManager.urlClassLoaderMap.putAll(urlClassLoader);
                 startApplication();
+                isEnable = true;
             } catch (Exception e1) {
                 logger.error("Failed to make ClassLoader from JAR: {}", e1.getMessage());
                 for (StackTraceElement ste : e1.getStackTrace()) {
                     logger.error(ste.toString());
                 }
-                logger.error("Cannot start the server.");
+                logger.error("Cannot start fmc plugin.");
             }
+        }).exceptionally(e1 -> {
+                logger.error("An error occurred while loading packages: {}", e1.getMessage());
+                for (StackTraceElement ste : e1.getStackTrace()) {
+                    logger.error(ste.toString());
+                }
+                logger.error("Cannot start fmc plugin.");
+                return null;
         });
     }
     
@@ -130,6 +136,12 @@ public class Main {
                         }
                     }
                 }
+            }).exceptionally(e -> {
+                logger.error("An error occurred while logging in to Discord: {}", e.getMessage());
+                for (StackTraceElement ste : e.getStackTrace()) {
+                    logger.error(ste.toString());
+                }
+                return null;
             }); 		
         Database db = getInjector().getInstance(Database.class);
 		try (Connection conn = db.getConnection()) {
@@ -164,6 +176,7 @@ public class Main {
     
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent e) {
+        if (!isEnable) return;
         getInjector().getInstance(DoServerOffline.class).updateDatabase();
     	getInjector().getProvider(SocketSwitch.class).get().stopSocketClient();
 		logger.info( "Client Socket Stopping..." );
