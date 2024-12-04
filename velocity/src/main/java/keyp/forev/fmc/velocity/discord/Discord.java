@@ -1,9 +1,10 @@
 package keyp.forev.fmc.velocity.discord;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -11,7 +12,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -20,16 +20,17 @@ import org.slf4j.Logger;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.libs.ClassManager;
-import keyp.forev.fmc.common.util.EncryptionUtil;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.libs.VPackageManager;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import com.google.inject.Singleton;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import java.net.URLClassLoader;
 
 @Singleton
 public class Discord {
@@ -40,6 +41,7 @@ public class Discord {
     private final Database db;
     private final Provider<Request> reqProvider;
     // JDA
+    private final URLClassLoader jdaURLClassLoader;
     private final Class<?> jdaClazz, jdaBuilderClazz, gatewayIntentsClazz, subcommandDataClazz,
         optionDataClazz, optionTypeClazz, entityMessageClazz,
         entityActivityClazz, entityMessageEmbedClazz, buttonClazz,
@@ -53,6 +55,7 @@ public class Discord {
     	this.config = config;
         this.db = db;
         this.reqProvider = reqProvider;
+        this.jdaURLClassLoader = ClassManager.urlClassLoaderMap.get(VPackageManager.VPackage.JDA);
         this.jdaClazz = VClassManager.JDA.JDA.get().getClazz();
         this.jdaBuilderClazz = VClassManager.JDA.JDA_BUILDER.get().getClazz();
         this.gatewayIntentsClazz = VClassManager.JDA.GATEWAY_INTENTS.get().getClazz();
@@ -84,101 +87,108 @@ public class Discord {
                 logger.info("Discord-Bot is logging in...");
                 
                 Method createDefault = jdaBuilderClazz.getMethod("createDefault", String.class);
-                final Object[] jdaBuilder = { createDefault.invoke(jdaBuilderClazz, config.getString("Discord.Token")) };
+                Object jdaBuilder = createDefault.invoke(jdaBuilderClazz, config.getString("Discord.Token"));
 
                 List<Object> intentsList = new ArrayList<>();
                 intentsList.add(Enum.valueOf((Class<Enum>) gatewayIntentsClazz, "GUILD_MESSAGES"));
                 intentsList.add(Enum.valueOf((Class<Enum>) gatewayIntentsClazz, "MESSAGE_CONTENT"));
 
-                jdaBuilder[0] = jdaBuilderClazz.getMethod("enableIntents", Collection.class)
-                    .invoke(jdaBuilder[0], intentsList);
-                // リスナーの登録は、独自アノテーションクラスを使用して動的に行う
+                jdaBuilder = jdaBuilderClazz.getMethod("enableIntents", Collection.class)
+                    .invoke(jdaBuilder, intentsList);
+                
                 // Method addEventListeners = jdaBuilder.getClass().getMethod("addEventListeners", Object[].class);
                 // jdaBuilder = addEventListeners.invoke(jdaBuilder, Main.getInjector().getInstance(DiscordEventListener.class));
-                return DynamicEventRegister.registerListeners(
-                    Main.getInjector().getInstance(DiscordEventListener.class),
-                    ClassManager.urlClassLoaderMap.get(VPackageManager.VPackage.JDA),
-                    jdaBuilderClazz,
-                    eventListenerClazz
-                ).thenCompose(listenerProxys -> {
-                    try {
-                        logger.info("listenerProxys: " + listenerProxys);
-                        logger.info("jdaBuilder[0]: " + jdaBuilder[0]);
 
-                        Method addEventListenerMethod = jdaBuilderClazz.getMethod("addEventListeners", Object[].class);
-                        logger.info("addEventListenerMethod: " + addEventListenerMethod);
+                // リスナーの登録は、独自アノテーションクラスを使用して動的に行う
+                DiscordEventListener listener = Main.getInjector().getInstance(DiscordEventListener.class);
+                List<Object> listenerProxys = new ArrayList<>();
+                Method addEventListenerMethod = jdaBuilderClazz.getMethod("addEventListeners", Object[].class);
+                for (Method method : listener.getClass().getDeclaredMethods()) {
+                    if (method.isAnnotationPresent(ReflectionHandler.class)) {
+                        ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
+                        Class<?> eventClazz = jdaURLClassLoader.loadClass(annotation.event());
+                        logger.info("eventClazz: " + eventClazz);
 
-                        //Object jdaBuilder2 = addEventListenerMethod.invoke(jdaBuilder[0], (Object) listenerProxys);
-                        //logger.info("jdaBuilder2: " + jdaBuilder2);
-                        for (Object proxy : listenerProxys) {
-                            jdaBuilder[0] = addEventListenerMethod.invoke(jdaBuilder[0], new Object[] { new Object[] { proxy } });
-                        }
-
-                        Method build = jdaBuilderClazz.getMethod("build");
-                        logger.info("build: " + build);
-
-                        jdaInstance = build.invoke(jdaBuilder[0]);
-                        logger.info("jdaInstance: " + jdaInstance);
-
-                        Method awaitReady = jdaClazz.getMethod("awaitReady");
-                        awaitReady.invoke(jdaInstance);
-                        
-                        Method upsertCommand = jdaClazz.getMethod("upsertCommand", String.class, String.class);
-                        Object createFMCCommand = upsertCommand.invoke(jdaInstance, "fmc", "FMC commands");
-
-                        //Field optionTypeStringField = optionTypeClazz.getField("STRING");
-                        //Field optionTypeAttachmentField = optionTypeClazz.getField("ATTACHMENT");
-                        //Object stringType = optionTypeStringField.get(null);
-                        //Object attachmentType = optionTypeAttachmentField.get(null);
-                        Object stringType = Enum.valueOf((Class<Enum>) optionTypeClazz, "STRING");
-                        Object attachmentType = Enum.valueOf((Class<Enum>) optionTypeClazz, "ATTACHMENT");
-
-                        Constructor<?> subcommandC = subcommandDataClazz.getConstructor(String.class, String.class);
-                        Object createImageSubcommand = subcommandC.newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)");
-                        Object createSyncRuleBookSubcommand = subcommandC.newInstance("syncrulebook", "ルールブックの同期を行うコマンド");
-
-                        Method addOptions = subcommandDataClazz.getMethod("addOptions", optionDataClazz);
-                        Constructor<?> optionDataC = optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class);
-                        addOptions.invoke(createImageSubcommand,
-                            optionDataC.newInstance(stringType, "url", "画像リンクの設定項目"),
-                            optionDataC.newInstance(attachmentType, "image", "ファイルの添付項目"),
-                            optionDataC.newInstance(stringType, "title", "画像マップのタイトル設定項目"),
-                            optionDataC.newInstance(stringType, "comment", "画像マップのコメント設定項目")
+                        Object proxy = Proxy.newProxyInstance(
+                            eventListenerClazz.getClassLoader(),
+                            new Class<?>[]{eventListenerClazz}, // ここで必ずEventListenerの型を指定
+                            new InvocationHandler() {
+                                @Override
+                                public Object invoke(Object proxy, Method eventMethod, Object[] args) throws Throwable {
+                                    if (args != null && args.length == 1 && eventClazz.isInstance(args[0])) {
+                                        method.invoke(listener, args[0]);
+                                    }
+                                    return null;
+                                }
+                            }
                         );
 
-                        Method addSubcommands = cmdCreateActionClazz.getMethod("addSubcommands", subcommandDataClazz.arrayType());
-                        Object cmdResult = addSubcommands.invoke(createFMCCommand, new Object[]{createImageSubcommand, createSyncRuleBookSubcommand});
-
-                        Method queue = restActionClazz.getMethod("queue");
-                        queue.invoke(cmdResult);
-                        //Method queue = createFMCCommand.getClass().getMethod("queue");
-                        //queue.invoke(createFMCCommand);
-
-                        Method getPresence = jdaClazz.getMethod("getPresence");
-                        Object presence = getPresence.invoke(jdaInstance);
-
-                        Method setActivity = presenceActivityClazz.getMethod("setActivity", entityActivityClazz);
-                        Method playing = presenceActivityClazz.getMethod("playing", String.class);
-                        Object activity = playing.invoke(null, config.getString("Discord.Presence.Activity", "FMCサーバー"));
-                        setActivity.invoke(presence, activity);
-
-                        isDiscord = true;
-                        logger.info("discord bot has been logged in.");
-                        return CompletableFuture.completedFuture(jdaInstance);
-                    } catch (Exception e) {
-                        logger.error("An error occurred: " + e.getMessage());
-                        for (StackTraceElement element : e.getStackTrace()) {
-                            logger.error(element.toString());
+                        if (proxy == null) {
+                            logger.error("Proxy is null.");
+                            logger.error("Proxy creation failed for method: " + method.getName());
+                        } else {
+                            logger.info("Proxy created: " + proxy);
+                            listenerProxys.add(proxy);
                         }
                     }
-                    return CompletableFuture.completedFuture(null);
-                }).exceptionally(e -> {
-                    logger.error("An error occurred: " + e.getMessage());
-                    for (StackTraceElement element : e.getStackTrace()) {
-                        logger.error(element.toString());
-                    }
-                    return null;
-                });
+                }
+                
+                logger.info("listenerProxys: " + listenerProxys);
+                logger.info("jdaBuilder: " + jdaBuilder);
+                
+                // 可変長引数として渡すために配列をラップ
+                Object[] proxyArray = listenerProxys.toArray(new Object[0]);
+                jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, (Object) proxyArray);
+
+                //for (Object proxy : listenerProxys) {
+                //    jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { new Object[] { proxy } });
+                //}
+
+                Method build = jdaBuilderClazz.getMethod("build");
+                logger.info("build: " + build);
+
+                jdaInstance = build.invoke(jdaBuilder);
+                logger.info("jdaInstance: " + jdaInstance);
+
+                Method awaitReady = jdaClazz.getMethod("awaitReady");
+                awaitReady.invoke(jdaInstance);
+                
+                Method upsertCommand = jdaClazz.getMethod("upsertCommand", String.class, String.class);
+                Object createFMCCommand = upsertCommand.invoke(jdaInstance, "fmc", "FMC commands");
+
+                Object stringType = Enum.valueOf((Class<Enum>) optionTypeClazz, "STRING");
+                Object attachmentType = Enum.valueOf((Class<Enum>) optionTypeClazz, "ATTACHMENT");
+
+                Constructor<?> subcommandC = subcommandDataClazz.getConstructor(String.class, String.class);
+                Object createImageSubcommand = subcommandC.newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)");
+                Object createSyncRuleBookSubcommand = subcommandC.newInstance("syncrulebook", "ルールブックの同期を行うコマンド");
+
+                Method addOptions = subcommandDataClazz.getMethod("addOptions", optionDataClazz);
+                Constructor<?> optionDataC = optionDataClazz.getConstructor(optionTypeClazz, String.class, String.class);
+                addOptions.invoke(createImageSubcommand,
+                    optionDataC.newInstance(stringType, "url", "画像リンクの設定項目"),
+                    optionDataC.newInstance(attachmentType, "image", "ファイルの添付項目"),
+                    optionDataC.newInstance(stringType, "title", "画像マップのタイトル設定項目"),
+                    optionDataC.newInstance(stringType, "comment", "画像マップのコメント設定項目")
+                );
+
+                Method addSubcommands = cmdCreateActionClazz.getMethod("addSubcommands", subcommandDataClazz.arrayType());
+                Object cmdResult = addSubcommands.invoke(createFMCCommand, new Object[]{createImageSubcommand, createSyncRuleBookSubcommand});
+
+                Method queue = restActionClazz.getMethod("queue");
+                queue.invoke(cmdResult);
+
+                Method getPresence = jdaClazz.getMethod("getPresence");
+                Object presence = getPresence.invoke(jdaInstance);
+
+                Method setActivity = presenceActivityClazz.getMethod("setActivity", entityActivityClazz);
+                Method playing = presenceActivityClazz.getMethod("playing", String.class);
+                Object activity = playing.invoke(null, config.getString("Discord.Presence.Activity", "FMCサーバー"));
+                setActivity.invoke(presence, activity);
+
+                isDiscord = true;
+                logger.info("discord bot has been logged in.");
+                return CompletableFuture.completedFuture(jdaInstance);
             } catch (Exception e) {
                 logger.error("An discord-bot-login error occurred: " + e.getMessage());
                 for (StackTraceElement element : e.getStackTrace()) {
@@ -186,7 +196,7 @@ public class Discord {
                 }
                 return CompletableFuture.completedFuture(null);
             }
-        }, Executors.newSingleThreadExecutor());
+        });
     }
 
     public CompletableFuture<Void> logoutDiscordBot() {
