@@ -3,6 +3,7 @@ package keyp.forev.fmc.velocity.discord;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URLClassLoader;
+import java.util.concurrent.CompletableFuture;
 
 import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 
@@ -10,7 +11,7 @@ import java.lang.reflect.InvocationHandler;
 
 public class DynamicEventRegister {
 
-    public static void registerListeners(Object target, Object jdaInstance, URLClassLoader jdaURLClassLoader) throws Exception {
+    public static CompletableFuture<Object> registerListeners(Object target, Object jdaBuilder, URLClassLoader jdaURLClassLoader) throws Exception {
         Class<?> eventListenerClass = Class.forName("net.dv8tion.jda.api.hooks.ListenerAdapter", true, jdaURLClassLoader);
         for (Method method : target.getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(ReflectionHandler.class)) {
@@ -29,9 +30,10 @@ public class DynamicEventRegister {
                         }
                     }
                 );
-                Method addEventListenerMethod = jdaInstance.getClass().getMethod("addEventListener", eventListenerClass);
-                addEventListenerMethod.invoke(jdaInstance, proxy);
+                Method addEventListenerMethod = jdaBuilder.getClass().getMethod("addEventListener", eventListenerClass);
+                jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, proxy);
             }
         }
+        return CompletableFuture.completedFuture(jdaBuilder);
     }
 }
