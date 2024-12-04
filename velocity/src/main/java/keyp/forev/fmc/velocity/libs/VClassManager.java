@@ -23,6 +23,10 @@ public class VClassManager {
         PRESENCE("net.dv8tion.jda.api.managers.Presence"),
         ERROR_RESPONSE_EXCEPTION("net.dv8tion.jda.api.exceptions.ErrorResponseException"),
         EVENT_MESSAGE_UPDATE("net.dv8tion.jda.api.events.message.MessageUpdateEvent"),
+        COMMAND_CREATE_ACTION("net.dv8tion.jda.api.requests.restaction.CommandCreateAction"),
+        REST_ACTION("net.dv8tion.jda.api.requests.RestAction"),
+        EVENTLISTENER("net.dv8tion.jda.api.hooks.EventListener"),
+        
         ;
         private String clazzName;
         private URLClassLoader urlClassLoader;

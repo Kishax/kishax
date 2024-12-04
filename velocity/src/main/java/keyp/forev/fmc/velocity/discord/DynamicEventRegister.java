@@ -8,32 +8,42 @@ import java.util.concurrent.CompletableFuture;
 import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 
 import java.lang.reflect.InvocationHandler;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DynamicEventRegister {
 
-    public static CompletableFuture<Object> registerListeners(Object target, Object jdaBuilder, URLClassLoader jdaURLClassLoader) throws Exception {
-        Class<?> eventListenerClass = Class.forName("net.dv8tion.jda.api.hooks.ListenerAdapter", true, jdaURLClassLoader);
-        for (Method method : target.getClass().getDeclaredMethods()) {
+    public static CompletableFuture<Object[]> registerListeners(
+            DiscordEventListener listener, 
+            URLClassLoader jdaURLClassLoader,
+            Class<?> jdaBuilderClazz,
+            Class<?> eventListenerClazz
+        ) throws Exception {
+        List<Object> proxys = new ArrayList<>();
+        for (Method method : listener.getClass().getDeclaredMethods()) {
             if (method.isAnnotationPresent(ReflectionHandler.class)) {
                 ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
-                Class<?> eventClass = Class.forName(annotation.event(), true, jdaURLClassLoader);
+                Class<?> eventClazz = jdaURLClassLoader.loadClass(annotation.event());
                 Object proxy = Proxy.newProxyInstance(
-                    eventListenerClass.getClassLoader(),
-                    new Class<?>[]{eventListenerClass},
+                    jdaURLClassLoader,
+                    new Class<?>[]{eventListenerClazz},
                     new InvocationHandler() {
                         @Override
                         public Object invoke(Object proxy, Method eventMethod, Object[] args) throws Throwable {
-                            if (args != null && args.length == 1 && eventClass.isInstance(args[0])) {
-                                method.invoke(target, args[0]);
+                            if (args != null && args.length == 1 && eventClazz.isInstance(args[0])) {
+                                method.invoke(listener, args[0]);
                             }
                             return null;
                         }
                     }
                 );
-                Method addEventListenerMethod = jdaBuilder.getClass().getMethod("addEventListener", eventListenerClass);
-                jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, proxy);
+                proxys.add(proxy);
             }
         }
-        return CompletableFuture.completedFuture(jdaBuilder);
+        
+        // 可変長引数として渡すために配列をラップ
+        //Object[] proxyArray = proxys.toArray(new Object[0]);
+        //return CompletableFuture.completedFuture(proxyArray);
+        return CompletableFuture.completedFuture(proxys.toArray());
     }
 }

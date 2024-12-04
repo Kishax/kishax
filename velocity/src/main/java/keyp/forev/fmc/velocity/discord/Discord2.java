@@ -37,6 +37,7 @@ import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
+import net.dv8tion.jda.api.hooks.AnnotatedEventManager;
 
 public class Discord2 {
 	public static JDA jda = null;
