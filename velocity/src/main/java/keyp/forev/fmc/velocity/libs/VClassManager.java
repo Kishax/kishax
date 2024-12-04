@@ -26,7 +26,6 @@ public class VClassManager {
         COMMAND_CREATE_ACTION("net.dv8tion.jda.api.requests.restaction.CommandCreateAction"),
         REST_ACTION("net.dv8tion.jda.api.requests.RestAction"),
         EVENTLISTENER("net.dv8tion.jda.api.hooks.EventListener"),
-        
         ;
         private String clazzName;
         private URLClassLoader urlClassLoader;
