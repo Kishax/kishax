@@ -59,10 +59,6 @@ public class DiscordEventListener {
 		this.sswProvider = sswProvider;
 	}
 
-	/*@Override
-	public void onMessageUpdate(@Nonnull MessageUpdateEvent event) {
-		// ...
-    }*/
 	@ReflectionHandler(event = "net.dv8tion.jda.api.events.message.MessageUpdateEvent")
 	public void onMessageUpdate(@Nonnull Object event) {
         try {

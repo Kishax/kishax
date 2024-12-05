@@ -2,7 +2,6 @@ package keyp.forev.fmc.velocity.module;
 
 import java.nio.file.Path;
 
-import org.checkerframework.checker.units.qual.t;
 import org.slf4j.Logger;
 
 import com.google.inject.AbstractModule;
@@ -81,6 +80,9 @@ public class Module extends AbstractModule {
         bind(FMCBoard.class);
         bind(CommandForwarder.class);
         bind(DefaultLuckperms.class);
+
+        // 試験要素
+        //bind(Discord2.class);
     }
 
     @Provides

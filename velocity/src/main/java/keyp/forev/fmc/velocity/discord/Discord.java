@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.libs.ClassManager;
+import keyp.forev.fmc.common.libs.JarLoader;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
@@ -100,45 +101,67 @@ public class Discord {
                 // jdaBuilder = addEventListeners.invoke(jdaBuilder, Main.getInjector().getInstance(DiscordEventListener.class));
 
                 // リスナーの登録は、独自アノテーションクラスを使用して動的に行う
-                DiscordEventListener listener = Main.getInjector().getInstance(DiscordEventListener.class);
                 List<Object> listenerProxys = new ArrayList<>();
                 Method addEventListenerMethod = jdaBuilderClazz.getMethod("addEventListeners", Object[].class);
-                for (Method method : listener.getClass().getDeclaredMethods()) {
-                    if (method.isAnnotationPresent(ReflectionHandler.class)) {
-                        ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
-                        Class<?> eventClazz = jdaURLClassLoader.loadClass(annotation.event());
-                        logger.info("eventClazz: " + eventClazz);
 
-                        Object proxy = Proxy.newProxyInstance(
-                            eventListenerClazz.getClassLoader(),
-                            new Class<?>[]{eventListenerClazz}, // ここで必ずEventListenerの型を指定
-                            new InvocationHandler() {
-                                @Override
-                                public Object invoke(Object proxy, Method eventMethod, Object[] args) throws Throwable {
-                                    if (args != null && args.length == 1 && eventClazz.isInstance(args[0])) {
-                                        method.invoke(listener, args[0]);
-                                    }
-                                    return null;
-                                }
+                DiscordEventListener listener = Main.getInjector().getInstance(DiscordEventListener.class);
+                try {
+                    for (Method method : listener.getClass().getDeclaredMethods()) {
+                        if (method.isAnnotationPresent(ReflectionHandler.class)) {
+                            ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
+                            Class<?> eventClazz = jdaURLClassLoader.loadClass(annotation.event());
+
+                            logger.info("EventListener class loader: " + eventListenerClazz.getClassLoader());
+                            logger.info("Discord class loader: " + Discord.class.getClassLoader());
+                            logger.info("JDA class loader: " + jdaClazz.getClassLoader());
+                            logger.info("JarLoader class loader: " + JarLoader.class.getClassLoader());
+                            logger.info("listener class loader: " + listener.getClass().getClassLoader());
+
+                            for (Class<?> iface : eventListenerClazz.getInterfaces()) {
+                                logger.info("Interface: " + iface.getName() + " | Loader: " + iface.getClassLoader());
                             }
-                        );
 
-                        if (proxy == null) {
-                            logger.error("Proxy is null.");
-                            logger.error("Proxy creation failed for method: " + method.getName());
-                        } else {
-                            logger.info("Proxy created: " + proxy);
+                            Object proxy = Proxy.newProxyInstance(
+                                eventListenerClazz.getClassLoader()
+                                /*eventListenerClazz.getClassLoader()*//*eventListenerClazz.getClassLoader()*//*jdaURLClassLoader*//*Discord.class.getClassLoader()*//*eventListenerClazz.getClassLoader()*/,
+                                new Class<?>[]{eventListenerClazz}, // ここで必ずEventListenerの型を指定
+                                new InvocationHandler() {
+                                    @Override
+                                    public Object invoke(Object proxy, Method eventMethod, Object[] args) throws Throwable {
+                                        try {
+                                            if (args != null && args.length == 1 && eventClazz.isAssignableFrom(args[0].getClass())) {
+                                                method.invoke(listener, args[0]);
+                                            }
+                                            return null;
+                                        } catch (Exception e) {
+                                            logger.error("Error in proxy invocation: ", e);
+                                            throw e;
+                                        }
+                                    }
+                                }
+                            );
+
+                            if (proxy == null) {
+                                throw new IllegalStateException("Failed to create proxy for " + eventListenerClazz.getName());
+                            }
+
                             listenerProxys.add(proxy);
                         }
                     }
+                } catch (IllegalArgumentException e) {
+                    logger.error("Failed to create proxy due to illegal arguments: " + e.getMessage());
+                    throw e;
+                } catch (Exception e) {
+                    logger.error("Unexpected error creating proxy: " + e.getMessage());
                 }
                 
                 logger.info("listenerProxys: " + listenerProxys);
                 logger.info("jdaBuilder: " + jdaBuilder);
                 
                 // 可変長引数として渡すために配列をラップ
-                Object[] proxyArray = listenerProxys.toArray(new Object[0]);
-                jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, (Object) proxyArray);
+                //Object[] proxyArray = listenerProxys.toArray(new Object[0]);
+                //jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, (Object) proxyArray);
+                jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { listenerProxys.toArray() });
 
                 //for (Object proxy : listenerProxys) {
                 //    jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { new Object[] { proxy } });
