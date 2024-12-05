@@ -81,7 +81,8 @@ public class Main {
                 return CompletableFuture.completedFuture(null);
             } else {
                 logger.info("All packages downloaded successfully.");
-                return JarLoader.makeURLClassLoaderFromJars(packages, dataDirectory);
+                ClassLoader parentLoader = this.getClass().getClassLoader();
+                return JarLoader.makeURLClassLoaderFromJars(parentLoader, packages, dataDirectory);
             }
         }).thenAccept(urlClassLoader -> {
             try {
@@ -142,7 +143,7 @@ public class Main {
                     logger.error(ste.toString());
                 }
                 return null;
-            }); 		
+            });
         Database db = getInjector().getInstance(Database.class);
 		try (Connection conn = db.getConnection()) {
             getInjector().getInstance(DoServerOnline.class).updateDatabase(conn);

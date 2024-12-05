@@ -18,7 +18,7 @@ public class JarLoader {
         loaders.add(loader); // GCに回収されないように保持
     }
 
-    public static CompletableFuture<Map<PackageManager, URLClassLoader>> makeURLClassLoaderFromJars(List<PackageManager> packages, Path dataDirectory) {
+    public static CompletableFuture<Map<PackageManager, URLClassLoader>> makeURLClassLoaderFromJars(ClassLoader parentLoader, List<PackageManager> packages, Path dataDirectory) {
         Map<PackageManager, CompletableFuture<URLClassLoader>> futures = packages.stream()
             .collect(Collectors.toMap(
                 pkg -> pkg,
@@ -38,7 +38,11 @@ public class JarLoader {
                                     jarurls[i + 1] = depJarPath.toUri().toURL();
                                 }
                             }
-                            URLClassLoader urlClassLoader = new URLClassLoader(jarurls, null);
+
+                            //ClassLoader parentLoader = JarLoader.class.getClass().getClassLoader();
+                            //ClassLoader parentLoader = ClassLoader.getSystemClassLoader().getParent();
+                            //System.out.println("parentLoader: " + parentLoader);
+                            URLClassLoader urlClassLoader = new URLClassLoader(jarurls, parentLoader/*null*/);
                             addLoader(urlClassLoader); // これを追加
                             return urlClassLoader;
                         } catch (IOException e) {

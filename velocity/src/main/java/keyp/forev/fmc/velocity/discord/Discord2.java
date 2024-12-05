@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 
-import com.google.inject.Inject;
+//import com.google.inject.Inject;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookMessage;
@@ -37,7 +37,6 @@ import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
-import net.dv8tion.jda.api.hooks.AnnotatedEventManager;
 
 public class Discord2 {
 	public static JDA jda = null;
@@ -49,7 +48,7 @@ public class Discord2 {
     private String channelId = null;
     private MessageChannel channel= null;
 	
-    @Inject
+    //@Inject
     public Discord2(Logger logger, VelocityConfig config, Database db, Request req) {
     	this.logger = logger;
     	this.config = config;
