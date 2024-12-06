@@ -65,24 +65,19 @@ public class DiscordEventListener {
             String ruleChannelId = Long.toString(config.getLong("Discord.Rule.ChannelId", 0));
             String ruleMessageId = Long.toString(config.getLong("Discord.Rule.MessageId", 0));
 
-            // getChannelメソッドを呼び出し
             Method getChannelMethod = event.getClass().getMethod("getChannel");
             Object channel = getChannelMethod.invoke(event);
 
-            // getIdメソッドを呼び出し
             Method getIdMethod = channel.getClass().getMethod("getId");
             String channelId = (String) getIdMethod.invoke(channel);
 
-            // getMessageIdメソッドを呼び出し
             Method getMessageIdMethod = event.getClass().getMethod("getMessageId");
             String messageId = (String) getMessageIdMethod.invoke(event);
 
             if (channelId.equals(ruleChannelId) && messageId.equals(ruleMessageId)) {
-                // getMessageメソッドを呼び出し
                 Method getMessageMethod = event.getClass().getMethod("getMessage");
                 Object message = getMessageMethod.invoke(event);
 
-                // getContentDisplayメソッドを呼び出し
                 Method getContentDisplayMethod = message.getClass().getMethod("getContentDisplay");
                 String newContent = (String) getContentDisplayMethod.invoke(message);
 
@@ -107,17 +102,8 @@ public class DiscordEventListener {
         }
     }
 
-	private void replyMessage(Method m, String message, boolean isEphemeral) throws Exception {
-		Object replyResult = m.invoke(m, message);
-		Method setEphemeralMethod = replyResult.getClass().getMethod("setEphemeral", boolean.class);
-		Object ephemeralReplyResult = setEphemeralMethod.invoke(replyResult, true);
-		Method queueMethod = ephemeralReplyResult.getClass().getMethod("queue");
-		queueMethod.invoke(ephemeralReplyResult);
-	}
-
 	@ReflectionHandler(event = "net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent")
     public void onSlashCommandInteraction(@Nonnull Object event) throws Exception {
-		Method replyMethod = event.getClass().getMethod("reply", String.class);
 		Method getUserMethod = event.getClass().getMethod("getUser");
 		Method getMemberMethod = event.getClass().getMethod("getMember");
 		Method getGuildMethod = event.getClass().getMethod("getGuild");
@@ -159,7 +145,7 @@ public class DiscordEventListener {
 							Method getRoleByIdMethod = guild.getClass().getMethod("getRoleById", long.class);
 							Object adCraRole = getRoleByIdMethod.invoke(guild, config.getLong("Discord.AdCraRoleId"));
 							if (!roles.contains(adCraRole)) {
-								replyMessage(replyMethod, userMention + " あなたはこの操作を行う権限がありません。", true);
+								replyMessage(event, userMention + " あなたはこの操作を行う権限がありません。", true);
 								return;
 							}
 							logger.info("メッセージの内容: {}", content);
@@ -168,16 +154,16 @@ public class DiscordEventListener {
 									db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {content, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
 									SocketSwitch ssw = sswProvider.get();
 									ssw.sendSpigotServer(conn, "RulebookSync");
-									replyMessage(replyMethod, "ルールブックを更新しました。", true);
+									replyMessage(event, "ルールブックを更新しました。", true);
 								} catch (SQLException | ClassNotFoundException e1) {
-									replyMessage(replyMethod, "データベースに接続できませんでした。", true);
+									replyMessage(event, "データベースに接続できませんでした。", true);
 									logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
 									for (StackTraceElement element : e1.getStackTrace()) {
 										logger.error(element.toString());
 									}
 								}
 							} else {
-								replyMessage(replyMethod, "メッセージの内容が取得できませんでした。", true);
+								replyMessage(event, "メッセージの内容が取得できませんでした。", true);
 							}
 						} catch (Exception e1) {
 							logger.error("An error occurred: " + e1.getMessage());
@@ -187,7 +173,7 @@ public class DiscordEventListener {
 						}
 					}).exceptionally(throwable -> {
 						try {
-							replyMessage(replyMethod, "メッセージの取得に失敗しました。", true);
+							replyMessage(event, "メッセージの取得に失敗しました。", true);
 						} catch (Exception e1) {
 							logger.error("An error occurred: " + e1.getMessage());
 							for (StackTraceElement element : e1.getStackTrace()) {
@@ -203,9 +189,10 @@ public class DiscordEventListener {
 							userUploadTimes = getDiscordUserTodayRegisterImageMetaTimes(conn, userId),
 							thisTimes = userUploadTimes + 1;
 						if (thisTimes >= limitUploadTimes) {
-							replyMessage(replyMethod, "1日の登録回数は"+limitUploadTimes+"回までです。", true);
+							replyMessage(event, "1日の登録回数は"+limitUploadTimes+"回までです。", true);
 							return;
 						}
+
 						Method getOptionMethod = event.getClass().getMethod("getOption", String.class);
 						Object urlObj = getOptionMethod.invoke(event, "url"),
 							titleObj = getOptionMethod.invoke(event, "title"),
@@ -213,16 +200,16 @@ public class DiscordEventListener {
 							imageObj = getOptionMethod.invoke(event, "image");
 
 						String url = urlObj != null ? (String) urlObj.getClass().getMethod("getAsString").invoke(urlObj) : null,
-							title = titleObj != null ? (String) titleObj.getClass().getMethod("getAsString").invoke(urlObj) : "無名のタイトル",
-							comment = commentObj != null ? (String) commentObj.getClass().getMethod("getAsString").invoke(urlObj) : "コメントなし";
+							title = titleObj != null ? (String) titleObj.getClass().getMethod("getAsString").invoke(titleObj) : "無名のタイトル",
+							comment = commentObj != null ? (String) commentObj.getClass().getMethod("getAsString").invoke(commentObj) : "コメントなし";
 						Object attachment = imageObj != null ? imageObj.getClass().getMethod("getAsAttachment").invoke(imageObj) : null;
 
 						if (url == null && attachment == null) {
-							replyMessage(replyMethod, "画像URLまたは画像を指定してください。", true);
+							replyMessage(event, "画像URLまたは画像を指定してください。", true);
 							return;
 						}
 						if (url != null && attachment != null) {
-							replyMessage(replyMethod, "画像URLと画像の両方を指定することはできません。", true);
+							replyMessage(event, "画像URLと画像の両方を指定することはできません。", true);
 							return;
 						}
 						if (attachment != null) {
@@ -233,12 +220,12 @@ public class DiscordEventListener {
 						String otp = OTPGenerator.generateOTP(6);
 						db.insertLog(conn, "INSERT INTO images (name, title, url, comment, otp, d, dname, did, date, locked, locked_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {userName12, title, url, comment, otp, true, userName12, userId, java.sql.Date.valueOf(now), true, false});
 
-						replyMessage(replyMethod, "画像メタデータを登録しました。(" + thisTimes + "/" + limitUploadTimes + ")\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```", true);
+						replyMessage(event, "画像メタデータを登録しました。(" + thisTimes + "/" + limitUploadTimes + ")\nワンタイムパスワード: "+otp+"\nマイクラ画像マップ取得コマンド: ```/q "+otp+"```", true);
 
 						logger.info("(Discord) 画像メタデータを登録しました。");
 						logger.info("ユーザー: {}\n試行: {}", (userName != null ? userName : userName2),"("+thisTimes+"/10)");
 					} catch (SQLException | ClassNotFoundException e1) {
-						replyMessage(replyMethod, "データベースに接続できませんでした。", true);
+						replyMessage(event, "データベースに接続できませんでした。", true);
 						logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
 						for (StackTraceElement element : e1.getStackTrace()) {
 							logger.error(element.toString());
@@ -255,16 +242,16 @@ public class DiscordEventListener {
 		Method getChannelJoinedMethod = event.getClass().getMethod("getChannelJoined");
 
 		Object member = getMemberMethod.invoke(event);
-		Object channel = getChannelJoinedMethod.invoke(event);
+		Method getUserMethod = member.getClass().getMethod("getUser");
+		Object user = getUserMethod.invoke(member);
+		Method getEffectiveNameMethod = member.getClass().getMethod("getEffectiveName");
+		String memberName = (String) getEffectiveNameMethod.invoke(member);
 
+		Object channel = getChannelJoinedMethod.invoke(event);
+		if (channel == null) return;
 		Method getNameMethod = channel.getClass().getMethod("getName");
 		String channelName = (String) getNameMethod.invoke(channel);
 
-		Method getUserMethod = member.getClass().getMethod("getUser");
-		Object user = getUserMethod.invoke(member);
-		
-		Method getEffectiveNameMethod = member.getClass().getMethod("getEffectiveName");
-		String memberName = (String) getEffectiveNameMethod.invoke(member);
 		if (user != null) {
 			Method isBotMethod = user.getClass().getMethod("isBot");
 			if ((boolean) isBotMethod.invoke(user)) {
@@ -280,7 +267,6 @@ public class DiscordEventListener {
 
 	@ReflectionHandler(event = "net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent")
 	public void onButtonInteraction(@Nonnull Object event) throws Exception {
-		Method replyMethod = event.getClass().getMethod("reply", String.class);
 		Method getComponentIdMethod = event.getClass().getMethod("getComponentId");
 		Method getMessageMethod = event.getClass().getMethod("getMessage");
 		Method getUserMethod = event.getClass().getMethod("getUser");
@@ -310,7 +296,7 @@ public class DiscordEventListener {
 		Object adCraRole = getRoleByIdMethod.invoke(guild, config.getLong("Discord.AdCraRoleId"));
 
 		if (!roles.contains(adCraRole)) {
-			replyMessage(replyMethod, userMention + " あなたはこの操作を行う権限がありません。", false);
+			replyMessage(event, userMention + " あなたはこの操作を行う権限がありません。", false);
 			return;
 		}
 		String replyMessage = null;
@@ -350,7 +336,7 @@ public class DiscordEventListener {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
 				if (replyMessage != null) {
-					replyMessage(replyMethod, replyMessage, false);
+					replyMessage(event, replyMessage, false);
 				}
 				Object edit = editMessageComponentsMethod.invoke(message);
 				edit.getClass().getMethod("queue").invoke(edit);
@@ -377,7 +363,7 @@ public class DiscordEventListener {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
 				if (replyMessage != null) {
-					replyMessage(replyMethod, replyMessage, false);
+					replyMessage(event, replyMessage, false);
 				}
 				Object edit = editMessageComponentsMethod.invoke(message);
 				edit.getClass().getMethod("queue").invoke(edit);
@@ -394,24 +380,26 @@ public class DiscordEventListener {
 		Method getAttachmentsMethod = getMessageMethod.getReturnType().getMethod("getAttachments");
 		Method getContentRawMethod = getMessageMethod.getReturnType().getMethod("getContentRaw");
 
-		Object author = getAuthorMethod.invoke(event);
-		Object member = getMemberMethod.invoke(event);
 		Object channel = getChannelMethod.invoke(event);
+		Method getChannelIdMethod = channel.getClass().getMethod("getId");
+		String channelId = (String) getChannelIdMethod.invoke(channel);
+
 		Object message = getMessageMethod.invoke(event);
+		Method isWebhookMessageMethod = message.getClass().getMethod("isWebhookMessage");
+
 		List<?> attachments = (List<?>) getAttachmentsMethod.invoke(message);
 		String content = (String) getContentRawMethod.invoke(message);
 
+		Object author = getAuthorMethod.invoke(event);
 		Method authorIsBotMethod = author.getClass().getMethod("isBot");
-		Method isWebhookMessageMethod = getMessageMethod.getReturnType().getMethod("isWebhookMessage");
-		Method getChannelIdMethod = channel.getClass().getMethod("getId");
 
-		String channelId = (String) getChannelIdMethod.invoke(channel);
 		if ((boolean) authorIsBotMethod.invoke(author) || 
-			(boolean) isWebhookMessageMethod.invoke(getMessageMethod) || 
+			(boolean) isWebhookMessageMethod.invoke(message) || 
 			!channelId.equals(Long.toString(config.getLong("Discord.ChatChannelId")))) {
 			return;
 		}
 
+		Object member = getMemberMethod.invoke(event);
 		if (member == null) return;
 
 		Method getEffectiveNameMethod = member.getClass().getMethod("getEffectiveName");
@@ -451,6 +439,15 @@ public class DiscordEventListener {
 				}
 		    }
 		}
+	}
+
+	private void replyMessage(Object event, String message, boolean isEphemeral) throws Exception {
+		Method replyMethod = event.getClass().getMethod("reply", String.class);
+		Object replyResult = replyMethod.invoke(event, message);
+		Method setEphemeralMethod = replyResult.getClass().getMethod("setEphemeral", boolean.class);
+		Object ephemeralReplyResult = setEphemeralMethod.invoke(replyResult, true);
+		Method queueMethod = ephemeralReplyResult.getClass().getMethod("queue");
+		queueMethod.invoke(ephemeralReplyResult);
 	}
 
 	private int getDiscordUserTodayRegisterImageMetaTimes(Connection conn, String userId) throws SQLException, ClassNotFoundException {
