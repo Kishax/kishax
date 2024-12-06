@@ -55,7 +55,6 @@ public class VClassManager {
             }
         }
         public ClassManager get() throws ClassNotFoundException {
-            //Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
             Class<?> clazz = urlClassLoader.loadClass(clazzName);
             return new ClassManager(clazz);
         }

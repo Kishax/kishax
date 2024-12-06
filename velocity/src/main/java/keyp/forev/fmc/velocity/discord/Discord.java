@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -55,8 +54,6 @@ public class Discord {
         entityMessageEmbedClazz, entityEmbedTypeClazz, buttonClazz, 
         presenceActivityClazz, embedBuilderClazz, errorResponseExceptionClazz, 
         cmdCreateActionClazz, restActionClazz;
-    // Club Minnced
-    private final Class<?> webhookBuilderClazz, webhookClientClazz, webhookMessageClazz;
     @Inject
     public Discord(Logger logger, VelocityConfig config, Database db, Provider<Request> reqProvider) throws ClassNotFoundException {
     	this.logger = logger;
@@ -76,9 +73,6 @@ public class Discord {
         this.entityEmbedTypeClazz = VClassManager.JDA.ENTITYS_EMBED_TYPE.get().getClazz();
         this.buttonClazz = VClassManager.JDA.BUTTON.get().getClazz();
         this.presenceActivityClazz = VClassManager.JDA.PRESENCE.get().getClazz();
-        this.webhookClientClazz = VClassManager.CLUB_MINNCED_WEBHOOK.WEBHOOK_CLIENT.get().getClazz();
-        this.webhookMessageClazz = VClassManager.CLUB_MINNCED_WEBHOOK.WEBHOOK_MESSAGE.get().getClazz();
-        this.webhookBuilderClazz = VClassManager.CLUB_MINNCED_WEBHOOK.WEBHOOK_MESSAGE_BUILDER.get().getClazz();
         this.embedBuilderClazz = VClassManager.JDA.EMBED_BUILDER.get().getClazz();
         this.errorResponseExceptionClazz = VClassManager.JDA.ERROR_RESPONSE_EXCEPTION.get().getClazz();
         this.cmdCreateActionClazz = VClassManager.JDA.COMMAND_CREATE_ACTION.get().getClazz();
@@ -467,49 +461,6 @@ public class Discord {
         });
     }
 
-    public void sendWebhookMessage(String userName, String avatarUrl, String content) throws Exception {
-        Constructor<?> webhookBuilderC = webhookBuilderClazz.getConstructor();
-        Object webhookBuilder = webhookBuilderC.newInstance();
-
-        Method setUsername = webhookBuilderClazz.getMethod("setUsername", String.class);
-        Method setAvatarUrl = webhookBuilderClazz.getMethod("setAvatarUrl", String.class);
-        Method setContent = webhookBuilderClazz.getMethod("setContent", String.class);
-        Method build = webhookBuilderClazz.getMethod("build");
-        setUsername.invoke(webhookBuilder, userName);
-        setAvatarUrl.invoke(webhookBuilder, avatarUrl);
-        setContent.invoke(webhookBuilder, content);
-        build.invoke(webhookBuilder);
-        
-    	String webhookUrl = config.getString("Discord.Webhook_URL","");
-
-    	if (webhookUrl.isEmpty()) return;
-
-        Method withUrl = webhookClientClazz.getMethod("withUrl", String.class);
-        Object webhookClient = withUrl.invoke(null, webhookUrl);
-
-        Method send = webhookClient.getClass().getMethod("send", webhookMessageClazz);
-        Object sendResult = send.invoke(webhookClient, webhookBuilder);
-
-        Method thenAccept = sendResult.getClass().getMethod("thenAccept", Consumer.class);
-        thenAccept.invoke(sendResult, (Consumer<Object>) _p -> {
-            try {
-                Method exceptionally = sendResult.getClass().getMethod("exceptionally", Function.class);
-                exceptionally.invoke(sendResult, (Function<Throwable, Object>) throwable -> {
-                    logger.error("A sendWebhookMessage error occurred: " + throwable.getMessage());
-                    for (StackTraceElement element : throwable.getStackTrace()) {
-                        logger.error(element.toString());
-                    }
-                    return null;
-                });
-            } catch (Exception e) {
-                logger.error("An error occurred: " + e.getMessage());
-                for (StackTraceElement element : e.getStackTrace()) {
-                    logger.error(element.toString());
-                }
-            }
-        });
-    }
-
     public CompletableFuture<Void> editBotEmbed(String messageId, String additionalDescription, boolean isChat) throws Exception {
         CompletableFuture<Void> future = new CompletableFuture<>();
         getBotMessage(messageId, currentEmbed -> {
@@ -778,6 +729,7 @@ public class Discord {
 
 
     public Object createEmbed(String description, int color) throws Exception {
+        Thread.currentThread().setContextClassLoader(jdaURLClassLoader);
         // "net.dv8tion.jda.api.entities.MessageEmbed"の内部クラスを取得
         //ClassLoader loader = entityMessageEmbedClazz.getClassLoader();
         Class<?> embedTypeClazz = entityEmbedTypeClazz, 
