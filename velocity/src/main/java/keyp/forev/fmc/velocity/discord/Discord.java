@@ -18,6 +18,7 @@ import java.util.function.Function;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 
 import keyp.forev.fmc.common.database.Database;
@@ -188,26 +189,36 @@ public class Discord {
                             MethodVisitor mv = cw.visitMethod(
                                 Opcodes.ACC_PUBLIC,
                                 methodName,
-                                "(L" + eventClazz.getName().replace('.', '/') + ";)V",
+                                //"(L" + eventClazz.getName().replace('.', '/') + ";)V",
+                                Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(eventClazz)),
                                 null,
                                 null
                             );
                             
-                            // メソッド本体の修正
                             mv.visitCode();
+
                             mv.visitVarInsn(Opcodes.ALOAD, 0);
                             mv.visitFieldInsn(
                                 Opcodes.GETFIELD,
                                 classNameInternal,
                                 "delegate",
-                                "L" + listener.getClass().getName().replace('.', '/') + ";"
+                                //"L" + listener.getClass().getName().replace('.', '/') + ";"
+                                Type.getDescriptor(DiscordEventListener.class)  // 具体的な型を指定
                             );
+
+                            // event 引数のロード
                             mv.visitVarInsn(Opcodes.ALOAD, 1);
+
+                            // 具象イベントクラスから Object への変換は不要（自動的にアップキャスト）
+
+                            // メソッド呼び出し
                             mv.visitMethodInsn(
                                 Opcodes.INVOKEVIRTUAL,
-                                listener.getClass().getName().replace('.', '/'),
+                                //listener.getClass().getName().replace('.', '/'),
+                                Type.getInternalName(DiscordEventListener.class),
                                 methodName,
-                                "(L" + eventClazz.getName().replace('.', '/') + ";)V",
+                                //"(L" + eventClazz.getName().replace('.', '/') + ";)V",
+                                Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class/*eventClazz*/)),
                                 false
                             );
                             mv.visitInsn(Opcodes.RETURN);

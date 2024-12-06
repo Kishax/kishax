@@ -36,6 +36,14 @@ shadowJar {
 	archiveClassifier.set('')
 	archiveVersion.set('3.4.0')
 	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+
+	sourceSets {
+        main {
+            java {
+                exclude '**/experience/**'
+            }
+        }
+    }
 }
 
 tasks.build {
