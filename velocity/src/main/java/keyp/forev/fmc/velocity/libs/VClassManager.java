@@ -26,7 +26,8 @@ public class VClassManager {
         EVENT_MESSAGE_UPDATE("net.dv8tion.jda.api.events.message.MessageUpdateEvent"),
         COMMAND_CREATE_ACTION("net.dv8tion.jda.api.requests.restaction.CommandCreateAction"),
         REST_ACTION("net.dv8tion.jda.api.requests.RestAction"),
-        EVENTLISTENER("net.dv8tion.jda.api.hooks.EventListener"),
+        EVENT_LISTENER("net.dv8tion.jda.api.hooks.EventListener"),
+        GENERIC_EVENT("net.dv8tion.jda.api.events.GenericEvent"),
         ;
         private String clazzName;
         private URLClassLoader urlClassLoader;
