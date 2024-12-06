@@ -52,7 +52,7 @@ public class Discord {
         optionTypeClazz, entityMessageClazz, entityActivityClazz, 
         entityMessageEmbedClazz, entityMessageChannel, buttonClazz, presenceActivityClazz, 
         embedBuilderClazz, errorResponseExceptionClazz, cmdCreateActionClazz, 
-        restActionClazz, eventListenerClazz;
+        restActionClazz, eventListenerClazz, genericEventClazz;
     // Club Minnced
     private final Class<?> webhookBuilderClazz, webhookClientClazz, webhookMessageClazz;
     @Inject
@@ -81,7 +81,8 @@ public class Discord {
         this.errorResponseExceptionClazz = VClassManager.JDA.ERROR_RESPONSE_EXCEPTION.get().getClazz();
         this.cmdCreateActionClazz = VClassManager.JDA.COMMAND_CREATE_ACTION.get().getClazz();
         this.restActionClazz = VClassManager.JDA.REST_ACTION.get().getClazz();
-        this.eventListenerClazz = VClassManager.JDA.EVENTLISTENER.get().getClazz();
+        this.eventListenerClazz = VClassManager.JDA.EVENT_LISTENER.get().getClazz();
+        this.genericEventClazz = VClassManager.JDA.GENERIC_EVENT.get().getClazz();
         this.listenerAdapterClazz = VClassManager.JDA.LISTENER_ADAPTER.get().getClazz();
     }
 
@@ -244,92 +245,6 @@ public class Discord {
                     throw new RuntimeException("Failed to create dynamic listener", e);
                 }*/
 
-                try {
-                    // ASMを使用したクラス生成
-                    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-                    String className = "DynamicListener_" + System.currentTimeMillis();
-                    String classNameInternal = className.replace('.', '/');
-                    String superClassInternal = listenerAdapterClazz.getName().replace('.', '/');
-                            
-                    // クラス定義
-                    cw.visit(Opcodes.V17, // Java 17バージョン
-                        Opcodes.ACC_PUBLIC,
-                        classNameInternal,
-                        null,
-                        superClassInternal,
-                        null);
-                    
-                    // デフォルトコンストラクタの追加
-                    MethodVisitor constructor = cw.visitMethod(
-                        Opcodes.ACC_PUBLIC,
-                        "<init>",
-                        "()V",
-                        null,
-                        null
-                    );
-                    constructor.visitCode();
-                    constructor.visitVarInsn(Opcodes.ALOAD, 0);
-                    constructor.visitMethodInsn(
-                        Opcodes.INVOKESPECIAL,
-                        superClassInternal,
-                        "<init>",
-                        "()V",
-                        false
-                    );
-                    constructor.visitInsn(Opcodes.RETURN);
-                    constructor.visitMaxs(1, 1);
-                    constructor.visitEnd();
-
-                    for (Method method : listener.getClass().getDeclaredMethods()) {
-                        if (method.isAnnotationPresent(ReflectionHandler.class)) {
-                            ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
-                            Class<?> eventClazz = jdaURLClassLoader.loadClass(annotation.event());
-                            String methodName = method.getName();
-                            
-                            // メソッド生成
-                            MethodVisitor mv = cw.visitMethod(
-                                Opcodes.ACC_PUBLIC,
-                                methodName,
-                                "(L" + eventClazz.getName().replace('.', '/') + ";)V",
-                                null,
-                                null
-                            );
-                            
-                            mv.visitCode();
-                            mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-                            mv.visitLdcInsn("Hello!");
-                            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
-                            mv.visitInsn(Opcodes.RETURN);
-                            mv.visitMaxs(2, 2);
-                            mv.visitEnd();
-                            
-                            cw.visitEnd();
-                        }
-                    }
-
-                    // クラスローダーを使用してクラスを定義
-                    //byte[] classBytes = cw.toByteArray();
-                    //Class<?> dynamicClass = defineClass(className, classBytes);
-                    byte[] classBytes = cw.toByteArray();
-                    try (CustomClassLoader loader = new CustomClassLoader(
-                        ((URLClassLoader) jdaURLClassLoader).getURLs(),
-                        jdaURLClassLoader.getParent()
-                    );) {
-                        Class<?> dynamicClass = loader.defineNewClass(className, classBytes);
-
-                        Object asmListener = dynamicClass.getDeclaredConstructor().newInstance();
-
-                        //listenerProxys.add(asmListener);
-                        jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { new Object[] { asmListener } });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new RuntimeException("Failed to create dynamic listener", e);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new RuntimeException("Failed to create dynamic listener", e);
-                }
-
                 // プロキシを使用したリスナーの登録
                 /*
                 try {
@@ -384,6 +299,130 @@ public class Discord {
                     logger.error("Unexpected error creating proxy: " + e.getMessage());
                 }
                 */
+
+                try {
+                    // ASMを使用したクラス生成
+                    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+                    String className = "DynamicListener_" + System.currentTimeMillis();
+                    String classNameInternal = className.replace('.', '/');
+                    String superClassInternal = listenerAdapterClazz.getName().replace('.', '/');
+                    //String[] interfaces = new String[0];
+                    //String[] interfaces = new String[] { 
+                    //    "net/dv8tion/jda/api/hooks/EventListener"  // 明示的にEventListenerを実装
+                    //};
+
+                    // クラス定義
+                    cw.visit(Opcodes.V17, // Java 17バージョン
+                        Opcodes.ACC_PUBLIC,
+                        classNameInternal,
+                        null,
+                        superClassInternal,
+                        null/*interfaces*/);
+                    
+                    // リスナーフィールドの追加
+                    cw.visitField(
+                        Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,
+                        "delegate",
+                        "L" + listener.getClass().getName().replace('.', '/') + ";",
+                        null,
+                        null
+                    ).visitEnd();
+
+                    // コンストラクタの修正
+                    MethodVisitor constructor = cw.visitMethod(
+                        Opcodes.ACC_PUBLIC,
+                        "<init>",
+                        "(L" + listener.getClass().getName().replace('.', '/') + ";)V",
+                        null,
+                        null
+                    );
+                    constructor.visitCode();
+                    // super()
+                    constructor.visitVarInsn(Opcodes.ALOAD, 0);
+                    constructor.visitMethodInsn(
+                        Opcodes.INVOKESPECIAL,
+                        superClassInternal,
+                        "<init>",
+                        "()V",
+                        false
+                    );
+                    // this.delegate = delegate
+                    constructor.visitVarInsn(Opcodes.ALOAD, 0);
+                    constructor.visitVarInsn(Opcodes.ALOAD, 1);
+                    constructor.visitFieldInsn(
+                        Opcodes.PUTFIELD,
+                        classNameInternal,
+                        "delegate",
+                        "L" + listener.getClass().getName().replace('.', '/') + ";"
+                    );
+                    constructor.visitInsn(Opcodes.RETURN);
+                    constructor.visitMaxs(2, 2);
+                    constructor.visitEnd();
+                    
+                    for (Method method : listener.getClass().getDeclaredMethods()) {
+                        if (method.isAnnotationPresent(ReflectionHandler.class)) {
+                            ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
+                            Class<?> eventClazz = jdaURLClassLoader.loadClass(annotation.event());
+                            String methodName = method.getName();
+                            
+                            // メソッド生成
+                            MethodVisitor mv = cw.visitMethod(
+                                //Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED,  // protectedメソッドとして定義
+                                Opcodes.ACC_PUBLIC,
+                                //Opcodes.ACC_PROTECTED,  // protectedメソッドとして定義
+                                methodName,
+                                "(L" + eventClazz.getName().replace('.', '/') + ";)V",
+                                null,
+                                null
+                            );
+                            
+                            // メソッド本体の修正
+                            mv.visitCode();
+                            mv.visitVarInsn(Opcodes.ALOAD, 0);
+                            mv.visitFieldInsn(
+                                Opcodes.GETFIELD,
+                                classNameInternal,
+                                "delegate",
+                                "L" + listener.getClass().getName().replace('.', '/') + ";"
+                            );
+                            mv.visitVarInsn(Opcodes.ALOAD, 1);
+                            mv.visitMethodInsn(
+                                Opcodes.INVOKEVIRTUAL,
+                                listener.getClass().getName().replace('.', '/'),
+                                methodName,
+                                "(L" + eventClazz.getName().replace('.', '/') + ";)V",
+                                false
+                            );
+                            mv.visitInsn(Opcodes.RETURN);
+                            mv.visitMaxs(2, 2);
+                            mv.visitEnd();
+                        }
+                    }
+
+                    // クラスローダーを使用してクラスを定義
+                    //byte[] classBytes = cw.toByteArray();
+                    //Class<?> dynamicClass = defineClass(className, classBytes);
+                    byte[] classBytes = cw.toByteArray();
+                    try (CustomClassLoader loader = new CustomClassLoader(
+                        ((URLClassLoader) jdaURLClassLoader).getURLs(),
+                        //jdaURLClassLoader.getParent()
+                        jdaURLClassLoader  // 親クラスローダーをJDAのローダーに変更
+                    );) {
+                        Class<?> dynamicClass = loader.defineNewClass(className, classBytes);
+
+                        Object asmListener = dynamicClass.getDeclaredConstructor(listener.getClass())
+                            .newInstance(listener);
+
+                        //listenerProxys.add(asmListener);
+                        jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { new Object[] { asmListener } });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("Failed to create dynamic listener", e);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Failed to create dynamic listener", e);
+                }
 
                 logger.info("listenerProxys: " + listenerProxys);
                 logger.info("jdaBuilder: " + jdaBuilder);
@@ -465,22 +504,6 @@ public class Discord {
                 return CompletableFuture.completedFuture(null);
             }
         });
-    }
-
-    // クラス定義用のヘルパーメソッド(asm)
-    private Class<?> defineClass(String name, byte[] bytes) throws Exception {
-        Method defineClassMethod = ClassLoader.class.getDeclaredMethod(
-            "defineClass",
-            String.class, byte[].class, int.class, int.class
-        );
-        defineClassMethod.setAccessible(true);
-        return (Class<?>) defineClassMethod.invoke(
-            jdaURLClassLoader,
-            name,
-            bytes,
-            0,
-            bytes.length
-        );
     }
 
     public CompletableFuture<Void> logoutDiscordBot() {

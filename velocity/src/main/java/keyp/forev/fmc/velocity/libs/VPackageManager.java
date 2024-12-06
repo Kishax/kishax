@@ -13,48 +13,34 @@ public class VPackageManager {
 
     public enum VPackage implements PackageManager {
         JDA(
-            "net.dv8tion:JDA:5.2.0", 
+            "net.dv8tion:JDA:5.2.0",
+            "https://github.com/discord-jda/JDA/releases/download/v5.2.0/JDA-5.2.0-withDependencies.jar",
             PackageType.MAIN, 
             DISCORD),
-        CLUB_MINNCED_OPUS(
-            "club.minnced:opus-java:1.1.1", 
-            PackageType.COMPILE, 
-            DISCORD),
-        NV_WEBSOCKET_CLIENT(
-            "com.neovisionaries:nv-websocket-client:2.14", 
-            PackageType.COMPILE, 
-            DISCORD),
-        OKHTTP3(
-            "com.squareup.okhttp3:okhttp:4.12.0", 
-            PackageType.COMPILE, 
-            DISCORD),
-        COMMON_COLLECTIONS(
-            "org.apache.commons:commons-collections4:4.4", 
-            PackageType.COMPILE, 
-            DISCORD
-            ),
         CLUB_MINNCED_WEBHOOK(
             "club.minnced:discord-webhooks:0.8.0", 
             PackageType.MAIN, 
             DISCORD
             ),
-        SF_TROVE(
-            "net.sf.trove4j:core:3.1.0",
-            PackageType.COMPILE,
-            DISCORD
-            ),
-        GOOGLE_TINK(
-            "'com.google.crypto.tink:tink:1.15.0'",
-            PackageType.COMPILE,
-            DISCORD
-            ),
         ;
+        private final String url;
         private final String groupId;
         private final String artifactId;
         private final String version;
         private final String groupKey;
         private final String packageType;
         VPackage(String coordinates, String packageType, String groupKey) {
+            this.url = null;
+            this.groupKey = groupKey;
+            this.packageType = packageType;
+            String[] parts = coordinates.split(":");
+            this.groupId = parts[0];
+            this.artifactId = parts[1];
+            this.version = parts[2];
+        }
+
+        VPackage(String coordinates, String url, String packageType, String groupKey) {
+            this.url = url;
             this.groupKey = groupKey;
             this.packageType = packageType;
             String[] parts = coordinates.split(":");
@@ -91,7 +77,11 @@ public class VPackageManager {
         @Override
         public URL getUrl() {
             try {
-                return getMavenUrl();
+                if (url != null) {
+                    return new URL(url);
+                } else {
+                    return getMavenUrl();
+                }
             } catch (MalformedURLException e) {
                 throw new RuntimeException("An error occurred while exec getUrl method in VPackageManager", e);
             }
