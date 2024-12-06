@@ -344,7 +344,7 @@ public class MessageEditor {
 											DiscordEventListener.playerChatMessageId = messageId2;
 										});
 									} else {
-										addMessage = MessageFormat.format("<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
+										addMessage = MessageFormat.format("\n\n<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
 										discord.editBotEmbed(chatMessageId, addMessage, true);
 									}
 								} else {
@@ -366,7 +366,7 @@ public class MessageEditor {
 							addMessage = MessageFormat.format("{0}が新規FMCメンバーになりました！:congratulations:", playerName);
 						}
 						try {
-							Object createEmbed = discord.createEmbed (addMessage, ColorUtil.PINK.getRGB());
+							Object createEmbed = discord.createEmbed(addMessage, ColorUtil.PINK.getRGB());
 							discord.sendBotMessage(createEmbed);
 						} catch (Exception e) {
 							logger.error("An Exception error occurred: " + e.getMessage());
@@ -558,6 +558,12 @@ public class MessageEditor {
 				}
 	            return CompletableFuture.completedFuture(null);
 	        }
-	    });
+	    }).exceptionally(e -> {
+	        logger.error("An Exception error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+	        return null;
+		});
 	}
 }
