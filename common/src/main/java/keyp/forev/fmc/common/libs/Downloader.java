@@ -38,7 +38,7 @@ public class Downloader {
             .map(pkg -> {
                 URL url = pkg.getUrl();
                 // ダウンロードパスに依存
-                Path targetPath = dataDirectory.resolve("libs/" + getFileNameFromURL(url));
+                Path targetPath = PackageType.getTargetPath(pkg, dataDirectory);
                 return downloadPackage(url, targetPath);
             })
             .collect(Collectors.toList());
@@ -47,10 +47,5 @@ public class Downloader {
             .thenApply(v -> futures.stream()
                 .map(CompletableFuture::join)
                 .collect(Collectors.toList()));
-    }
-
-    private String getFileNameFromURL(URL url) {
-        String urlString = url.toString();
-        return urlString.substring(urlString.lastIndexOf('/') + 1);
     }
 }

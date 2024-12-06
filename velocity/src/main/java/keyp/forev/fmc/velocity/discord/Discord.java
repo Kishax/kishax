@@ -1,10 +1,8 @@
 package keyp.forev.fmc.velocity.discord;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -16,11 +14,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.slf4j.Logger;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.libs.ClassManager;
-import keyp.forev.fmc.common.libs.JarLoader;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
@@ -28,9 +28,13 @@ import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.libs.VPackageManager;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
+
 import com.google.inject.Singleton;
+
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import java.net.URL;
 import java.net.URLClassLoader;
 
 @Singleton
@@ -43,11 +47,12 @@ public class Discord {
     private final Provider<Request> reqProvider;
     // JDA
     private final URLClassLoader jdaURLClassLoader;
-    private final Class<?> jdaClazz, jdaBuilderClazz, gatewayIntentsClazz, subcommandDataClazz,
-        optionDataClazz, optionTypeClazz, entityMessageClazz,
-        entityActivityClazz, entityMessageEmbedClazz, buttonClazz,
-        presenceActivityClazz, embedBuilderClazz, errorResponseExceptionClazz,
-        cmdCreateActionClazz, restActionClazz, eventListenerClazz;
+    private final Class<?> jdaClazz, jdaBuilderClazz, listenerAdapterClazz,
+        gatewayIntentsClazz, subcommandDataClazz, optionDataClazz, 
+        optionTypeClazz, entityMessageClazz, entityActivityClazz, 
+        entityMessageEmbedClazz, entityMessageChannel, buttonClazz, presenceActivityClazz, 
+        embedBuilderClazz, errorResponseExceptionClazz, cmdCreateActionClazz, 
+        restActionClazz, eventListenerClazz;
     // Club Minnced
     private final Class<?> webhookBuilderClazz, webhookClientClazz, webhookMessageClazz;
     @Inject
@@ -65,7 +70,8 @@ public class Discord {
         this.optionTypeClazz = VClassManager.JDA.OPTION_TYPE.get().getClazz();
         this.entityMessageClazz = VClassManager.JDA.ENTITYS_MESSAGE.get().getClazz();
         this.entityActivityClazz = VClassManager.JDA.ENTITYS_ACTIVITY.get().getClazz();
-        this.entityMessageEmbedClazz = VClassManager.JDA.ENTITYES_MESSAGE_EMBED.get().getClazz();
+        this.entityMessageEmbedClazz = VClassManager.JDA.ENTITYS_MESSAGE_EMBED.get().getClazz();
+        this.entityMessageChannel = VClassManager.JDA.ENTITYS_MESSAGE_CHANNEL.get().getClazz();
         this.buttonClazz = VClassManager.JDA.BUTTON.get().getClazz();
         this.presenceActivityClazz = VClassManager.JDA.PRESENCE.get().getClazz();
         this.webhookClientClazz = VClassManager.CLUB_MINNCED_WEBHOOK.WEBHOOK_CLIENT.get().getClazz();
@@ -76,6 +82,20 @@ public class Discord {
         this.cmdCreateActionClazz = VClassManager.JDA.COMMAND_CREATE_ACTION.get().getClazz();
         this.restActionClazz = VClassManager.JDA.REST_ACTION.get().getClazz();
         this.eventListenerClazz = VClassManager.JDA.EVENTLISTENER.get().getClazz();
+        this.listenerAdapterClazz = VClassManager.JDA.LISTENER_ADAPTER.get().getClazz();
+    }
+
+    // カスタムクラスローダーの定義
+    // Java 17以降のモジュールシステムの制限により、
+    // ClassLoader.defineClass()メソッドに直接アクセスできない問題を解決するために使用
+    private static class CustomClassLoader extends URLClassLoader {
+        public CustomClassLoader(URL[] urls, ClassLoader parent) {
+            super(urls, parent);
+        }
+
+        public Class<?> defineNewClass(String name, byte[] bytes) {
+            return super.defineClass(name, bytes, 0, bytes.length);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -105,6 +125,213 @@ public class Discord {
                 Method addEventListenerMethod = jdaBuilderClazz.getMethod("addEventListeners", Object[].class);
 
                 DiscordEventListener listener = Main.getInjector().getInstance(DiscordEventListener.class);
+
+                /*
+                try {
+                    // ByteBuddyを使用した動的クラス生成
+                    Object bytebuddyListener = new ByteBuddy()
+                        .subclass(listenerAdapterClazz)
+                        .method(ElementMatchers.named("onMessageReceived"))
+                        .intercept(MethodDelegation.to(new Object() {
+                            @SuppressWarnings("unused")
+                            public void handle(@Origin Method method, @AllArguments Object[] args) {
+                                try {
+                                    Object event = args[0];
+                                    // リフレクションでメソッドを取得
+                                    Method getMessageMethod = event.getClass().getMethod("getMessage");
+                                    Object message = getMessageMethod.invoke(event);
+                                    
+                                    Method getContentRawMethod = message.getClass().getMethod("getContentRaw");
+                                    String content = (String) getContentRawMethod.invoke(message);
+                                    
+                                    Method getChannelMethod = message.getClass().getMethod("getChannel");
+                                    Object channel = getChannelMethod.invoke(message);
+                                    
+                                    Method sendMessageMethod = channel.getClass().getMethod("sendMessage", String.class);
+                                    Object action = sendMessageMethod.invoke(channel, content);
+                                    
+                                    Method queueMethod = action.getClass().getMethod("queue");
+                                    queueMethod.invoke(action);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }))
+                        .make()
+                        .load(jdaURLClassLoader)
+                        .getLoaded()
+                        .getDeclaredConstructor()
+                        .newInstance();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Failed to create dynamic listener", e);
+                }
+                */
+                /*
+                try {
+                    // javassistを使用した動的クラス生成
+                    // ClassPool pool = ClassPool.getDefault();
+                    ClassPool pool = new ClassPool(true);
+                    pool.appendClassPath(new LoaderClassPath(jdaURLClassLoader));
+
+                    // クラスの生成
+                    logger.info("create dynamic class...");
+                    String className = "DynamicListener_" + System.currentTimeMillis();
+                    CtClass dynamicClass = pool.makeClass(className);
+                    dynamicClass.setModifiers(Modifier.PUBLIC);
+                    logger.info("set java version...");
+                    dynamicClass.getClassFile().setMajorVersion(52);
+
+                    // スーパークラスの設定
+                    logger.info("set superclass: " + listenerAdapterClazz.getName());
+                    dynamicClass.setSuperclass(pool.get(listenerAdapterClazz.getName()));
+
+                    // 必要なパッケージのインポート
+                    pool.importPackage(listenerAdapterClazz.getName());
+
+                    for (Method method : listener.getClass().getDeclaredMethods()) {
+                        if (method.isAnnotationPresent(ReflectionHandler.class)) {
+                            ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
+                            String eventClazzPath = annotation.event();
+                            String methodName = method.getName();
+
+                            // 必要なパッケージのインポート
+                            // pool.importPackage(eventClazzPath);
+                            pool.importPackage(entityMessageClazz.getName());
+                            pool.importPackage(entityMessageChannel.getName());
+
+                            // イベントクラスの取得
+                            CtClass eventClass = pool.get(eventClazzPath);
+                            
+                            // メソッドのパラメータ設定
+                            CtClass[] paramTypes = new CtClass[] { eventClass };
+
+                            // Class<?> eventClazz = jdaURLClassLoader.loadClass(eventClazzPath);
+
+                            // メソッドの作成
+                            CtMethod ctmethod = new CtMethod(CtClass.voidType, methodName, paramTypes, dynamicClass);
+                            ctmethod.setModifiers(Modifier.PUBLIC);
+
+                            // メソッド本体の設定（完全修飾名を使用）
+                            //String body = 
+                            //    "{ \n" +
+                            //    "    " + entityMessageClazz.getName() + " message = $1.getMessage(); \n" +
+                            //    "    " + entityMessageChannel.getName() + " channel = message.getChannel(); \n" +
+                            //    "    String content = message.getContentRaw(); \n" +
+                            //    "    channel.sendMessage(content).queue(); \n" +
+                            //    "}";
+                            
+                            String body =
+                                "{ \n" +
+                                "    java.lang.System.out.println(\"Hello!\");\n" +
+                                "}";
+
+                            logger.info("body: " + body);
+
+                            // メソッドの追加
+                            ctmethod.setBody(body);
+                            dynamicClass.addMethod(ctmethod);
+                            break;
+                        }
+                    }
+
+                    // クラスをロード
+                    Class<?> dynamicListenerClazz = dynamicClass.toClass(jdaURLClassLoader, Discord.class.getProtectionDomain());
+                    Object listeners = dynamicListenerClazz.getDeclaredConstructor().newInstance();
+                    listenerProxys.add(listeners);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Failed to create dynamic listener", e);
+                }*/
+
+                try {
+                    // ASMを使用したクラス生成
+                    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+                    String className = "DynamicListener_" + System.currentTimeMillis();
+                    String classNameInternal = className.replace('.', '/');
+                    String superClassInternal = listenerAdapterClazz.getName().replace('.', '/');
+                            
+                    // クラス定義
+                    cw.visit(Opcodes.V17, // Java 17バージョン
+                        Opcodes.ACC_PUBLIC,
+                        classNameInternal,
+                        null,
+                        superClassInternal,
+                        null);
+                    
+                    // デフォルトコンストラクタの追加
+                    MethodVisitor constructor = cw.visitMethod(
+                        Opcodes.ACC_PUBLIC,
+                        "<init>",
+                        "()V",
+                        null,
+                        null
+                    );
+                    constructor.visitCode();
+                    constructor.visitVarInsn(Opcodes.ALOAD, 0);
+                    constructor.visitMethodInsn(
+                        Opcodes.INVOKESPECIAL,
+                        superClassInternal,
+                        "<init>",
+                        "()V",
+                        false
+                    );
+                    constructor.visitInsn(Opcodes.RETURN);
+                    constructor.visitMaxs(1, 1);
+                    constructor.visitEnd();
+
+                    for (Method method : listener.getClass().getDeclaredMethods()) {
+                        if (method.isAnnotationPresent(ReflectionHandler.class)) {
+                            ReflectionHandler annotation = method.getAnnotation(ReflectionHandler.class);
+                            Class<?> eventClazz = jdaURLClassLoader.loadClass(annotation.event());
+                            String methodName = method.getName();
+                            
+                            // メソッド生成
+                            MethodVisitor mv = cw.visitMethod(
+                                Opcodes.ACC_PUBLIC,
+                                methodName,
+                                "(L" + eventClazz.getName().replace('.', '/') + ";)V",
+                                null,
+                                null
+                            );
+                            
+                            mv.visitCode();
+                            mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+                            mv.visitLdcInsn("Hello!");
+                            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+                            mv.visitInsn(Opcodes.RETURN);
+                            mv.visitMaxs(2, 2);
+                            mv.visitEnd();
+                            
+                            cw.visitEnd();
+                        }
+                    }
+
+                    // クラスローダーを使用してクラスを定義
+                    //byte[] classBytes = cw.toByteArray();
+                    //Class<?> dynamicClass = defineClass(className, classBytes);
+                    byte[] classBytes = cw.toByteArray();
+                    try (CustomClassLoader loader = new CustomClassLoader(
+                        ((URLClassLoader) jdaURLClassLoader).getURLs(),
+                        jdaURLClassLoader.getParent()
+                    );) {
+                        Class<?> dynamicClass = loader.defineNewClass(className, classBytes);
+
+                        Object asmListener = dynamicClass.getDeclaredConstructor().newInstance();
+
+                        //listenerProxys.add(asmListener);
+                        jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { new Object[] { asmListener } });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("Failed to create dynamic listener", e);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Failed to create dynamic listener", e);
+                }
+
+                // プロキシを使用したリスナーの登録
+                /*
                 try {
                     for (Method method : listener.getClass().getDeclaredMethods()) {
                         if (method.isAnnotationPresent(ReflectionHandler.class)) {
@@ -121,15 +348,17 @@ public class Discord {
                                 logger.info("Interface: " + iface.getName() + " | Loader: " + iface.getClassLoader());
                             }
 
+                            String methodName = method.getName();
                             Object proxy = Proxy.newProxyInstance(
-                                eventListenerClazz.getClassLoader()
-                                /*eventListenerClazz.getClassLoader()*//*eventListenerClazz.getClassLoader()*//*jdaURLClassLoader*//*Discord.class.getClassLoader()*//*eventListenerClazz.getClassLoader()*/,
-                                new Class<?>[]{eventListenerClazz}, // ここで必ずEventListenerの型を指定
+                                eventListenerClazz.getClassLoader(),
+                                // jdaURLClassLoader
+                                // Discord.class.getClassLoader()
+                                new Class<?>[]{listenerAdapterClazz}, // ここで必ずEventListenerの型を指定
                                 new InvocationHandler() {
                                     @Override
                                     public Object invoke(Object proxy, Method eventMethod, Object[] args) throws Throwable {
                                         try {
-                                            if (args != null && args.length == 1 && eventClazz.isAssignableFrom(args[0].getClass())) {
+                                            if (eventMethod.getName().equals(methodName) && args != null && args.length == 1 && eventClazz.isAssignableFrom(args[0].getClass())) {
                                                 method.invoke(listener, args[0]);
                                             }
                                             return null;
@@ -154,24 +383,40 @@ public class Discord {
                 } catch (Exception e) {
                     logger.error("Unexpected error creating proxy: " + e.getMessage());
                 }
-                
+                */
+
                 logger.info("listenerProxys: " + listenerProxys);
                 logger.info("jdaBuilder: " + jdaBuilder);
                 
                 // 可変長引数として渡すために配列をラップ
                 //Object[] proxyArray = listenerProxys.toArray(new Object[0]);
                 //jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, (Object) proxyArray);
-                jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { listenerProxys.toArray() });
+                //jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { listenerProxys.toArray() });
 
                 //for (Object proxy : listenerProxys) {
                 //    jdaBuilder = addEventListenerMethod.invoke(jdaBuilder, new Object[] { new Object[] { proxy } });
                 //}
 
-                Method build = jdaBuilderClazz.getMethod("build");
-                logger.info("build: " + build);
+                try {
+                    Method build = jdaBuilderClazz.getMethod("build");
+                    logger.info("build: " + build);
 
-                jdaInstance = build.invoke(jdaBuilder);
-                logger.info("jdaInstance: " + jdaInstance);
+                    try {
+                        jdaInstance = build.invoke(jdaBuilder);
+                        if (jdaInstance == null) {
+                            throw new RuntimeException("JDA instance is null after build");
+                        }
+                        logger.info("jdaInstance: " + jdaInstance);
+                    } catch (InvocationTargetException e) {
+                        // 実際の例外を取得
+                        Throwable cause = e.getCause();
+                        logger.error("Build failed with cause: ", cause);
+                        throw new RuntimeException("Failed to build JDA: " + cause.getMessage(), cause);
+                    }
+                } catch (Exception e) {
+                    logger.error("An error occurred: " + e.getMessage());
+                    throw new RuntimeException("Failed to build JDA", e);
+                }
 
                 Method awaitReady = jdaClazz.getMethod("awaitReady");
                 awaitReady.invoke(jdaInstance);
@@ -220,6 +465,22 @@ public class Discord {
                 return CompletableFuture.completedFuture(null);
             }
         });
+    }
+
+    // クラス定義用のヘルパーメソッド(asm)
+    private Class<?> defineClass(String name, byte[] bytes) throws Exception {
+        Method defineClassMethod = ClassLoader.class.getDeclaredMethod(
+            "defineClass",
+            String.class, byte[].class, int.class, int.class
+        );
+        defineClassMethod.setAccessible(true);
+        return (Class<?>) defineClassMethod.invoke(
+            jdaURLClassLoader,
+            name,
+            bytes,
+            0,
+            bytes.length
+        );
     }
 
     public CompletableFuture<Void> logoutDiscordBot() {
