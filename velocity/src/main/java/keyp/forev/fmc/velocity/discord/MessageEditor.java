@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ public class MessageEditor {
 	private final Discord discord;
 	private final EmojiManager emoji;
 	private final PlayerUtils pu;
+	private final Webhooker webhooker;
 	private String avatarUrl = null, addMessage = null, 
 			Emoji = null, FaceEmoji = null, targetServerName = null,
 			uuid = null, playerName = null, currentServerName = null;
@@ -48,7 +50,7 @@ public class MessageEditor {
 	public MessageEditor (
 		Main plugin, Logger logger, ProxyServer server,
 		VelocityConfig config, Database db, Discord discord,
-		EmojiManager emoji, PlayerUtils pu
+		EmojiManager emoji, PlayerUtils pu, Webhooker webhooker
 	) {
 		this.plugin = plugin;
 		this.logger = logger;
@@ -58,6 +60,7 @@ public class MessageEditor {
 		this.discord = discord;
 		this.emoji = emoji;
 		this.pu = pu;
+		this.webhooker = webhooker;
 	}
 	
 	public CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, String serverName) throws Exception {
@@ -334,21 +337,52 @@ public class MessageEditor {
 						if (Objects.nonNull(FaceEmoji)) {
 							try {
 								if (discordMessageType) {
+									logger.info("embed mode");
 									// 編集embedによるChatメッセージ送信
-									if (Objects.isNull(chatMessageId)) {
+									if (chatMessageId == null) {
 										// 直前にEmbedによるChatメッセージを送信しなかった場合
 										// EmbedChatMessageを送って、MessageIdを
 										addMessage = MessageFormat.format("<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
+										logger.info("Creating embed...");
 										Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
-										discord.sendBotMessageAndgetMessageId(createEmbed, true).thenAccept(messageId2 -> {
+										logger.info("Sending message...");
+										return discord.sendBotMessageAndgetMessageId(createEmbed, true).thenAccept(messageId2 -> {
 											DiscordEventListener.playerChatMessageId = messageId2;
+										}).exceptionally(e -> {
+											logger.error("An Exception error occurred: " + e.getMessage());
+											for (StackTraceElement element : e.getStackTrace()) {
+												logger.error(element.toString());
+											}
+											return null;
 										});
 									} else {
 										addMessage = MessageFormat.format("\n\n<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
-										discord.editBotEmbed(chatMessageId, addMessage, true);
+										return discord.editBotEmbed(chatMessageId, addMessage, true)
+											.exceptionally(e -> {
+												logger.error("An Exception error occurred: " + e.getMessage());
+												for (StackTraceElement element : e.getStackTrace()) {
+													logger.error(element.toString());
+												}
+												return null;
+											});
 									}
 								} else {
-									discord.sendWebhookMessage(playerName, avatarUrl, chatMessage);
+									logger.info("webhook mode");
+									// Webhook経由で送信
+									return CompletableFuture.runAsync(() -> {
+										try {
+											webhooker.sendWebhookMessage(playerName, avatarUrl, chatMessage);
+										} catch (Exception e) {
+											logger.error("Failed to send webhook message", e);
+											throw new CompletionException(e);
+										}
+									}).exceptionally(e -> {
+										logger.error("An Exception error occurred: " + e.getMessage());
+										for (StackTraceElement element : e.getStackTrace()) {
+											logger.error(element.toString());
+										}
+										return null;
+									});
 								}
 							} catch (Exception e) {
 								logger.error("An Exception error occurred: " + e.getMessage());

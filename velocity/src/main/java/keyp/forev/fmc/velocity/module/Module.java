@@ -28,6 +28,7 @@ import keyp.forev.fmc.velocity.discord.Discord;
 import keyp.forev.fmc.velocity.discord.DiscordEventListener;
 import keyp.forev.fmc.velocity.discord.EmojiManager;
 import keyp.forev.fmc.velocity.discord.MessageEditor;
+import keyp.forev.fmc.velocity.discord.Webhooker;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.server.DoServerOnline;
 import keyp.forev.fmc.velocity.server.FMCBoard;
@@ -80,7 +81,7 @@ public class Module extends AbstractModule {
         bind(FMCBoard.class);
         bind(CommandForwarder.class);
         bind(DefaultLuckperms.class);
-
+        bind(Webhooker.class);
         // 試験要素
         //bind(Discord2.class);
     }

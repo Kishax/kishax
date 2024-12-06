@@ -239,13 +239,21 @@ public class EventListener {
     		    	component = component.append(Component.text(")").color(NamedTextColor.GOLD));
         		    bc.sendSpecificServerMessage(component, chatServerName);
     		    }
-    		    discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext);
-    		} catch (Exception ex) {
+
+    		    discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext)
+					.exceptionally(ex -> {
+						logger.error("An Exception error occurred: " + ex.getMessage());
+						for (StackTraceElement element : ex.getStackTrace()) {
+							logger.error(element.toString());
+						}
+						return null;
+					});
+			} catch (Exception ex) {
 	            logger.error("An onChat error occurred: " + ex.getMessage());
 	            for (StackTraceElement element : ex.getStackTrace()) {
 	                logger.error(element.toString());
 	            }
-    		}
+			}
         }).schedule();
 	}
 	
