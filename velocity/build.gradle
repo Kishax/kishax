@@ -22,6 +22,7 @@ dependencies {
 	compileOnly 'net.dv8tion:JDA:5.2.0'
 	compileOnly 'club.minnced:discord-webhooks:0.8.0'
 	shadowImpl 'de.timongcraft:VeloBoard:1.4.0-EXPERIMENTAL-CHANGES'
+	shadowImpl 'org.ow2.asm:asm:9.7.1'
 	shadowImpl project(':common')
 }
 

@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 import keyp.forev.fmc.common.libs.interfaces.PackageManager;
 
 public class JarLoader {
-    private static final List<URLClassLoader> loaders = new ArrayList<>(); // これを追加
+
+    private static final List<URLClassLoader> loaders = new ArrayList<>();
     public static void addLoader(URLClassLoader loader) {
         loaders.add(loader); // GCに回収されないように保持
     }
@@ -23,7 +24,7 @@ public class JarLoader {
             .collect(Collectors.toMap(
                 pkg -> pkg,
                 pkg -> {
-                    Path jarPath = dataDirectory.resolve("libs/" + getFileNameFromURL(pkg.getUrl()));
+                    Path jarPath = PackageType.getTargetPath(pkg, dataDirectory);
                     return CompletableFuture.supplyAsync(() -> {
                         try {
                             URL jarurl = jarPath.toUri().toURL();
@@ -34,16 +35,13 @@ public class JarLoader {
                             if (!dependencies.isEmpty()) {
                                 for (int i = 0; i < dependencies.size(); i++) {
                                     PackageManager dep = dependencies.get(i);
-                                    Path depJarPath = dataDirectory.resolve("libs/" + getFileNameFromURL(dep.getUrl()));
+                                    Path depJarPath = PackageType.getTargetPath(dep, dataDirectory);
                                     jarurls[i + 1] = depJarPath.toUri().toURL();
                                 }
                             }
 
-                            //ClassLoader parentLoader = JarLoader.class.getClass().getClassLoader();
-                            //ClassLoader parentLoader = ClassLoader.getSystemClassLoader().getParent();
-                            //System.out.println("parentLoader: " + parentLoader);
                             URLClassLoader urlClassLoader = new URLClassLoader(jarurls, parentLoader/*null*/);
-                            addLoader(urlClassLoader); // これを追加
+                            addLoader(urlClassLoader);
                             return urlClassLoader;
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -58,10 +56,5 @@ public class JarLoader {
                     Map.Entry::getKey,
                     entry -> entry.getValue().join()
                 )));
-    }
-
-    private static String getFileNameFromURL(URL url) {
-        String urlString = url.toString();
-        return urlString.substring(urlString.lastIndexOf('/') + 1);
     }
 }

@@ -4,9 +4,9 @@ import java.net.URL;
 import java.util.List;
 
 public interface PackageManager {
-    String getName();
-    String getCoordinates();
     URL getUrl();
-    String getVersion();
+    String getArtifactId();
+    String getGroupKey();
+    String getPackageType();
     List<PackageManager> getDependencies();
 }

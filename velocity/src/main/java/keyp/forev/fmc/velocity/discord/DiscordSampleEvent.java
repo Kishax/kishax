@@ -5,8 +5,9 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import javax.annotation.Nonnull;
 
-public class Discord3 extends ListenerAdapter {
+public class DiscordSampleEvent extends ListenerAdapter {
     public void onMessageReceived(@Nonnull MessageReceivedEvent event) {
+        event.getMessage();
         if (event.getAuthor().isBot()) {
             return;
         }
