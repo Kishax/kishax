@@ -35,7 +35,7 @@ public class SwitchChatType {
         	case 2 -> {
 				switch(args[1].toLowerCase()) {
 					case "status" -> {
-						if (config.getBoolean("Discord.ChatType", false)) {
+						if (config.getBoolean("Discord.MessageType", false)) {
 							component = Component.text("現在のチャットタイプは、編集Embedメッセージタイプです。").color(NamedTextColor.GREEN);
 						} else {
 							component = Component.text("現在のチャットタイプは、プレーンテキストメッセージタイプです。").color(NamedTextColor.GREEN);
@@ -51,11 +51,11 @@ public class SwitchChatType {
 							return;
 						}
 
-						if (config.getBoolean("Discord.ChatType", false)) {
-							DiscordConfig.put("ChatType", false);
+						if (config.getBoolean("Discord.MessageType", false)) {
+							DiscordConfig.put("MessageType", false);
 							component = Component.text("チャットタイプをプレーンテキストメッセージタイプに変更しました。").color(NamedTextColor.GREEN);
 						} else {
-							DiscordConfig.put("ChatType", true);
+							DiscordConfig.put("MessageType", true);
 							component = Component.text("チャットタイプを編集Embedメッセージタイプに変更しました。").color(NamedTextColor.GREEN);
 						}
 						

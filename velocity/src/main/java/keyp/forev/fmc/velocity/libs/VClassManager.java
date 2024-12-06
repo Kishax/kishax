@@ -15,19 +15,17 @@ public class VClassManager {
         TEXT_CHANNEL("net.dv8tion.jda.api.entities.channel.concrete.TextChannel"),
         OPTION_DATA("net.dv8tion.jda.api.interactions.commands.build.OptionData"),
         OPTION_TYPE("net.dv8tion.jda.api.interactions.commands.OptionType"),
-        ENTITYS_MESSAGE_CHANNEL("net.dv8tion.jda.api.entities.channel.middleman.MessageChannel"),
         ENTITYS_MESSAGE("net.dv8tion.jda.api.entities.Message"),
         ENTITYS_MESSAGE_EMBED("net.dv8tion.jda.api.entities.MessageEmbed"),
         ENTITYS_ACTIVITY("net.dv8tion.jda.api.entities.Activity"),
         ENTITYS_ICON("net.dv8tion.jda.api.entities.Icon"),
+        ENTITYS_EMBED_TYPE("net.dv8tion.jda.api.entities.EmbedType"),
         BUTTON("net.dv8tion.jda.api.interactions.components.buttons.Button"),
         PRESENCE("net.dv8tion.jda.api.managers.Presence"),
         ERROR_RESPONSE_EXCEPTION("net.dv8tion.jda.api.exceptions.ErrorResponseException"),
         EVENT_MESSAGE_UPDATE("net.dv8tion.jda.api.events.message.MessageUpdateEvent"),
         COMMAND_CREATE_ACTION("net.dv8tion.jda.api.requests.restaction.CommandCreateAction"),
         REST_ACTION("net.dv8tion.jda.api.requests.RestAction"),
-        EVENT_LISTENER("net.dv8tion.jda.api.hooks.EventListener"),
-        GENERIC_EVENT("net.dv8tion.jda.api.events.GenericEvent"),
         ;
         private String clazzName;
         private URLClassLoader urlClassLoader;

@@ -52,9 +52,9 @@ public class Discord {
     private final Class<?> jdaClazz, jdaBuilderClazz, listenerAdapterClazz,
         gatewayIntentsClazz, subcommandDataClazz, optionDataClazz, 
         optionTypeClazz, entityMessageClazz, entityActivityClazz, 
-        entityMessageEmbedClazz, entityMessageChannel, buttonClazz, presenceActivityClazz, 
-        embedBuilderClazz, errorResponseExceptionClazz, cmdCreateActionClazz, 
-        restActionClazz, eventListenerClazz, genericEventClazz;
+        entityMessageEmbedClazz, entityEmbedTypeClazz, buttonClazz, 
+        presenceActivityClazz, embedBuilderClazz, errorResponseExceptionClazz, 
+        cmdCreateActionClazz, restActionClazz;
     // Club Minnced
     private final Class<?> webhookBuilderClazz, webhookClientClazz, webhookMessageClazz;
     @Inject
@@ -73,7 +73,7 @@ public class Discord {
         this.entityMessageClazz = VClassManager.JDA.ENTITYS_MESSAGE.get().getClazz();
         this.entityActivityClazz = VClassManager.JDA.ENTITYS_ACTIVITY.get().getClazz();
         this.entityMessageEmbedClazz = VClassManager.JDA.ENTITYS_MESSAGE_EMBED.get().getClazz();
-        this.entityMessageChannel = VClassManager.JDA.ENTITYS_MESSAGE_CHANNEL.get().getClazz();
+        this.entityEmbedTypeClazz = VClassManager.JDA.ENTITYS_EMBED_TYPE.get().getClazz();
         this.buttonClazz = VClassManager.JDA.BUTTON.get().getClazz();
         this.presenceActivityClazz = VClassManager.JDA.PRESENCE.get().getClazz();
         this.webhookClientClazz = VClassManager.CLUB_MINNCED_WEBHOOK.WEBHOOK_CLIENT.get().getClazz();
@@ -83,8 +83,6 @@ public class Discord {
         this.errorResponseExceptionClazz = VClassManager.JDA.ERROR_RESPONSE_EXCEPTION.get().getClazz();
         this.cmdCreateActionClazz = VClassManager.JDA.COMMAND_CREATE_ACTION.get().getClazz();
         this.restActionClazz = VClassManager.JDA.REST_ACTION.get().getClazz();
-        this.eventListenerClazz = VClassManager.JDA.EVENT_LISTENER.get().getClazz();
-        this.genericEventClazz = VClassManager.JDA.GENERIC_EVENT.get().getClazz();
         this.listenerAdapterClazz = VClassManager.JDA.LISTENER_ADAPTER.get().getClazz();
     }
 
@@ -544,9 +542,11 @@ public class Discord {
                 }
 
                 Object newEmbed = addDescriptionToEmbed(currentEmbed, additionalDescription);
-
-                Method editMessageEmbedsById = channel.getClass().getMethod("editMessageEmbedsById", String.class, entityMessageEmbedClazz);
-                Object messageAction = editMessageEmbedsById.invoke(channel, messageId, newEmbed);
+                Object entityMessageEmbedArray = Array.newInstance(entityMessageEmbedClazz, 1);
+                Method editMessageEmbedsById = channel.getClass().getMethod("editMessageEmbedsById", String.class, 
+                    entityMessageEmbedArray.getClass());
+                Array.set(entityMessageEmbedArray, 0, newEmbed);
+                Object messageAction = editMessageEmbedsById.invoke(channel, messageId, entityMessageEmbedArray);
 
                 Method queue = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
                 queue.invoke(messageAction,
@@ -588,10 +588,10 @@ public class Discord {
         if (channel == null) return;
 
         Method retrieveMessageById = channel.getClass().getMethod("retrieveMessageById", String.class);
-        retrieveMessageById.invoke(channel, messageId);
+        Object restActionMessage = retrieveMessageById.invoke(channel, messageId);
 
-        Method queue = retrieveMessageById.getReturnType().getMethod("queue", Consumer.class, Consumer.class);
-        queue.invoke(retrieveMessageById.invoke(channel, messageId),
+        Method queue = restActionMessage.getClass().getMethod("queue", Consumer.class, Consumer.class);
+        queue.invoke(restActionMessage,
             (Consumer<Object>) message -> {
                 try {
                     Method getEmbeds = entityMessageClazz.getMethod("getEmbeds");
@@ -602,8 +602,14 @@ public class Discord {
                         if (isList) {
                             @SuppressWarnings("unchecked")
                             List<Object> embedList = (List<Object>) embeds;
-                            if (!embedList.isEmpty()) {
-                                embedConsumer.accept(embedList.get(0));
+                            //List<Object> embedList = Array.newInstance();
+                            Object entityEmbedsArray = Array.newInstance(entityMessageEmbedClazz, embedList.size());
+                            for (int i = 0; i < embedList.size(); i++) {
+                                Array.set(entityEmbedsArray, i, embedList.get(i));
+                            }
+                            Object zero = Array.get(entityEmbedsArray, 0);
+                            if (!embedList.isEmpty()/*&& entityEmbedsArray != null */ ) {
+                                embedConsumer.accept((Object) zero/*embedList.get(0)*//*entityEmbedsArray*/);
                             } else {
                                 embedConsumer.accept(null);
                             }
@@ -654,8 +660,11 @@ public class Discord {
 
         if (channel == null) return;
 
-        Method editMessageEmbedsById = channel.getClass().getMethod("editMessageEmbedsById", String.class, entityMessageEmbedClazz);
-        Object messageAction = editMessageEmbedsById.invoke(channel, messageId, newEmbed);
+        Object entityMessageEmbedArray = Array.newInstance(entityMessageEmbedClazz, 1);
+        Method editMessageEmbedsById = channel.getClass().getMethod("editMessageEmbedsById", String.class, 
+            entityMessageEmbedArray.getClass());
+        Array.set(entityMessageEmbedArray, 0, newEmbed);
+        Object messageAction = editMessageEmbedsById.invoke(channel, messageId, (Object) entityMessageEmbedArray);
 
         Method queue = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
         queue.invoke(messageAction,
@@ -699,8 +708,9 @@ public class Discord {
         }
 
     	if (embed != null) {
-            Method sendMessageEmbeds = channel.getClass().getMethod("sendMessageEmbeds", entityMessageEmbedClazz);
-            Object messageAction = sendMessageEmbeds.invoke(channel, embed);
+            Object entityMessageEmbedArray = Array.newInstance(entityMessageEmbedClazz, 0);
+            Method sendMessageEmbeds = channel.getClass().getMethod("sendMessageEmbeds", entityMessageEmbedClazz, entityMessageEmbedArray.getClass());
+            Object messageAction = sendMessageEmbeds.invoke(channel, embed, (Object) entityMessageEmbedArray);
 
             Method queue = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
             queue.invoke(messageAction,
@@ -769,20 +779,37 @@ public class Discord {
 
     public Object createEmbed(String description, int color) throws Exception {
         // "net.dv8tion.jda.api.entities.MessageEmbed"の内部クラスを取得
-        ClassLoader loader = entityMessageEmbedClazz.getClassLoader();
+        //ClassLoader loader = entityMessageEmbedClazz.getClassLoader();
+        Class<?> embedTypeClazz = entityEmbedTypeClazz, 
+            footerClazz = null, imageInfoClazz = null, 
+            providerClazz = null, thumbnailClazz = null, videoInfoClazz = null,
+            authorInfoClazz = null;
+        Class<?>[] inClasses = entityMessageEmbedClazz.getDeclaredClasses();
+        for (Class<?> m : inClasses) {
+            String clazzName = m.getName();
+            switch (clazzName) {
+                case "net.dv8tion.jda.api.entities.MessageEmbed$Footer" -> footerClazz = m;
+                case "net.dv8tion.jda.api.entities.MessageEmbed$ImageInfo" -> imageInfoClazz = m;
+                case "net.dv8tion.jda.api.entities.MessageEmbed$Provider" -> providerClazz = m;
+                case "net.dv8tion.jda.api.entities.MessageEmbed$Thumbnail" -> thumbnailClazz = m;
+                case "net.dv8tion.jda.api.entities.MessageEmbed$VideoInfo" -> videoInfoClazz = m;
+                case "net.dv8tion.jda.api.entities.MessageEmbed$AuthorInfo" -> authorInfoClazz = m;
+            }
+        }
         Constructor<?> messageEmbedC = entityMessageEmbedClazz.getConstructor(
             String.class, String.class, String.class,
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$EmbedType", true, loader),
-            Class.forName("java.time.OffsetDateTime"),
+            embedTypeClazz,
+            java.time.OffsetDateTime.class,
             int.class,
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Thumbnail", true, loader),
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Provider", true, loader),
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$AuthorInfo", true, loader),
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$VideoInfo", true, loader),
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$Footer", true, loader),
-            Class.forName("net.dv8tion.jda.api.entities.MessageEmbed$ImageInfo", true, loader),
+            thumbnailClazz,
+            providerClazz,
+            authorInfoClazz,
+            videoInfoClazz,
+            footerClazz,
+            imageInfoClazz,
             List.class
         );
+
         return messageEmbedC.newInstance(
             null, // URL
             null, // Title
