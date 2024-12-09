@@ -209,16 +209,16 @@ public class Database {
         return columnNames;
     }
     
-    public void updateMemberToggle(Connection conn, String columnName, boolean value, String key) throws SQLException {
+    public void updateMemberToggle(Connection conn, String columnName, boolean value, String nameOrUUID) throws SQLException {
         String query = "UPDATE members SET " + columnName + " = ? WHERE ";
-        if (JavaUtils.isUUID(key)) {
+        if (JavaUtils.isUUID(nameOrUUID)) {
             query += "uuid = ?";
         } else {
             query += "name = ?";
         }
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setBoolean(1, value);
-            ps.setString(2, key);
+            ps.setString(2, nameOrUUID);
             ps.executeUpdate();
         }
     }

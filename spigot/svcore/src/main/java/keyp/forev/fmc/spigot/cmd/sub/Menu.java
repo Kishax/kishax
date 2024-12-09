@@ -1133,6 +1133,10 @@ public class Menu {
         player.openInventory(inv);
     }
 
+    public void openTeleportPointMenu(Player player, int page) {
+        
+    }
+
     public void openServerTypeInventory(Player player, int page) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         playerMenuActions.put(0, () -> generalMenu(player, 1));
