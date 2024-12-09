@@ -53,7 +53,7 @@ public class Discord {
         optionTypeClazz, entityMessageClazz, entityActivityClazz, 
         entityMessageEmbedClazz, entityEmbedTypeClazz, buttonClazz, 
         presenceActivityClazz, embedBuilderClazz, errorResponseExceptionClazz, 
-        cmdCreateActionClazz, restActionClazz;
+        cmdCreateActionClazz, restActionClazz, itemComponentClazz;
     @Inject
     public Discord(Logger logger, VelocityConfig config, Database db, Provider<Request> reqProvider) throws ClassNotFoundException {
     	this.logger = logger;
@@ -78,6 +78,7 @@ public class Discord {
         this.cmdCreateActionClazz = VClassManager.JDA.COMMAND_CREATE_ACTION.get().getClazz();
         this.restActionClazz = VClassManager.JDA.REST_ACTION.get().getClazz();
         this.listenerAdapterClazz = VClassManager.JDA.LISTENER_ADAPTER.get().getClazz();
+        this.itemComponentClazz = VClassManager.JDA.ITEM_COMPONENT.get().getClazz();
     }
 
     // カスタムクラスローダーの定義
@@ -420,11 +421,14 @@ public class Discord {
         Object button1 = successButton.invoke(buttonClazz, "reqOK", "YES");
         Object button2 = dangerButton.invoke(buttonClazz, "reqCancel", "NO");
 
-        Method sendMessage = channel.getClass().getMethod("sendMessage", String.class);
+        Method sendMessage = channel.getClass().getMethod("sendMessage", CharSequence.class);
         Object sendMessageResult = sendMessage.invoke(channel, buttonMessage);
 
-        Method setActionRow = sendMessageResult.getClass().getMethod("setActionRow", buttonClazz, buttonClazz);
-        Object setActionRowResult = setActionRow.invoke(sendMessageResult, button1, button2);
+        Object actionsArray = Array.newInstance(itemComponentClazz, 2);
+        Method setActionRow = sendMessageResult.getClass().getMethod("setActionRow", actionsArray.getClass());
+        Array.set(actionsArray, 0, button1);
+        Array.set(actionsArray, 1, button2);
+        Object setActionRowResult = setActionRow.invoke(sendMessageResult, (Object) actionsArray);
 
         Method queue = setActionRowResult.getClass().getMethod("queue", Consumer.class);
         queue.invoke(setActionRowResult, (Consumer<Object>) message -> {
@@ -796,8 +800,9 @@ public class Discord {
             return;
         }
     	if (embed != null) {
-            Method sendMessageEmbeds = channel.getClass().getMethod("sendMessageEmbeds", entityMessageEmbedClazz);
-            Object messageAction = sendMessageEmbeds.invoke(channel, embed);
+            Object entityMessageEmbedArray = Array.newInstance(entityMessageEmbedClazz, 0);
+            Method sendMessageEmbeds = channel.getClass().getMethod("sendMessageEmbeds", entityMessageEmbedClazz, entityMessageEmbedArray.getClass());
+            Object messageAction = sendMessageEmbeds.invoke(channel, embed, (Object) entityMessageEmbedArray);
 
             Method queue = messageAction.getClass().getMethod("queue", Consumer.class, Consumer.class);
             queue.invoke(messageAction,

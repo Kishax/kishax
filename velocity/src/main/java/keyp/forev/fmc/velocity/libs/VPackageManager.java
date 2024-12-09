@@ -21,61 +21,11 @@ public class VPackageManager {
             ),
         CLUB_MINNCED_WEBHOOK(
             "club.minnced:discord-webhooks:0.8.0", 
+            "https://github.com/bella2391/Dependency-Provider/releases/download/Dependency-Provider-67/FMC-Dependency-1.0.0.jar",
             PackageType.MAIN, 
-            DISCORD
-            ),
-        JAVACORD(
-            "org.javacord:javacord:3.8.0",
-            PackageType.COMPILE,
-            DISCORD
-            ),
-        /*OKHTTP3(
-            "com.squareup.okhttp3:okhttp:4.12.0",
-            PackageType.COMPILE,
             WEBHOOK
             ),
-        JSON(
-            "org.json:json:20240303",
-            PackageType.COMPILE,
-            WEBHOOK
-            ),
-        SLF4J(
-            "org.slf4j:slf4j-api:2.0.16",
-            PackageType.COMPILE,
-            WEBHOOK
-            ),
-        KOTLIN_STDLIB_JDK8(
-            "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0",
-            PackageType.COMPILE,
-            WEBHOOK
-            ),
-        KOTLIN_STDLIB_JDK7(
-            "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0",
-            PackageType.COMPILE,
-            WEBHOOK
-            ),
-        OKIO(
-            "com.squareup.okio:okio:3.9.1",
-            PackageType.COMPILE,
-            WEBHOOK
-            ),
-        OKIO_JVM(
-            "com.squareup.okio:okio-jvm:3.9.1",
-            PackageType.COMPILE,
-            WEBHOOK
-            ),
-        KOTLIN_STDLIB(
-            "org.jetbrains.kotlin:kotlin-stdlib:2.1.0",
-            PackageType.COMPILE,
-            WEBHOOK
-            ),
-        JETBRAINS_ANNOTATIONS(
-            "org.jetbrains:annotations:26.0.1",
-            PackageType.COMPILE,
-            WEBHOOK
-            )*/
         ;
-
         private final String url;
         private final String groupId;
         private final String artifactId;
