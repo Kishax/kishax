@@ -1,6 +1,7 @@
 package keyp.forev.fmc.velocity.discord;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,6 +34,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
+import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import com.google.inject.Inject;
@@ -48,7 +50,7 @@ public class DiscordEventListener {
 	private final Discord discord;
 	private final Provider<SocketSwitch> sswProvider;
 	@Inject
-	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, Discord discord, Provider<SocketSwitch> sswProvider) {
+	public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, Discord discord, Provider<SocketSwitch> sswProvider) throws ClassNotFoundException {
 		this.logger = logger;
 		this.config = config;
 		this.db = db;
@@ -300,7 +302,6 @@ public class DiscordEventListener {
 			return;
 		}
 		String replyMessage = null;
-		Method editMessageComponentsMethod = message.getClass().getMethod("editMessageComponents");
 
         switch (buttonId) {
         	case "reqOK" -> {
@@ -338,8 +339,6 @@ public class DiscordEventListener {
 				if (replyMessage != null) {
 					replyMessage(event, replyMessage, false);
 				}
-				Object edit = editMessageComponentsMethod.invoke(message);
-				edit.getClass().getMethod("queue").invoke(edit);
             }
         	case "reqCancel" -> {
 				replyMessage = userMention + " リクエストを拒否しました。";
@@ -365,8 +364,6 @@ public class DiscordEventListener {
 				if (replyMessage != null) {
 					replyMessage(event, replyMessage, false);
 				}
-				Object edit = editMessageComponentsMethod.invoke(message);
-				edit.getClass().getMethod("queue").invoke(edit);
             }
         }
     }
