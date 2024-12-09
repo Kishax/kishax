@@ -8,7 +8,8 @@ public enum PermSettings {
     HUB("fmc.proxy.hub"),
     CEND("fmc.proxy.cend"),
     PERM("fmc.proxy.perm"),
-    TPR("fmc.proxy.tpr")
+    TPR("fmc.proxy.tpr"),
+    SILENT("fmc.proxy.silent"),
     ;
 
 	private final String value;

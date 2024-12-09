@@ -3,6 +3,7 @@ package keyp.forev.fmc.velocity.discord;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -95,7 +96,7 @@ public class MessageEditor {
 		return AddEmbedSomeMessage(type, null, null, null, null, null, playerUUID);
 	}
 
-	private CompletableFuture<Void> AddEmbedSomeMessage (String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName, String chatMessage, UUID playerUUID) throws Exception{
+	private CompletableFuture<Void> AddEmbedSomeMessage(String type, Player player, ServerInfo serverInfo, String serverName, String alternativePlayerName, String chatMessage, UUID playerUUID) throws Exception{
 		boolean discordMessageType = config.getBoolean("Discord.MessageType", false);
 		if (player == null) {
 			if (Objects.nonNull(alternativePlayerName)) {
@@ -109,6 +110,25 @@ public class MessageEditor {
 			uuid = player.getUniqueId().toString();
 			playerName = player.getUsername();
 		}
+
+		// サイレント中のプレイヤーはDiscordにメッセージを送信しない
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement("SELECT silent FROM members WHERE uuid=?;")) {
+			ps.setString(1, uuid);
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					if (rs.getBoolean("silent")) {
+						return CompletableFuture.completedFuture(null);
+					}
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An onConnection error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
+		
 	    avatarUrl = "https://minotar.net/avatar/" + uuid;
 	    String EmojiName = config.getString("Discord." + type + "EmojiName", "");
 	    // 第二引数に画像URLが入っていないため、もし、EmojiNameという絵文字がなかったら、追加せずにnullで返る

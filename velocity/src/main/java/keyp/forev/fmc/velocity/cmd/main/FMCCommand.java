@@ -26,6 +26,7 @@ import keyp.forev.fmc.velocity.cmd.sub.Perm;
 import keyp.forev.fmc.velocity.cmd.sub.ReloadConfig;
 import keyp.forev.fmc.velocity.cmd.sub.Retry;
 import keyp.forev.fmc.velocity.cmd.sub.ServerTeleport;
+import keyp.forev.fmc.velocity.cmd.sub.Silent;
 import keyp.forev.fmc.velocity.cmd.sub.StartServer;
 import keyp.forev.fmc.velocity.cmd.sub.StopServer;
 import keyp.forev.fmc.velocity.cmd.sub.SwitchChatType;
@@ -39,7 +40,7 @@ public class FMCCommand implements SimpleCommand {
     private final Database db;
     private final PlayerUtils pu;
     private final DefaultLuckperms lp;
-    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend"));
+    public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend", "silent"));
     public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
@@ -77,6 +78,7 @@ public class FMCCommand implements SimpleCommand {
             case "conv" -> Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
             case "chat" -> Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
             case "cend" -> Main.getInjector().getInstance(CEnd.class).execute(invocation);
+            case "silent" -> Main.getInjector().getInstance(Silent.class).execute(source, args);
             default -> source.sendMessage(Component.text("Unknown subcommand: " + subCommand));
         }
     }
@@ -97,6 +99,12 @@ public class FMCCommand implements SimpleCommand {
             case 2 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
                 switch (args[0].toLowerCase()) {
+                    case "silent" -> {
+                        for (String subcmd : Silent.args1) {
+                            ret.add(subcmd);
+                        }
+                        return ret;
+                    }
                     case "start", "req" -> {
                         for (String offlineServer : db.getServersList(false)) {
                             ret.add(offlineServer);
@@ -148,6 +156,17 @@ public class FMCCommand implements SimpleCommand {
             case 3 -> {
                 if (!source.hasPermission("fmc.proxy." + args[0].toLowerCase())) return Collections.emptyList();
                 switch (args[0].toLowerCase()) {
+                    case "silent" -> {
+                        switch (args[1].toLowerCase()) {
+                            case "add", "remove" -> {
+                                pu.loadPlayers(); // プレイヤーリストをロード
+                                for (String player : pu.getPlayerList()) {
+                                    ret.add(player);
+                                }
+                                return ret;
+                            }
+                        }
+                    }
                     case "conv" -> {
                         switch(args[1].toLowerCase()) {
                             case "add", "remove" -> {
