@@ -85,7 +85,8 @@ public class RegisterTeleportPoint implements TabExecutor {
                 .color(NamedTextColor.GOLD)
                 .decorate(
                     TextDecoration.BOLD,
-                    TextDecoration.ITALIC)
+                    TextDecoration.ITALIC,
+                    TextDecoration.UNDERLINED)
                 .hoverEvent(HoverEvent.showText(Component.text("クリックして入力")))
                 .clickEvent(ClickEvent.suggestCommand("タイトル:コメント"));
 
@@ -121,7 +122,6 @@ public class RegisterTeleportPoint implements TabExecutor {
                     .appendNewline()
                     .append(note)
                     .appendNewline()
-                    .appendSpace().appendSpace().appendSpace().appendSpace().appendSpace()
                     .append(note2)
                     .appendNewline()
                     .append(example)
@@ -234,50 +234,45 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                 }
                                                 try {
                                                     rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
-                                                    try {
-                                                        rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
-                                                        try (Connection conn = db.getConnection()) {
-                                                            db.updateLog(conn, "INSERT INTO tp_points (title, comment, x, y, z, yaw, pitch, world, server, type, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {title, comment, x, y, z, yaw, pitch, worldName, thisServerName, type, playerUUID});
+                                                    try (Connection conn = db.getConnection()) {
+                                                        db.updateLog(conn, "INSERT INTO tp_points (name, uuid, title, comment, x, y, z, yaw, pitch, world, server, type, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, title, comment, x, y, z, yaw, pitch, worldName, thisServerName, type, playerUUID});
 
-                                                            Component message3 = Component.text("テレポートポイントを登録しました。")
-                                                                .color(NamedTextColor.GREEN)
-                                                                .decorate(TextDecoration.BOLD);
+                                                        Component message3 = Component.text("テレポートポイントを登録しました。")
+                                                            .color(NamedTextColor.GREEN)
+                                                            .decorate(TextDecoration.BOLD);
 
-                                                            Component here = Component.text("ココ")
-                                                                .clickEvent(ClickEvent.runCommand("/fmc menu tp point " + type))
-                                                                .hoverEvent(HoverEvent.showText(Component.text("クリックしてテレポート")))
-                                                                .color(NamedTextColor.GOLD)
-                                                                .decorate(
-                                                                    TextDecoration.BOLD,
-                                                                    TextDecoration.UNDERLINED);
-                                                            
-                                                            Component message4 = Component.text("をクリックすると、確認できるよ！")
-                                                                .color(NamedTextColor.GOLD)
-                                                                .decorate(TextDecoration.BOLD);
-                                                            
-                                                            Component content = Component.text("※メニューが開きます。")
-                                                                .color(NamedTextColor.GRAY)
-                                                                .decorate(TextDecoration.ITALIC);
-                                                            
-                                                            TextComponent lastMessages = Component.text()
-                                                                .append(message3)
-                                                                .appendNewline()
-                                                                .append(here)
-                                                                .append(message4)
-                                                                .appendNewline()
-                                                                .append(content)
-                                                                .build();
+                                                        Component here = Component.text("ココ")
+                                                            .clickEvent(ClickEvent.runCommand("/fmc menu tp point " + type))
+                                                            .hoverEvent(HoverEvent.showText(Component.text("クリックしてテレポート")))
+                                                            .color(NamedTextColor.GOLD)
+                                                            .decorate(
+                                                                TextDecoration.BOLD,
+                                                                TextDecoration.UNDERLINED);
                                                         
-                                                            player.sendMessage(message3);
-                                                        } catch (SQLException | ClassNotFoundException e) {
-                                                            player.sendMessage(ChatColor.RED + "座標の保存に失敗しました。");
-                                                            logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-                                                            for (StackTraceElement element : e.getStackTrace()) {
-                                                                logger.error(element.toString());
-                                                            }
+                                                        Component message4 = Component.text("をクリックすると、確認できるよ！")
+                                                            .color(NamedTextColor.GOLD)
+                                                            .decorate(TextDecoration.BOLD);
+                                                        
+                                                        Component content = Component.text("※メニューが開きます。")
+                                                            .color(NamedTextColor.GRAY)
+                                                            .decorate(TextDecoration.ITALIC);
+                                                        
+                                                        TextComponent lastMessages = Component.text()
+                                                            .append(message3)
+                                                            .appendNewline()
+                                                            .append(here)
+                                                            .append(message4)
+                                                            .appendNewline()
+                                                            .append(content)
+                                                            .build();
+                                                    
+                                                        player.sendMessage(lastMessages);
+                                                    } catch (SQLException | ClassNotFoundException e) {
+                                                        player.sendMessage(ChatColor.RED + "座標の保存に失敗しました。");
+                                                        logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+                                                        for (StackTraceElement element : e.getStackTrace()) {
+                                                            logger.error(element.toString());
                                                         }
-                                                    } catch (Exception e) {
-                                                        player.sendMessage("処理中にエラーが発生しました。");
                                                     }
                                                 } catch (Exception e) {
                                                     player.sendMessage("処理中にエラーが発生しました。");
