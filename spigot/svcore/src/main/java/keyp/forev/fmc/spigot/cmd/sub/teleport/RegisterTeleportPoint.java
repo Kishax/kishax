@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.settings.PermSettings;
+import keyp.forev.fmc.common.util.JavaUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils2;
 import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
@@ -55,7 +56,7 @@ public class RegisterTeleportPoint implements TabExecutor {
             Player player = (Player) sender;
             String playerName = player.getName();
             String playerUUID = player.getUniqueId().toString();
-            if (lp.hasPermission(playerName, PermSettings.TELEPORT_REGISTER_POINT.get())) {
+            if (!lp.hasPermission(playerName, PermSettings.TELEPORT_REGISTER_POINT.get())) {
                 player.sendMessage(ChatColor.RED + "権限がありません。");
                 return true;
             }
@@ -80,31 +81,39 @@ public class RegisterTeleportPoint implements TabExecutor {
             if (loc.getWorld() instanceof World) {
                 World playerWorld = loc.getWorld();
                 final String worldName = playerWorld.getName();
-                Component titleOrComment = Component.text("タイトル名:コメント")
+                Component titleOrComment = Component.text("タイトル:コメント")
                 .color(NamedTextColor.GOLD)
                 .decorate(
                     TextDecoration.BOLD,
                     TextDecoration.ITALIC)
                 .hoverEvent(HoverEvent.showText(Component.text("クリックして入力")))
-                .clickEvent(ClickEvent.suggestCommand("タイトル名:コメント"));
+                .clickEvent(ClickEvent.suggestCommand("タイトル:コメント"));
 
                 Component example = Component.text("(例)")
                     .appendSpace()
                     .append(Component.text("おうち:いえにかえれるよ。"))
                     .color(NamedTextColor.GRAY);
 
-                Component note = Component.text("※タイトル名とコメントは「:」で区切ってください。")
+                Component note = Component.text("※タイトルとコメントは「:」で区切ってください。")
                     .color(NamedTextColor.GRAY);
                 
-                Component note2 = Component.text("(「:」は全角でも可)")
+                Component note2 = Component.text("※「:」は全角でも可")
                     .color(NamedTextColor.GRAY);
 
+                final double roundX = JavaUtils.roundToFirstDecimalPlace(x);
+                final double roundY = JavaUtils.roundToFirstDecimalPlace(y);
+                final double roundZ = JavaUtils.roundToFirstDecimalPlace(z);
+
+                Component currentCoord = Component.text("現在地: " + worldName + "(" + roundX + ", " + roundY + ", " + roundZ + ")")
+                    .color(NamedTextColor.GOLD)
+                    .decorate(
+                        TextDecoration.BOLD,
+                        TextDecoration.UNDERLINED);
+
                 TextComponent messages = Component.text()
-                    .append(Component.text("座標を取得しました。"))
+                    .append(currentCoord)
                     .appendNewline()
-                    .append(Component.text("World: " + worldName))
-                    .append(Component.text("Location: (" + x + ", " + y + ", " + z + ")"))
-                    .append(Component.text("テレポートポイントに登録しますか？"))
+                    .append(Component.text("現在地をテレポートポイントに登録しますか？"))
                     .appendNewline()
                     .append(Component.text("登録する場合は"))
                     .append(titleOrComment)
@@ -112,9 +121,11 @@ public class RegisterTeleportPoint implements TabExecutor {
                     .appendNewline()
                     .append(note)
                     .appendNewline()
+                    .appendSpace().appendSpace().appendSpace().appendSpace().appendSpace()
                     .append(note2)
                     .appendNewline()
                     .append(example)
+                    .appendNewline()
                     .appendNewline()
                     .append(Component.text("処理を中断する場合は"))
                     .append(TCUtils.ZERO.get())
@@ -159,28 +170,40 @@ public class RegisterTeleportPoint implements TabExecutor {
                                 try {
                                     rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
                                     
-                                    Component note3 = Component.text("プライベートは自分だけが見えるポイントを、")
-                                        .append(Component.text("パブリックは全員が見えるポイントを指します。"))
-                                        .color(NamedTextColor.GRAY);
+                                    TextComponent note3 = Component.text()
+                                        .append(Component.text("プライベート")
+                                            .decorate(TextDecoration.UNDERLINED))
+                                        .append(Component.text("は自分だけが飛べるポイントを"))
+                                        .appendNewline()
+                                        .append(Component.text("パブリック")
+                                            .decorate(TextDecoration.UNDERLINED))
+                                        .append(Component.text("は全員が共有で飛べるポイントを指します。"))
+                                        .color(NamedTextColor.GRAY)
+                                        .decorate(TextDecoration.ITALIC)
+                                        .build();
 
-                                    Component message = Component.text("タイトル名: " + title)
-                                        .appendNewline()
-                                        .append(Component.text("コメント: " + comment))
-                                        .appendNewline()
-                                        .append(Component.text("最後に"))
-                                        .appendNewline()
-                                        .append(Component.text("このポイントをパブリックにする場合は"))
+                                    TextComponent message = Component.text()
+                                        .append(Component.text("このポイントを"))
+                                        .append(Component.text("パブリック")
+                                            .decorate(TextDecoration.UNDERLINED))
+                                        .append(Component.text("にする場合は"))
                                         .append(TCUtils.ONE.get())
                                         .append(Component.text("と入力してください。"))
-                                        .append(Component.text("プライベートにする場合は"))
+                                        .appendNewline()
+                                        .append(Component.text("プライベート")
+                                            .decorate(TextDecoration.UNDERLINED))
+                                        .append(Component.text("にする場合は"))
                                         .append(TCUtils.TWO.get())
                                         .append(Component.text("と入力してください。"))
                                         .appendNewline()
                                         .append(note3)
+                                        .appendNewline()
                                         .append(Component.text("処理を中断する場合は"))
                                         .append(TCUtils.ZERO.get())
                                         .append(Component.text("と入力してください。"))
-                                        .append(TCUtils.INPUT_MODE.get());
+                                        .appendNewline()
+                                        .append(TCUtils.INPUT_MODE.get())
+                                        .build();
 
                                     player.sendMessage(message);
 
@@ -195,15 +218,57 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                     .decorate(TextDecoration.BOLD);
                                                     
                                                 player.sendMessage(message2);
+                                                return;
                                             }
                                             case "1", "2" -> {
-                                                boolean isPublic = input2.equals("1");
+                                                //boolean isPublic = input2.equals("1");
+                                                final String type;
+                                                switch (input2) {
+                                                    case "1" -> type = "public";
+                                                    case "2" -> type = "private";
+                                                    default -> {
+                                                        rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                                        player.sendMessage(ChatColor.RED + "処理中にエラーが発生しました。");
+                                                        throw new IllegalArgumentException("Invalid input: " + input2);
+                                                    }
+                                                }
                                                 try {
                                                     rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
                                                     try {
                                                         rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
                                                         try (Connection conn = db.getConnection()) {
-                                                            db.updateLog(conn, "INSERT INTO tp_points (title, comment, x, y, z, yaw, pitch, world, server, public, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {title, comment, x, y, z, yaw, pitch, worldName, thisServerName, isPublic, playerUUID});
+                                                            db.updateLog(conn, "INSERT INTO tp_points (title, comment, x, y, z, yaw, pitch, world, server, type, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {title, comment, x, y, z, yaw, pitch, worldName, thisServerName, type, playerUUID});
+
+                                                            Component message3 = Component.text("テレポートポイントを登録しました。")
+                                                                .color(NamedTextColor.GREEN)
+                                                                .decorate(TextDecoration.BOLD);
+
+                                                            Component here = Component.text("ココ")
+                                                                .clickEvent(ClickEvent.runCommand("/fmc menu tp point " + type))
+                                                                .hoverEvent(HoverEvent.showText(Component.text("クリックしてテレポート")))
+                                                                .color(NamedTextColor.GOLD)
+                                                                .decorate(
+                                                                    TextDecoration.BOLD,
+                                                                    TextDecoration.UNDERLINED);
+                                                            
+                                                            Component message4 = Component.text("をクリックすると、確認できるよ！")
+                                                                .color(NamedTextColor.GOLD)
+                                                                .decorate(TextDecoration.BOLD);
+                                                            
+                                                            Component content = Component.text("※メニューが開きます。")
+                                                                .color(NamedTextColor.GRAY)
+                                                                .decorate(TextDecoration.ITALIC);
+                                                            
+                                                            TextComponent lastMessages = Component.text()
+                                                                .append(message3)
+                                                                .appendNewline()
+                                                                .append(here)
+                                                                .append(message4)
+                                                                .appendNewline()
+                                                                .append(content)
+                                                                .build();
+                                                        
+                                                            player.sendMessage(message3);
                                                         } catch (SQLException | ClassNotFoundException e) {
                                                             player.sendMessage(ChatColor.RED + "座標の保存に失敗しました。");
                                                             logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
@@ -211,12 +276,6 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                                 logger.error(element.toString());
                                                             }
                                                         }
-                                                        
-                                                        Component message3 = Component.text("テレポートポイントを登録しました。")
-                                                            .color(NamedTextColor.GREEN)
-                                                            .decorate(TextDecoration.BOLD);
-
-                                                        player.sendMessage(message3);
                                                     } catch (Exception e) {
                                                         player.sendMessage("処理中にエラーが発生しました。");
                                                     }
@@ -232,7 +291,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                                             }
                                         }
                                     });
-                                    rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                    rt.addTaskRunnable(player, playerActions2, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
                                 } catch (Exception e) {
                                     player.sendMessage("処理中にエラーが発生しました。");
                                 }

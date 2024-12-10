@@ -37,3 +37,7 @@ commands:
     usage: /<command>
     description: You can teleport to back
     executor: keyp.forev.fmc.spigot.cmd.sub.teleport.Back
+  registerpoint:
+    usage: /<command>
+    description: You can register point
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.RegisterTeleportPoint

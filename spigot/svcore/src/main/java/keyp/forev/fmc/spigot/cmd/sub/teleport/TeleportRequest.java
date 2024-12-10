@@ -54,7 +54,7 @@ public class TeleportRequest implements TabExecutor {
     @Override
 	public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
-            if (lp.hasPermission(player.getName(), PermSettings.TPR.get())) {
+            if (!lp.hasPermission(player.getName(), PermSettings.TPR.get())) {
                 Component errorMessage = Component.text("権限がありません。")
                     .color(NamedTextColor.RED);
                 player.sendMessage(errorMessage);
