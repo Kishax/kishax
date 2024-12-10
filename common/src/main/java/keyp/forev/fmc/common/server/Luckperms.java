@@ -26,14 +26,14 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.types.InheritanceNode;
 
-public class DefaultLuckperms {
+public class Luckperms {
 	protected final LuckPerms lpapi = LuckPermsProvider.get();
 	private final Logger logger;
 	private final Database db;
 	private final PlayerUtils pu;
 	
 	@Inject
-	public DefaultLuckperms(Logger logger, Database db, PlayerUtils pu) {
+	public Luckperms(Logger logger, Database db, PlayerUtils pu) {
 		this.logger = logger;
 		this.db = db;
 		this.pu = pu;

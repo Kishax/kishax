@@ -12,21 +12,21 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
-import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
+import keyp.forev.fmc.common.server.Luckperms;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import net.md_5.bungee.api.ChatColor;
 
 public class SetPoint {
     private final Logger logger;
     private final Database db;
-    private final DefaultLuckperms lp;
-    private final SpigotServerHomeDir shd;
+    private final Luckperms lp;
+    private final String thisServerName;
     @Inject
-    public SetPoint(Logger logger, Database db, DefaultLuckperms lp, SpigotServerHomeDir shd) {
+    public SetPoint(Logger logger, Database db, Luckperms lp, ServerHomeDir shd) {
         this.logger = logger;
         this.db = db;
         this.lp = lp;
-        this.shd = shd;
+        this.thisServerName = shd.getServerName();
     }
 
     public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -44,39 +44,38 @@ public class SetPoint {
             String type = args[1];
             switch (type) {
                 case "load", "room", "hub" -> {
-                    Location location = player.getLocation();
-                    String serverName = shd.getServerName();
-                    if (location != null) {
-                        double x = location.getX();
-                        double y = location.getY();
-                        double z = location.getZ();
-                        float yaw = location.getYaw();
-                        float pitch = location.getPitch();
-                        String world = null;
-                        if (location.getWorld() instanceof World) {
-                            World playerWorld = location.getWorld();
-                            world = playerWorld.getName();
+                    Location loc = player.getLocation();
+                    if (loc == null) {
+                        player.sendMessage(ChatColor.RED + "座標の取得に失敗しました。");
+                        return;
+                    }
+                    double x = loc.getX();
+                    double y = loc.getY();
+                    double z = loc.getZ();
+                    float yaw = loc.getYaw();
+                    float pitch = loc.getPitch();
+                    String worldName = null;
+                    if (loc.getWorld() instanceof World) {
+                        World playerWorld = loc.getWorld();
+                        worldName = playerWorld.getName();
+                    }
+                    player.sendMessage("""
+                        座標を取得しました。
+                        X: %s
+                        Y: %s
+                        Z: %s
+                        Yaw: %s
+                        Pitch: %s
+                        World: %s
+                        """.formatted(x, y, z, yaw, pitch, worldName));
+                    try (Connection conn = db.getConnection()) {
+                        db.updateLog(conn, "UPDATE coords SET x = ?, y = ?, z = ?, yaw = ?, pitch = ?, world = ?, server = ? WHERE name = ?", new Object[] {x, y, z, yaw, pitch, worldName, thisServerName, type});
+                    } catch (SQLException | ClassNotFoundException e) {
+                        player.sendMessage(ChatColor.RED + "座標の保存に失敗しました。");
+                        logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+                        for (StackTraceElement element : e.getStackTrace()) {
+                            logger.error(element.toString());
                         }
-                        player.sendMessage("""
-                            座標を取得しました。
-                            X: %s
-                            Y: %s
-                            Z: %s
-                            Yaw: %s
-                            Pitch: %s
-                            World: %s
-                            """.formatted(x, y, z, yaw, pitch, world));
-                        try (Connection conn = db.getConnection()) {
-                            db.updateLog(conn, "UPDATE coords SET x = ?, y = ?, z = ?, yaw = ?, pitch = ?, world = ?, server = ? WHERE name = ?", new Object[] {x, y, z, yaw, pitch, world, serverName, type});
-                        } catch (SQLException | ClassNotFoundException e) {
-                            player.sendMessage(ChatColor.RED + "座標の保存に失敗しました。");
-                            logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
-                            for (StackTraceElement element : e.getStackTrace()) {
-                                logger.error(element.toString());
-                            }
-                        }
-                    } else {
-                        player.sendMessage(ChatColor.RED + "座標が取得できませんでした。");
                     }
                 }
                 default -> {

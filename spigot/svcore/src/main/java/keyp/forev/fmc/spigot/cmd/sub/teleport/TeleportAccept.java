@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -28,9 +28,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class TeleportAccept implements TabExecutor {
     private final JavaPlugin plugin;
     private final Logger logger;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     @Inject
-    public TeleportAccept(JavaPlugin plugin, Logger logger, DefaultLuckperms lp) {
+    public TeleportAccept(JavaPlugin plugin, Logger logger, Luckperms lp) {
         this.plugin = plugin;
         this.logger = logger;
         this.lp = lp;

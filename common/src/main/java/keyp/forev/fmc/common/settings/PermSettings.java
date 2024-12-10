@@ -8,8 +8,9 @@ public enum PermSettings {
     HUB("fmc.proxy.hub"),
     CEND("fmc.proxy.cend"),
     PERM("fmc.proxy.perm"),
-    TPR("fmc.proxy.tpr"),
+    TPR("fmc.tpr"),
     SILENT("fmc.proxy.silent"),
+    TELEPORT_REGISTER_POINT("fmc.registerpoint"),
     ;
 
 	private final String value;

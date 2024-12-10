@@ -8,12 +8,12 @@ import com.google.inject.Provides;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.database.interfaces.DatabaseInfo;
 import keyp.forev.fmc.common.module.interfaces.binding.annotation.DataDirectory;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.DoServerOffline;
 import keyp.forev.fmc.common.server.DoServerOnline;
 import keyp.forev.fmc.common.server.JedisProvider;
 import keyp.forev.fmc.common.server.ServerStatusCache;
-import keyp.forev.fmc.common.server.interfaces.DefaultServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.PortFinder;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
@@ -73,7 +73,7 @@ public class Module extends AbstractModule {
 		bind(PortFinder.class);
 		bind(AutoShutdown.class);
 		bind(Rcon.class);
-		bind(DefaultLuckperms.class);
+		bind(Luckperms.class);
 		bind(ImageMap.class);
 		bind(Book.class);
 		bind(Inventory.class);
@@ -102,14 +102,14 @@ public class Module extends AbstractModule {
 	        AutoShutdown asd,
 	        Inventory inv,
 	        Menu menu,
-	        DefaultLuckperms lp,
+	        Luckperms lp,
 	        BroadCast bc) {
 	    return new SpigotSocketResponse(plugin, logger, db, ssc, shd, sswProvider, asd, inv, menu, lp, bc);
 	}
 	
 	@Provides
 	@Singleton
-	public DefaultServerHomeDir provideServerHomeDir(JavaPlugin plugin) {
+	public ServerHomeDir provideServerHomeDir(JavaPlugin plugin) {
 		return new SpigotServerHomeDir(plugin);
 	}
 }

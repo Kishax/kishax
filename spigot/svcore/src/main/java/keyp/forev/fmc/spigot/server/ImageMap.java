@@ -53,7 +53,7 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
-
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.CalcUtil;
@@ -85,7 +85,7 @@ public class ImageMap {
     private final String serverName;
     
     @Inject
-    public ImageMap(JavaPlugin plugin, Logger logger, Database db, SpigotServerHomeDir shd, RunnableTaskUtil rt) {
+    public ImageMap(JavaPlugin plugin, Logger logger, Database db, ServerHomeDir shd, RunnableTaskUtil rt) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;

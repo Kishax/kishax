@@ -15,7 +15,7 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.common.util.OTPGenerator;
 import net.kyori.adventure.text.Component;
@@ -28,10 +28,10 @@ public class Retry implements SimpleCommand {
 
 	private final Logger logger;
 	private final Database db;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
 	private final String[] subcommands = {"retry"};
 	@Inject
-	public Retry(Logger logger, Database db, DefaultLuckperms lp) {
+	public Retry(Logger logger, Database db, Luckperms lp) {
 		this.logger = logger;
 		this.db = db;
 		this.lp = lp;

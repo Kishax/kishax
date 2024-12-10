@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 
 import com.google.inject.Inject;
 
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.spigot.events.EventListener;
 import keyp.forev.fmc.spigot.settings.FMCCoords;
 import net.kyori.adventure.text.Component;
@@ -18,9 +18,9 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
 
 public class Back implements TabExecutor {
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     @Inject
-    public Back(DefaultLuckperms lp) {
+    public Back(Luckperms lp) {
         this.lp = lp;
     }
 

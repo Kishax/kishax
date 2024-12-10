@@ -9,7 +9,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.interfaces.DefaultServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 
 public class DoServerOffline {
@@ -18,7 +18,7 @@ public class DoServerOffline {
 	private final Provider<SocketSwitch> sswProvider;
 	private final String thisServerName;
 	@Inject
-	public DoServerOffline(Logger logger, Database db, Provider<SocketSwitch> sswProvider, DefaultServerHomeDir shd) {
+	public DoServerOffline(Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
 		this.logger = logger;
 		this.db = db;
 		this.sswProvider = sswProvider;

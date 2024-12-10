@@ -13,7 +13,7 @@ import keyp.forev.fmc.common.database.interfaces.DatabaseInfo;
 import keyp.forev.fmc.common.module.interfaces.binding.annotation.DataDirectory;
 import keyp.forev.fmc.common.server.DoServerOffline;
 import keyp.forev.fmc.common.server.DoServerOnline;
-import keyp.forev.fmc.common.server.interfaces.DefaultServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.PortFinder;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
@@ -74,7 +74,7 @@ public class Module extends AbstractModule {
 	
 	@Provides
 	@Singleton
-	public DefaultServerHomeDir providesForgeServerHomeDir() {
+	public ServerHomeDir providesForgeServerHomeDir() {
 		return new ForgeServerHomeDir(configPath);
 	}
 	

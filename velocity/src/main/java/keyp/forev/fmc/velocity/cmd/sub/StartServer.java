@@ -20,7 +20,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -39,11 +39,11 @@ public class StartServer {
 	private final BroadCast bc;
 	private final DoServerOnline dso;
 	private final MessageEditor discordME;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
 	private String currentServerName = null;
 	
 	@Inject
-	public StartServer (ProxyServer server, Logger logger, VelocityConfig config, Database db, ConsoleCommandSource console, MessageEditor discordME, BroadCast bc, DoServerOnline dso, DefaultLuckperms lp) {
+	public StartServer (ProxyServer server, Logger logger, VelocityConfig config, Database db, ConsoleCommandSource console, MessageEditor discordME, BroadCast bc, DoServerOnline dso, Luckperms lp) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;

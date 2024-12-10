@@ -13,7 +13,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.DoServerOffline;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.util.PlayerUtils;
@@ -28,7 +28,7 @@ import keyp.forev.fmc.spigot.module.Module;
 import keyp.forev.fmc.spigot.server.AutoShutdown;
 import keyp.forev.fmc.spigot.server.ImageMap;
 import keyp.forev.fmc.spigot.server.Rcon;
-import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 
 public class Main extends JavaPlugin {
 	private static Injector injector = null;
@@ -71,7 +71,7 @@ public class Main extends JavaPlugin {
     	if (getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
 		}
-		getInjector().getInstance(DefaultLuckperms.class).triggerNetworkSync();
+		getInjector().getInstance(Luckperms.class).triggerNetworkSync();
 		logger.info("linking with LuckPerms...");
 		logger.info(LuckPermsProvider.get().getPlatform().toString());
 		getInjector().getInstance(PlayerUtils.class).loadPlayers();
@@ -101,7 +101,7 @@ public class Main extends JavaPlugin {
     }
 
 	private void ifHubThenUpdate(Connection conn) throws SQLException, ClassNotFoundException {
-		String thisServerName = getInjector().getInstance(SpigotServerHomeDir.class).getServerName();
+		String thisServerName = getInjector().getInstance(ServerHomeDir.class).getServerName();
         String query = "SELECT hub FROM status WHERE name=? LIMIT 1;";
         PreparedStatement ps = conn.prepareStatement(query);
         ps.setString(1, thisServerName);

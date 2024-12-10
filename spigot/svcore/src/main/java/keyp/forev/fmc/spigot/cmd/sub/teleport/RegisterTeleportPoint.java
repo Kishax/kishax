@@ -1,10 +1,14 @@
 package keyp.forev.fmc.spigot.cmd.sub.teleport;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -13,19 +17,36 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.google.inject.Inject;
 
+import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils2;
 import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.md_5.bungee.api.ChatColor;
+import keyp.forev.fmc.common.server.Luckperms;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
+import keyp.forev.fmc.common.database.Database;
+import org.slf4j.Logger;
 
 public class RegisterTeleportPoint implements TabExecutor {
+    private final Logger logger;
+    private final Database db;
+    private final Luckperms lp;
     private final RunnableTaskUtil rt;
+    private final String thisServerName;
     @Inject
-    public RegisterTeleportPoint(RunnableTaskUtil rt) {
+    public RegisterTeleportPoint(Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ServerHomeDir shd) {
+        this.logger = logger;
+        this.db = db;
+        this.lp = lp;
         this.rt = rt;
+        this.thisServerName = shd.getServerName();
     }
 
     @Override
@@ -33,44 +54,207 @@ public class RegisterTeleportPoint implements TabExecutor {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             String playerName = player.getName();
-            // ラージか1✕1かをプレイヤーに問う
-            TextComponent messages = Component.text()
-                .append(Component.text("1✕1の画像マップを作成する場合は、"))
-                .append(TCUtils.ONE.get())
-                .append(Component.text("と入力してください。"))
-                .appendNewline()
-                .append(Component.text("ラージマップを作成する場合は、"))
-                .append(TCUtils.TWO.get())
-                .append(Component.text("と入力してください。"))
-                .appendNewline()
-                .append(TCUtils.INPUT_MODE.get())
-                .build();
+            String playerUUID = player.getUniqueId().toString();
+            if (lp.hasPermission(playerName, PermSettings.TELEPORT_REGISTER_POINT.get())) {
+                player.sendMessage(ChatColor.RED + "権限がありません。");
+                return true;
+            }
 
-            player.sendMessage(messages);
-            
-            Map<String, MessageRunnable> playerActions = new HashMap<>();
-            playerActions.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get(), (input) -> {
-                player.sendMessage(TCUtils2.getResponseComponent(input));
-                switch (input) {
-                    case "0" -> {
-                        rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+            if (rt.checkIsOtherInputMode(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get())) {
+                player.sendMessage(ChatColor.RED + "他でインプット中のため処理を続行できません。");
+                return true;
+            }
+
+            Location loc = player.getLocation();
+            if (loc == null) {
+                player.sendMessage(ChatColor.RED + "座標の取得に失敗しました。");
+                return true;
+            }
+
+            final double x = loc.getX();
+            final double y = loc.getY();
+            final double z = loc.getZ();
+            final float yaw = loc.getYaw();
+            final float pitch = loc.getPitch();
+
+            if (loc.getWorld() instanceof World) {
+                World playerWorld = loc.getWorld();
+                final String worldName = playerWorld.getName();
+                Component titleOrComment = Component.text("タイトル名:コメント")
+                .color(NamedTextColor.GOLD)
+                .decorate(
+                    TextDecoration.BOLD,
+                    TextDecoration.ITALIC)
+                .hoverEvent(HoverEvent.showText(Component.text("クリックして入力")))
+                .clickEvent(ClickEvent.suggestCommand("タイトル名:コメント"));
+
+                Component example = Component.text("(例)")
+                    .appendSpace()
+                    .append(Component.text("おうち:いえにかえれるよ。"))
+                    .color(NamedTextColor.GRAY);
+
+                Component note = Component.text("※タイトル名とコメントは「:」で区切ってください。")
+                    .color(NamedTextColor.GRAY);
+                
+                Component note2 = Component.text("(「:」は全角でも可)")
+                    .color(NamedTextColor.GRAY);
+
+                TextComponent messages = Component.text()
+                    .append(Component.text("座標を取得しました。"))
+                    .appendNewline()
+                    .append(Component.text("World: " + worldName))
+                    .append(Component.text("Location: (" + x + ", " + y + ", " + z + ")"))
+                    .append(Component.text("テレポートポイントに登録しますか？"))
+                    .appendNewline()
+                    .append(Component.text("登録する場合は"))
+                    .append(titleOrComment)
+                    .append(Component.text("を入力してください。"))
+                    .appendNewline()
+                    .append(note)
+                    .appendNewline()
+                    .append(note2)
+                    .appendNewline()
+                    .append(example)
+                    .appendNewline()
+                    .append(Component.text("処理を中断する場合は"))
+                    .append(TCUtils.ZERO.get())
+                    .append(Component.text("と入力してください。"))
+                    .appendNewline()
+                    .append(TCUtils.INPUT_MODE.get())
+                    .build();
+
+                player.sendMessage(messages);
+                
+                Map<String, MessageRunnable> playerActions = new HashMap<>();
+                playerActions.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get(), (input) -> {
+                    player.sendMessage(TCUtils2.getResponseComponent(input));
+                    switch (input) {
+                        case "0" -> {
+                            rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                            Component message = Component.text("処理を中断しました。")
+                                .color(NamedTextColor.RED)
+                                .decorate(TextDecoration.BOLD);
+
+                            player.sendMessage(message);
+                        }
+                        default -> {
+                            // 「:」もしくは全角の「：」が含まれてるかどうか
+                            if (input.contains(":") || input.contains("：")) {
+                                // 「:」もしくは全角の「：」が複数ある場合は処理を中断
+                                if (input.split("[:：]").length > 2) {
+                                    Component errorMessage = Component.text("コメントの開始位置が決定できません。")
+                                        .appendNewline()
+                                        .append(Component.text("「:」もしくは全角の「：」は1つだけ入力してください。"))
+                                        .color(NamedTextColor.RED);
+
+                                    player.sendMessage(errorMessage);
+
+                                    rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                    return;
+                                }
+
+                                String[] titleAndComment = input.split("[:：]", 2);
+                                String title = titleAndComment[0];
+                                String comment = titleAndComment[1];
+                                try {
+                                    rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                    
+                                    Component note3 = Component.text("プライベートは自分だけが見えるポイントを、")
+                                        .append(Component.text("パブリックは全員が見えるポイントを指します。"))
+                                        .color(NamedTextColor.GRAY);
+
+                                    Component message = Component.text("タイトル名: " + title)
+                                        .appendNewline()
+                                        .append(Component.text("コメント: " + comment))
+                                        .appendNewline()
+                                        .append(Component.text("最後に"))
+                                        .appendNewline()
+                                        .append(Component.text("このポイントをパブリックにする場合は"))
+                                        .append(TCUtils.ONE.get())
+                                        .append(Component.text("と入力してください。"))
+                                        .append(Component.text("プライベートにする場合は"))
+                                        .append(TCUtils.TWO.get())
+                                        .append(Component.text("と入力してください。"))
+                                        .appendNewline()
+                                        .append(note3)
+                                        .append(Component.text("処理を中断する場合は"))
+                                        .append(TCUtils.ZERO.get())
+                                        .append(Component.text("と入力してください。"))
+                                        .append(TCUtils.INPUT_MODE.get());
+
+                                    player.sendMessage(message);
+
+                                    Map<String, MessageRunnable> playerActions2 = new HashMap<>();
+                                    playerActions2.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get(), (input2) -> {
+                                        player.sendMessage(TCUtils2.getResponseComponent(input2));
+                                        switch (input2) {
+                                            case "0" -> {
+                                                rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                                Component message2 = Component.text("処理を中断しました。")
+                                                    .color(NamedTextColor.RED)
+                                                    .decorate(TextDecoration.BOLD);
+                                                    
+                                                player.sendMessage(message2);
+                                            }
+                                            case "1", "2" -> {
+                                                boolean isPublic = input2.equals("1");
+                                                try {
+                                                    rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                                    try {
+                                                        rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                                        try (Connection conn = db.getConnection()) {
+                                                            db.updateLog(conn, "INSERT INTO tp_points (title, comment, x, y, z, yaw, pitch, world, server, public, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {title, comment, x, y, z, yaw, pitch, worldName, thisServerName, isPublic, playerUUID});
+                                                        } catch (SQLException | ClassNotFoundException e) {
+                                                            player.sendMessage(ChatColor.RED + "座標の保存に失敗しました。");
+                                                            logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+                                                            for (StackTraceElement element : e.getStackTrace()) {
+                                                                logger.error(element.toString());
+                                                            }
+                                                        }
+                                                        
+                                                        Component message3 = Component.text("テレポートポイントを登録しました。")
+                                                            .color(NamedTextColor.GREEN)
+                                                            .decorate(TextDecoration.BOLD);
+
+                                                        player.sendMessage(message3);
+                                                    } catch (Exception e) {
+                                                        player.sendMessage("処理中にエラーが発生しました。");
+                                                    }
+                                                } catch (Exception e) {
+                                                    player.sendMessage("処理中にエラーが発生しました。");
+                                                }
+                                            }
+                                            default -> {
+                                                Component errorMessage2 = Component.text("無効な入力です。")
+                                                    .color(NamedTextColor.RED);
+                                                player.sendMessage(errorMessage2);
+                                                rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                            }
+                                        }
+                                    });
+                                    rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                } catch (Exception e) {
+                                    player.sendMessage("処理中にエラーが発生しました。");
+                                }
+                            } else {
+                                Component errorMessage = Component.text("無効な入力です。")
+                                    .appendNewline()
+                                    .append(Component.text("タイトル名とコメントは「:」で区切ってください。"))
+                                    .color(NamedTextColor.RED);
+                                
+                                player.sendMessage(errorMessage);
+
+                                rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                            }
+                        }
                     }
-                    case "1" -> {
-                        rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
-                    }
-                    case "2" -> {
-                        rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
-                    }
-                    default -> {
-                        Component errorMessage = Component.text("無効な入力です。")
-                            .appendNewline()
-                            .append(Component.text("1または2を入力してください。"))
-                            .color(NamedTextColor.RED);
-                        rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
-                    }
-                }
-            });
-            rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                });
+                rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+            } else {
+                player.sendMessage(ChatColor.RED + "ワールドの取得に失敗しました。");
+                rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                throw new NullPointerException("World is null.");
+            }
         } else {
             Component errorMessage = Component.text("プレイヤーのみが実行できます。")
                 .color(NamedTextColor.RED);

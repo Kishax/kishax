@@ -26,7 +26,7 @@ import keyp.forev.fmc.common.libs.ClassManager;
 import keyp.forev.fmc.common.libs.Downloader;
 import keyp.forev.fmc.common.libs.JarLoader;
 import keyp.forev.fmc.common.libs.interfaces.PackageManager;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import de.timongcraft.veloboard.VeloBoardRegistry;
@@ -151,7 +151,7 @@ public class Main {
 			logger.error("An error occurred while updating the database: {}", e1.getMessage());
 		}
     	server.getEventManager().register(this, getInjector().getInstance(EventListener.class));
-    	getInjector().getInstance(DefaultLuckperms.class).triggerNetworkSync();
+    	getInjector().getInstance(Luckperms.class).triggerNetworkSync();
  		logger.info("linking with LuckPerms...");
         logger.info(LuckPermsProvider.get().getPlatform().toString());
  		getInjector().getInstance(PlayerUtils.class).loadPlayers();

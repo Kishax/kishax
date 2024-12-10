@@ -10,7 +10,7 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import net.kyori.adventure.text.Component;
@@ -21,13 +21,13 @@ import net.kyori.adventure.text.format.TextDecoration;
 public class Perm {
 
 	private final VelocityConfig config;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
 	public static List<String> args1 = new ArrayList<>(Arrays.asList("add","remove","list"));
 	public static List<String> permS = null;
 	public static List<String> permD = null;
 	
 	@Inject
-	public Perm (VelocityConfig config, DefaultLuckperms lp) {
+	public Perm (VelocityConfig config, Luckperms lp) {
 		this.config = config;
 		this.lp = lp;
 	}
@@ -78,11 +78,11 @@ public class Perm {
 								additionalComponent = Component.newline()
 										.append(Component.text(playerName)
 											.color(NamedTextColor.WHITE))
-										.append(Component.space())
-										.append(Component.space())
+										.appendSpace()
+										.appendSpace()
 										.append(Component.text("-")
-											.append(Component.space())
-											.append(Component.space())
+											.appendSpace()
+											.appendSpace()
 											.append(Component.text(shortPermission))
 										.color(NamedTextColor.GOLD));
 

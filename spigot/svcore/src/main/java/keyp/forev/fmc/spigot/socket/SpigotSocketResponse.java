@@ -13,7 +13,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
@@ -28,7 +28,7 @@ import keyp.forev.fmc.spigot.events.EventListener;
 import keyp.forev.fmc.spigot.server.AutoShutdown;
 import keyp.forev.fmc.spigot.server.BroadCast;
 import keyp.forev.fmc.spigot.server.Inventory;
-import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 
 import org.bukkit.plugin.java.JavaPlugin;
@@ -42,11 +42,11 @@ public class SpigotSocketResponse implements SocketResponse {
     private final AutoShutdown asd;
     private final Inventory inv;
     private final Menu menu;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     private final BroadCast bc;
     private final String thisServerName;
     @Inject
-    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, SpigotServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, DefaultLuckperms lp, BroadCast bc) {
+    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, Luckperms lp, BroadCast bc) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;

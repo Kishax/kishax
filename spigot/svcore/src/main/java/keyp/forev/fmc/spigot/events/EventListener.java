@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.spigot.cmd.sub.Confirm;
 import keyp.forev.fmc.spigot.cmd.sub.Menu;
@@ -62,13 +62,13 @@ public final class EventListener implements Listener {
 	private final PortalsConfig psConfig;
     private final Menu menu;
     private final ServerStatusCache ssc;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     private final Inventory inv;
     private final FMCItemFrame fif;
     private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
 
     @Inject
-	public EventListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, DefaultLuckperms lp, Inventory inv, FMCItemFrame fif) {
+	public EventListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv, FMCItemFrame fif) {
 		this.plugin = plugin;
         this.logger = logger;
 		this.psConfig = psConfig;

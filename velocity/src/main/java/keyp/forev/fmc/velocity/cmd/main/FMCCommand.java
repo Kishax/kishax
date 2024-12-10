@@ -13,7 +13,7 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -39,12 +39,12 @@ public class FMCCommand implements SimpleCommand {
     private final VelocityConfig config;
     private final Database db;
     private final PlayerUtils pu;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend", "silent"));
     public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
     @Inject
-    public FMCCommand(VelocityConfig config, Database db, PlayerUtils pu, DefaultLuckperms lp) {
+    public FMCCommand(VelocityConfig config, Database db, PlayerUtils pu, Luckperms lp) {
         this.config = config;
         this.db = db;
         this.pu = pu;

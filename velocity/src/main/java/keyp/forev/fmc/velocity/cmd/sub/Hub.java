@@ -17,7 +17,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -27,10 +27,10 @@ public class Hub implements SimpleCommand {
 	private final ProxyServer server;
 	private final Logger logger;
 	private final Database db;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
 	private final String[] subcommands = {"hub"};
 	@Inject
-    public Hub(ProxyServer server, Logger logger, Database db, DefaultLuckperms lp) {
+    public Hub(ProxyServer server, Logger logger, Database db, Luckperms lp) {
 		this.server = server;
 		this.logger = logger;
 		this.db = db;

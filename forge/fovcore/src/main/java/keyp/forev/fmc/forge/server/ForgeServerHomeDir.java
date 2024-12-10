@@ -4,9 +4,9 @@ import java.nio.file.Path;
 
 import com.google.inject.Inject;
 
-import keyp.forev.fmc.common.server.interfaces.DefaultServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 
-public class ForgeServerHomeDir implements DefaultServerHomeDir {
+public class ForgeServerHomeDir implements ServerHomeDir {
 	private final Path configPath;
 	@Inject
 	public ForgeServerHomeDir(Path configPath) {

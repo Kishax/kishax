@@ -15,6 +15,7 @@ import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.md_5.bungee.api.ChatColor;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 
 public class AutoShutdown {
 
@@ -27,7 +28,7 @@ public class AutoShutdown {
     private BukkitRunnable task = null;
     
     @Inject
-	public AutoShutdown (JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, SpigotServerHomeDir shd, BroadCast bc) {
+	public AutoShutdown (JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, BroadCast bc) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.db = db;
