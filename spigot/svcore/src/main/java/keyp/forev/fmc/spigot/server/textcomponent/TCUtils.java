@@ -1,11 +1,11 @@
 package keyp.forev.fmc.spigot.server.textcomponent;
 
 import keyp.forev.fmc.common.settings.FMCSettings;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 public enum TCUtils {
     ASTERISK("asterisk"),
@@ -19,61 +19,66 @@ public enum TCUtils {
     ONE("1"),
     TWO("2"),
     ;
-	private final TextComponent value;
+    private final String key;
 	TCUtils(String key) {
-        TextComponent message = new TextComponent();
-        switch (key) {
-            case "asterisk" -> {
-                message.addExtra("\n※\s");
-                message.setColor(ChatColor.GRAY);
-                message.setItalic(true);
-            }
-            case "javauser" -> {
-                message.addExtra("Java版ユーザー");
-                message.setColor(ChatColor.GRAY);
-                message.setItalic(true);
-                message.setUnderlined(true);
-            }
-            case "bedrockuser" -> {
-                message.addExtra("Bedrock版ユーザー");
-                message.setColor(ChatColor.GRAY);
-                message.setItalic(true);
-                message.setUnderlined(true);
-            }
-            case "settings_enter" -> {
-                message.addExtra("この機能はいつでもメニュー>設定より変更できます。");
-                message.setColor(ChatColor.GRAY);
-                message.setItalic(true);
-            }
-            case "later_open_inv_3", "later_open_inv_5" -> {
-                String number = key.substring(key.lastIndexOf('_') + 1);
-                message.addExtra(number + "秒後にインベントリを開きます。");
-                message.setBold(true);
-                message.setUnderlined(true);
-                message.setColor(ChatColor.GOLD);
-            }
-            case "input_mode" -> {
-                message.addExtra("-------user-input-mode(" + FMCSettings.INPUT_PERIOD.getValue() + "s)-------");
-                message.setItalic(true);
-                message.setColor(ChatColor.BLUE);
-                TextComponent message2 = new TextComponent("\n以下、入力する内容は、チャット欄には表示されません。");
-                message2.setItalic(true);
-                message2.setColor(ChatColor.GRAY);
-                message.addExtra(message2);
-            }
-            case "0", "1", "2" -> {
-                message.addExtra(key);
-                message.setBold(true);
-                message.setUnderlined(true);
-                message.setColor(ChatColor.GOLD);
-                message.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, key));
-                message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックして入力")));
-            }
-        }
-        this.value = message;
+        this.key = key;
     }
 
-    public TextComponent get() {
-        return this.value;
+    public Component get() {
+        switch (key) {
+            case "asterisk" -> {
+                return Component.text("※")
+                    .appendNewline()
+                    .color(NamedTextColor.GRAY)
+                    .decorate(TextDecoration.ITALIC);
+            }
+            case "javauser" -> {
+                return Component.text("Java版ユーザー")
+                    .color(NamedTextColor.GRAY)
+                    .decorate(
+                        TextDecoration.ITALIC,
+                        TextDecoration.UNDERLINED);
+            }
+            case "bedrockuser" -> {
+                return Component.text("Bedrock版ユーザー")
+                    .color(NamedTextColor.GRAY)
+                    .decorate(
+                        TextDecoration.ITALIC,
+                        TextDecoration.UNDERLINED);
+            }
+            case "settings_enter" -> {
+                return Component.text("この機能はいつでもメニュー>設定より変更できます。")
+                    .color(NamedTextColor.GRAY)
+                    .decorate(TextDecoration.ITALIC);
+            }
+            case "later_open_inv_3", "later_open_inv_5" -> {
+                String seconds = key.substring(key.lastIndexOf('_') + 1);
+                return Component.text(seconds + "秒後にインベントリを開きます。")
+                    .color(NamedTextColor.GOLD)
+                    .decorate(
+                        TextDecoration.BOLD,
+                        TextDecoration.UNDERLINED);
+            }
+            case "input_mode" -> {
+                Component t1 = Component.text("-------user-input-mode(" + FMCSettings.INPUT_PERIOD.getValue() + "s)-------")
+                    .color(NamedTextColor.BLUE)
+                    .decorate(TextDecoration.ITALIC);
+                Component t2 = Component.newline()
+                    .append(Component.text("以下、入力する内容は、チャット欄には表示されません。"))
+                    .color(NamedTextColor.GRAY)
+                    .decorate(TextDecoration.ITALIC);
+                return t1.append(t2);
+            }
+            case "0", "1", "2" -> {
+                return Component.text(key)
+                    .color(NamedTextColor.GRAY)
+                    .decorate(
+                        TextDecoration.BOLD,
+                        TextDecoration.ITALIC)
+                    .hoverEvent(HoverEvent.showText(Component.text("クリックして入力")))
+                    .clickEvent(ClickEvent.suggestCommand(key));
+            }
+            default -> throw new IllegalArgumentException("Unexpected value: " + key);
+        }
     }
 }

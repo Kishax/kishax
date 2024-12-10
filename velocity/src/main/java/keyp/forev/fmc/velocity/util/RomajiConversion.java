@@ -92,7 +92,23 @@ public class RomajiConversion {
 					if (force) {
 						// エントリーを上書き
 						updatedLines.add(key + "," + value);
-                        source.sendMessage(Component.text("Forced updated entry by " + who + ":\n" + key + " -> " + value).color(NamedTextColor.YELLOW));
+
+						StringBuilder messageBuilder = new StringBuilder();
+						messageBuilder.append("Forced updated entry by ")
+							.append(who)
+							.append(":");
+
+						StringBuilder messageBuilder2 = new StringBuilder();
+						messageBuilder2.append(key)
+							.append(" -> ")
+							.append(value);
+
+						Component message = Component.text(messageBuilder.toString())
+							.appendNewline()
+							.append(Component.text(messageBuilder2.toString()))
+							.color(NamedTextColor.YELLOW);
+
+                        source.sendMessage(message);
 					}
 				} else {
 					updatedLines.add(line);
@@ -108,15 +124,18 @@ public class RomajiConversion {
 
 			if (entryFound) {
 				if (!force) {
-					Component component = Component.text("そのキーはすでに存在しています。\n上書きしますか？\n").color(NamedTextColor.RED)
-											.append(Component.text("YES")
-        			    			    			.color(NamedTextColor.GOLD)
-        			    			    			.clickEvent(ClickEvent.runCommand("/fmcp conv add "+key+" "+value+" true"))
-        			                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)("+key+","+value+")を追加します。"))))
-        			    			    	.append(Component.text(" or ").color(NamedTextColor.GOLD))
-        			    			    	.append(Component.text("NO").color(NamedTextColor.GOLD)
-        			    			    			.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
-        			                                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))));
+					Component component = Component.text("そのキーはすでに存在しています。").color(NamedTextColor.RED)
+						.appendNewline()
+						.append(Component.text("上書きしますか？").color(NamedTextColor.RED))
+						.appendNewline()
+						.append(Component.text("YES")
+							.color(NamedTextColor.GOLD)
+							.clickEvent(ClickEvent.runCommand("/fmcp conv add "+key+" "+value+" true"))
+							.hoverEvent(HoverEvent.showText(Component.text("(クリックして)("+key+","+value+")を追加します。"))))
+						.append(Component.text(" or ").color(NamedTextColor.GOLD))
+						.append(Component.text("NO").color(NamedTextColor.GOLD)
+							.clickEvent(ClickEvent.runCommand("/fmcp cancel"))
+							.hoverEvent(HoverEvent.showText(Component.text("(クリックして)キャンセルします。"))));
 					source.sendMessage(component);
 					return;
 				}
@@ -128,8 +147,22 @@ public class RomajiConversion {
 			// ファイルに書き込む
 			Files.write(filePath, lines);
 
-			Component addComponent = Component.text("Added new entry by "+who+":\n" + key + " -> " + value).color(NamedTextColor.YELLOW);
-			bc.broadCastMessage(addComponent);
+			StringBuilder messageBuilder = new StringBuilder();
+			messageBuilder.append("Added new entry by ")
+				.append(who)
+				.append(":");
+
+			StringBuilder messageBuilder2 = new StringBuilder();
+			messageBuilder2.append(key)
+				.append(" -> ")
+				.append(value);
+
+			Component message = Component.text(messageBuilder.toString())
+				.appendNewline()
+				.append(Component.text(messageBuilder2.toString()))
+				.color(NamedTextColor.YELLOW);
+
+			bc.broadCastMessage(message);
 
 			// データの再読み込み
 			reloadCsv();

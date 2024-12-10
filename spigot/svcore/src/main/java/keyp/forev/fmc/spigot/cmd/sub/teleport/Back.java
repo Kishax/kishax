@@ -12,8 +12,10 @@ import com.google.inject.Inject;
 import keyp.forev.fmc.common.server.DefaultLuckperms;
 import keyp.forev.fmc.spigot.events.EventListener;
 import keyp.forev.fmc.spigot.settings.FMCCoords;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.TextComponent;
 
 public class Back implements TabExecutor {
     private final DefaultLuckperms lp;
@@ -32,17 +34,19 @@ public class Back implements TabExecutor {
                 player.teleport(FMCCoords.ROOM_POINT.getLocation());
             } else {
                 if (EventListener.playerBeforeLocationMap.containsKey(player)) {
-                    TextComponent message = new TextComponent("テレポート前の座標に戻ります。");
-                    message.setBold(true);
-                    message.setColor(ChatColor.GREEN);
-                    player.spigot().sendMessage(message);
+                    Component message = Component.text("テレポート前の座標に戻ります。")
+                        .color(NamedTextColor.GREEN)
+                        .decorate(TextDecoration.BOLD);
+
+                    player.sendMessage(message);
+
                     player.teleport(EventListener.playerBeforeLocationMap.get(player));
                     EventListener.playerBeforeLocationMap.remove(player);
                 } else {
-                    TextComponent message = new TextComponent("テレポート前の座標がありません。");
-                    message.setBold(true);
-                    message.setColor(ChatColor.RED);
-                    player.spigot().sendMessage(message);
+                    Component message = Component.text("テレポート前の座標がありません。")
+                        .color(NamedTextColor.RED)
+                        .decorate(TextDecoration.BOLD);
+                    player.sendMessage(message);
                 }
             }
         } else {

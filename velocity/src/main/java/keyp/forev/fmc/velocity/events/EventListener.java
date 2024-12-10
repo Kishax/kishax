@@ -308,9 +308,27 @@ public class EventListener {
 				if (db.isMaintenance(conn)) {
 					List<String> menteAllowMembers = mt.getMenteAllowMembers();
 					if (player.hasPermission(PermSettings.SUPER_ADMIN.get())) {
-						player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
+						Component adminMenteMessage = Component.text("スーパーアドミン認証...PASS")
+							.appendNewline()
+							.appendNewline()
+							.append(Component.text("ALL CORRECT"))
+							.appendNewline()
+							.appendNewline()
+							.append(Component.text("メンテナンスモードが有効です。"))
+							.color(NamedTextColor.GREEN);
+
+						player.sendMessage(adminMenteMessage);
 					} else if (menteAllowMembers.contains(playerName)) {
-						player.sendMessage(Component.text("メンテメンバー認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効です。").color(NamedTextColor.GREEN));
+						Component confirmedMemberMenteMessage = Component.text("メンテメンバー認証...PASS")
+							.appendNewline()
+							.appendNewline()
+							.append(Component.text("ALL CORRECT"))
+							.appendNewline()
+							.appendNewline()
+							.append(Component.text("メンテナンスモードが有効です。"))
+							.color(NamedTextColor.GREEN);
+
+						player.sendMessage(confirmedMemberMenteMessage);
 					} else {
 						pd.playerDisconnect (
 							false,
@@ -338,7 +356,6 @@ public class EventListener {
 								bc.sendSpecificServerMessage(component, currentServerName);
 								joinMessage = config.getString("EventMessage.Join","");
 								if (!joinMessage.isEmpty()) {
-									// \\n を \n に変換
 									joinMessage = joinMessage.replace("\\n", "\n");
 									player.sendMessage(Component.text(joinMessage).color(NamedTextColor.AQUA));
 								}
@@ -492,18 +509,41 @@ public class EventListener {
 									}
 									String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
 									if (!DiscordInviteUrl.isEmpty()) {
-										component = Component.text(playerName+"が"+currentServerName+"サーバーに初参加しました。").color(NamedTextColor.YELLOW)
-												.append(Component.text("\nFMCサーバー").color(NamedTextColor.AQUA).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-												.append(Component.text("へようこそ！\n当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成と、それをマイクラアカウントと紐づける").color(NamedTextColor.AQUA))
-												.append(Component.text("WEB認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-												.append(Component.text("を必須としています。\n").color(NamedTextColor.AQUA))
-												.append(Component.text("FMCユーザーは、サーバーを起動するためのリクエストを管理者へ送ることができます。今後色々なコンテンツを追加していく予定です！").color(NamedTextColor.AQUA))
-												.append(Component.text("\nここを進んでください！").color(NamedTextColor.AQUA))
-												.append(Component.text("\nなにかわからないことがあったら、当サーバーの").color(NamedTextColor.AQUA))
-												.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
-														.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
-														.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscordへいこう！"))))
-												.append(Component.text("にて質問してください！参加するには、上の「Discord」をクリックしてね。").color(NamedTextColor.AQUA));
+										component = Component.text(playerName + "が" + currentServerName + "サーバーに初参加しました。").color(NamedTextColor.YELLOW)
+											.appendNewline()
+											.append(Component.text("FMCサーバー")
+												.color(NamedTextColor.AQUA)
+												.decorate(
+													TextDecoration.BOLD,
+													TextDecoration.UNDERLINED))
+											.append(Component.text("へようこそ！")
+												.color(NamedTextColor.AQUA))
+											.appendNewline()
+											.append(Component.text("当サーバーでは、サーバーへ参加するにあたって、FMCアカウント作成と、それをマイクラアカウントと紐づける")
+												.color(NamedTextColor.AQUA))
+											.append(Component.text("WEB認証")
+												.color(NamedTextColor.LIGHT_PURPLE)
+												.decorate(
+													TextDecoration.BOLD, 
+													TextDecoration.UNDERLINED))
+											.append(Component.text("を必須としています。")
+												.color(NamedTextColor.AQUA))
+											.appendNewline()
+											.append(Component.text("FMCユーザーは、サーバーを起動するためのリクエストを管理者へ送ることができます。今後色々なコンテンツを追加していく予定です！")
+												.color(NamedTextColor.AQUA))
+											.appendNewline()
+											.append(Component.text("ここを進んでください！")
+												.color(NamedTextColor.AQUA))
+											.appendNewline()
+											.append(Component.text("なにかわからないことがあったら、当サーバーの").color(NamedTextColor.AQUA))
+											.append(Component.text("Discord")
+												.color(NamedTextColor.BLUE)
+												.decorate(
+													TextDecoration.BOLD,
+													TextDecoration.UNDERLINED)
+												.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
+												.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscordへいこう！"))))
+											.append(Component.text("にて質問してください！参加するには、上の「Discord」をクリックしてね。").color(NamedTextColor.AQUA));
 										player.sendMessage(component);
 									}
 									ms.updateJoinPlayers(playerName, currentServerName);

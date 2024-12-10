@@ -109,15 +109,37 @@ public class VelocitySocketResponse implements SocketResponse {
                     	String DiscordInviteUrl = config.getString("Discord.InviteUrl","");
                     	if (!DiscordInviteUrl.isEmpty()) {
                     		component = Component.text()
-                    				.append(Component.text("\nWEB認証").color(NamedTextColor.LIGHT_PURPLE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
-            	        			.append(Component.text("が完了しました。\n池に飛び込もう！").color(NamedTextColor.AQUA))
-            	        			.append(Component.text("\n\nFMCサーバーの").color(NamedTextColor.AQUA))
-            	        			.append(Component.text("Discord").color(NamedTextColor.BLUE).decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
-            	        					.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
-                			    			.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscordへいこう！"))))
-            	        			.append(Component.text("には参加しましたか？").color(NamedTextColor.AQUA))
-            			    		.append(Component.text("\nここでは、個性豊かな色々なメンバーと交流ができます！\nなお、マイクラとDiscord間のチャットは同期しているので、誰かが反応してくれるはずです...！").color(NamedTextColor.AQUA))
-            			    		.build();
+								.appendNewline()
+								.append(Component.text("WEB認証")
+									.color(NamedTextColor.LIGHT_PURPLE)
+									.decorate(
+										TextDecoration.BOLD,
+										TextDecoration.UNDERLINED))
+								.append(Component.text("が完了しました。")
+									.color(NamedTextColor.AQUA))
+								.appendNewline()
+								.append(Component.text("池に飛び込もう！")
+									.color(NamedTextColor.AQUA))
+								.appendNewline()
+								.appendNewline()
+								.append(Component.text("FMCサーバーの")
+									.color(NamedTextColor.AQUA))
+								.append(Component.text("Discord")
+									.color(NamedTextColor.BLUE)
+									.decorate(
+										TextDecoration.BOLD,
+										TextDecoration.UNDERLINED)
+									.clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
+									.hoverEvent(HoverEvent.showText(Component.text("FMCサーバーのDiscordへいこう！"))))
+								.append(Component.text("には参加しましたか？")
+									.color(NamedTextColor.AQUA))
+								.appendNewline()
+								.append(Component.text("ここでは、個性豊かな色々なメンバーと交流ができます！")
+									.color(NamedTextColor.AQUA))
+								.appendNewline()
+								.append(Component.text("ぜひ、参加してみてください！")
+									.color(NamedTextColor.AQUA))
+								.build();
 							player.sendMessage(component);
                     	}
                 	}
@@ -207,7 +229,6 @@ public class VelocitySocketResponse implements SocketResponse {
         
     	// URLが含まれてなかったら
         if (!isUrl) {
-        	//if (string.contains("\\n")) string = string.replace("\\n", "\n");
         	bc.broadCastMessage(Component.text(string).color(NamedTextColor.AQUA));
         	return;
         }
@@ -231,7 +252,6 @@ public class VelocitySocketResponse implements SocketResponse {
         	if (Objects.nonNull(textParts) && textPartsSize != 0) {
         		String text = textParts.get(i);
         		
-        		//if (text.contains("\\n")) text = text.replace("\\n", "\n");
         		additionalComponent = Component.text()
         				.append(Component.text(text))
         				.color(NamedTextColor.AQUA)

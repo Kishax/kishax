@@ -45,11 +45,26 @@ public class PlayerDisconnect {
 					Component.text("現在メンテナンス中です。").color(NamedTextColor.BLUE)
 				);
 			} else {
-				player.sendMessage(Component.text("スーパーアドミン認証...PASS\n\nALL CORRECT\n\nメンテナンスモードが有効になりました。\nスーパーアドミン以外を退出させました。").color(NamedTextColor.GREEN));
+				Component menteLeaveMessage = Component.text("スーパーアドミン認証...PASS")
+					.appendNewline()
+					.appendNewline()
+					.append(Component.text("ALL CORRECT"))
+					.appendNewline()
+					.appendNewline()
+					.append(Component.text("メンテナンスモードが有効になりました。"))
+					.append(Component.text("スーパーアドミン以外を退出させました。"))
+					.color(NamedTextColor.GREEN);
+
+				player.sendMessage(menteLeaveMessage);
 			}
 		}
 		
-		console.sendMessage(Component.text("メンテナンスモードが有効になりました。\nスーパーアドミン以外を退出させました。").color(NamedTextColor.GREEN));
+		Component consoleMessage = Component.text("メンテナンスモードが有効になりました。")
+			.appendNewline()
+			.append(Component.text("スーパーアドミン以外を退出させました。"))
+			.color(NamedTextColor.GREEN);
+			
+		console.sendMessage(consoleMessage);
 	}
 	
 	public void playerDisconnect(Boolean bool, Player player, TextComponent component) {

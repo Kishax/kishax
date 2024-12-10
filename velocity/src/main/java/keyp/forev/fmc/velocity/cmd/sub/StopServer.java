@@ -106,12 +106,22 @@ public class StopServer {
 							}
 						}
 						TextComponent component = Component.text()
-								.append(Component.text("WEB認証...PASS\nアドミン認証...PASS\n\nALL CORRECT\n").color(NamedTextColor.GREEN))
-								.append(Component.text(targetServerName+"サーバーがまもなく停止します。").color(NamedTextColor.RED))
-								.build();
+							.append(Component.text("WEB認証...PASS")
+								.appendNewline()
+								.append(Component.text("アドミン認証...PASS"))
+								.appendNewline()
+								.appendNewline()
+								.append(Component.text("ALL CORRECT"))
+								.appendNewline()
+							.color(NamedTextColor.GREEN))
+							.append(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
+							.build();
 						player.sendMessage(component);
 						TextComponent notifyComponent = Component.text()
-							.append(Component.text(player.getUsername()+"が"+targetServerName+"サーバーを停止させました。\nまもなく"+targetServerName+"サーバーが停止します。").color(NamedTextColor.RED))
+							.append(Component.text(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。")
+								.appendNewline()
+								.append(Component.text("まもなく" + targetServerName + "サーバーが停止します。"))
+							.color(NamedTextColor.RED))
 							.build();
 						bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
 						console.sendMessage(Component.text(targetServerName+"サーバーがまもなく停止します。").color(NamedTextColor.RED));

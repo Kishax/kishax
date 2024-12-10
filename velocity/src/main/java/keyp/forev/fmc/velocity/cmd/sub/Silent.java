@@ -58,7 +58,9 @@ public class Silent {
                         TextComponent componentBuilder = Component.text()
 							.append(Component.text("FMC Silent Player List")
 								.color(NamedTextColor.GOLD)
-								.decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+								.decorate(
+                                    TextDecoration.BOLD,
+                                    TextDecoration.UNDERLINED))
 							.build();
 
                         List<String> silentPlayers = new ArrayList<>();
@@ -68,7 +70,16 @@ public class Silent {
                             ps.setBoolean(1, true);
                             try (ResultSet rs = ps.executeQuery()) {
                                 while (rs.next()) {
-                                    componentBuilder = componentBuilder.append(Component.text("\n" + rs.getString("name")).color(NamedTextColor.GREEN));
+                                    Component addition = Component.newline()
+                                        .append(Component.space())
+                                        .append(Component.space())
+                                        .append(Component.text("-")
+                                            .append(Component.space())
+                                            .append(Component.space())
+                                            .append(Component.text(rs.getString("name")))
+                                        .color(NamedTextColor.GREEN));
+
+                                    componentBuilder = componentBuilder.append(addition);
                                 }
                             }
                         } catch (SQLException | ClassNotFoundException e) {

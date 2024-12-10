@@ -27,7 +27,11 @@ public class Debug {
 		Map<String, Object> DebugConfig = config.getStringObjectMap("Debug");
 		Map<String, Object> DiscordConfig = config.getStringObjectMap("Discord");
 		if (DebugConfig == null || DiscordConfig == null) {
-			source.sendMessage(Component.text("コンフィグの設定が正しくありません。\n(Debug or Discord) Map is Empty.").color(NamedTextColor.RED));
+			Component errorMessage = Component.text("コンフィグの設定が正しくありません。")
+				.appendNewline()
+				.append(Component.text("(Debug or Discord) Map is Empty.")
+				.color(NamedTextColor.RED));
+			source.sendMessage(errorMessage);
 			return;
 		}
 		String value1 = config.getString("Debug.Webhook_URL", null),
