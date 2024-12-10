@@ -1,5 +1,7 @@
 package keyp.forev.fmc.common.util;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
@@ -9,6 +11,21 @@ public class JavaUtils {
         return UUID_PATTERN.matcher(str).matches();
     }
 
+    public class Time {
+        public enum Format {
+            YYYY_MM_DD_HH_MM_SS("yyyy-MM-dd HH:mm:ss");
+            private final SimpleDateFormat sdf;
+            Format(String format) {
+                this.sdf = new SimpleDateFormat(format);
+            }
+
+            public String format(java.util.Date date) {
+                return this.sdf.format(date);
+            }
+        }
+
+    }
+    
     public static String secondsToStr(int seconds) {
         if (seconds < 60) {
             if (seconds < 10) {
@@ -28,18 +45,9 @@ public class JavaUtils {
         }
     }
 
-    public class Time {
-        public enum Format {
-            YYYY_MM_DD_HH_MM_SS("yyyy-MM-dd HH:mm:ss");
-            private final SimpleDateFormat sdf;
-            Format(String format) {
-                this.sdf = new SimpleDateFormat(format);
-            }
-
-            public String format(java.util.Date date) {
-                return this.sdf.format(date);
-            }
-        }
-
+    public static double roundToFirstDecimalPlace(double value) {
+        BigDecimal bd = new BigDecimal(Double.toString(value));
+        bd = bd.setScale(1, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }

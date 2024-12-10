@@ -39,7 +39,7 @@ public class TeleportAccept implements TabExecutor {
     @Override
 	public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
-            if (lp.hasPermission(player.getName(), PermSettings.TPR.get())) {
+            if (!lp.hasPermission(player.getName(), PermSettings.TPR.get())) {
                 player.sendMessage(ChatColor.RED + "権限がありません。");
                 return true;
             }

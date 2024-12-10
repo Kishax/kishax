@@ -20,6 +20,7 @@ import keyp.forev.fmc.common.util.PlayerUtils;
 import net.luckperms.api.LuckPermsProvider;
 import keyp.forev.fmc.spigot.cmd.main.FMCCommand;
 import keyp.forev.fmc.spigot.cmd.sub.Q;
+import keyp.forev.fmc.spigot.cmd.sub.teleport.RegisterTeleportPoint;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest;
 import keyp.forev.fmc.spigot.events.EventListener;
@@ -55,7 +56,8 @@ public class Main extends JavaPlugin {
 			tprCmd = getCommand("tpr"),
 			tprmCmd = getCommand("tprm"),
 			tprmaCmd = getCommand("tprma"),
-			tpraCmd = getCommand("tpra");
+			tpraCmd = getCommand("tpra"),
+			registerpointCmd = getCommand("registerpoint");
 		if (fmcCmd != null) {
 			fmcCmd.setExecutor(getInjector().getInstance(FMCCommand.class));
 		}
@@ -67,6 +69,9 @@ public class Main extends JavaPlugin {
 			tprmCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
 			tpraCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
 			tprmaCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
+		}
+		if (registerpointCmd != null) {
+			registerpointCmd.setExecutor(getInjector().getInstance(RegisterTeleportPoint.class));
 		}
     	if (getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();

@@ -125,6 +125,7 @@ public class Menu {
             if (args.length == 1) {
                 generalMenu(player, 1);
             } else if (args.length > 1) {
+                int permLevel = lp.getPermLevel(player.getName());
                 switch (args[1].toLowerCase()) {
                     case "get" -> {
                         boolean hasMenuBook = false;
@@ -160,7 +161,6 @@ public class Menu {
                     }
                     case "server" -> {
                         if (plugin.getConfig().getBoolean("Menu.Server", false)) {
-                            int permLevel = lp.getPermLevel(player.getName());
                             if (permLevel < 1) {
                                 player.sendMessage("先にWEB認証を完了させてください。");
                                 return;
@@ -185,6 +185,34 @@ public class Menu {
                             openImageMenu(player, 1);
                         } else {
                             sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
+                        }
+                    }
+                    case "tp" -> {
+                        if (permLevel < 1) {
+                            player.sendMessage("先にWEB認証を完了させてください。");
+                            return;
+                        }
+                        if (args.length > 2) {
+                            String type = args[2].toLowerCase();
+                            switch (type) {
+                                case "point" -> teleportPointTypeMenu(player, 1);
+                                case "player" -> playerTeleportMenu(player, 1);
+                                default -> sender.sendMessage("Usage: /fmc menu tp <point|player>");
+                            }
+                        } else if (args.length > 3) {
+                            String type = args[2].toLowerCase();
+                            switch (type) {
+                                case "point" -> {
+                                    if (args[3].equalsIgnoreCase("private") || args[3].equalsIgnoreCase("public")) {
+                                        openTeleportPointMenu(player, 1, args[3]);
+                                    } else {
+                                        sender.sendMessage("Usage: /fmc menu tp point <private|public>");
+                                    }
+                                }
+                                default -> sender.sendMessage("Usage: /fmc menu tp point <private|public>");
+                            }
+                        } else {
+                            Main.getInjector().getInstance(Menu.class).openServerTypeInventory((Player) sender, 1);
                         }
                     }
                 }
@@ -404,31 +432,52 @@ public class Menu {
     public void teleportPointTypeMenu(Player player, int page) {
         Map<Integer, Runnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Menu.teleportInventoryName);
+        playerMenuActions.put(0, () -> generalMenu(player, 1));
         playerMenuActions.put(11, () -> openTeleportPointMenu(player, 1, Menu.PRIVATE));
-        //playerMenuActions.put(13, () -> player.performCommand());
+        playerMenuActions.put(13, () -> {
+            player.closeInventory();
+            player.performCommand("registerpoint");
+        });
         playerMenuActions.put(15, () -> openTeleportPointMenu(player, 1, Menu.PUBLIC));
         playerMenuActions.put(26, () -> teleportMenu(player, 1));
+
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+
         ItemStack privatePointItem = new ItemStack(Material.OBSERVER);
         ItemMeta privatePointMeta = privatePointItem.getItemMeta();
         if (privatePointMeta != null) {
             privatePointMeta.setDisplayName(ChatColor.GREEN + "プライベートポイント");
+            privatePointMeta.setLore(new ArrayList<>(
+                Arrays.asList(ChatColor.GRAY + "自分だけのポイントを確認できるよ。"))
+                );
             privatePointItem.setItemMeta(privatePointMeta);
         }
         inv.setItem(11, privatePointItem);
+
         ItemStack newPointItem = new ItemStack(Material.REDSTONE_TORCH);
         ItemMeta newPointMeta = newPointItem.getItemMeta();
         if (newPointMeta != null) {
             newPointMeta.setDisplayName(ChatColor.GREEN + "ポイントセット");
             newPointItem.setLore(new ArrayList<>(
-                Arrays.asList(ChatColor.GRAY + "新しいポイントを設定できるよ。"))
+                Arrays.asList(ChatColor.GRAY + "新しいポイントをメニューに追加できるよ。"))
                 );
             newPointItem.setItemMeta(newPointMeta);
         }
-        inv.setItem(13, privatePointItem);
+        inv.setItem(13, newPointItem);
+
         ItemStack publicPointItem = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta publicPointMeta = publicPointItem.getItemMeta();
         if (publicPointMeta != null) {
             publicPointMeta.setDisplayName(ChatColor.GREEN + "パブリックポイント");
+            publicPointMeta.setLore(new ArrayList<>(
+                Arrays.asList(ChatColor.GRAY + "共有のポイントを確認できるよ。"))
+                );
             publicPointItem.setItemMeta(publicPointMeta);
         }
         inv.setItem(15, publicPointItem);
