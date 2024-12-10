@@ -38,9 +38,15 @@ public class SwitchRomajiConvType {
 	
 	private void sendDefaultMessage(@NotNull CommandSource source) {
 		if (source.hasPermission("fmc.proxy.conv.*")) {
-			source.sendMessage(Component.text("usage: /fmcp conv <add|remove|switch|reload> [<add|remove>:key] [<add>:value]\n(例) /fmcp conv add bakumoriraisu 爆盛りライス\n(例) /fmcp conv remove bakumoriraisu").color(NamedTextColor.GREEN));
+			Component usage = Component.text("usage: /fmcp conv <add|remove|switch|reload> [<add|remove>:key] [<add>:value]")
+				.appendNewline()
+				.append(Component.text("(例) /fmcp conv add bakumoriraisu 爆盛りライス"))
+				.appendNewline()
+				.append(Component.text("(例) /fmcp conv remove bakumoriraisu"))
+				.color(NamedTextColor.GREEN);
+			source.sendMessage(usage);
 		} else {
-			source.sendMessage(Component.text("usage: /fmcp conv <add|remove> [<add|remove>:key] [<add>:value]\n(例) /fmcp conv add bakumoriraisu 爆盛りライス\n(例) /fmcp conv remove bakumoriraisu").color(NamedTextColor.GREEN));
+			source.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
 		}
 	}
 
@@ -134,15 +140,19 @@ public class SwitchRomajiConvType {
 							}
 						}
 					}
-					case "add" -> source.sendMessage(Component.text("usage: /fmcp conv <add|remove> <key> <value>\n(例) /fmcp conv add bakumoriraisu 爆盛りライス").color(NamedTextColor.GREEN));
-					case "remove" -> source.sendMessage(Component.text("usage: /fmcp conv remove <key>\n(例) /fmcp conv remove bakumoriraisu").color(NamedTextColor.GREEN));
 					default -> sendDefaultMessage(source);
 				}
 			}
 			case 3 -> {
 				switch(args[1].toLowerCase()) {
 					case "add" -> {
-						source.sendMessage(Component.text("変換後の日本語／カタカナ／漢字を入力してください。\n(例) /fmcp conv add bakumoriraisu 爆盛りライス\n(例) /fmcp conv remove bakumoriraisu").color(NamedTextColor.RED));
+						Component usage = Component.text("変換後の日本語／カタカナ／漢字を入力してください。")
+							.appendNewline()
+							.append(Component.text("(例) /fmcp conv add bakumoriraisu 爆盛りライス"))
+							.appendNewline()
+							.append(Component.text("(例) /fmcp conv remove bakumoriraisu"))
+							.color(NamedTextColor.GREEN);
+						source.sendMessage(usage);
 					}
 					case "remove" -> {
 						// Listから削除&romaji.csv編集処理

@@ -22,11 +22,11 @@ import keyp.forev.fmc.common.util.OTPGenerator;
 import keyp.forev.fmc.spigot.server.ImageMap;
 import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -73,19 +73,25 @@ public class Confirm {
                                 if (rsAffected3 > 0) {
                                     sendConfirmationMessage(player, ranum, confirmUrl);
                                 } else {
-                                    player.sendMessage(ChatColor.RED + "エラーが発生しました。");
+                                    Component errorMessage = Component.text("エラーが発生しました。")
+                                        .color(NamedTextColor.RED);
+                                    player.sendMessage(errorMessage);
                                 }
                             }
                         }
                     } catch (SQLException | ClassNotFoundException e2) {
-                        player.sendMessage(ChatColor.RED + "WEB認証のQRコード生成に失敗しました。");
+                        Component errorMessage = Component.text("WEB認証のQRコード生成に失敗しました。")
+                            .color(NamedTextColor.RED);
+                        player.sendMessage(errorMessage);
                         logger.error("A SQLException error occurred: " + e2.getMessage());
                         for (StackTraceElement element : e2.getStackTrace()) {
                             logger.error(element.toString());
                         }
                     }
                 } else {
-                    player.sendMessage(ChatColor.GREEN + "WEB認証済みプレイヤーが通過しました！");
+                    Component message = Component.text("WEB認証済みプレイヤーが通過しました！")
+                        .color(NamedTextColor.GREEN);
+                    player.sendMessage(message);
                 }
                 Confirm.confirmMap.add(player);
             }
@@ -107,131 +113,158 @@ public class Confirm {
 
     private void sendConfirmationMessage(Player player, int ranum, String confirmUrl) {
         String ranumstr = Integer.toString(ranum);
-        TextComponent webAuth = new TextComponent("WEB認証");
-        webAuth.setColor(ChatColor.GOLD);
-        webAuth.setBold(true);
-        webAuth.setUnderlined(true);
-        webAuth.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, confirmUrl));
-        webAuth.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてWEB認証ページを開く")));
-        TextComponent forUser = new TextComponent("\n\n[サイトへのアクセス方法]\n");
-        forUser.setColor(ChatColor.GOLD);
-        forUser.setBold(true);
-        forUser.setUnderlined(true);
-        TextComponent javaUserAccess = new TextComponent("は、");
-        javaUserAccess.setColor(ChatColor.GRAY);
-        javaUserAccess.setItalic(true);
-        TextComponent here = new TextComponent("ココ");
-        here.setColor(ChatColor.GOLD);
-        here.setUnderlined(true);
-        here.setItalic(true);
-        here.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, confirmUrl));
-        here.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてWEB認証ページを開く")));
-        TextComponent javaUserAccess2 = new TextComponent("をクリックしてアクセスしてね！\n");
-        javaUserAccess2.setColor(ChatColor.GRAY);
-        javaUserAccess2.setItalic(true);
-        TextComponent bedrockUserAccess = new TextComponent("は、配布されたQRコードを読み取ってアクセスしてね！");
-        bedrockUserAccess.setColor(ChatColor.GRAY);
-        bedrockUserAccess.setItalic(true);
-        TextComponent authCode = new TextComponent("\n認証コードは ");
-        authCode.setColor(ChatColor.WHITE);
-        TextComponent code = new TextComponent(ranumstr);
-        code.setColor(ChatColor.BLUE);
-        code.setUnderlined(true);
-        code.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, ranumstr));
-        code.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてコピー")));
-        TextComponent endMessage = new TextComponent(" です。");
-        endMessage.setColor(ChatColor.WHITE);
-        TextComponent regenerate = new TextComponent("\n認証コードの再生成");
-        regenerate.setColor(ChatColor.GOLD);
-        regenerate.setBold(true);
-        regenerate.setUnderlined(true);
-        regenerate.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fmcp retry"));
-        regenerate.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックして認証コードを再生成します。")));
-        TextComponent bedrockUserGenerate = new TextComponent("は、 ");
-        bedrockUserGenerate.setColor(ChatColor.GRAY);
-        bedrockUserGenerate.setItalic(true);
-        TextComponent bedrockUserGenerate2 = new TextComponent("/retry");
-        bedrockUserGenerate2.setColor(ChatColor.GRAY);
-        bedrockUserGenerate2.setItalic(true);
-        bedrockUserGenerate2.setUnderlined(true);
-        TextComponent bedrockUserGenerate3 = new TextComponent(" とコマンドを打ってね！");
-        bedrockUserGenerate3.setColor(ChatColor.GRAY);
-        bedrockUserGenerate3.setItalic(true);
+
+        Component webAuth = Component.text("WEB認証")
+            .color(NamedTextColor.GOLD)
+            .decorate(
+                TextDecoration.BOLD,
+                TextDecoration.UNDERLINED)
+            .clickEvent(ClickEvent.openUrl(confirmUrl))
+            .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
+
+        Component forUser = Component.newline()
+            .appendNewline()
+            .append(Component.text("[サイトへのアクセス方法]"))
+            .appendNewline()
+            .color(NamedTextColor.GOLD)
+            .decorate(
+                TextDecoration.BOLD,
+                TextDecoration.UNDERLINED);
+
+        Component javaUserAccess = Component.text("は、")
+            .color(NamedTextColor.GRAY)
+            .decorate(TextDecoration.ITALIC);
+        
+        Component here = Component.text("ココ")
+            .color(NamedTextColor.GOLD)
+            .decorate(
+                TextDecoration.UNDERLINED,
+                TextDecoration.ITALIC)
+            .clickEvent(ClickEvent.openUrl(confirmUrl))
+            .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
+
+        Component javaUserAccess2 = Component.text("をクリックしてアクセスしてね！")
+            .appendNewline()
+            .color(NamedTextColor.GRAY)
+            .decorate(TextDecoration.ITALIC);
+
+        Component bedrockUserAccess = Component.text("は、配布されたQRコードを読み取ってアクセスしてね！")
+            .color(NamedTextColor.GRAY)
+            .decorate(TextDecoration.ITALIC);
+
+        Component authCode = Component.newline()
+            .append(Component.text("認証コードは "))
+            .color(NamedTextColor.WHITE);
+
+        Component code = Component.text(ranumstr)
+            .color(NamedTextColor.BLUE)
+            .decorate(TextDecoration.UNDERLINED)
+            .clickEvent(ClickEvent.copyToClipboard(ranumstr))
+            .hoverEvent(HoverEvent.showText(Component.text("クリックしてコピー")));
+        
+        Component endMessage = Component.text(" です。")
+            .color(NamedTextColor.WHITE);
+        
+        Component regenerate = Component.newline()
+            .append(Component.text("認証コードの再生成"))
+            .color(NamedTextColor.GOLD)
+            .decorate(
+                TextDecoration.BOLD,
+                TextDecoration.UNDERLINED)
+            .clickEvent(ClickEvent.runCommand("/fmcp retry"))
+            .hoverEvent(HoverEvent.showText(Component.text("クリックして認証コードを再生成します。")));
+
+        Component bedrockUserGenerate = Component.text("は、 ")
+            .color(NamedTextColor.GRAY)
+            .decorate(TextDecoration.ITALIC);
+        
+        Component bedrockUserGenerate2 = Component.text("/retry")
+            .color(NamedTextColor.GRAY)
+            .decorate(
+                TextDecoration.UNDERLINED,
+                TextDecoration.ITALIC);
+        
+        Component bedrockUserGenerate3 = Component.text(" とコマンドを打ってね！")
+            .color(NamedTextColor.GRAY)
+            .decorate(TextDecoration.ITALIC);
+        
         new BukkitRunnable() {
             int countdown = 50;
             int gCountdown = 3;
             @Override
             public void run() {
-                TextComponent message = new TextComponent();
+                Component message = Component.empty();
                 switch (countdown) {
-                    case 50 -> message.addExtra("こんにちは！");
-                    case 47 -> message.addExtra("FMCサーバー代表のベラです。");
-                    case 44 -> message.addExtra("サーバーに参加するには、");
-                    case 41 -> message.addExtra("FMCアカウントとMinecraftアカウントをリンクさせる必要があるよ！");
+                    case 50 -> message = message.append(Component.text("こんにちは！"));
+                    case 47 -> message = message.append(Component.text("FMCサーバー代表のベラです。"));
+                    case 44 -> message = message.append(Component.text("サーバーに参加するには、"));
+                    case 41 -> message = message.append(Component.text("FMCアカウントとMinecraftアカウントをリンクさせる必要があるよ！"));
                     case 39 -> {
-                        message.addExtra(webAuth);
-                        message.addExtra("より、手続きを進めてね！");
+                        message = message.append(webAuth)
+                            .append(Component.text("より、手続きを進めてね！"));
                     }
-                    case 36 -> {
-                        message.addExtra(forUser);
-                    }
+                    case 36 -> message = message.append(forUser);
                     case 33 -> {
-                        message.addExtra(TCUtils.JAVA_USER.get());
-                        message.addExtra(javaUserAccess);
-                        message.addExtra(here);
-                        message.addExtra(javaUserAccess2);
+                        message = message.append(TCUtils.JAVA_USER.get())
+                            .append(javaUserAccess)
+                            .append(here)
+                            .append(javaUserAccess2);
                     }
                     case 30 -> {
-                        message.addExtra(TCUtils.BEDROCK_USER.get());
-                        message.addExtra(bedrockUserAccess);
+                        message = message
+                            .append(TCUtils.BEDROCK_USER.get())
+                            .append(bedrockUserAccess);
                     }
                     case 27 -> {
-                        message.addExtra("\n認証コードを生成するよ。");
+                        message = message
+                            .appendNewline()
+                            .append(Component.text("認証コードを生成するよ。"));
                     }
                     case 24, 23, 22 -> {
-                        message.addExtra(countGenerate(gCountdown));
+                        message = message.append(countGenerate(gCountdown));
                         gCountdown--;
                     }
                     case 21 -> {
-                        message.addExtra(authCode);
-                        message.addExtra(code);
-                        message.addExtra(endMessage);
+                        message = message.append(authCode)
+                            .append(code)
+                            .append(endMessage);
                     }
                     case 18 -> {
-                        message.addExtra("認証コードを再生成する場合は、");
+                        message = message.append(Component.text("認証コードを再生成する場合は、"));
                     }
                     case 15 -> {
-                        message.addExtra(regenerate);
-                        message.addExtra(" をクリックしてね！\n");
+                        message = message.append(regenerate)
+                            .append(Component.text(" をクリックしてね！"))
+                            .appendNewline();
                     }
                     case 13 -> {
-                        message.addExtra(TCUtils.BEDROCK_USER.get());
-                        message.addExtra(bedrockUserGenerate);
-                        message.addExtra(bedrockUserGenerate2);
-                        message.addExtra(bedrockUserGenerate3);
+                        message = message.append(TCUtils.BEDROCK_USER.get())
+                            .append(bedrockUserGenerate)
+                            .append(bedrockUserGenerate2)
+                            .append(bedrockUserGenerate3);
                     }
                     case 10 -> {
-                        message.addExtra("\nそれでは、楽しいマイクラライフを！");
+                        message = message
+                            .appendNewline()
+                            .append(Component.text("それでは、楽しいマイクラライフを！"));
                     }
                     case 0 -> {
                         cancel();
                         return;
                     }
                 }
-                // ここで、メッセージが.addExtra()で追加されてたら、それをプレイヤーに送信する
-                if (message.getExtra() != null && !message.getExtra().isEmpty()) {
-                    player.spigot().sendMessage(message);
+                if (message != Component.empty()) {
+                    player.sendMessage(message);
                 }             
                 countdown--;
             }
         }.runTaskTimer(plugin, 0, 20);
     }
 
-    private TextComponent countGenerate(int countdown) {
-        TextComponent untilGenerater = new TextComponent("生成中..." + countdown);
-        untilGenerater.setColor(ChatColor.GRAY);
-        untilGenerater.setItalic(true);
-        return untilGenerater;
+    private Component countGenerate(int countdown) {
+        return Component.text("生成中..." + countdown)
+            .color(NamedTextColor.GRAY)
+            .decorate(TextDecoration.ITALIC);
     }
     
     private int checkExistConfirmMap(Connection conn, Object[] args) throws SQLException {

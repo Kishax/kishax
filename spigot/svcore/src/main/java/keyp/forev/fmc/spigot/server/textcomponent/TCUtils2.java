@@ -1,25 +1,23 @@
 package keyp.forev.fmc.spigot.server.textcomponent;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 public class TCUtils2 {
-    private final String value;
-    private final TextComponent message;
-    public TCUtils2(String input) {
-        this.value = input;
-        this.message = new TextComponent();
-    }
+    public static Component getResponseComponent(String input) {
+        Component message1 = Component.newline()
+            .append(Component.text(input))
+            .color(NamedTextColor.GRAY)
+            .decorate(
+                TextDecoration.BOLD,
+                TextDecoration.ITALIC);
 
-    public TextComponent getResponseComponent() {
-        message.addExtra("\n" + this.value);
-        message.setBold(true);
-        message.setItalic(true);
-        message.setColor(ChatColor.GRAY);
-        TextComponent message2 = new TextComponent(" と入力されました。\n");
-        message2.setColor(ChatColor.GRAY);
-        message2.setItalic(true);
-        message.addExtra(message2);
-        return message;
+        Component message2 = Component.text(" と入力されました。")
+            .appendNewline()
+            .color(NamedTextColor.GRAY)
+            .decorate(TextDecoration.ITALIC);
+
+        return message1.append(message2);
     }
 }

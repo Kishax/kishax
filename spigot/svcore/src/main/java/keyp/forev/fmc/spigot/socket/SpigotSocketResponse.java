@@ -17,11 +17,12 @@ import keyp.forev.fmc.common.server.DefaultLuckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.spigot.cmd.sub.Menu;
 import keyp.forev.fmc.spigot.events.EventListener;
 import keyp.forev.fmc.spigot.server.AutoShutdown;
@@ -74,7 +75,8 @@ public class SpigotSocketResponse implements SocketResponse {
                             logger.error(element.toString());
                         }
                     }
-	                bc.broadCastMessage(ChatColor.RED+"管理者の命令より、"+thisServerName+"サーバーを5秒後に停止します。");
+                    Component message = Component.text("管理者の命令より、"+thisServerName+"サーバーを停止させます。").color(NamedTextColor.RED);
+	                bc.broadCastMessage(message);
 	                asd.countdownAndShutdown(5);
                 }
             } else if (res.contains("起動")) {
@@ -91,23 +93,32 @@ public class SpigotSocketResponse implements SocketResponse {
                                 String playerName = player.getName();
                                 if (lp.getPermLevel(playerName) < 1) continue;
                                 if (chatTypePlayers.contains(player.getName())) {
-                                    TextComponent message2 = new TextComponent("サーバーに入るには");
-                                    TextComponent message3 = new TextComponent("ココ");
-                                    message3.setBold(true);
-                                    message3.setUnderlined(true);
-                                    message3.setColor(ChatColor.GOLD);
-                                    message3.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fmc fv " + playerName + " fmcp stp " + extractedServer));
-                                    message3.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックでサーバーに入ります。")));
-                                    TextComponent message4 = new TextComponent("をクリックしてください。\n");
-                                    player.spigot().sendMessage(message2, message3, message4, TCUtils.SETTINGS_ENTER.get());
+                                    Component here = Component.text("ココ")
+                                        .color(NamedTextColor.GOLD)
+                                        .decorate(
+                                            TextDecoration.BOLD,
+                                            TextDecoration.UNDERLINED)
+                                        .clickEvent(ClickEvent.runCommand("/fmc fv " + playerName + " fmcp stp " + extractedServer))
+                                        .hoverEvent(HoverEvent.showText(Component.text("クリックでサーバーに入ります。")));
+
+                                    TextComponent messages = Component.text()
+                                        .append(Component.text("サーバーに入るには"))
+                                        .append(here)
+                                        .append(Component.text("をクリックしてください。"))
+                                        .appendNewline()
+                                        .append(TCUtils.SETTINGS_ENTER.get())
+                                        .build();
+                                    
+                                    player.sendMessage(messages);
                                 } else {
-                                    TextComponent message = new TextComponent("3秒後にインベントリを開きます。\n");
-                                    message.setBold(true);
-                                    message.setUnderlined(true);
-                                    message.setColor(ChatColor.GOLD);
-                                    message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fmc menu server before"));
-                                    message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("直近で起動したサーバーインベントリを開きます。")));
-                                    player.spigot().sendMessage(message, TCUtils.SETTINGS_ENTER.get());
+                                    TextComponent messages = Component.text()
+                                        .append(TCUtils.LATER_OPEN_INV_3.get())
+                                        .appendNewline()
+                                        .append(TCUtils.SETTINGS_ENTER.get())
+                                        .build();
+
+                                    player.sendMessage(messages);
+                                    
                                     plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                                         menu.openServerInventoryFromOnlineServerInventory(player, extractedServer, 1);
                                     }, 60L);

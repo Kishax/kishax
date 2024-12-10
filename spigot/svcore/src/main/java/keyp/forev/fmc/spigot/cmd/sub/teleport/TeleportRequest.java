@@ -25,12 +25,11 @@ import keyp.forev.fmc.common.server.DefaultLuckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.spigot.cmd.sub.Menu;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
-
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class TeleportRequest implements TabExecutor {
@@ -56,17 +55,23 @@ public class TeleportRequest implements TabExecutor {
 	public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
             if (lp.hasPermission(player.getName(), PermSettings.TPR.get())) {
-                player.sendMessage(ChatColor.RED + "権限がありません。");
+                Component errorMessage = Component.text("権限がありません。")
+                    .color(NamedTextColor.RED);
+                player.sendMessage(errorMessage);
                 return true;
             }
             if (args.length < 1) {
-                player.sendMessage(ChatColor.RED + "引数が不足しています。");
+                Component errorMessage = Component.text("引数が不足しています。")
+                    .color(NamedTextColor.RED);
+                player.sendMessage(errorMessage);
                 return true;
             }
             String targetName = args[0];
             Player targetPlayer = plugin.getServer().getPlayer(targetName);
             if (targetPlayer == null) {
-                player.sendMessage(ChatColor.RED + "プレイヤーが見つかりません。");
+                Component errorMessage = Component.text("プレイヤーが見つかりません。")
+                    .color(NamedTextColor.RED);
+                player.sendMessage(errorMessage);
                 return true;
             }
             String cmdName = cmd.getName();
@@ -76,7 +81,9 @@ public class TeleportRequest implements TabExecutor {
             }
         } else {
             if (sender != null) {
-                sender.sendMessage(ChatColor.RED + "このコマンドはプレイヤーのみ実行可能です。");
+                Component errorMessage = Component.text("このコマンドはプレイヤーのみ実行可能です。")
+                    .color(NamedTextColor.RED);
+                sender.sendMessage(errorMessage);
             }
         }
         return true;
@@ -114,7 +121,9 @@ public class TeleportRequest implements TabExecutor {
 
     private void teleportRequest(Player player, Player targetPlayer, boolean me) {
         if (player.equals(targetPlayer)) {
-            player.sendMessage(ChatColor.RED + "自分自身にはテレポートできません。");
+            Component errorMessage = Component.text("自分自身にはテレポートできません。")
+                .color(NamedTextColor.RED);
+            player.sendMessage(errorMessage);
             return;
         }
         if (!me ? TeleportRequest.teleportMap.containsKey(player) : TeleportRequest.teleportMeMap.containsKey(player)) {
@@ -127,7 +136,9 @@ public class TeleportRequest implements TabExecutor {
                     }
                 }
                 if (isRequested) {
-                    player.sendMessage(ChatColor.RED + "既にリクエストを送信しています。");
+                    Component errorMessage = Component.text("既にリクエストを送信しています。")
+                        .color(NamedTextColor.RED);
+                    player.sendMessage(errorMessage);
                     return;
                 }
             }
@@ -135,17 +146,25 @@ public class TeleportRequest implements TabExecutor {
         String playerName = player.getName(),
             targetName = targetPlayer.getName();
         try (Connection conn = db.getConnection()) {
-            TextComponent message = new TextComponent(playerName + "があなたにテレポートを" + (!me ? "" : "逆") +"リクエストしています。\n");
-            message.setColor(ChatColor.GOLD);
+            StringBuilder messageBuilder = new StringBuilder();
+            messageBuilder.append(playerName)
+                .append("があなたにテレポートを")
+                .append(!me ? "" : "逆")
+                .append("リクエストしています。");
+            Component message = Component.text(messageBuilder.toString())
+                .color(NamedTextColor.GOLD);
+            
             if (teleportMessageType(conn, targetName)) {
-                TextComponent message1 = new TextComponent("3秒後にインベントリを開きます。\n");
-                message1.setBold(true);
-                message1.setUnderlined(true);
-                message1.setColor(ChatColor.GOLD);
-                // fmc menu tp requests playerNameをまだ実装していないため、以下コメント
-                //message1.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/fmc menu server before"));
-                //message1.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("直近で起動したサーバーインベントリを開きます。")));
-                targetPlayer.spigot().sendMessage(message, message1, TCUtils.SETTINGS_ENTER.get());
+                TextComponent messages = Component.text()
+                    .append(message)
+                    .appendNewline()
+                    .append(TCUtils.LATER_OPEN_INV_3.get())
+                    .appendNewline()
+                    .append(TCUtils.SETTINGS_ENTER.get())
+                    .build();
+
+                targetPlayer.sendMessage(messages);
+
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     if (!me) {
                         menu.teleportResponseMenu(targetPlayer, player);
@@ -154,31 +173,51 @@ public class TeleportRequest implements TabExecutor {
                     }
                 }, 60L);
             } else {
-                TextComponent accept = new TextComponent("[受け入れる]");
-                accept.setBold(true);
-                accept.setColor(ChatColor.GREEN);
-                accept.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてリクエストを受け入れます。")));
-                accept.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, !me ? "/tpra " + player.getName() : "/tprma " + player.getName()));
-                TextComponent deny = new TextComponent("[拒否する]");
-                deny.setBold(true);
-                deny.setColor(ChatColor.RED);
-                deny.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("クリックしてリクエストを拒否します。")));
-                deny.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, !me ? "/tprd " + player.getName() : "/tprmd " + player.getName()));
-                message.addExtra(accept);
-                message.addExtra(" ");
-                message.addExtra(deny);
-                targetPlayer.spigot().sendMessage(message);
+                StringBuilder cmdAccept = new StringBuilder();
+                cmdAccept.append(!me ? "/tpra " : "/tprma ")
+                    .append(player.getName());
+
+                Component accept = Component.text("[受け入れる]")
+                    .color(NamedTextColor.GREEN)
+                    .decorate(TextDecoration.BOLD)
+                    .hoverEvent(Component.text("クリックしてリクエストを受け入れます。"))
+                    .clickEvent(ClickEvent.runCommand(cmdAccept.toString()));
+
+                StringBuilder cmdDeny = new StringBuilder();
+                cmdDeny.append(!me ? "/tprd " : "/tprmd ")
+                    .append(player.getName());
+
+                Component deny = Component.text("[拒否する]")
+                    .color(NamedTextColor.RED)
+                    .decorate(TextDecoration.BOLD)
+                    .hoverEvent(Component.text("クリックしてリクエストを拒否します。"))
+                    .clickEvent(ClickEvent.runCommand(cmdDeny.toString()));
+                
+                TextComponent messages = Component.text()
+                    .append(message)
+                    .append(accept)
+                    .append(Component.space())
+                    .append(deny)
+                    .build();
+
+                targetPlayer.sendMessage(messages);
             }
-            TextComponent message1 = new TextComponent("リクエストを送信しました。\n");
-            message1.setColor(ChatColor.GREEN);
-            message1.setBold(true);
-            TextComponent message2 = new TextComponent("リクエストは60秒後に自動的にキャンセルされます。");
-            message2.setColor(ChatColor.GRAY);
-            message2.setItalic(true);
-            player.spigot().sendMessage(message1, message2);
+
+            Component message2 = Component.text("リクエストを送信しました。")
+                .appendNewline()
+                .color(NamedTextColor.GREEN)
+                .decorate(TextDecoration.BOLD);
+            
+            Component message3 = Component.text("リクエストは60秒後に自動的にキャンセルされます。")
+                .color(NamedTextColor.GRAY)
+                .decorate(TextDecoration.ITALIC);
+
+            player.sendMessage(message2.append(message3));
         } catch (ClassNotFoundException | SQLException e) {
             player.closeInventory();
-            player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+            Component errorMessage = Component.text("データベースとの通信に失敗しました。")
+                .color(NamedTextColor.RED);
+            player.sendMessage(errorMessage);
 			logger.error("A ClassNotFoundException | SQLException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
@@ -190,11 +229,14 @@ public class TeleportRequest implements TabExecutor {
             @Override
             public void run() {
                 if (countdown <= 0) {
-                    TextComponent message = new TextComponent("リクエストがタイムアウトしました。");
-                    message.setColor(ChatColor.RED);
-                    message.setBold(true);
-                    player.spigot().sendMessage(message);
-                    targetPlayer.spigot().sendMessage(message);
+                    Component timeout = Component.text("リクエストがタイムアウトしました。")
+                        .color(NamedTextColor.RED)
+                        .decorate(TextDecoration.BOLD);
+                    
+                    player.sendMessage(timeout);
+
+                    targetPlayer.sendMessage(timeout);
+
                     List<Map<Player, BukkitTask>> futureList = !me ? TeleportRequest.teleportMap.get(player) : TeleportRequest.teleportMeMap.get(player);
                     if (futureList != null) {
                         futureList.removeIf(future -> {

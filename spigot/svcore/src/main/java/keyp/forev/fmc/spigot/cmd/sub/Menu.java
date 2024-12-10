@@ -41,8 +41,11 @@ import keyp.forev.fmc.common.server.DefaultLuckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.JavaUtils;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.TextComponent;
 import keyp.forev.fmc.spigot.Main;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest;
 import keyp.forev.fmc.spigot.events.EventListener;
@@ -833,29 +836,40 @@ public class Menu {
                             // 作成者以外の場合
                             playerMenuActions.put(inv.first(item), () -> {
                                 player.closeInventory();
-                                TextComponent alert = new TextComponent("ロック解除済みです。\n");
-                                alert.setColor(ChatColor.RED);
-                                player.spigot().sendMessage(
-                                    alert,
-                                    new TextComponent("作成者のみロック後のアクションを選択できます。")
-                                );
+
+                                Component alert = Component.text("ロック解除済みです。")
+                                    .color(NamedTextColor.RED);
+                                
+                                TextComponent messages = Component.text()
+                                    .append(alert)
+                                    .append(Component.text("作成者のみロック後のアクションを選択できます。"))
+                                    .build();
+
+                                player.sendMessage(messages);
                             });
                         }
                     } else if (large) {
                         playerMenuActions.put(inv.first(item), () -> {
                             player.closeInventory();
-                            TextComponent message = new TextComponent(server + "サーバー");
-                            message.setBold(true);
-                            message.setUnderlined(true);
-                            message.setColor(ChatColor.GOLD);
-                            TextComponent alert = new TextComponent("ラージマップは取得できません。");
-                            alert.setColor(ChatColor.RED);
-                            player.spigot().sendMessage(
-                                new TextComponent("この画像は"),
-                                message,
-                                new TextComponent("で作られたラージマップです。\n"),
-                                alert
-                            );
+                            Component serverComponent = Component.text(server + "サーバー")
+                                .color(NamedTextColor.GOLD)
+                                .decorate(
+                                    TextDecoration.BOLD,
+                                    TextDecoration.UNDERLINED)
+                                .color(NamedTextColor.GOLD);
+
+                            Component alert = Component.text("ラージマップは取得できません。")
+                                .color(NamedTextColor.RED);
+
+                            TextComponent messages = Component.text()
+                                .append(Component.text("この画像は"))
+                                .append(serverComponent)
+                                .append(Component.text("で作られたラージマップです。"))
+                                .appendNewline()
+                                .append(alert)
+                                .build();
+
+                            player.sendMessage(messages);
                         });
                     } else if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
                         // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
@@ -1330,10 +1344,12 @@ public class Menu {
                         }
                         Location loc = new Location(world, x, y, z, yaw, pitch);
                         player.teleport(loc);
-                        TextComponent message = new TextComponent("テレポートしました。");
-                        message.setBold(true);
-                        message.setColor(ChatColor.GREEN);
-                        player.spigot().sendMessage(message);
+
+                        Component message = Component.text("テレポートしました。")
+                            .color(NamedTextColor.GREEN)
+                            .decorate(TextDecoration.BOLD);
+                            
+                        player.sendMessage(message);
                     });
                     index++;
                 }

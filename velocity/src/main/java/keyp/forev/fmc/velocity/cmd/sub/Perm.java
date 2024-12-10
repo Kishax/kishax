@@ -58,7 +58,9 @@ public class Perm {
 						TextComponent componentBuilder = Component.text()
 							.append(Component.text("FMC Specific Permission List")
 								.color(NamedTextColor.GOLD)
-								.decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED))
+								.decorate(
+									TextDecoration.BOLD,
+									TextDecoration.UNDERLINED))
 							.build();
 						
 						// アドミンリスト表示処理
@@ -72,25 +74,30 @@ public class Perm {
 								continue;
 							}
 							for (String playerName : playersPermList) {
-								TextComponent additionalComponent;
-								additionalComponent = Component.text()
-										.append(Component.text("\n"+playerName)
+								Component additionalComponent;
+								additionalComponent = Component.newline()
+										.append(Component.text(playerName)
 											.color(NamedTextColor.WHITE))
-										.append(Component.text("  -"+shortPermission)
-											.color(NamedTextColor.GOLD))
-										.build();
+										.append(Component.space())
+										.append(Component.space())
+										.append(Component.text("-")
+											.append(Component.space())
+											.append(Component.space())
+											.append(Component.text(shortPermission))
+										.color(NamedTextColor.GOLD));
+
 								componentBuilder = componentBuilder.append(additionalComponent);
 							}
 						}
 						if (!nonFoundPermList.isEmpty()) {
 							for (String nonFoundPerm : nonFoundPermList) {
 								TextComponent additionalComponent;
-								additionalComponent = Component.text()
-										.append(Component.text("\n"+nonFoundPerm)
+								additionalComponent = Component.newline()
+										.append(Component.text(nonFoundPerm)
 											.color(NamedTextColor.GOLD))
-										.append(Component.text("  -No player has this permission.")
-											.color(NamedTextColor.RED))
-										.build();
+										.append(Component.text("No player has this permission.")
+											.color(NamedTextColor.RED));
+
 								componentBuilder = componentBuilder.append(additionalComponent);
 							}
 						}
@@ -105,25 +112,25 @@ public class Perm {
 				// 以下はパーミッションが所持していることが確認されている上で、permというコマンドを使っているので、確認の必要なし
 				//if(args[0].toLowerCase().equalsIgnoreCase("perm"))
 				if (!(args1.contains(args[1].toLowerCase()))) {
-					source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+					source.sendMessage(Component.text("第2引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
 					break;
 				}
 				
 				if (!(permS.contains(args[2].toLowerCase()))) {
-					source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+					source.sendMessage(Component.text("第3引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
 					break;
 				}
 				
-				source.sendMessage(Component.text("対象のプレイヤー名を入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+				source.sendMessage(Component.text("対象のプレイヤー名を入力してください。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
 			}
 			case 4 -> {
 				if (!(args1.contains(args[1].toLowerCase()))) {
-					source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+					source.sendMessage(Component.text("第2引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
 					break;
 				}
 				
 				if (!(permS.contains(args[2].toLowerCase()))) {
-					source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
+					source.sendMessage(Component.text("第3引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp perm <add|remove|list> [Short:permission] <player>").color(NamedTextColor.GREEN)));
 					break;
 				}
 				

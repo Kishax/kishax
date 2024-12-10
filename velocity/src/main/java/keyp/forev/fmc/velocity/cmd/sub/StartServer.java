@@ -160,12 +160,22 @@ public class StartServer {
 															}
 														}
 														TextComponent component = Component.text()
-																	.append(Component.text("WEB認証...PASS\nアドミン認証...PASS\n\nALL CORRECT\n").color(NamedTextColor.GREEN))
+																	.append(Component.text("WEB認証...PASS")
+																		.appendNewline()
+																		.append(Component.text("アドミン認証...PASS"))
+																		.appendNewline()
+																		.appendNewline()
+																		.append(Component.text("ALL CORRECT"))
+																		.appendNewline()
+																	.color(NamedTextColor.GREEN))
 																	.append(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
 																	.build();
 														player.sendMessage(component);
 														TextComponent notifyComponent = Component.text()
-															.append(Component.text(player.getUsername()+"が"+targetServerName+"サーバーを起動しました。\nまもなく"+targetServerName+"サーバーが起動します。").color(NamedTextColor.AQUA))
+															.append(Component.text(player.getUsername() + "が" + targetServerName + "サーバーを起動しました。")
+																.appendNewline()
+																.append(Component.text("まもなく" + targetServerName + "サーバーが起動します。"))
+															.color(NamedTextColor.AQUA))
 															.build();
 														bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
 														console.sendMessage(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
@@ -176,8 +186,12 @@ public class StartServer {
 												logger.error(NamedTextColor.RED+"実行時にエラーが発生しました。");
 											}
 										} else {
-											player.sendMessage(Component.text("内部エラーが発生しました。\nサーバーを起動できません。").color(NamedTextColor.RED));
-											logger.error(NamedTextColor.RED+"内部エラーが発生しました。\nサーバーを起動できません。");
+											Component errorMessage = Component.text("内部エラーが発生しました。")
+													.appendNewline()
+													.append(Component.text("サーバーを起動できません。"))
+												.color(NamedTextColor.RED);
+											player.sendMessage(errorMessage);
+											logger.error(NamedTextColor.RED + "内部エラーが発生しました。\nサーバーを起動できません。");
 										}
 									} catch (SQLException e) {
 										logger.error("An SQLException error occurred: " + e.getMessage());

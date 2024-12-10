@@ -19,8 +19,10 @@ import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.server.DefaultLuckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class TeleportAccept implements TabExecutor {
@@ -66,11 +68,15 @@ public class TeleportAccept implements TabExecutor {
                                 task.cancel();
                                 requestedPlayers.remove(requestedPlayer);
                                 targetPlayer.teleport(player);
-                                TextComponent message = new TextComponent("テレポートしました。");
-                                message.setBold(true);
-                                message.setColor(ChatColor.GREEN);
-                                player.spigot().sendMessage(message);
-                                targetPlayer.spigot().sendMessage(message);
+
+                                Component message = Component.text("テレポートしました。")
+                                    .color(NamedTextColor.GREEN)
+                                    .decorate(TextDecoration.BOLD);
+
+                                player.sendMessage(message);
+
+                                targetPlayer.sendMessage(message);
+
                                 return true;
                             }
                         }
@@ -93,11 +99,15 @@ public class TeleportAccept implements TabExecutor {
                                 task.cancel();
                                 requestedPlayers.remove(requestedPlayer);
                                 player.teleport(targetPlayer); // 逆
-                                TextComponent message = new TextComponent("テレポートしました。");
-                                message.setBold(true);
-                                message.setColor(ChatColor.GREEN);
-                                player.spigot().sendMessage(message);
-                                targetPlayer.spigot().sendMessage(message);
+
+                                Component messages = Component.text("テレポートしました。")
+                                    .color(NamedTextColor.GREEN)
+                                    .decorate(TextDecoration.BOLD);
+
+                                player.sendMessage(messages);
+
+                                targetPlayer.sendMessage(messages);
+                                
                                 return true;
                             }
                         }

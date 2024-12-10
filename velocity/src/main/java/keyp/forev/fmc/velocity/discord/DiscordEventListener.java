@@ -417,7 +417,8 @@ public class DiscordEventListener {
 					Method getUrlMethod = attachment.getClass().getMethod("getUrl");
 					String url = (String) getUrlMethod.invoke(attachment);
 					additionalComponent = Component.text()
-						.append(Component.text("\n"+url)
+						.appendNewline()
+						.append(Component.text(url)
 							.color(NamedTextColor.GRAY)
 							.decorate(TextDecoration.UNDERLINED))
 							.clickEvent(ClickEvent.openUrl(url))
@@ -472,7 +473,6 @@ public class DiscordEventListener {
             lastMatchEnd = matcher.end();
         }
         if (!isUrl) {
-        	//if (string.contains("\\n")) string = string.replace("\\n", "\n");
         	bc.broadCastMessage(Component.text(string).color(NamedTextColor.AQUA));
         	return;
         }
@@ -502,9 +502,9 @@ public class DiscordEventListener {
         			// textがなかったら、先頭の改行は無くす(=URLのみ)
         			getUrl = urls.get(i);
         		} else if (i != textPartsSize - 1) {
-            		getUrl = "\n"+urls.get(i)+"\n";
+            		getUrl = "\n" + urls.get(i) + "\n";
             	} else {
-            		getUrl = "\n"+urls.get(i);
+            		getUrl = "\n" + urls.get(i);
             	}
         		TextComponent additionalComponent;
         		additionalComponent = Component.text()

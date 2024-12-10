@@ -153,17 +153,25 @@ public class VelocityRequest implements Request {
 											if (success != null && !success.isEmpty()) {
 												String playerEmoji = emoji.getEmojiString(playerName, success);
 												try {
-													discord.sendRequestButtonWithMessage(playerEmoji+playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。\n起動しますか？\n(管理者のみ実行可能です。)");
+													discord.sendRequestButtonWithMessage(playerEmoji + playerName + "が" + targetServerName + "サーバーの起動リクエストを送信しました。\n起動しますか？\n(管理者のみ実行可能です。)");
 												} catch (Exception e) {
 													logger.error("An exception occurred while executing the sendRequestButtonWithMessage method: {}", e.getMessage());
 													for (StackTraceElement ste : e.getStackTrace()) {
 														logger.error(ste.toString());
 													}
 												}
-												player.sendMessage(Component.text("送信されました。\n管理者が3分以内に対応しますのでしばらくお待ちくださいませ。").color(NamedTextColor.GREEN));
+												Component message = Component.text("送信されました。")
+													.appendNewline()
+													.append(Component.text("管理者が3分以内に対応しますのでしばらくお待ちくださいませ。"))
+													.color(NamedTextColor.GREEN);
+
+												player.sendMessage(message);
+
 												TextComponent notifyComponent = Component.text()
-													.append(Component.text(playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。").color(NamedTextColor.AQUA))
+													.append(Component.text(playerName + "が" + targetServerName + "サーバーの起動リクエストを送信しました。")
+													.color(NamedTextColor.AQUA))
 													.build();
+													
 												bc.sendExceptPlayerMessage(notifyComponent, playerName);
 												try {
 													discordME.AddEmbedSomeMessage("Request", player, targetServerName);

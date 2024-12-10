@@ -105,14 +105,14 @@ public class Maintenance {
 							}
 							case "switch" -> {
 								if(!(args1.contains(args[1].toLowerCase()))) {
-									source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									source.sendMessage(Component.text("第2引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 									break;
 								}
 								if(!(args2.contains(args[2].toLowerCase()))) {
-									source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									source.sendMessage(Component.text("第3引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 									break;
 								}
-								source.sendMessage(Component.text("discord通知をtrueにするかfalseにするかを決定してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+								source.sendMessage(Component.text("discord通知をtrueにするかfalseにするかを決定してください。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 							}
 							default -> source.sendMessage(Component.text("usage: /fmcp maintenance <switch|status|list|add|remove> <player|discord> <true|false>").color(NamedTextColor.GREEN));
 						}
@@ -121,19 +121,19 @@ public class Maintenance {
 						switch (args[1].toLowerCase()) {
 							case "switch" -> {
 								if (!(args1.contains(args[1].toLowerCase()))) {
-									source.sendMessage(Component.text("第2引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									source.sendMessage(Component.text("第2引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 									break;
 								}
 								if (!(args2.contains(args[2].toLowerCase()))) {
-									source.sendMessage(Component.text("第3引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									source.sendMessage(Component.text("第3引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 									break;
 								}
 								if (!(args3.contains(args[3].toLowerCase()))) {
-									source.sendMessage(Component.text("第4引数が不正です。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									source.sendMessage(Component.text("第4引数が不正です。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 									break;
 								}
 								if (!(args[3].equals("true") || args[3].equals("false"))) {
-									source.sendMessage(Component.text("trueかfalseを入力してください。\n").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
+									source.sendMessage(Component.text("trueかfalseを入力してください。").color(NamedTextColor.RED).append(Component.text("usage: /fmcp maintenance <switch|status> <discord> <true|false>").color(NamedTextColor.GREEN)));
 									break;
 								}
 		
