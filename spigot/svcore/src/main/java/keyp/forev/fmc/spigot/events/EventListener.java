@@ -41,13 +41,13 @@ import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.spigot.cmd.sub.Confirm;
 import keyp.forev.fmc.spigot.cmd.sub.Menu;
 import keyp.forev.fmc.spigot.server.FMCItemFrame;
-import keyp.forev.fmc.spigot.server.ImageMap;
 import keyp.forev.fmc.spigot.server.Inventory;
 import keyp.forev.fmc.spigot.server.Rcon;
 import keyp.forev.fmc.spigot.settings.FMCCoords;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
+import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
 import net.md_5.bungee.api.ChatColor;
@@ -56,6 +56,7 @@ public final class EventListener implements Listener {
     public static Map<Player, Map<String, MessageRunnable>> playerInputerMap = new HashMap<>();
     public static Map<Player, Map<String, BukkitTask>> playerTaskMap = new HashMap<>();
     public static final AtomicBoolean isHub = new AtomicBoolean(false);
+    public static final Map<Player, Location> playerBeforeLocationMap = new HashMap<>();
     private final JavaPlugin plugin;
     private final Logger logger;
 	private final PortalsConfig psConfig;
@@ -89,6 +90,7 @@ public final class EventListener implements Listener {
         Confirm.confirmMap.remove(player);
         playerInputerMap.remove(player);
         playerTaskMap.remove(player);
+        playerBeforeLocationMap.remove(player);
     }
 
     @EventHandler
@@ -124,11 +126,10 @@ public final class EventListener implements Listener {
             Map<String, MessageRunnable> map = EventListener.playerInputerMap.get(player);
             map.entrySet().forEach(action -> {
                 String key = action.getKey();
-                switch (key) {
-                    case ImageMap.ACTIONS_KEY, ImageMap.ACTIONS_KEY2, ImageMap.ACTIONS_KEY3 -> {
-                        MessageRunnable runnable = action.getValue();
-                        runnable.run(message);
-                    }
+                List<String> taskKeys = RunnableTaskUtil.Key.getKeys();
+                if (taskKeys.contains(key)) {
+                    MessageRunnable runnable = action.getValue();
+                    runnable.run(message);
                 }
             });
         }

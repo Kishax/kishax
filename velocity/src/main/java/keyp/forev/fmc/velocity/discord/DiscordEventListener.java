@@ -1,7 +1,6 @@
 package keyp.forev.fmc.velocity.discord;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,7 +33,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
-import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import com.google.inject.Inject;
