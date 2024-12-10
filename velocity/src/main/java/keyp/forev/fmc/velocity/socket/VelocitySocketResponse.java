@@ -19,7 +19,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
@@ -42,7 +42,7 @@ public class VelocitySocketResponse implements SocketResponse {
 	private final ProxyServer server;
 	private final Database db;
 	private final VelocityConfig config;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
 	private final BroadCast bc;
 	private final ConsoleCommandSource console;
 	private final MessageEditor discordME;
@@ -50,7 +50,7 @@ public class VelocitySocketResponse implements SocketResponse {
 	private final CommandForwarder cf;
 	private String mineName = null;
 	@Inject
-	public VelocitySocketResponse(Logger logger, ProxyServer server, Database db, VelocityConfig config, DefaultLuckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditor discordME, Provider<SocketSwitch> sswProvider, CommandForwarder cf) {
+	public VelocitySocketResponse(Logger logger, ProxyServer server, Database db, VelocityConfig config, Luckperms lp, BroadCast bc, ConsoleCommandSource console, MessageEditor discordME, Provider<SocketSwitch> sswProvider, CommandForwarder cf) {
 		this.logger = logger;
 		this.server = server;
 		this.db = db;

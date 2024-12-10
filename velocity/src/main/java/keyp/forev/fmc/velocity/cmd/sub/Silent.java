@@ -16,7 +16,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -27,11 +27,11 @@ import keyp.forev.fmc.common.util.PlayerUtils;
 public class Silent {
 	private final Logger logger;
 	private final Database db;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
     private final PlayerUtils pu;
     public static List<String> args1 = new ArrayList<>(Arrays.asList("add","remove","list"));
 	@Inject
-    public Silent(Logger logger, Database db, DefaultLuckperms lp, PlayerUtils pu) {
+    public Silent(Logger logger, Database db, Luckperms lp, PlayerUtils pu) {
 		this.logger = logger;
 		this.db = db;
 		this.lp = lp;
@@ -71,11 +71,11 @@ public class Silent {
                             try (ResultSet rs = ps.executeQuery()) {
                                 while (rs.next()) {
                                     Component addition = Component.newline()
-                                        .append(Component.space())
-                                        .append(Component.space())
+                                        .appendSpace()
+                                        .appendSpace()
                                         .append(Component.text("-")
-                                            .append(Component.space())
-                                            .append(Component.space())
+                                            .appendSpace()
+                                            .appendSpace()
                                             .append(Component.text(rs.getString("name")))
                                         .color(NamedTextColor.GREEN));
 

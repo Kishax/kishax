@@ -13,7 +13,7 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -26,10 +26,10 @@ public class CEnd implements SimpleCommand {
 	private final ProxyServer server;
 	private final Logger logger;
 	private final MessageEditor discordME;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
 	private final String[] subcommands = {"cend"};
 	@Inject
-    public CEnd (Main plugin, ProxyServer server, Logger logger, MessageEditor discordME, DefaultLuckperms lp) {
+    public CEnd (Main plugin, ProxyServer server, Logger logger, MessageEditor discordME, Luckperms lp) {
 		this.plugin = plugin;
 		this.server = server;
 		this.logger = logger;

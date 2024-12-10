@@ -21,7 +21,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.interfaces.DefaultServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.PortFinder;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 
@@ -33,13 +33,13 @@ public class ServerStatusCache {
     private final PortFinder pf;
     private final DoServerOnline dso;
     private final Provider<SocketSwitch> sswProvider;
-    private final DefaultServerHomeDir shd;
+    private final ServerHomeDir shd;
     private final AtomicBoolean isFirstRefreshing = new AtomicBoolean(false);
     private Map<String, Map<String, Map<String, Object>>> statusMap = new ConcurrentHashMap<>();
     private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
     @Inject
-    public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, DefaultServerHomeDir shd) {
+    public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
         this.logger = logger;
         this.db = db;
         this.pf = pf;

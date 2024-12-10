@@ -5,11 +5,11 @@ import java.util.Objects;
 
 import com.google.inject.Inject;
 
-import keyp.forev.fmc.common.server.interfaces.DefaultServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class SpigotServerHomeDir implements DefaultServerHomeDir {
+public class SpigotServerHomeDir implements ServerHomeDir {
 	private final File dataFolder;
 	@Inject
 	public SpigotServerHomeDir(JavaPlugin plugin) {

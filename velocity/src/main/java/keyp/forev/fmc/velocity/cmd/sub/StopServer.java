@@ -16,7 +16,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -33,12 +33,12 @@ public class StopServer {
 	private final BroadCast bc;
 	private final DoServerOnline dso;
 	private final MessageEditor discordME;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
     private final Provider<SocketSwitch> sswProvider;
 	private String currentServerName = null;
 	
 	@Inject
-	public StopServer (ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, MessageEditor discordME, BroadCast bc, DoServerOnline dso, DefaultLuckperms lp, Provider<SocketSwitch> sswProvider) {
+	public StopServer (ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, MessageEditor discordME, BroadCast bc, DoServerOnline dso, Luckperms lp, Provider<SocketSwitch> sswProvider) {
 		this.server = server;
 		this.logger = logger;
 		this.db = db;

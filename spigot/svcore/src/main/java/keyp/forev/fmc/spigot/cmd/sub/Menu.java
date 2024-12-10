@@ -37,7 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.JavaUtils;
@@ -50,7 +50,7 @@ import keyp.forev.fmc.spigot.Main;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest;
 import keyp.forev.fmc.spigot.events.EventListener;
 import keyp.forev.fmc.spigot.server.ImageMap;
-import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -100,15 +100,15 @@ public class Menu {
     private final Logger logger;
     private final Database db;
     private final ServerStatusCache ssc;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     private final ImageMap im;
-    private final SpigotServerHomeDir shd;
+    private final ServerHomeDir shd;
     private final Book book;
     private final CommandForward cf;
     private int currentOreIndex = 0; // 現在のインデックスを管理するフィールド
 
 	@Inject
-	public Menu(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, DefaultLuckperms lp, ImageMap im, SpigotServerHomeDir shd, Book book, CommandForward cf) {  
+	public Menu(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf) {  
 		this.plugin = plugin;
         this.logger = logger;
         this.db = db;

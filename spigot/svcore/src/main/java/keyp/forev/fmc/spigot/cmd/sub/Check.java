@@ -6,7 +6,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import com.google.inject.Inject;
 
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.spigot.settings.FMCCoords;
 import net.md_5.bungee.api.ChatColor;
@@ -15,9 +15,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Check {
     private final JavaPlugin plugin;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     @Inject
-    public Check(JavaPlugin plugin, DefaultLuckperms lp) {
+    public Check(JavaPlugin plugin, Luckperms lp) {
         this.plugin = plugin;
         this.lp = lp;
     }

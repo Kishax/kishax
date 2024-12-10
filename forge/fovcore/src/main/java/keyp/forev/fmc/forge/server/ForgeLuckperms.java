@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.model.user.UserManager;
@@ -16,7 +16,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
-public class ForgeLuckperms extends DefaultLuckperms {
+public class ForgeLuckperms extends Luckperms {
 	@Inject
 	public ForgeLuckperms(Logger logger, Database db, PlayerUtils pu) {
 		super(logger, db, pu);

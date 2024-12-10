@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.model.user.UserManager;
@@ -16,7 +16,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
-public class FabricLuckperms extends DefaultLuckperms {
+public class FabricLuckperms extends Luckperms {
 	@Inject
 	public FabricLuckperms(Logger logger, Database db, PlayerUtils pu) {
 		super(logger, db, pu);

@@ -22,7 +22,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -45,13 +45,13 @@ public class VelocityRequest implements Request {
 	private final Discord discord;
 	private final MessageEditor discordME;
 	private final EmojiManager emoji;
-	private final DefaultLuckperms lp;
+	private final Luckperms lp;
 	private final PlayerUtils pu;
 	private final DoServerOnline dso;
 	private String currentServerName = null;
 	
 	@Inject
-	public VelocityRequest(ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc, Discord discord, MessageEditor discordME, EmojiManager emoji, DefaultLuckperms lp, PlayerUtils pu, DoServerOnline dso) {
+	public VelocityRequest(ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc, Discord discord, MessageEditor discordME, EmojiManager emoji, Luckperms lp, PlayerUtils pu, DoServerOnline dso) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;

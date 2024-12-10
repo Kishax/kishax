@@ -71,7 +71,7 @@ public enum TCUtils {
             }
             case "0", "1", "2" -> {
                 return Component.text(key)
-                    .color(NamedTextColor.GRAY)
+                    .color(NamedTextColor.GOLD)
                     .decorate(
                         TextDecoration.BOLD,
                         TextDecoration.ITALIC)

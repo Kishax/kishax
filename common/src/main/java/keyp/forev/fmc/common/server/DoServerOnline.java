@@ -11,17 +11,17 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.interfaces.DefaultServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 
 public class DoServerOnline {
 	private final Logger logger;
 	private final Provider<SocketSwitch> sswProvider;
-	private final DefaultServerHomeDir shd;
+	private final ServerHomeDir shd;
 	private final Database db;
 	
 	@Inject
-	public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, DefaultServerHomeDir shd, Database db) {
+	public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
 		this.logger = logger;
 		this.sswProvider = sswProvider;
 		this.shd = shd;

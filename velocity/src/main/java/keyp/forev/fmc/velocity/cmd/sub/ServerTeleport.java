@@ -16,7 +16,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.velocity.server.DoServerOnline;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -25,11 +25,11 @@ public class ServerTeleport implements SimpleCommand {
     private final Logger logger;
     private final ProxyServer server;
     private final Database db;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     private final DoServerOnline dso;
     private final String[] subcommands = {"stp"};
     @Inject
-    public ServerTeleport(Logger logger, ProxyServer server, Database db, DefaultLuckperms lp, DoServerOnline dso) {
+    public ServerTeleport(Logger logger, ProxyServer server, Database db, Luckperms lp, DoServerOnline dso) {
         this.logger = logger;
 		this.server = server;
 		this.db = db;

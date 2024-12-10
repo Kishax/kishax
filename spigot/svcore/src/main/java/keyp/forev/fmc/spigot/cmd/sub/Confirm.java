@@ -16,11 +16,11 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.OTPGenerator;
 import keyp.forev.fmc.spigot.server.ImageMap;
-import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
+import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -35,11 +35,11 @@ public class Confirm {
     private final JavaPlugin plugin;
     private final Logger logger;
     private final Database db;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     private final ImageMap im;
     private final String thisServerName;
     @Inject
-    public Confirm(JavaPlugin plugin, Logger logger, Database db, DefaultLuckperms lp, ImageMap im, SpigotServerHomeDir shd) {
+    public Confirm(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;

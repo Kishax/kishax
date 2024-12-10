@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.spigot.cmd.sub.Menu;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
@@ -40,10 +40,10 @@ public class TeleportRequest implements TabExecutor {
     private final JavaPlugin plugin;
     private final Logger logger;
     private final Database db;
-    private final DefaultLuckperms lp;
+    private final Luckperms lp;
     private final Menu menu;
     @Inject
-    public TeleportRequest(JavaPlugin plugin, Logger logger, Database db, DefaultLuckperms lp, Menu menu) {
+    public TeleportRequest(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, Menu menu) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -196,7 +196,7 @@ public class TeleportRequest implements TabExecutor {
                 TextComponent messages = Component.text()
                     .append(message)
                     .append(accept)
-                    .append(Component.space())
+                    .appendSpace()
                     .append(deny)
                     .build();
 

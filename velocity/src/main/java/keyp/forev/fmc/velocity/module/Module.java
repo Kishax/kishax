@@ -14,7 +14,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.database.interfaces.DatabaseInfo;
-import keyp.forev.fmc.common.server.DefaultLuckperms;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
 import keyp.forev.fmc.common.util.PlayerUtils;
@@ -80,7 +80,7 @@ public class Module extends AbstractModule {
         bind(Maintenance.class);
         bind(FMCBoard.class);
         bind(CommandForwarder.class);
-        bind(DefaultLuckperms.class);
+        bind(Luckperms.class);
         bind(Webhooker.class);
         // 試験要素
         //bind(Discord2.class);
@@ -97,7 +97,7 @@ public class Module extends AbstractModule {
         Discord discord, 
         MessageEditor discordME, 
         EmojiManager emoji, 
-        DefaultLuckperms lp, 
+        Luckperms lp, 
         PlayerUtils pu, 
         DoServerOnline dso
     ) {
@@ -126,7 +126,7 @@ public class Module extends AbstractModule {
             ProxyServer server, 
             Database db, 
             VelocityConfig config, 
-            DefaultLuckperms lp, 
+            Luckperms lp, 
             BroadCast bc, 
             ConsoleCommandSource console, 
             MessageEditor discordME, 
