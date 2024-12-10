@@ -1,5 +1,6 @@
 package keyp.forev.fmc.common.util;
 
+import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
 public class JavaUtils {
@@ -25,5 +26,20 @@ public class JavaUtils {
             seconds = remainingSeconds % 60;
             return String.format("%02d:%02d:%02d", hours, minutes, seconds);
         }
+    }
+
+    public class Time {
+        public enum Format {
+            YYYY_MM_DD_HH_MM_SS("yyyy-MM-dd HH:mm:ss");
+            private final SimpleDateFormat sdf;
+            Format(String format) {
+                this.sdf = new SimpleDateFormat(format);
+            }
+
+            public String format(java.util.Date date) {
+                return this.sdf.format(date);
+            }
+        }
+
     }
 }

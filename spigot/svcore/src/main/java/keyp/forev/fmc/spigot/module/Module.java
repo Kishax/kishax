@@ -35,6 +35,7 @@ import keyp.forev.fmc.spigot.server.Inventory;
 import keyp.forev.fmc.spigot.server.Rcon;
 import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
 import keyp.forev.fmc.spigot.socket.SpigotSocketResponse;
+import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 
 import java.nio.file.Path;
@@ -79,6 +80,7 @@ public class Module extends AbstractModule {
 		bind(FMCItemFrame.class);
 		bind(CommandForward.class);
 		bind(BroadCast.class);
+		bind(RunnableTaskUtil.class);
     }
 
 	@Provides

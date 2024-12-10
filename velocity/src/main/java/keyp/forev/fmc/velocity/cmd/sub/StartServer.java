@@ -165,7 +165,7 @@ public class StartServer {
 																	.build();
 														player.sendMessage(component);
 														TextComponent notifyComponent = Component.text()
-															.append(Component.text(player.getUsername()+"が"+targetServerName+"サーバーを起動しました。\nまもなく"+targetServerName+"サーバーが起動します。\n自動転送を希望する方は、自動転送エリアの上でお待ちくださいませ。").color(NamedTextColor.AQUA))
+															.append(Component.text(player.getUsername()+"が"+targetServerName+"サーバーを起動しました。\nまもなく"+targetServerName+"サーバーが起動します。").color(NamedTextColor.AQUA))
 															.build();
 														bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
 														console.sendMessage(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));

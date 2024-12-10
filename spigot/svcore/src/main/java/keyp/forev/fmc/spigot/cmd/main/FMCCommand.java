@@ -16,6 +16,7 @@ import com.google.inject.Inject;
 import keyp.forev.fmc.spigot.Main;
 import keyp.forev.fmc.spigot.cmd.sub.portal.PortalsDelete;
 import keyp.forev.fmc.spigot.cmd.sub.portal.PortalsWand;
+import keyp.forev.fmc.spigot.cmd.sub.teleport.Back;
 import keyp.forev.fmc.spigot.cmd.sub.portal.PortalsRename;
 import keyp.forev.fmc.spigot.cmd.sub.portal.PortalsNether;
 import keyp.forev.fmc.spigot.cmd.sub.Check;
@@ -40,7 +41,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class FMCCommand implements TabExecutor {
 	private final JavaPlugin plugin;
 	private final PortalsConfig psConfig;
-	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu", "button", "check", "setpoint", "confirm"));
+	private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu", "button", "check", "setpoint", "confirm", "back"));
 	@Inject
 	public FMCCommand(JavaPlugin plugin, PortalsConfig psConfig) {
 		this.plugin = plugin;
@@ -67,6 +68,9 @@ public class FMCCommand implements TabExecutor {
 						.append(ChatColor.AQUA+"\n\n/fmc portal ")
 							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmc portal "))
 							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルに関して！(クリックしてコピー)")))
+						.append(ChatColor.AQUA+"\n\n/fmc back")
+							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmc back"))
+							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("前回のテレポート先に戻る！(クリックしてコピー)")))
     			        .create();
     		sender.spigot().sendMessage(component);
     		return true;
@@ -76,38 +80,15 @@ public class FMCCommand implements TabExecutor {
     		return true;
     	}
 		switch (args[0].toLowerCase()) {
-			case "confirm" -> {
-				Main.getInjector().getInstance(Confirm.class).execute(sender, cmd, label, args);
-				return true;
-			}
-			case "fv" -> {
-				Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
-				return true;
-			}
-			case "reload" -> {
-				Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);
-				return true;
-			}
-			case "mcvc" -> {
-				Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
-				return true; 
-			}
-			case "hideplayer" -> {
-				Main.getInjector().getInstance(HidePlayer.class).execute(sender, cmd, label, args);
-				return true;
-			}
-			case "menu" -> {
-				Main.getInjector().getInstance(Menu.class).execute(sender, cmd, label, args);
-				return true;
-			}
-			case "check" -> {
-				Main.getInjector().getInstance(Check.class).execute(sender, cmd, label, args);
-				return true;
-			}
-			case "setpoint" -> {
-				Main.getInjector().getInstance(SetPoint.class).execute(sender, cmd, label, args);
-				return true;
-			}
+			case "back" -> Main.getInjector().getInstance(Back.class).onCommand(sender, cmd, label, args);
+			case "confirm" -> Main.getInjector().getInstance(Confirm.class).execute(sender, cmd, label, args);
+			case "fv" -> Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
+			case "reload" -> Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);
+			case "mcvc" -> Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
+			case "hideplayer" -> Main.getInjector().getInstance(HidePlayer.class).execute(sender, cmd, label, args);
+			case "menu" -> Main.getInjector().getInstance(Menu.class).execute(sender, cmd, label, args);
+			case "check" -> Main.getInjector().getInstance(Check.class).execute(sender, cmd, label, args);
+			case "setpoint" -> Main.getInjector().getInstance(SetPoint.class).execute(sender, cmd, label, args);
 			case "image","im" -> {
 				if (args.length > 1) {
 					if (!sender.hasPermission("fmc." + args[0] + "." + args[1])) {
@@ -115,14 +96,8 @@ public class FMCCommand implements TabExecutor {
 						return true;
 					}
 					switch (args[1].toLowerCase()) {
-						case "create" -> {
-							Main.getInjector().getInstance(ImageMap.class).executeImageMapLeading(sender, args);
-							return true;
-						}
-						case "q" -> {
-							Main.getInjector().getInstance(ImageMap.class).executeQ(sender, args, false);
-							return true;
-						}
+						case "create" -> Main.getInjector().getInstance(ImageMap.class).executeImageMapLeading(sender, args);
+						case "q" -> Main.getInjector().getInstance(ImageMap.class).executeQ(sender, args, false);
 					}
 				} else {
 					sender.sendMessage("Usage: /fmc im <create|createqr> <title> <comment> <url>");
@@ -136,22 +111,10 @@ public class FMCCommand implements TabExecutor {
 						return true;
 					}
 					switch (args[1].toLowerCase()) {
-						case "wand" -> {
-							Main.getInjector().getInstance(PortalsWand.class).execute(sender, cmd, label, args);
-							return true;
-						}
-						case "delete" -> {
-							Main.getInjector().getInstance(PortalsDelete.class).execute(sender, cmd, label, args);
-							return true;
-						}
-						case "rename" -> {
-							Main.getInjector().getInstance(PortalsRename.class).execute(sender, cmd, label, args);
-							return true;
-						}
-						case "nether" -> {
-							Main.getInjector().getInstance(PortalsNether.class).execute(sender, cmd, label, args);
-							return true;
-						}
+						case "wand" -> Main.getInjector().getInstance(PortalsWand.class).execute(sender, cmd, label, args);
+						case "delete" -> Main.getInjector().getInstance(PortalsDelete.class).execute(sender, cmd, label, args);
+						case "rename" -> Main.getInjector().getInstance(PortalsRename.class).execute(sender, cmd, label, args);
+						case "nether" -> Main.getInjector().getInstance(PortalsNether.class).execute(sender, cmd, label, args);
 					}
 				} else {
 					sender.sendMessage("Usage: /fmc portal <rename|delete|wand>");

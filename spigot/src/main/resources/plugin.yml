@@ -12,24 +12,28 @@ commands:
   fmc:
     usage: /<command>
     description: You can use FMC Spigot server command!
-    executor: spigot_command.FMCCommand
+    executor: keyp.forev.fmc.spigot.cmd.main.FMCCommand
   q:
     usage: /<command>
     description: You can confirm image map code generated at discord
-    executor: spigot_command.Q
+    executor: keyp.forev.fmc.spigot.cmd.sub.Q
   tpr:
     usage: /<command>
     description: You can teleport to other player
-    executor: spigot_command.TeleportRequest
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest
   tprm:
     usage: /<command>
     description: You can teleport to other player
-    executor: spigot_command.TeleportRequest
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest
   tpra:
     usage: /<command>
     description: You can accept teleport request
-    executor: spigot_command.TeleportAccept
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept
   tprma:
     usage: /<command>
     description: You can accept teleport request
-    executor: spigot_command.TeleportAccept
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept
+  back:
+    usage: /<command>
+    description: You can teleport to back
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.Back
