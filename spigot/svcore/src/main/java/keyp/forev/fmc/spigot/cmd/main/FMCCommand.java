@@ -190,6 +190,12 @@ public class FMCCommand implements TabExecutor {
 								}
 								return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
 							}
+							case "tp" -> {
+								for (String portalMenuTpCmd : Menu.args2tp) {
+									ret.add(portalMenuTpCmd);
+								}
+								return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
+							}
 						}
 					}
 					case "portal" -> {
@@ -212,6 +218,25 @@ public class FMCCommand implements TabExecutor {
                         List<String> actions = new ArrayList<>(Arrays.asList("hide", "show"));
                         return StringUtil.copyPartialMatches(args[2].toLowerCase(), actions, new ArrayList<>());
                     }
+				}
+			}
+			case 4 -> {
+				if (!sender.hasPermission("fmc." + args[0].toLowerCase())) return Collections.emptyList();
+				switch (args[0].toLowerCase()) {
+					case "menu" -> {
+						switch (args[1].toLowerCase()) {
+							case "tp" -> {
+								switch (args[2].toLowerCase()) {
+									case "point" -> {
+										for (String portalMenuTpCmd : Menu.args3tpsp) {
+											ret.add(portalMenuTpCmd);
+										}
+										return StringUtil.copyPartialMatches(args[3].toLowerCase(), ret, new ArrayList<>());
+									}
+								}
+							}
+						}
+					}
 				}
 			}
     	}

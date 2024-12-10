@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -178,9 +179,11 @@ public final class EventListener implements Listener {
                 }
             }
             String title = event.getView().getTitle();
-            if (Menu.menuNames.contains(title)) {
+            Optional<Menu.Type> type = Menu.Type.getType(title);
+            if (type.isPresent()) {
                 event.setCancelled(true);
-                menu.runMenuAction(player, title, event.getRawSlot());
+                Menu.Type menuType = type.get();
+                menu.runMenuAction(player, menuType, event.getRawSlot());
             } else if (title.endsWith(" server")) {
                 event.setCancelled(true);
                 Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
@@ -199,7 +202,7 @@ public final class EventListener implements Listener {
                 }
             } else if (title.endsWith(" servers")) {
                 event.setCancelled(true);
-                menu.runMenuAction(player, Menu.serverTypeInventoryName, event.getRawSlot());
+                menu.runMenuAction(player, Menu.Type.SERVER_EACH_TYPE, event.getRawSlot());
             }
         }
     }
