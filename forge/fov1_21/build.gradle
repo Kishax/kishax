@@ -32,7 +32,7 @@ shadowJar {
 	configurations = [project.configurations.shadowImpl]
 	archiveBaseName.set('FMC-Forge')
 	archiveClassifier.set('')
-	archiveVersion.set('1.21-shaded')
+	archiveVersion.set('1.21-reobfed')
     from(project(':forge:fovcore').sourceSets.main.output)
 	dependencies {
 		exclude(dependency('com.google.guava:.*'))
@@ -72,13 +72,6 @@ processResources {
 reobf {
     shadowJar {
 		dependsOn shadowJar
-		doLast {
-			def reobfJar = file("${buildDir}/libs/FMC-Forge-1.21-shaded.jar")
-			def renamedJar = file("${buildDir}/libs/FMC-Forge-1.21-reobfed.jar")
-			if (reobfJar.exists()) {
-			    reobfJar.renameTo(renamedJar)
-			}
-        }
     }
 }
 
