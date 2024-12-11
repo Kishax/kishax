@@ -1622,6 +1622,13 @@ public class Menu {
                         }
 
                         player.closeInventory();
+
+                        int permLevel = lp.getPermLevel(player.getName());
+                        if (permLevel < 1) {
+                            player.sendMessage(ChatColor.RED + "まだFMCのWEB認証が完了していません。");
+                            return;
+                        }
+
                         // ここで、テレポートさせる前の座標を記録し、/backコマンドで戻れるようにする
                         Location beforeLoc = player.getLocation();
                         EventListener.playerBeforeLocationMap.put(player, beforeLoc);
