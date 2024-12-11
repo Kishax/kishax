@@ -17,10 +17,10 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
 
-public class Back implements TabExecutor {
+public class TeleportBack implements TabExecutor {
     private final Luckperms lp;
     @Inject
-    public Back(Luckperms lp) {
+    public TeleportBack(Luckperms lp) {
         this.lp = lp;
     }
 
@@ -34,7 +34,7 @@ public class Back implements TabExecutor {
                 player.teleport(FMCCoords.ROOM_POINT.getLocation());
             } else {
                 if (EventListener.playerBeforeLocationMap.containsKey(player)) {
-                    Component message = Component.text("テレポート前の座標に戻ります。")
+                    Component message = Component.text("テレポート前の座標に戻りました。")
                         .color(NamedTextColor.GREEN)
                         .decorate(TextDecoration.BOLD);
 

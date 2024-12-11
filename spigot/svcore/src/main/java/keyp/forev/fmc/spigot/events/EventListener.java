@@ -1,6 +1,7 @@
 package keyp.forev.fmc.spigot.events;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -54,8 +56,8 @@ import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
 import net.md_5.bungee.api.ChatColor;
 
 public final class EventListener implements Listener {
-    public static Map<Player, Map<String, MessageRunnable>> playerInputerMap = new HashMap<>();
-    public static Map<Player, Map<String, BukkitTask>> playerTaskMap = new HashMap<>();
+    public static Map<Player, Map<RunnableTaskUtil.Key, MessageRunnable>> playerInputerMap = new HashMap<>();
+    public static Map<Player, Map<RunnableTaskUtil.Key, BukkitTask>> playerTaskMap = new HashMap<>();
     public static final AtomicBoolean isHub = new AtomicBoolean(false);
     public static final Map<Player, Location> playerBeforeLocationMap = new HashMap<>();
     private final JavaPlugin plugin;
@@ -124,11 +126,14 @@ public final class EventListener implements Listener {
         String message = event.getMessage();
         if (EventListener.playerInputerMap.containsKey(player)) {
             event.setCancelled(true);
-            Map<String, MessageRunnable> map = EventListener.playerInputerMap.get(player);
+            Map<RunnableTaskUtil.Key, MessageRunnable> map = EventListener.playerInputerMap.get(player);
             map.entrySet().forEach(action -> {
-                String key = action.getKey();
-                List<String> taskKeys = RunnableTaskUtil.Key.getKeys();
-                if (taskKeys.contains(key)) {
+                RunnableTaskUtil.Key key = action.getKey();
+
+                List<RunnableTaskUtil.Key> keys = Arrays.stream(RunnableTaskUtil.Key.values())
+                    .collect(Collectors.toList());
+                
+                if (keys.contains(key)) {
                     MessageRunnable runnable = action.getValue();
                     runnable.run(message);
                 }
@@ -178,6 +183,7 @@ public final class EventListener implements Listener {
                     }
                 }
             }
+
             String title = event.getView().getTitle();
             Optional<Menu.Type> type = Menu.Type.getType(title);
             if (type.isPresent()) {
@@ -198,7 +204,7 @@ public final class EventListener implements Listener {
                         return false;
                     }));
                 if (iskey) {
-                    menu.runMenuAction(player, Menu.serverInventoryName, event.getRawSlot());
+                    menu.runMenuAction(player, Menu.Type.SERVER, event.getRawSlot());
                 }
             } else if (title.endsWith(" servers")) {
                 event.setCancelled(true);

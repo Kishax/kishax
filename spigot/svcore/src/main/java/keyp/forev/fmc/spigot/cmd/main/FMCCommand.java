@@ -16,7 +16,7 @@ import com.google.inject.Inject;
 import keyp.forev.fmc.spigot.Main;
 import keyp.forev.fmc.spigot.cmd.sub.portal.PortalsDelete;
 import keyp.forev.fmc.spigot.cmd.sub.portal.PortalsWand;
-import keyp.forev.fmc.spigot.cmd.sub.teleport.Back;
+import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportBack;
 import keyp.forev.fmc.spigot.cmd.sub.portal.PortalsRename;
 import keyp.forev.fmc.spigot.cmd.sub.portal.PortalsNether;
 import keyp.forev.fmc.spigot.cmd.sub.Check;
@@ -80,7 +80,7 @@ public class FMCCommand implements TabExecutor {
     		return true;
     	}
 		switch (args[0].toLowerCase()) {
-			case "back" -> Main.getInjector().getInstance(Back.class).onCommand(sender, cmd, label, args);
+			case "back" -> Main.getInjector().getInstance(TeleportBack.class).onCommand(sender, cmd, label, args);
 			case "confirm" -> Main.getInjector().getInstance(Confirm.class).execute(sender, cmd, label, args);
 			case "fv" -> Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
 			case "reload" -> Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);

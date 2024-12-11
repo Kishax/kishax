@@ -27,6 +27,7 @@ public class VClassManager {
         COMMAND_CREATE_ACTION("net.dv8tion.jda.api.requests.restaction.CommandCreateAction"),
         REST_ACTION("net.dv8tion.jda.api.requests.RestAction"),
         ITEM_COMPONENT("net.dv8tion.jda.api.interactions.components.ItemComponent"),
+        ROLE("net.dv8tion.jda.api.entities.Role"),
         ;
         private String clazzName;
         private URLClassLoader urlClassLoader;

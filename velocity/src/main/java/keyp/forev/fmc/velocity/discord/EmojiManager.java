@@ -3,6 +3,7 @@ package keyp.forev.fmc.velocity.discord;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,13 +34,14 @@ public class EmojiManager {
     private final Logger logger;
     private final VelocityConfig config;
     private final Database db;
-    private final Class<?> iconClazz;
+    private final Class<?> iconClazz, roleClazz;
     @Inject
     public EmojiManager(Logger logger, VelocityConfig config, Database db) throws ClassNotFoundException {
         this.logger = logger;
         this.config = config;
         this.db = db;
         this.iconClazz = VClassManager.JDA.ENTITYS_ICON.get().getClazz();
+        this.roleClazz = VClassManager.JDA.ROLE.get().getClazz();
     }
 
     public void updateDefaultEmojiId() throws Exception {
@@ -168,8 +170,9 @@ public class EmojiManager {
                 byte[] imageBytes = baos.toByteArray();
                 Object icon = iconClazz.getMethod("from", byte[].class).invoke(null, imageBytes);
             
-                Method createEmoji = guild.getClass().getMethod("createEmoji", String.class, iconClazz);;
-                Object action = createEmoji.invoke(guild, emojiName, icon);
+                Object roleArray = Array.newInstance(roleClazz, 0);
+                Method createEmoji = guild.getClass().getMethod("createEmoji", String.class, iconClazz, roleArray.getClass());
+                Object action = createEmoji.invoke(guild, emojiName, icon, roleArray);
 
                 Method queue = action.getClass().getMethod("queue", Consumer.class, Consumer.class);
                 queue.invoke(action, new Object[] {
