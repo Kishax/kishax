@@ -1501,13 +1501,16 @@ public class Menu {
                     double roundz = JavaUtils.roundToFirstDecimalPlace(z);
 
                     List<String> lores = new ArrayList<>();
-                    lores.add("<" + type + ">");
+                    
+                    if (!comment.isBlank()) {
+                        List<String> commentLines = Arrays.stream(comment.split("\n"))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                        lores.addAll(commentLines);
+                    }
+
                     lores.add("World: " + worldName);
                     lores.add("Location: (" + roundx + ", " + roundy + ", " + roundz + ")");
-                    List<String> commentLines = Arrays.stream(comment.split("\n"))
-                        .map(String::trim)
-                        .collect(Collectors.toList());
-                    lores.addAll(commentLines);
                     lores.add("created by " + authorName);
                     lores.add("created at " + date.replace("-", "/"));
 

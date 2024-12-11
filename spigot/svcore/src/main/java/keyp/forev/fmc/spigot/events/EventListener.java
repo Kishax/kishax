@@ -120,27 +120,6 @@ public final class EventListener implements Listener {
         }
     }
     
-    @EventHandler
-    public void onChat(org.bukkit.event.player.AsyncPlayerChatEvent event) {
-        Player player = event.getPlayer();
-        String message = event.getMessage();
-        if (EventListener.playerInputerMap.containsKey(player)) {
-            event.setCancelled(true);
-            Map<RunnableTaskUtil.Key, MessageRunnable> map = EventListener.playerInputerMap.get(player);
-            map.entrySet().forEach(action -> {
-                RunnableTaskUtil.Key key = action.getKey();
-
-                List<RunnableTaskUtil.Key> keys = Arrays.stream(RunnableTaskUtil.Key.values())
-                    .collect(Collectors.toList());
-                
-                if (keys.contains(key)) {
-                    MessageRunnable runnable = action.getValue();
-                    runnable.run(message);
-                }
-            });
-        }
-    }
-
     @SuppressWarnings("deprecation")
 	@EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -162,6 +141,27 @@ public final class EventListener implements Listener {
         inv.updatePlayerInventory(player);
     }
 
+    @EventHandler
+    public void onChat(org.bukkit.event.player.AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        String message = event.getMessage();
+        if (EventListener.playerInputerMap.containsKey(player)) {
+            event.setCancelled(true);
+            Map<RunnableTaskUtil.Key, MessageRunnable> map = EventListener.playerInputerMap.get(player);
+            map.entrySet().forEach(action -> {
+                RunnableTaskUtil.Key key = action.getKey();
+
+                List<RunnableTaskUtil.Key> keys = Arrays.stream(RunnableTaskUtil.Key.values())
+                    .collect(Collectors.toList());
+                
+                if (keys.contains(key)) {
+                    MessageRunnable runnable = action.getValue();
+                    runnable.run(message);
+                }
+            });
+        }
+    }
+    
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
@@ -188,6 +188,8 @@ public final class EventListener implements Listener {
             Optional<Menu.Type> type = Menu.Type.getType(title);
             if (type.isPresent()) {
                 event.setCancelled(true);
+                // 以下、Menu.openTeleportPointMenuメソッドにて右クリックの場合の処理で使用
+                
                 Menu.Type menuType = type.get();
                 menu.runMenuAction(player, menuType, event.getRawSlot());
             } else if (title.endsWith(" server")) {
