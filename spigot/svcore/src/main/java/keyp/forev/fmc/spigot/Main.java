@@ -20,6 +20,8 @@ import keyp.forev.fmc.common.util.PlayerUtils;
 import net.luckperms.api.LuckPermsProvider;
 import keyp.forev.fmc.spigot.cmd.main.FMCCommand;
 import keyp.forev.fmc.spigot.cmd.sub.Q;
+import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportBack;
+import keyp.forev.fmc.spigot.cmd.sub.teleport.Navi;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.RegisterTeleportPoint;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest;
@@ -51,28 +53,9 @@ public class Main extends JavaPlugin {
 		getInjector().getInstance(AutoShutdown.class).startCheckForPlayers();
     	getServer().getPluginManager().registerEvents(getInjector().getInstance(EventListener.class), this);
         getServer().getPluginManager().registerEvents(getInjector().getInstance(WandListener.class), this);
-		PluginCommand fmcCmd = getCommand("fmc"),
-			qCmd = getCommand("q"),
-			tprCmd = getCommand("tpr"),
-			tprmCmd = getCommand("tprm"),
-			tprmaCmd = getCommand("tprma"),
-			tpraCmd = getCommand("tpra"),
-			registerpointCmd = getCommand("registerpoint");
-		if (fmcCmd != null) {
-			fmcCmd.setExecutor(getInjector().getInstance(FMCCommand.class));
-		}
-		if (qCmd != null) {
-			qCmd.setExecutor(getInjector().getInstance(Q.class));
-		}
-		if (tprCmd != null && tprmCmd != null && tpraCmd != null && tprmaCmd != null) {
-			tprCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
-			tprmCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
-			tpraCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
-			tprmaCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
-		}
-		if (registerpointCmd != null) {
-			registerpointCmd.setExecutor(getInjector().getInstance(RegisterTeleportPoint.class));
-		}
+		
+		registerCommand();
+
     	if (getConfig().getBoolean("MCVC.Mode",false)) {
     		getInjector().getInstance(Rcon.class).startMCVC();
 		}
@@ -104,6 +87,39 @@ public class Main extends JavaPlugin {
     	logger.info("Socket Server stopping...");
     	logger.info("プラグインが無効になりました。");
     }
+
+	private void registerCommand() {
+		PluginCommand fmcCmd = getCommand("fmc"),
+			qCmd = getCommand("q"),
+			tprCmd = getCommand("tpr"),
+			tprmCmd = getCommand("tprm"),
+			tprmaCmd = getCommand("tprma"),
+			tpraCmd = getCommand("tpra"),
+			registerpointCmd = getCommand("registerpoint"),
+			backCmd = getCommand("back"),
+			nvCmd = getCommand("nv");
+		if (fmcCmd != null) {
+			fmcCmd.setExecutor(getInjector().getInstance(FMCCommand.class));
+		}
+		if (qCmd != null) {
+			qCmd.setExecutor(getInjector().getInstance(Q.class));
+		}
+		if (tprCmd != null && tprmCmd != null && tpraCmd != null && tprmaCmd != null) {
+			tprCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
+			tprmCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
+			tpraCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
+			tprmaCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
+		}
+		if (registerpointCmd != null) {
+			registerpointCmd.setExecutor(getInjector().getInstance(RegisterTeleportPoint.class));
+		}
+		if (backCmd != null) {
+			backCmd.setExecutor(getInjector().getInstance(TeleportBack.class));
+		}
+		if (nvCmd != null) {
+			nvCmd.setExecutor(getInjector().getInstance(Navi.class));
+		}
+	}
 
 	private void ifHubThenUpdate(Connection conn) throws SQLException, ClassNotFoundException {
 		String thisServerName = getInjector().getInstance(ServerHomeDir.class).getServerName();

@@ -52,15 +52,9 @@ public class RunnableTaskUtil {
         public String get() {
             return key;
         }
-
-        public static List<String> getKeys() {
-        return Arrays.stream(values())
-            .map(Key::get)
-            .collect(Collectors.toList());
-        }
     }
 
-    public void addTaskRunnable(Player player, Map<String, MessageRunnable> playerActions, String key) {
+    public void addTaskRunnable(Player player, Map<Key, MessageRunnable> playerActions, Key key) {
         EventListener.playerInputerMap.put(player, playerActions);
         scheduleNewTask(player, inputPeriod, key);
         try (Connection connection3 = db.getConnection()) {
@@ -74,31 +68,31 @@ public class RunnableTaskUtil {
         }
     }
 
-    public void extendTask(Player player, String key) {
+    public void extendTask(Player player, Key key) {
         cancelTask(player, key);
         scheduleNewTask(player, inputPeriod, key);
     }
 
-    private void scheduleNewTask(Player player, int delaySeconds, String key) {
+    private void scheduleNewTask(Player player, int delaySeconds, Key key) {
         BukkitTask newTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
             removeCancelTaskRunnable(player, key);
         }, 20 * delaySeconds);
         if (EventListener.playerTaskMap.containsKey(player)) {
-            Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
+            Map<Key, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
             playerTasks.put(key, newTask);
             EventListener.playerTaskMap.put(player, playerTasks);
         } else {
-            Map<String, BukkitTask> playerTasks = new HashMap<>();
+            Map<Key, BukkitTask> playerTasks = new HashMap<>();
             playerTasks.put(key, newTask);
             EventListener.playerTaskMap.put(player, playerTasks);
         }
     }
 
-    public boolean checkIsOtherInputMode(Player player, String exceptedKey)  {
+    public boolean checkIsOtherInputMode(Player player, Key exceptedKey)  {
         if (EventListener.playerInputerMap.containsKey(player) && EventListener.playerTaskMap.containsKey(player)) {
-            Map<String, MessageRunnable> playerActions = EventListener.playerInputerMap.get(player);
-            Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
+            Map<Key, MessageRunnable> playerActions = EventListener.playerInputerMap.get(player);
+            Map<Key, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
             // playerActions, playerTasksにACTIONS_KEY以外が含まれているとき
             boolean isInputMode = playerActions.entrySet().stream().anyMatch(entry -> !entry.getKey().equals(exceptedKey)),
                 isTaskMode = playerTasks.entrySet().stream().anyMatch(entry -> !entry.getKey().equals(exceptedKey));
@@ -107,10 +101,10 @@ public class RunnableTaskUtil {
         return false;
     }
 
-    public boolean checkIsInputMode(Player player, String key) {
+    public boolean checkIsInputMode(Player player, Key key) {
         if (EventListener.playerInputerMap.containsKey(player) && EventListener.playerTaskMap.containsKey(player)) {
-            Map<String, MessageRunnable> playerActions = EventListener.playerInputerMap.get(player);
-            Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
+            Map<Key, MessageRunnable> playerActions = EventListener.playerInputerMap.get(player);
+            Map<Key, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
             // playerActions, playerTasksにACTIONS_KEYが含まれているとき
             boolean isInputMode = playerActions.containsKey(key),
                 isTaskMode = playerTasks.containsKey(key);
@@ -119,7 +113,7 @@ public class RunnableTaskUtil {
         return false;
     }
 
-    public void removeCancelTaskRunnable(Player player, String key) {
+    public void removeCancelTaskRunnable(Player player, Key key) {
         String playerName = player.getName();
         EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(key));
         // タスクをキャンセルしてから、playerTaskMapから削除する
@@ -141,9 +135,9 @@ public class RunnableTaskUtil {
         }
     }
 
-    private void cancelTask(Player player, String key) {
+    private void cancelTask(Player player, Key key) {
         if (EventListener.playerTaskMap.containsKey(player)) {
-            Map<String, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
+            Map<Key, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
             if (playerTasks.containsKey(key)) {
                 BukkitTask task = playerTasks.get(key);
                 task.cancel();

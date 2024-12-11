@@ -2,6 +2,7 @@ package keyp.forev.fmc.common.util;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
@@ -13,7 +14,9 @@ public class JavaUtils {
 
     public class Time {
         public enum Format {
-            YYYY_MM_DD_HH_MM_SS("yyyy-MM-dd HH:mm:ss");
+            YYYY_MM_DD_HH_MM_SS("yyyy-MM-dd HH:mm:ss"),
+            YYYY_MM_DD("yyyy/MM/dd"),
+            ;
             private final SimpleDateFormat sdf;
             Format(String format) {
                 this.sdf = new SimpleDateFormat(format);
@@ -21,6 +24,10 @@ public class JavaUtils {
 
             public String format(java.util.Date date) {
                 return this.sdf.format(date);
+            }
+
+            public String format(Timestamp ts) {
+                return this.sdf.format(ts);
             }
         }
 

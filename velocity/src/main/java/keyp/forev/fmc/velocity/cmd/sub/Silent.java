@@ -63,7 +63,7 @@ public class Silent {
                                     TextDecoration.UNDERLINED))
 							.build();
 
-                        List<String> silentPlayers = new ArrayList<>();
+                        List<CommandSource> silentPlayers = new ArrayList<>();
                         String query = "SELECT name FROM members WHERE silent = ?;";
                         try (Connection conn = db.getConnection();
                             PreparedStatement ps = conn.prepareStatement(query)) {
@@ -80,6 +80,8 @@ public class Silent {
                                         .color(NamedTextColor.GREEN));
 
                                     componentBuilder = componentBuilder.append(addition);
+
+                                    silentPlayers.add(source);
                                 }
                             }
                         } catch (SQLException | ClassNotFoundException e) {

@@ -36,8 +36,12 @@ commands:
   back:
     usage: /<command>
     description: You can teleport to back
-    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.Back
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportBack
   registerpoint:
     usage: /<command>
     description: You can register point
     executor: keyp.forev.fmc.spigot.cmd.sub.teleport.RegisterTeleportPoint
+  nv:
+    usage: /<command>
+    description: You can open navi menu
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.Navi

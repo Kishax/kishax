@@ -61,7 +61,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                 return true;
             }
 
-            if (rt.checkIsOtherInputMode(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get())) {
+            if (rt.checkIsOtherInputMode(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT)) {
                 player.sendMessage(ChatColor.RED + "他でインプット中のため処理を続行できません。");
                 return true;
             }
@@ -136,12 +136,12 @@ public class RegisterTeleportPoint implements TabExecutor {
 
                 player.sendMessage(messages);
                 
-                Map<String, MessageRunnable> playerActions = new HashMap<>();
-                playerActions.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get(), (input) -> {
+                Map<RunnableTaskUtil.Key, MessageRunnable> playerActions = new HashMap<>();
+                playerActions.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT, (input) -> {
                     player.sendMessage(TCUtils2.getResponseComponent(input));
                     switch (input) {
                         case "0" -> {
-                            rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                            rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                             Component message = Component.text("処理を中断しました。")
                                 .color(NamedTextColor.RED)
                                 .decorate(TextDecoration.BOLD);
@@ -160,7 +160,7 @@ public class RegisterTeleportPoint implements TabExecutor {
 
                                     player.sendMessage(errorMessage);
 
-                                    rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                    rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                     return;
                                 }
 
@@ -168,7 +168,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                                 String title = titleAndComment[0];
                                 String comment = titleAndComment[1];
                                 try {
-                                    rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                    rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                     
                                     TextComponent note3 = Component.text()
                                         .append(Component.text("プライベート")
@@ -207,12 +207,12 @@ public class RegisterTeleportPoint implements TabExecutor {
 
                                     player.sendMessage(message);
 
-                                    Map<String, MessageRunnable> playerActions2 = new HashMap<>();
-                                    playerActions2.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get(), (input2) -> {
+                                    Map<RunnableTaskUtil.Key, MessageRunnable> playerActions2 = new HashMap<>();
+                                    playerActions2.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT, (input2) -> {
                                         player.sendMessage(TCUtils2.getResponseComponent(input2));
                                         switch (input2) {
                                             case "0" -> {
-                                                rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                                rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                                 Component message2 = Component.text("処理を中断しました。")
                                                     .color(NamedTextColor.RED)
                                                     .decorate(TextDecoration.BOLD);
@@ -227,15 +227,15 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                     case "1" -> type = "public";
                                                     case "2" -> type = "private";
                                                     default -> {
-                                                        rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                                        rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                                         player.sendMessage(ChatColor.RED + "処理中にエラーが発生しました。");
                                                         throw new IllegalArgumentException("Invalid input: " + input2);
                                                     }
                                                 }
                                                 try {
-                                                    rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                                    rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                                     try (Connection conn = db.getConnection()) {
-                                                        db.updateLog(conn, "INSERT INTO tp_points (name, uuid, title, comment, x, y, z, yaw, pitch, world, server, type, uuid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, title, comment, x, y, z, yaw, pitch, worldName, thisServerName, type, playerUUID});
+                                                        db.updateLog(conn, "INSERT INTO tp_points (name, uuid, title, comment, x, y, z, yaw, pitch, world, server, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, title, comment, x, y, z, yaw, pitch, worldName, thisServerName, type});
 
                                                         Component message3 = Component.text("テレポートポイントを登録しました。")
                                                             .color(NamedTextColor.GREEN)
@@ -282,11 +282,11 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                 Component errorMessage2 = Component.text("無効な入力です。")
                                                     .color(NamedTextColor.RED);
                                                 player.sendMessage(errorMessage2);
-                                                rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                                rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                             }
                                         }
                                     });
-                                    rt.addTaskRunnable(player, playerActions2, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                    rt.addTaskRunnable(player, playerActions2, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                 } catch (Exception e) {
                                     player.sendMessage("処理中にエラーが発生しました。");
                                 }
@@ -298,15 +298,15 @@ public class RegisterTeleportPoint implements TabExecutor {
                                 
                                 player.sendMessage(errorMessage);
 
-                                rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                                rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                             }
                         }
                     }
                 });
-                rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
             } else {
                 player.sendMessage(ChatColor.RED + "ワールドの取得に失敗しました。");
-                rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT.get());
+                rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                 throw new NullPointerException("World is null.");
             }
         } else {
