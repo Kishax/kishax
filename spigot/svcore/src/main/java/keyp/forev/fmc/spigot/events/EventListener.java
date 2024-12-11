@@ -161,18 +161,18 @@ public final class EventListener implements Listener {
             });
         }
     }
-    
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
-            ClickType click = event.getClick();
+            ClickType clickType = event.getClick();
             ItemStack clickedItem = event.getCurrentItem();
             if (clickedItem != null) {
                 switch (clickedItem.getType()) {
                     case ENCHANTED_BOOK -> {
                         EnchantmentStorageMeta meta = (EnchantmentStorageMeta) clickedItem.getItemMeta();
                         if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Menu.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                            if (click.isRightClick() || click == ClickType.CREATIVE) {
+                            if (clickType.isRightClick() || clickType == ClickType.CREATIVE) {
                                 player.closeInventory();
                                 player.performCommand("fmc menu");
                                 return;
@@ -188,10 +188,8 @@ public final class EventListener implements Listener {
             Optional<Menu.Type> type = Menu.Type.getType(title);
             if (type.isPresent()) {
                 event.setCancelled(true);
-                // 以下、Menu.openTeleportPointMenuメソッドにて右クリックの場合の処理で使用
-                
                 Menu.Type menuType = type.get();
-                menu.runMenuAction(player, menuType, event.getRawSlot());
+                menu.runMenuAction(player, menuType, event.getRawSlot(), clickType);
             } else if (title.endsWith(" server")) {
                 event.setCancelled(true);
                 Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
@@ -206,11 +204,11 @@ public final class EventListener implements Listener {
                         return false;
                     }));
                 if (iskey) {
-                    menu.runMenuAction(player, Menu.Type.SERVER, event.getRawSlot());
+                    menu.runMenuAction(player, Menu.Type.SERVER, event.getRawSlot(), clickType);
                 }
             } else if (title.endsWith(" servers")) {
                 event.setCancelled(true);
-                menu.runMenuAction(player, Menu.Type.SERVER_EACH_TYPE, event.getRawSlot());
+                menu.runMenuAction(player, Menu.Type.SERVER_EACH_TYPE, event.getRawSlot(), clickType);
             }
         }
     }

@@ -27,6 +27,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
@@ -45,6 +46,8 @@ import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.JavaUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
@@ -52,13 +55,16 @@ import keyp.forev.fmc.spigot.Main;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest;
 import keyp.forev.fmc.spigot.events.EventListener;
 import keyp.forev.fmc.spigot.server.ImageMap;
+import keyp.forev.fmc.spigot.server.interfaces.MenuRunnable;
+import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 @Singleton
 public class Menu {
-    public static final Map<Player, Map<Type, Map<Integer, Runnable>>> menuActions = new ConcurrentHashMap<>();
+    public static final Map<Player, Map<Type, Map<Integer, MenuRunnable>>> menuActions = new ConcurrentHashMap<>();
     public static final String PUBLIC = "public", PRIVATE = "private";
     public static final String PERSISTANT_KEY = "fmcmenu";
     public enum Type {
@@ -77,7 +83,8 @@ public class Menu {
         CHOOSE_COLOR("choose color"),
         TELEPORT_POINT_TYPE("teleport point type"),
         TELEPORT_POINT("teleport point"),
-        TELEPORT_NV_PLAYER("teleport navigate player")
+        TELEPORT_NV_PLAYER("teleport navigate player"),
+        DELETE("delete"),
         ;
 
         private final String name;
@@ -242,33 +249,33 @@ public class Menu {
         }
 	}
 
-    public void runMenuAction(Player player, Type menuType, int slot) {
-        Map<Type, Map<Integer, Runnable>> playerMenuActions = getPlayerMenuActions(player);
+    public void runMenuAction(Player player, Type menuType, int slot, ClickType clickType) {
+        Map<Type, Map<Integer, MenuRunnable>> playerMenuActions = getPlayerMenuActions(player);
         if (playerMenuActions != null) {
             // コレクションをコピーしてから反復処理を行う
-            Map<Type, Map<Integer, Runnable>> copiedMenuActions = new HashMap<>(playerMenuActions);
+            Map<Type, Map<Integer, MenuRunnable>> copiedMenuActions = new HashMap<>(playerMenuActions);
             copiedMenuActions.entrySet().stream()
                 .filter(entry -> entry.getKey().equals(menuType))
                 .map(Map.Entry::getValue)
                 .filter(actions -> actions.containsKey(slot))
                 .map(actions -> actions.get(slot))
-                .forEach(Runnable::run);
+                .forEach(action -> action.run(clickType));
         }
     }
 
-    public Map<Type, Map<Integer, Runnable>> getPlayerMenuActions(Player player) {
+    public Map<Type, Map<Integer, MenuRunnable>> getPlayerMenuActions(Player player) {
         return Menu.menuActions.get(player);
     }
 
     public void settingMenu(Player player, int page) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27,Type.SETTING.get());
         try (Connection conn = db.getConnection()) {
             Map<String, Object> memberMap = db.getMemberMap(conn, player.getUniqueId().toString());
             switch (page) {
                 case 1 -> {
                     if (memberMap.get("hubinv") instanceof Boolean hubinv) {
-                        playerMenuActions.put(11, () -> {
+                        playerMenuActions.put(11, (clickType) -> {
                             try (Connection connection = db.getConnection()) {
                                 db.updateMemberToggle(connection, "hubinv", !hubinv, player.getUniqueId().toString());
                                 player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (hubinv ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
@@ -303,7 +310,7 @@ public class Menu {
                         }
                     }
                     if (memberMap.get("tptype") instanceof Boolean tptype) {
-                        playerMenuActions.put(13, () -> {
+                        playerMenuActions.put(13, (clickType) -> {
                             try (Connection connection = db.getConnection()) {
                                 db.updateMemberToggle(connection, "tptype", !tptype, player.getUniqueId().toString());
                                 player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (tptype ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
@@ -355,20 +362,20 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> generalMenu(player, 2));
+        playerMenuActions.put(0, (clickType) -> generalMenu(player, 2));
         Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SETTING, playerMenuActions);
         player.openInventory(inv);
     }
 
     public void generalMenu(Player player, int page) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.GENERAL.get());
         switch (page) {
             case 1 -> {
-                playerMenuActions.put(11, () -> teleportMenu(player, 1));
-                playerMenuActions.put(13, () -> openServerTypeInventory(player, 1));
-                playerMenuActions.put(15, () -> openImageMenu(player, 1));
-                playerMenuActions.put(26, () -> generalMenu(player, page + 1));
+                playerMenuActions.put(11, (clickType) -> teleportMenu(player, 1));
+                playerMenuActions.put(13, (clickType) -> openServerTypeInventory(player, 1));
+                playerMenuActions.put(15, (clickType) -> openImageMenu(player, 1));
+                playerMenuActions.put(26, (clickType) -> generalMenu(player, page + 1));
                 ItemStack teleportItem = new ItemStack(Material.ENDER_PEARL);
                 ItemMeta teleportMeta = teleportItem.getItemMeta();
                 if (teleportMeta != null) {
@@ -402,13 +409,13 @@ public class Menu {
                 inv.setItem(26, nextPageItem);
             }
             case 2 -> {
-                playerMenuActions.put(11, () -> settingMenu(player, 1));
-                playerMenuActions.put(13, () -> book.giveRuleBook(player));
-                playerMenuActions.put(15, () -> {
+                playerMenuActions.put(11, (clickType) -> settingMenu(player, 1));
+                playerMenuActions.put(13, (clickType) -> book.giveRuleBook(player));
+                playerMenuActions.put(15, (clickType) -> {
                     player.closeInventory();
                     player.sendMessage(ChatColor.GREEN + "ここにあればいいなと思う機能があればDiscordで教えてね");
                 });
-                playerMenuActions.put(18, () -> generalMenu(player, page - 1));
+                playerMenuActions.put(18, (clickType) -> generalMenu(player, page - 1));
                 ItemStack settingItem = new ItemStack(Material.ENCHANTING_TABLE);
                 ItemMeta settingMeta = settingItem.getItemMeta();
                 if (settingMeta != null) {
@@ -446,16 +453,16 @@ public class Menu {
     }
 
     public void teleportPointTypeMenu(Player player, int page) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.TELEPORT_POINT_TYPE.get());
-        playerMenuActions.put(0, () -> generalMenu(player, 1));
-        playerMenuActions.put(11, () -> openTeleportPointMenu(player, 1, Menu.PRIVATE));
-        playerMenuActions.put(13, () -> {
+        playerMenuActions.put(0, (clickType) -> teleportMenu(player, 1));
+        playerMenuActions.put(11, (clickType) -> openTeleportPointMenu(player, 1, Menu.PRIVATE));
+        playerMenuActions.put(13, (clickType) -> {
             player.closeInventory();
             player.performCommand("registerpoint");
         });
-        playerMenuActions.put(15, () -> openTeleportPointMenu(player, 1, Menu.PUBLIC));
-        playerMenuActions.put(26, () -> teleportMenu(player, 1));
+        playerMenuActions.put(15, (clickType) -> openTeleportPointMenu(player, 1, Menu.PUBLIC));
+        playerMenuActions.put(26, (clickType) -> teleportMenu(player, 1));
 
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -480,8 +487,8 @@ public class Menu {
         ItemMeta newPointMeta = newPointItem.getItemMeta();
         if (newPointMeta != null) {
             newPointMeta.setDisplayName(ChatColor.GREEN + "ポイントセット");
-            newPointItem.setLore(new ArrayList<>(
-                Arrays.asList(ChatColor.GRAY + "現在地を新しいポイントとしてメニューに追加できるよ。"))
+            newPointMeta.setLore(new ArrayList<>(
+                Arrays.asList(ChatColor.GRAY + "現在地を新規ポイントとして登録できるよ。"))
                 );
             newPointItem.setItemMeta(newPointMeta);
         }
@@ -507,9 +514,9 @@ public class Menu {
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_NV_PLAYER.get());
 
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
 
-        playerMenuActions.put(0, () -> teleportPointTypeMenu(player, 1));
+        playerMenuActions.put(0, (clickType) -> teleportMenu(player, 1));
 
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -550,7 +557,7 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
-            playerMenuActions.put(53, () -> openFaceIconMenu(player, page + 1));
+            playerMenuActions.put(53, (clickType) -> openFaceIconMenu(player, page + 1));
         }
         if (page > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -560,7 +567,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
-            playerMenuActions.put(45, () -> openFaceIconMenu(player, page - 1));
+            playerMenuActions.put(45, (clickType) -> openFaceIconMenu(player, page - 1));
         }
 
         for (int i = startIndex; i < endIndex; i++) {
@@ -577,7 +584,7 @@ public class Menu {
             }
 
             inv.addItem(playerItem);
-            playerMenuActions.put(inv.first(playerItem), () -> {
+            playerMenuActions.put(inv.first(playerItem), (clickType) -> {
                 player.closeInventory();
                 player.performCommand("navplayer " + onlinePlayerName);
             });
@@ -588,16 +595,30 @@ public class Menu {
     }
 
     public void teleportMenu(Player player, int page) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.TELEPORT.get());
-        playerMenuActions.put(11, () -> teleportPointTypeMenu(player, 1));
-        playerMenuActions.put(13, () -> playerTeleportMenu(player, 1));
-        playerMenuActions.put(15, () -> openFaceIconMenu(player, 1));
-        playerMenuActions.put(26, () -> generalMenu(player, 1));
+
+        playerMenuActions.put(0, (clickType) -> generalMenu(player, 1));
+        playerMenuActions.put(11, (clickType) -> teleportPointTypeMenu(player, 1));
+        playerMenuActions.put(13, (clickType) -> playerTeleportMenu(player, 1));
+        playerMenuActions.put(15, (clickType) -> openFaceIconMenu(player, 1));
+        playerMenuActions.put(26, (clickType) -> generalMenu(player, 1));
+
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+
         ItemStack teleportPointItem = new ItemStack(Material.LIGHTNING_ROD);
         ItemMeta teleportPointMeta = teleportPointItem.getItemMeta();
         if (teleportPointMeta != null) {
             teleportPointMeta.setDisplayName(ChatColor.GREEN + "ポイントテレポート");
+            teleportPointMeta.setLore(new ArrayList<>(Arrays.asList(
+                "設定されたポイントに飛べる！"
+            )));
             teleportPointItem.setItemMeta(teleportPointMeta);
         }
         inv.setItem(11, teleportPointItem);
@@ -606,6 +627,9 @@ public class Menu {
         SkullMeta playerTeleportMeta = (SkullMeta) playerTeleportItem.getItemMeta();
         if (playerTeleportMeta != null) {
             playerTeleportMeta.setDisplayName(ChatColor.GREEN + "プレイヤーテレポート");
+            playerTeleportMeta.setLore(new ArrayList<>(Arrays.asList(
+                "プレイヤーにテレポートできる！"
+            )));
             playerTeleportItem.setItemMeta(playerTeleportMeta);
         }
         inv.setItem(13, playerTeleportItem);
@@ -628,6 +652,7 @@ public class Menu {
             nextPageItem.setItemMeta(nextPageMeta);
         }
         inv.setItem(26, nextPageItem);
+
         Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT, playerMenuActions);
         player.openInventory(inv);
     }
@@ -636,7 +661,7 @@ public class Menu {
         int inventorySize = 27;
         int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_RESPONSE_HEAD.get());
         // valueにplayerが含まれていたら、keyplayerをコレクト
         Set<Player> requestedPlayers = TeleportRequest.teleportMap.entrySet().stream()
@@ -656,7 +681,7 @@ public class Menu {
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(26, nextPageItem);
-                playerMenuActions.put(26, () -> teleportResponseHeadMenu(player, page + 1));
+                playerMenuActions.put(26, (clickType) -> teleportResponseHeadMenu(player, page + 1));
             }
             if (page > 1) {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -666,7 +691,7 @@ public class Menu {
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(18, prevPageItem);
-                playerMenuActions.put(18, () -> teleportResponseHeadMenu(player, page - 1));
+                playerMenuActions.put(18, (clickType) -> teleportResponseHeadMenu(player, page - 1));
             }
             for (int i = startIndex; i < endIndex; i++) {
                 Player targetPlayer = (Player) requestedPlayers.toArray()[i];
@@ -678,7 +703,7 @@ public class Menu {
                     playerItem.setItemMeta(playerMeta);
                 }
                 inv.addItem(playerItem); // i - startIndex + 1
-                playerMenuActions.put(inv.first(playerItem), () -> teleportResponseMenu(targetPlayer, player));
+                playerMenuActions.put(inv.first(playerItem), (clickType) -> teleportResponseMenu(targetPlayer, player));
             }
         } else {
             ItemStack noRequestItem = new ItemStack(Material.BARRIER);
@@ -696,7 +721,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> playerTeleportMenu(player, 1));
+        playerMenuActions.put(0, (clickType) -> playerTeleportMenu(player, 1));
         Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_RESPONSE_HEAD, playerMenuActions);
         player.openInventory(inv);
     }
@@ -710,7 +735,7 @@ public class Menu {
     }
 
     private void teleportResponseMenu(Player player, Player targetPlayer, boolean me) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.TELEPORT_RESPONSE.get());
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -719,7 +744,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> playerTeleportMenu(player, 1));
+        playerMenuActions.put(0, (clickType) -> playerTeleportMenu(player, 1));
         ItemStack acceptItem = new ItemStack(Material.DROPPER);
         ItemMeta acceptMeta = acceptItem.getItemMeta();
         if (acceptMeta != null) {
@@ -727,7 +752,7 @@ public class Menu {
             acceptItem.setItemMeta(acceptMeta);
         }
         inv.setItem(11, acceptItem);
-        playerMenuActions.put(11, () -> {
+        playerMenuActions.put(11, (clickType) -> {
             player.closeInventory();
             if (!me) {
                 player.performCommand("tpra " + targetPlayer.getName());
@@ -742,7 +767,7 @@ public class Menu {
             denyItem.setItemMeta(denyMeta);
         }
         inv.setItem(15, denyItem);
-        playerMenuActions.put(15, () -> {
+        playerMenuActions.put(15, (clickType) -> {
             player.closeInventory();
             if (!me) {
                 player.performCommand("tprd " + targetPlayer.getName());
@@ -767,7 +792,7 @@ public class Menu {
         int inventorySize = 27;
         int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_REQUEST.get());
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -776,7 +801,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> playerTeleportMenu(player, 1));
+        playerMenuActions.put(0, (clickType) -> playerTeleportMenu(player, 1));
         int totalItems = Bukkit.getOnlinePlayers().size();
         if (totalItems != 1) {
             int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
@@ -790,7 +815,7 @@ public class Menu {
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(26, nextPageItem);
-                playerMenuActions.put(26, () -> teleportRequestMenu(player, page + 1));
+                playerMenuActions.put(26, (clickType) -> teleportRequestMenu(player, page + 1));
             }
             if (page > 1) {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -800,7 +825,7 @@ public class Menu {
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(18, prevPageItem);
-                playerMenuActions.put(18, () -> teleportRequestMenu(player, page - 1));
+                playerMenuActions.put(18, (clickType) -> teleportRequestMenu(player, page - 1));
             }
             for (int i = startIndex; i < endIndex; i++) {
                 Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
@@ -813,7 +838,7 @@ public class Menu {
                     playerItem.setItemMeta(playerMeta);
                 }
                 inv.addItem(playerItem);
-                playerMenuActions.put(inv.first(playerItem), () -> {
+                playerMenuActions.put(inv.first(playerItem), (clickType) -> {
                     player.closeInventory();
                     if (!me) {
                         player.performCommand("tpr " + targetPlayer.getName());
@@ -836,14 +861,14 @@ public class Menu {
     }
 
     public void playerTeleportMenu(Player player, int page) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.PLAYER_TELEPORT.get());
         switch (page) {
             case 1 -> {
-                playerMenuActions.put(0, () -> teleportMenu(player, 1));
-                playerMenuActions.put(11, () -> teleportRequestMenu(player, 1));
-                playerMenuActions.put(13, () -> teleportMeRequestMenu(player, 1));
-                playerMenuActions.put(15, () -> teleportResponseHeadMenu(player, 1));
+                playerMenuActions.put(0, (clickType) -> teleportMenu(player, 1));
+                playerMenuActions.put(11, (clickType) -> teleportRequestMenu(player, 1));
+                playerMenuActions.put(13, (clickType) -> teleportMeRequestMenu(player, 1));
+                playerMenuActions.put(15, (clickType) -> teleportResponseHeadMenu(player, 1));
                 ItemStack backItem = new ItemStack(Material.STICK);
                 ItemMeta backMeta = backItem.getItemMeta();
                 if (backMeta != null) {
@@ -895,7 +920,7 @@ public class Menu {
             int startIndex = (page - 1) * itemsPerPage;
             int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
 
-            Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+            Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
             ItemStack backItem = new ItemStack(Material.STICK);
             ItemMeta backMeta = backItem.getItemMeta();
             if (backMeta != null) {
@@ -904,7 +929,7 @@ public class Menu {
             }
             inv.setItem(0, backItem);
 
-            playerMenuActions.put(0, () -> generalMenu(player, 1));
+            playerMenuActions.put(0, (clickType) -> generalMenu(player, 1));
             if (page < totalPages) {
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
@@ -913,7 +938,7 @@ public class Menu {
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(53, nextPageItem);
-                playerMenuActions.put(53, () -> openImageMenu(player, page + 1));
+                playerMenuActions.put(53, (clickType) -> openImageMenu(player, page + 1));
             }
             if (page > 1) {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -923,7 +948,7 @@ public class Menu {
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(45, prevPageItem);
-                playerMenuActions.put(45, () -> openImageMenu(player, page - 1));
+                playerMenuActions.put(45, (clickType) -> openImageMenu(player, page - 1));
             }
             int index = 0;
             for (int i = startIndex; i < endIndex; i++) {
@@ -982,7 +1007,7 @@ public class Menu {
                     //inv.setItem(slot, item);
                     if (locked) {
                         // discord未認証(/qコマンドでロック解除されていない)の場合
-                        playerMenuActions.put(inv.first(item), () -> {
+                        playerMenuActions.put(inv.first(item), (clickType) -> {
                             //logger.info("through into lockedMap");
                             player.closeInventory();
                             player.sendMessage(ChatColor.RED + "この画像はロックされています。\n"
@@ -993,7 +1018,7 @@ public class Menu {
                         if (authorName.equals(player.getName())) {
                             // 作成者の場合
                             // OTPがまだデータベースに残っているのが確定している
-                            playerMenuActions.put(inv.first(item), () -> {
+                            playerMenuActions.put(inv.first(item), (clickType) -> {
                                 //logger.info("through into executeQFromMenu");
                                 player.closeInventory();
                                 if (imageInfo.get("otp") instanceof String otp) {
@@ -1002,7 +1027,7 @@ public class Menu {
                             });
                         } else {
                             // 作成者以外の場合
-                            playerMenuActions.put(inv.first(item), () -> {
+                            playerMenuActions.put(inv.first(item), (clickType) -> {
                                 player.closeInventory();
 
                                 Component alert = Component.text("ロック解除済みです。")
@@ -1017,7 +1042,7 @@ public class Menu {
                             });
                         }
                     } else if (large) {
-                        playerMenuActions.put(inv.first(item), () -> {
+                        playerMenuActions.put(inv.first(item), (clickType) -> {
                             player.closeInventory();
                             Component serverComponent = Component.text(server + "サーバー")
                                 .color(NamedTextColor.GOLD)
@@ -1042,13 +1067,13 @@ public class Menu {
                     } else if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
                         // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
                         //Map<String, Object> thisServerImage = thisServerImageInfo.get(mapId);
-                        playerMenuActions.put(inv.first(item), () -> {
+                        playerMenuActions.put(inv.first(item), (clickType) -> {
                             //logger.info("through into giveMap");
                             player.closeInventory();
                             im.giveMapToPlayer(player, mapId);
                         }); 
                     } else {
-                        playerMenuActions.put(inv.first(item), () -> {
+                        playerMenuActions.put(inv.first(item), (clickType) -> {
                             //logger.info("through into executeImageMapFromMenu");
                             player.closeInventory();
                             im.executeImageMapFromMenu(player, new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date});
@@ -1071,7 +1096,7 @@ public class Menu {
     }
 
     public void openOnlineServerInventory(Player player, int page) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 54, Type.ONLINE_SERVER.get());
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -1080,7 +1105,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> openServerTypeInventory(player, 1));
+        playerMenuActions.put(0, (clickType) -> openServerTypeInventory(player, 1));
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         // オンラインサーバーのみを抽出
         Map<String, Map<String, Object>> serverStatusOnlineMap = serverStatusMap.values().stream()
@@ -1109,7 +1134,7 @@ public class Menu {
             }
             int slot = SLOT_POSITIONS[i - startIndex];
             inv.setItem(slot, serverItem);
-            playerMenuActions.put(slot, () -> openServerInventoryFromOnlineServerInventory(player, serverName, 1));
+            playerMenuActions.put(slot, (clickType) -> openServerInventoryFromOnlineServerInventory(player, serverName, 1));
         }
         if (page > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -1119,7 +1144,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
-            playerMenuActions.put(45, () -> openOnlineServerInventory(player, page - 1));
+            playerMenuActions.put(45, (clickType) -> openOnlineServerInventory(player, page - 1));
         }
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
@@ -1129,7 +1154,7 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
-            playerMenuActions.put(53, () -> openOnlineServerInventory(player, page + 1));
+            playerMenuActions.put(53, (clickType) -> openOnlineServerInventory(player, page + 1));
         }
         Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.ONLINE_SERVER, playerMenuActions);
         //logger.info("menuActions: {}", menuActions);
@@ -1137,7 +1162,7 @@ public class Menu {
     }
 
     public void openServerEachTypeInventory(Player player, String serverType, int page) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -1146,7 +1171,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, () -> {
+        playerMenuActions.put(0, (clickType) -> {
             openServerTypeInventory(player, 1);
         });
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
@@ -1171,7 +1196,7 @@ public class Menu {
                 serverItem.setItemMeta(serverMeta);
             }
             int slot = SLOT_POSITIONS[i - startIndex];
-            playerMenuActions.put(slot, () -> openServerInventory(player, serverName, 1));
+            playerMenuActions.put(slot, (clickType) -> openServerInventory(player, serverName, 1));
             inv.setItem(slot, serverItem);
         }
         if (page > 1) {
@@ -1182,7 +1207,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
-            playerMenuActions.put(45, () -> openServerEachTypeInventory(player, serverType, page - 1));
+            playerMenuActions.put(45, (clickType) -> openServerEachTypeInventory(player, serverType, page - 1));
         }
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
@@ -1192,7 +1217,7 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
-            playerMenuActions.put(53, () -> openServerEachTypeInventory(player, serverType, page + 1));
+            playerMenuActions.put(53, (clickType) -> openServerEachTypeInventory(player, serverType, page + 1));
         }
         Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SERVER_EACH_TYPE, playerMenuActions);
         player.openInventory(inv);
@@ -1207,7 +1232,7 @@ public class Menu {
     }
 
     private void openServerInventory(Player player, String serverName, int page, boolean fromOnlineServerInventory) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
         int permLevel = lp.getPermLevel(player.getName());
         Inventory inv = Bukkit.createInventory(null, 54, serverName + " server");
         ItemStack backItem = new ItemStack(Material.STICK);
@@ -1250,7 +1275,7 @@ public class Menu {
                                                 //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
                                             } else if (permLevel >= 2) {
                                                 leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーを停止する");
-                                                playerMenuActions.put(22, () -> serverSwitch(player, serverName));
+                                                playerMenuActions.put(22, (clickType) -> serverSwitch(player, serverName));
                                                 //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + ""));
                                             }
                                             leverItem.setItemMeta(leverMeta);
@@ -1261,7 +1286,7 @@ public class Menu {
                                         if (doorMeta != null) {
                                             doorMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーに入る");
                                             doorItem.setItemMeta(doorMeta);
-                                            playerMenuActions.put(24, () -> enterServer(player, serverName));
+                                            playerMenuActions.put(24, (clickType) -> enterServer(player, serverName));
                                         }
                                         inv.setItem(24, doorItem);
                                     } else {
@@ -1289,11 +1314,11 @@ public class Menu {
                                             if (permLevel == 1) {
                                                 leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動リクエスト");
                                                 leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
-                                                playerMenuActions.put(22, () -> serverSwitch(player, serverName));
+                                                playerMenuActions.put(22, (clickType) -> serverSwitch(player, serverName));
                                             } else if (permLevel >= 2) {
                                                 leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーの起動");
                                                 leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "アドミン権限より起動する。"));
-                                                playerMenuActions.put(22, () -> serverSwitch(player, serverName));
+                                                playerMenuActions.put(22, (clickType) -> serverSwitch(player, serverName));
                                             }
                                             leverItem.setItemMeta(leverMeta);
                                         }
@@ -1355,7 +1380,7 @@ public class Menu {
                                             prevPageItem.setItemMeta(prevPageMeta);
                                         }
                                         inv.setItem(45, prevPageItem);
-                                        playerMenuActions.put(45, () -> openServerInventory(player, serverName, page - 1));
+                                        playerMenuActions.put(45, (clickType) -> openServerInventory(player, serverName, page - 1));
                                     }
                                     // ページ進むブロックを配置
                                     if (page < totalPages) {
@@ -1366,7 +1391,7 @@ public class Menu {
                                             nextPageItem.setItemMeta(nextPageMeta);
                                         }
                                         inv.setItem(53, nextPageItem);
-                                        playerMenuActions.put(53, () -> openServerInventory(player, serverName, page + 1));
+                                        playerMenuActions.put(53, (clickType) -> openServerInventory(player, serverName, page + 1));
                                     }
                                 } else {
                                     ItemStack noPlayerItem = new ItemStack(Material.BARRIER);
@@ -1390,7 +1415,7 @@ public class Menu {
                 }
             }
         }
-        playerMenuActions.put(0, () -> {
+        playerMenuActions.put(0, (clickType) -> {
             if (fromOnlineServerInventory) {
                 openOnlineServerInventory(player, 1);
             } else {
@@ -1402,14 +1427,17 @@ public class Menu {
     }
 
     public void openTeleportPointMenu(Player player, int page, String type) {
+        boolean isPrivate = type == Menu.PRIVATE;
+        String playerUUID = player.getUniqueId().toString();
+
         int inventorySize = 54;
         int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_POINT.get());
 
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
 
-        playerMenuActions.put(0, () -> teleportPointTypeMenu(player, 1));
+        playerMenuActions.put(0, (clickType) -> teleportPointTypeMenu(player, 1));
 
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -1422,10 +1450,18 @@ public class Menu {
         try (Connection conn = db.getConnection()) {
             Map<Integer, Map<String, Object>> thisServerTeleportPoints = new HashMap<>();
             String thisServerName = shd.getServerName();
-            String query = "SELECT * FROM tp_points WHERE server=? AND type=?;";
+            String query;
+            if (isPrivate) {
+                query = "SELECT * FROM tp_points WHERE server=? AND type=? AND uuid=?;";
+            } else {
+                query = "SELECT * FROM tp_points WHERE server=? AND type=?;";
+            }
             try (PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setString(1, thisServerName);
                 ps.setString(2, type);
+                if (isPrivate) {
+                    ps.setString(3, playerUUID);
+                }
                 try (ResultSet rs = ps.executeQuery()) {
                     int rsIndex = 0;
                     while (rs.next()) {
@@ -1468,7 +1504,7 @@ public class Menu {
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(53, nextPageItem);
-                playerMenuActions.put(53, () -> openTeleportPointMenu(player, page + 1, type));
+                playerMenuActions.put(53, (clickType) -> openTeleportPointMenu(player, page + 1, type));
             }
             if (page > 1) {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -1478,13 +1514,15 @@ public class Menu {
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(45, prevPageItem);
-                playerMenuActions.put(45, () -> openTeleportPointMenu(player, page - 1, type));
+                playerMenuActions.put(45, (clickType) -> openTeleportPointMenu(player, page - 1, type));
             }
             int index = 0;
             for (int i = startIndex; i < endIndex; i++) {
                 Map<String, Object> tpPoint = thisServerTeleportPoints.get(i);
                 if (tpPoint != null) {
                     String authorName = (String) tpPoint.get("name");
+                    String authorUUID = (String) tpPoint.get("uuid");
+                    boolean isAuthor = authorUUID.equals(playerUUID);
                     String title = (String) tpPoint.get("title");
                     String comment  = (String) tpPoint.get("comment");
                     double x = (Double) tpPoint.get("x");
@@ -1495,13 +1533,14 @@ public class Menu {
                     String worldName = (String) tpPoint.get("world");
                     Timestamp ts = (Timestamp) tpPoint.get("created_at");
                     String date = JavaUtils.Time.Format.YYYY_MM_DD.format(ts);
+                    int id = (int) tpPoint.get("id"); // 削除用
 
                     double roundx = JavaUtils.roundToFirstDecimalPlace(x);
                     double roundy = JavaUtils.roundToFirstDecimalPlace(y);
                     double roundz = JavaUtils.roundToFirstDecimalPlace(z);
 
                     List<String> lores = new ArrayList<>();
-                    
+
                     if (!comment.isBlank()) {
                         List<String> commentLines = Arrays.stream(comment.split("\n"))
                             .map(String::trim)
@@ -1513,6 +1552,9 @@ public class Menu {
                     lores.add("Location: (" + roundx + ", " + roundy + ", " + roundz + ")");
                     lores.add("created by " + authorName);
                     lores.add("created at " + date.replace("-", "/"));
+                    if (isAuthor) {
+                        lores.add("右クリックで" + ChatColor.RED + "削除メニュー");
+                    }
 
                     ItemStack item = new ItemStack(Material.ENDER_PEARL);
                     ItemMeta meta = item.getItemMeta();
@@ -1524,7 +1566,61 @@ public class Menu {
                     }
                     inv.addItem(item);
                     //inv.setItem(slot, item);
-                    playerMenuActions.put(inv.first(item), () -> {
+                    playerMenuActions.put(inv.first(item), (clickType) -> {
+                        // 右クリックかつ作成者本人なら削除ダイアログへ
+                        if (clickType.isRightClick() && isAuthor) {
+                            // 削除メニューへ飛ぶ
+                            Runnable backTask = () -> {
+                                openTeleportPointMenu(player, 1, type);
+                            };
+                            Runnable deleteTask = () -> {
+                                try (Connection dconn = db.getConnection()) {
+                                    try (PreparedStatement dps = dconn.prepareStatement("DELETE FROM tp_points WHERE id = " + id + ";")) {
+                                        int dpsAffected = dps.executeUpdate();
+                                        if (dpsAffected > 0) {
+                                            player.closeInventory();
+
+                                            Component success = Component.text("削除しました。(id: " + id + ")")
+                                                .color(NamedTextColor.RED)
+                                                .decorate(TextDecoration.BOLD);
+
+                                            Component deleteContent = Component.text("タイトル: " + title)
+                                                .append(Component.text("コメント: " + (comment.isBlank() ? "なし" : comment)))
+                                                .color(NamedTextColor.GRAY)
+                                                .decorate(TextDecoration.ITALIC);
+
+                                            Component back = Component.text("※もとのメニューに戻ります。")
+                                                .color(NamedTextColor.GRAY)
+                                                .decorate(TextDecoration.ITALIC);
+
+                                            TextComponent messages = Component.text()
+                                                .append(deleteContent)
+                                                .appendNewline()
+                                                .append(success)
+                                                .appendNewline()
+                                                .append(TCUtils.LATER_OPEN_INV_3.get())
+                                                .appendNewline()
+                                                .append(back)
+                                                .build();
+
+                                            new BukkitRunnable() {
+                                                @Override
+                                                public void run() {
+                                                    backTask.run();
+                                                }
+                                            }.runTaskLater(plugin, 20 * 3);
+
+                                            player.sendMessage(messages);
+                                        }
+                                    }
+                                } catch (ClassNotFoundException | SQLException e) {
+                                    logger.error("A SQLException occurred: ", e);
+                                }
+                            };
+                            openDeleteInventory(player, backTask, deleteTask);
+                            return;
+                        }
+
                         player.closeInventory();
                         // ここで、テレポートさせる前の座標を記録し、/backコマンドで戻れるようにする
                         Location beforeLoc = player.getLocation();
@@ -1569,9 +1665,40 @@ public class Menu {
         }
     }
 
+    private void openDeleteInventory(Player player, Runnable backTask, Runnable deleteTask) {
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
+
+        playerMenuActions.put(0, (clickType) -> backTask.run());
+        playerMenuActions.put(13, (clickType) -> deleteTask.run());
+
+        Inventory inv = Bukkit.createInventory(null, 27, Type.DELETE.get());
+
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+
+        ItemStack tntItem = new ItemStack(Material.TNT);
+        ItemMeta tntMeta = tntItem.getItemMeta();
+        if (tntMeta != null) {
+            tntMeta.setDisplayName(ChatColor.RED + "削除する");
+            List<String> lores = new ArrayList<>();
+            lores.add(ChatColor.RED + "この操作はもとに戻せません！");
+            tntMeta.setLore(lores);
+            tntItem.setItemMeta(tntMeta);
+        }
+        inv.setItem(13, tntItem);
+
+        Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.DELETE, playerMenuActions);
+        player.openInventory(inv);
+    }
+
     public void openServerTypeInventory(Player player, int page) {
-        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
-        playerMenuActions.put(0, () -> generalMenu(player, 1));
+        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
+        playerMenuActions.put(0, (clickType) -> generalMenu(player, 1));
         Inventory inv = Bukkit.createInventory(null, 27, Type.SERVER_TYPE.get());
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -1582,11 +1709,11 @@ public class Menu {
         inv.setItem(0, backItem);
         switch (page) {
             case 1 -> {
-                playerMenuActions.put(11, () -> openServerEachTypeInventory(player, "survival", 1));
-                playerMenuActions.put(13, () -> openServerEachTypeInventory(player, "minigame", 1));
-                playerMenuActions.put(15, () -> openServerEachTypeInventory(player, "dev", 1));
-                playerMenuActions.put(18, () -> openOnlineServerInventory(player, 1));
-                playerMenuActions.put(26, () -> openServerTypeInventory(player, 2));
+                playerMenuActions.put(11, (clickType) -> openServerEachTypeInventory(player, "survival", 1));
+                playerMenuActions.put(13, (clickType) -> openServerEachTypeInventory(player, "minigame", 1));
+                playerMenuActions.put(15, (clickType) -> openServerEachTypeInventory(player, "dev", 1));
+                playerMenuActions.put(18, (clickType) -> openOnlineServerInventory(player, 1));
+                playerMenuActions.put(26, (clickType) -> openServerTypeInventory(player, 2));
                 ItemStack lifeServerItem = new ItemStack(Material.BREAD);
                 ItemMeta lifeMeta = lifeServerItem.getItemMeta();
                 if (lifeMeta != null) {
@@ -1624,10 +1751,10 @@ public class Menu {
                 inv.setItem(26, nextPageItem);
             }
             case 2 -> {
-                playerMenuActions.put(11, () -> openServerEachTypeInventory(player, "distributed", 1));
-                playerMenuActions.put(13, () -> openServerEachTypeInventory(player, "mod", 1));
-                playerMenuActions.put(15, () -> openServerEachTypeInventory(player, "others", 1));
-                playerMenuActions.put(18, () -> openServerTypeInventory(player, 1));
+                playerMenuActions.put(11, (clickType) -> openServerEachTypeInventory(player, "distributed", 1));
+                playerMenuActions.put(13, (clickType) -> openServerEachTypeInventory(player, "mod", 1));
+                playerMenuActions.put(15, (clickType) -> openServerEachTypeInventory(player, "others", 1));
+                playerMenuActions.put(18, (clickType) -> openServerTypeInventory(player, 1));
                 ItemStack distributionServerItem = new ItemStack(Material.CHORUS_FRUIT);
                 ItemMeta distributionMeta = distributionServerItem.getItemMeta();
                 if (distributionMeta != null) {
