@@ -58,6 +58,7 @@ import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.CalcUtil;
 import keyp.forev.fmc.spigot.cmd.sub.Menu;
+import keyp.forev.fmc.spigot.server.interfaces.MenuRunnable;
 import keyp.forev.fmc.spigot.server.render.ImageMapRenderer;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils2;
@@ -475,7 +476,7 @@ public class ImageMap {
 
                         player.sendMessage(note.append(TCUtils.INPUT_MODE.get()));
 
-                        Map<Integer, Runnable> playerMenuActions = new HashMap<>();
+                        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
                         Inventory inv = Bukkit.createInventory(null, 27, Menu.Type.CHOOSE_COLOR.get());
                         Map<ItemStack, java.awt.Color> colorItems = ColorItems.getColorItems();
                         //logger.info("colorItems: {}", colorItems);
@@ -484,7 +485,7 @@ public class ImageMap {
                             ItemStack item = entry.getKey();
                             java.awt.Color color = entry.getValue();
                             inv.setItem(index, item);
-                            playerMenuActions.put(index, () -> {
+                            playerMenuActions.put(index, (clickType) -> {
                                 player.closeInventory();
                                 inputs_3[2] = color;
                                 executeLargeImageMap(sender, args, dArgs, inputs, inputs2, inputs_3);
@@ -497,7 +498,7 @@ public class ImageMap {
                         custom.setItemMeta(customMeta);
                         inv.setItem(index, custom);
                         index++;
-                        playerMenuActions.put(index, () -> {
+                        playerMenuActions.put(index, (clickType) -> {
                             rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                             player.closeInventory();
 
