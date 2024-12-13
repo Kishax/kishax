@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -46,8 +47,6 @@ import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.JavaUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
@@ -55,6 +54,7 @@ import keyp.forev.fmc.spigot.Main;
 import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest;
 import keyp.forev.fmc.spigot.events.EventListener;
 import keyp.forev.fmc.spigot.server.ImageMap;
+import keyp.forev.fmc.spigot.server.interfaces.MenuItemStackRunnable;
 import keyp.forev.fmc.spigot.server.interfaces.MenuRunnable;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
@@ -65,6 +65,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 @Singleton
 public class Menu {
     public static final Map<Player, Map<Type, Map<Integer, MenuRunnable>>> menuActions = new ConcurrentHashMap<>();
+    public static final Map<Player, Map<Type, Map<Integer, MenuItemStackRunnable>>> menuItemActions = new ConcurrentHashMap<>();
     public static final String PUBLIC = "public", PRIVATE = "private";
     public static final String PERSISTANT_KEY = "fmcmenu";
     public enum Type {
@@ -85,6 +86,7 @@ public class Menu {
         TELEPORT_POINT("teleport point"),
         TELEPORT_NV_PLAYER("teleport navigate player"),
         DELETE("delete"),
+        CHANGE_MATERIAL("material change")
         ;
 
         private final String name;
@@ -732,6 +734,60 @@ public class Menu {
 
     public void teleportMeResponseMenu(Player player, Player targetPlayer) {
         teleportResponseMenu(player, targetPlayer, true);
+    }
+
+
+    public void changeMaterial(Player player) {
+        Map<Integer, MenuItemStackRunnable> playerMenuActions = new HashMap<>();
+        final int invSize = 27;
+        final int setSlot = 13;
+        Inventory inv = Bukkit.createInventory(null, invSize, Type.CHANGE_MATERIAL.get());
+
+        List<Integer> slotRange = IntStream.rangeClosed(0, invSize - 1).boxed()
+            .filter(entry -> entry != setSlot)
+            .collect(Collectors.toList());
+
+        for (int i = 0; i <= invSize -1; i++) {
+            if (i == setSlot) {
+                // 何も置かない
+                // プレイヤーがアイテムを置くのを待つ
+
+                playerMenuActions.put(i, (itemStack) -> {
+                    if (itemStack != null) {
+                        Material material = itemStack.getType();
+                        String materialName = material.name();
+                        try (Connection conn = db.getConnection()) {
+                            // idを管理画面開いたときにセットしたidより取得
+
+
+                            db.updateLog(conn, "UPDATE", new Object[] {});
+                        } catch (SQLException | ClassNotFoundException e) {
+                            logger.error("An error occurred while saving material info to database: {}", e);
+                        }
+                        // データベースにこのmaterialのアイテムidを保存
+                        // アイテムidからMaterialを得るメソッドが必要になる
+                    }
+                });
+                continue;
+            }
+            ItemStack glassItem = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+            ItemMeta glassMeta = glassItem.getItemMeta();
+            if (glassMeta != null) {
+                glassMeta.setLore(new ArrayList<>(
+                    Arrays.asList(
+                        "真ん中の空いているスロットに",
+                        "変更したい種類のアイテムを入れてね。",
+                        "メニュー内のアイテムの種類が変わります。"
+                    )
+                ));
+                glassItem.setItemMeta(glassMeta);
+            }
+            inv.setItem(i, glassItem);
+            playerMenuActions.put(i, (itemStack) -> changeMaterial(player));
+        }
+
+        Menu.menuItemActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.CHANGE_MATERIAL, playerMenuActions);
+        player.openInventory(inv);
     }
 
     private void teleportResponseMenu(Player player, Player targetPlayer, boolean me) {
@@ -1801,17 +1857,6 @@ public class Menu {
         cf.executeProxyCommand(player, "fmcp stp " + serverName);
     }
 
-    private boolean checkServerOnline(String serverName) {
-        return ssc.getStatusMap().values().stream()
-            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
-            .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
-            .map(serverDataEntry -> serverDataEntry.getValue().get("online"))
-            .filter(online -> online instanceof Boolean)
-            .map(online -> (Boolean) online)
-            .findFirst()
-            .orElse(false);
-    }
-
     public void serverSwitch(Player player, String serverName) {
         int permLevel = lp.getPermLevel(player.getName());
         if (checkServerOnline(serverName)) {
@@ -1858,5 +1903,16 @@ public class Menu {
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
         return serverStatusList != null ? serverStatusList.size() : 0;
+    }
+
+    private boolean checkServerOnline(String serverName) {
+        return ssc.getStatusMap().values().stream()
+            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+            .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
+            .map(serverDataEntry -> serverDataEntry.getValue().get("online"))
+            .filter(online -> online instanceof Boolean)
+            .map(online -> (Boolean) online)
+            .findFirst()
+            .orElse(false);
     }
 }
