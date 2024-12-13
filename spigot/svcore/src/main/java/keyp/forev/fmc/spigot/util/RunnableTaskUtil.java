@@ -14,7 +14,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.socket.SocketSwitch;
-import keyp.forev.fmc.spigot.events.EventListener;
+import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
 import net.md_5.bungee.api.ChatColor;
 

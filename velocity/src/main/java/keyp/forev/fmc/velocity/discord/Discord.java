@@ -23,11 +23,11 @@ import org.slf4j.Logger;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.libs.ClassManager;
 import keyp.forev.fmc.velocity.Main;
-import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
-import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.libs.VPackageManager;
+import keyp.forev.fmc.velocity.server.cmd.sub.VelocityRequest;
+import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
 import com.google.inject.Singleton;

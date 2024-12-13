@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.spigot.cmd.sub.Book;
+import keyp.forev.fmc.spigot.server.cmd.sub.Book;
 
 import org.bukkit.plugin.java.JavaPlugin;
 

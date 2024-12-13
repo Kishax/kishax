@@ -23,11 +23,11 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import keyp.forev.fmc.spigot.cmd.sub.Menu;
-import keyp.forev.fmc.spigot.events.EventListener;
 import keyp.forev.fmc.spigot.server.AutoShutdown;
 import keyp.forev.fmc.spigot.server.BroadCast;
 import keyp.forev.fmc.spigot.server.Inventory;
+import keyp.forev.fmc.spigot.server.events.EventListener;
+import keyp.forev.fmc.spigot.server.menu.Menu;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 

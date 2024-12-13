@@ -24,6 +24,8 @@ import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
 import keyp.forev.fmc.velocity.server.BroadCast;
+import keyp.forev.fmc.velocity.server.cmd.sub.CommandForwarder;
+import keyp.forev.fmc.velocity.server.events.EventListener;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -31,9 +33,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import keyp.forev.fmc.velocity.cmd.sub.CommandForwarder;
 import keyp.forev.fmc.velocity.discord.MessageEditor;
-import keyp.forev.fmc.velocity.events.EventListener;
 
 import com.google.inject.Inject;
 
