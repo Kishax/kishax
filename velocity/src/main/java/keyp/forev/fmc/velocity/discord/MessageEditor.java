@@ -28,8 +28,8 @@ import keyp.forev.fmc.common.util.ColorUtil;
 import keyp.forev.fmc.common.util.JavaUtils;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.velocity.Main;
-import keyp.forev.fmc.velocity.cmd.sub.Maintenance;
-import keyp.forev.fmc.velocity.events.EventListener;
+import keyp.forev.fmc.velocity.server.cmd.sub.Maintenance;
+import keyp.forev.fmc.velocity.server.events.EventListener;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import com.google.inject.Inject;
 

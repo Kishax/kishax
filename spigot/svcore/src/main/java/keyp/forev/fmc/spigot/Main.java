@@ -18,19 +18,19 @@ import keyp.forev.fmc.common.server.DoServerOffline;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import net.luckperms.api.LuckPermsProvider;
-import keyp.forev.fmc.spigot.cmd.main.FMCCommand;
-import keyp.forev.fmc.spigot.cmd.sub.Q;
-import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportBack;
-import keyp.forev.fmc.spigot.cmd.sub.teleport.Navi;
-import keyp.forev.fmc.spigot.cmd.sub.teleport.RegisterTeleportPoint;
-import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept;
-import keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportRequest;
-import keyp.forev.fmc.spigot.events.EventListener;
-import keyp.forev.fmc.spigot.events.WandListener;
 import keyp.forev.fmc.spigot.module.Module;
 import keyp.forev.fmc.spigot.server.AutoShutdown;
 import keyp.forev.fmc.spigot.server.ImageMap;
 import keyp.forev.fmc.spigot.server.Rcon;
+import keyp.forev.fmc.spigot.server.cmd.main.FMCCommand;
+import keyp.forev.fmc.spigot.server.cmd.sub.Q;
+import keyp.forev.fmc.spigot.server.cmd.sub.teleport.Navi;
+import keyp.forev.fmc.spigot.server.cmd.sub.teleport.RegisterTeleportPoint;
+import keyp.forev.fmc.spigot.server.cmd.sub.teleport.TeleportAccept;
+import keyp.forev.fmc.spigot.server.cmd.sub.teleport.TeleportBack;
+import keyp.forev.fmc.spigot.server.cmd.sub.teleport.TeleportRequest;
+import keyp.forev.fmc.spigot.server.events.EventListener;
+import keyp.forev.fmc.spigot.server.events.WandListener;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 
 public class Main extends JavaPlugin {

@@ -57,8 +57,9 @@ import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.CalcUtil;
-import keyp.forev.fmc.spigot.cmd.sub.Menu;
 import keyp.forev.fmc.spigot.server.interfaces.MenuRunnable;
+import keyp.forev.fmc.spigot.server.menu.Menu;
+import keyp.forev.fmc.spigot.server.menu.Type;
 import keyp.forev.fmc.spigot.server.render.ImageMapRenderer;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils2;
@@ -477,7 +478,7 @@ public class ImageMap {
                         player.sendMessage(note.append(TCUtils.INPUT_MODE.get()));
 
                         Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
-                        Inventory inv = Bukkit.createInventory(null, 27, Menu.Type.CHOOSE_COLOR.get());
+                        Inventory inv = Bukkit.createInventory(null, 27, Type.CHOOSE_COLOR.get());
                         Map<ItemStack, java.awt.Color> colorItems = ColorItems.getColorItems();
                         //logger.info("colorItems: {}", colorItems);
                         int index = 0;
@@ -592,7 +593,7 @@ public class ImageMap {
                             });
                             rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                         });
-                        Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Menu.Type.CHOOSE_COLOR, playerMenuActions);
+                        Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.CHOOSE_COLOR, playerMenuActions);
                         player.sendMessage(TCUtils.LATER_OPEN_INV_5.get());
                         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                             player.openInventory(inv);

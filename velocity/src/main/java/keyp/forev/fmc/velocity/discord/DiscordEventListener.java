@@ -30,10 +30,10 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import keyp.forev.fmc.velocity.cmd.sub.VelocityRequest;
-import keyp.forev.fmc.velocity.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.server.BroadCast;
+import keyp.forev.fmc.velocity.server.cmd.sub.VelocityRequest;
+import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import com.google.inject.Inject;
 

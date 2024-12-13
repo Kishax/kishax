@@ -17,8 +17,8 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import keyp.forev.fmc.common.database.Database;
-import keyp.forev.fmc.spigot.cmd.sub.Book;
-import keyp.forev.fmc.spigot.cmd.sub.Menu;
+import keyp.forev.fmc.spigot.server.cmd.sub.Book;
+import keyp.forev.fmc.spigot.server.menu.Menu;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -56,7 +56,7 @@ public class Inventory {
                                 }
                                 case ENCHANTED_BOOK -> {
                                     EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
-                                    if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Menu.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                    if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, keyp.forev.fmc.spigot.server.cmd.sub.MenuExecutor.PERSISTANT_KEY), PersistentDataType.STRING)) {
                                         hasMenuBook = true;
                                     }
                                 }
