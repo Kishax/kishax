@@ -158,12 +158,11 @@ public class FMCCommand implements SimpleCommand {
                 switch (args[0].toLowerCase()) {
                     case "silent" -> {
                         switch (args[1].toLowerCase()) {
-                            case "add", "remove" -> {
-                                pu.loadPlayers(); // プレイヤーリストをロード
-                                for (String player : pu.getPlayerList()) {
-                                    ret.add(player);
-                                }
-                                return ret;
+                            case "add" -> {
+                                return Main.getInjector().getInstance(Silent.class).getSilentPlayers(false);
+                            }
+                            case "remove" -> {
+                                return Main.getInjector().getInstance(Silent.class).getSilentPlayers(true);
                             }
                         }
                     }

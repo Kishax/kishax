@@ -141,4 +141,21 @@ public class Silent {
             }
         }
 	}
+
+    public List<String> getSilentPlayers(boolean isSilent) {
+        List<String> silentPlayers = new ArrayList<>();
+        try (Connection conn = db.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement("SELECT name FROM members WHERE silent = ?;")) {
+                ps.setBoolean(1, isSilent);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        silentPlayers.add(rs.getString("name"));
+                    }
+                }
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.info("An error occurred while Silent#getSilentPlayers: {}", e) ;
+        }
+        return silentPlayers;
+    }
 }
