@@ -30,11 +30,6 @@ import keyp.forev.fmc.spigot.server.cmd.sub.teleport.TeleportBack;
 import keyp.forev.fmc.spigot.server.cmd.sub.MenuExecutor;
 import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.hover.content.Text;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -48,31 +43,13 @@ public class FMCCommand implements TabExecutor {
 		this.psConfig = psConfig;
 	}
 	
+	@Deprecated
 	@Override
 	public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
 		if (sender == null) {
 			return true;
 		}
     	if (args.length == 0 || !subcommands.contains(args[0].toLowerCase())) {
-    		BaseComponent[] component =
-    			    new ComponentBuilder(ChatColor.YELLOW+"FMC COMMANDS LIST").bold(true).underlined(true)
-    			        .append(ChatColor.AQUA+"\n\n/fmc reload")
-							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc reload"))
-							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("コンフィグ、リロードします！(クリックしてコピー)")))
-						.append(ChatColor.AQUA+"\n\n/fmc fv ")
-							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc fv "))
-							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("プロキシコマンドをフォワードします！(クリックしてコピー)")))
-    			        .append(ChatColor.AQUA+"\n\n/fmc mcvc")
-							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmc mcvc"))
-							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("MCVCモードの切り替えを行います！(クリックしてコピー)")))
-						.append(ChatColor.AQUA+"\n\n/fmc portal ")
-							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmc portal "))
-							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルに関して！(クリックしてコピー)")))
-						.append(ChatColor.AQUA+"\n\n/fmc back")
-							.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/fmc back"))
-							.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("前回のテレポート先に戻る！(クリックしてコピー)")))
-    			        .create();
-    		sender.spigot().sendMessage(component);
     		return true;
     	}
     	if (!sender.hasPermission("fmc." + args[0])) {

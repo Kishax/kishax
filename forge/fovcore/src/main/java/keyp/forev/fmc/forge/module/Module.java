@@ -24,7 +24,6 @@ import keyp.forev.fmc.forge.server.AutoShutdown;
 import keyp.forev.fmc.forge.server.CountdownTask;
 import keyp.forev.fmc.forge.server.ForgeLuckperms;
 import keyp.forev.fmc.forge.server.ForgeServerHomeDir;
-import keyp.forev.fmc.forge.server.Rcon;
 import keyp.forev.fmc.forge.server.cmd.sub.CommandForward;
 import keyp.forev.fmc.forge.socket.ForgeSocketResponse;
 import keyp.forev.fmc.forge.util.config.ForgeConfig;
@@ -66,12 +65,6 @@ public class Module extends AbstractModule {
 		return configPath.resolve(Main.MODID);
     }
 
-	@Provides
-	@Singleton
-	public Rcon providesRcon(Logger logger, ForgeConfig config, MinecraftServer server) {
-		return new Rcon(logger, config, server, configPath);
-	}
-	
 	@Provides
 	@Singleton
 	public ServerHomeDir providesForgeServerHomeDir() {

@@ -25,7 +25,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import keyp.forev.fmc.spigot.server.AutoShutdown;
 import keyp.forev.fmc.spigot.server.BroadCast;
-import keyp.forev.fmc.spigot.server.Inventory;
+import keyp.forev.fmc.spigot.server.InventoryCheck;
 import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.server.menu.Menu;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
@@ -40,13 +40,13 @@ public class SpigotSocketResponse implements SocketResponse {
     private final ServerStatusCache ssc;
     private final Provider<SocketSwitch> sswProvider;
     private final AutoShutdown asd;
-    private final Inventory inv;
+    private final InventoryCheck inv;
     private final Menu menu;
     private final Luckperms lp;
     private final BroadCast bc;
     private final String thisServerName;
     @Inject
-    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, Inventory inv, Menu menu, Luckperms lp, BroadCast bc) {
+    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, InventoryCheck inv, Menu menu, Luckperms lp, BroadCast bc) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;

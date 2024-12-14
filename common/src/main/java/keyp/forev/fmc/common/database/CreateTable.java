@@ -17,11 +17,9 @@ import java.sql.PreparedStatement;
 
 public class CreateTable {
     private final Logger logger;
-    private final Database db;
     @Inject
-    public CreateTable(Logger logger, Database db) {
+    public CreateTable(Logger logger) {
         this.logger = logger;
-        this.db = db;
     }
 
     public CompletableFuture<List<CompletableFuture<Boolean>>> createTables(Connection conn) throws SQLException {

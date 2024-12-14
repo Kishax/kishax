@@ -23,7 +23,6 @@ import keyp.forev.fmc.fabric.server.AutoShutdown;
 import keyp.forev.fmc.fabric.server.CountdownTask;
 import keyp.forev.fmc.fabric.server.FabricLuckperms;
 import keyp.forev.fmc.fabric.server.FabricServerHomeDir;
-import keyp.forev.fmc.fabric.server.Rcon;
 import keyp.forev.fmc.fabric.server.cmd.sub.CommandForward;
 import keyp.forev.fmc.fabric.socket.FabricSocketResponse;
 import keyp.forev.fmc.fabric.util.config.FabricConfig;
@@ -56,7 +55,6 @@ public class Module extends AbstractModule {
 		bind(FabricLuckperms.class);
 		bind(AutoShutdown.class);
 		bind(CommandForward.class);
-		bind(Rcon.class);
 		bind(CountdownTask.class);
 	}
 	

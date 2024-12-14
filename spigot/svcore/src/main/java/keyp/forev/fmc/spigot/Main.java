@@ -21,7 +21,6 @@ import net.luckperms.api.LuckPermsProvider;
 import keyp.forev.fmc.spigot.module.Module;
 import keyp.forev.fmc.spigot.server.AutoShutdown;
 import keyp.forev.fmc.spigot.server.ImageMap;
-import keyp.forev.fmc.spigot.server.Rcon;
 import keyp.forev.fmc.spigot.server.cmd.main.FMCCommand;
 import keyp.forev.fmc.spigot.server.cmd.sub.Q;
 import keyp.forev.fmc.spigot.server.cmd.sub.teleport.Navi;
@@ -56,9 +55,6 @@ public class Main extends JavaPlugin {
 		
 		registerCommand();
 
-    	if (getConfig().getBoolean("MCVC.Mode",false)) {
-    		getInjector().getInstance(Rcon.class).startMCVC();
-		}
 		getInjector().getInstance(Luckperms.class).triggerNetworkSync();
 		logger.info("linking with LuckPerms...");
 		logger.info(LuckPermsProvider.get().getPlatform().toString());
@@ -79,9 +75,6 @@ public class Main extends JavaPlugin {
 			getInjector().getInstance(DoServerOffline.class).updateDatabase();
 		} catch (Exception e) {
 			logger.error( "An error occurred while updating the database: {}", e.getMessage());
-		}
-    	if (getConfig().getBoolean("MCVC.Mode",false)) {
-    		getInjector().getInstance(Rcon.class).stopMCVC();
 		}
     	getInjector().getInstance(AutoShutdown.class).stopCheckForPlayers();
     	logger.info("Socket Server stopping...");

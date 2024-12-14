@@ -38,6 +38,7 @@ public class MenuExecutor {
         this.menu = menu;
 	}
 
+    @Deprecated
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (sender instanceof Player player) {
             if (args.length == 1) {

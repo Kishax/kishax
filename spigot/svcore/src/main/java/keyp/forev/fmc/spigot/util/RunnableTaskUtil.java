@@ -3,9 +3,7 @@ package keyp.forev.fmc.spigot.util;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -21,7 +19,6 @@ import net.md_5.bungee.api.ChatColor;
 import com.google.inject.Provider;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
-import java.util.Arrays;
 
 public class RunnableTaskUtil {
     private final JavaPlugin plugin;

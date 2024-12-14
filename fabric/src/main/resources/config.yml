@@ -10,14 +10,6 @@ Socket:
     Client_Port: 8766
     Server_Port: 
 
-Discord:
-    Webhook_URL: ""
-
-MCVC:
-    Mode: false
-    Host: "localhost"
-    EXE_Path: ""
-
 AutoStop:
     Mode: false
     Interval: 3

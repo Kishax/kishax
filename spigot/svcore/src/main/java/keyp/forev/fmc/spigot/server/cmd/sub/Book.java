@@ -34,6 +34,7 @@ public class Book {
         player.sendMessage(ChatColor.GREEN + "ルールガイドを渡しました！");
     }
 
+    @Deprecated
     public BookMeta setBookItemMeta(BookMeta meta) {
         String rulebook = FMCSettings.RULEBOOK_CONTENT.getValue();
         if (rulebook != null) {

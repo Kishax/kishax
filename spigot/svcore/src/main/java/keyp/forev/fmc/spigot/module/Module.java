@@ -24,8 +24,7 @@ import keyp.forev.fmc.spigot.server.AutoShutdown;
 import keyp.forev.fmc.spigot.server.BroadCast;
 import keyp.forev.fmc.spigot.server.FMCItemFrame;
 import keyp.forev.fmc.spigot.server.ImageMap;
-import keyp.forev.fmc.spigot.server.Inventory;
-import keyp.forev.fmc.spigot.server.Rcon;
+import keyp.forev.fmc.spigot.server.InventoryCheck;
 import keyp.forev.fmc.spigot.server.SpigotServerHomeDir;
 import keyp.forev.fmc.spigot.server.cmd.sub.Book;
 import keyp.forev.fmc.spigot.server.cmd.sub.CommandForward;
@@ -72,11 +71,10 @@ public class Module extends AbstractModule {
 		bind(ServerStatusCache.class).in(com.google.inject.Scopes.SINGLETON);
 		bind(PortFinder.class);
 		bind(AutoShutdown.class);
-		bind(Rcon.class);
 		bind(Luckperms.class);
 		bind(ImageMap.class);
 		bind(Book.class);
-		bind(Inventory.class);
+		bind(InventoryCheck.class);
 		bind(FMCItemFrame.class);
 		bind(CommandForward.class);
 		bind(BroadCast.class);
@@ -100,7 +98,7 @@ public class Module extends AbstractModule {
 	        SpigotServerHomeDir shd,
 	        Provider<SocketSwitch> sswProvider,
 	        AutoShutdown asd,
-	        Inventory inv,
+	        InventoryCheck inv,
 	        Menu menu,
 	        Luckperms lp,
 	        BroadCast bc) {
