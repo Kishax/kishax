@@ -94,7 +94,7 @@ public class Discord {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public CompletableFuture<Object> loginDiscordBotAsync() {
         return CompletableFuture.supplyAsync(() -> {
             if (config.getString("Discord.Token","").isEmpty()) {

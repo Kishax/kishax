@@ -16,9 +16,7 @@ import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.fabric.module.Module;
 import keyp.forev.fmc.fabric.server.AutoShutdown;
 import keyp.forev.fmc.fabric.server.FabricLuckperms;
-import keyp.forev.fmc.fabric.server.Rcon;
 import keyp.forev.fmc.fabric.server.cmd.main.FMCCommand;
-import keyp.forev.fmc.fabric.util.config.FabricConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -46,7 +44,6 @@ public class Main implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 		    injector = Guice.createInjector(new Module(fabric, logger, server));
 		    getInjector().getInstance(AutoShutdown.class).start();
-		    getInjector().getInstance(Rcon.class).startMCVC();
 		    try {
 		        LuckPerms luckperms = LuckPermsProvider.get();
 		        getInjector().getInstance(FabricLuckperms.class).triggerNetworkSync();
@@ -62,9 +59,6 @@ public class Main implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
 			getInjector().getInstance(DoServerOffline.class).updateDatabase();
 			getInjector().getInstance(AutoShutdown.class).stop();
-		    if (getInjector().getInstance(FabricConfig.class).getBoolean("MCVC.Mode", false)) {
-		        getInjector().getInstance(Rcon.class).stopMCVC();
-		    }
 		});
 	}
 	

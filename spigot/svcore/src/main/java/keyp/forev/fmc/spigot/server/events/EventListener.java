@@ -1,6 +1,7 @@
 package keyp.forev.fmc.spigot.server.events;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +17,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,13 +24,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -42,8 +42,7 @@ import com.google.inject.Inject;
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.spigot.server.FMCItemFrame;
-import keyp.forev.fmc.spigot.server.Inventory;
-import keyp.forev.fmc.spigot.server.Rcon;
+import keyp.forev.fmc.spigot.server.InventoryCheck;
 import keyp.forev.fmc.spigot.server.cmd.sub.Confirm;
 import keyp.forev.fmc.spigot.server.menu.Menu;
 import keyp.forev.fmc.spigot.server.menu.Type;
@@ -54,6 +53,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
 
 public final class EventListener implements Listener {
@@ -61,18 +64,19 @@ public final class EventListener implements Listener {
     public static Map<Player, Map<RunnableTaskUtil.Key, BukkitTask>> playerTaskMap = new HashMap<>();
     public static final AtomicBoolean isHub = new AtomicBoolean(false);
     public static final Map<Player, Location> playerBeforeLocationMap = new HashMap<>();
+    private final Map<Player, List<ItemStack>> playerInventorySnapshot = new HashMap<>();
     private final JavaPlugin plugin;
     private final Logger logger;
 	private final PortalsConfig psConfig;
     private final Menu menu;
     private final ServerStatusCache ssc;
     private final Luckperms lp;
-    private final Inventory inv;
+    private final InventoryCheck inv;
     private final FMCItemFrame fif;
-    private final Set<Player> playersInPortal = new HashSet<>(); // プレイヤーの状態を管理するためのセット
+    private final Set<Player> playersInPortal = new HashSet<>();
 
     @Inject
-	public EventListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, Inventory inv, FMCItemFrame fif) {
+	public EventListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, FMCItemFrame fif) {
 		this.plugin = plugin;
         this.logger = logger;
 		this.psConfig = psConfig;
@@ -83,11 +87,6 @@ public final class EventListener implements Listener {
         this.fif = fif;
 	}
 
-    @EventHandler
-    public void onServerLoad(ServerLoadEvent event) {
-        //fif.loadWorldsItemFrames();
-    }
-    
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
@@ -121,7 +120,7 @@ public final class EventListener implements Listener {
         }
     }
     
-    @SuppressWarnings("deprecation")
+    @Deprecated
 	@EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         fif.loadWorldsItemFrames();
@@ -142,6 +141,7 @@ public final class EventListener implements Listener {
         inv.updatePlayerInventory(player);
     }
 
+    @Deprecated
     @EventHandler
     public void onChat(org.bukkit.event.player.AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
@@ -164,10 +164,64 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        if (event.getPlayer() instanceof Player player) {
+            String title = event.getView().getOriginalTitle();
+
+            Optional<Type> type = Type.getType(title);
+            if (type.isPresent()) {
+                Type menuType = type.get();
+                if (menuType == Type.CHANGE_MATERIAL) {
+                    List<ItemStack> snapshot = new ArrayList<>();
+                    for (ItemStack item : player.getInventory().getContents()) {
+                        snapshot.add(item == null ? null : item.clone());
+                    }
+                    playerInventorySnapshot.put(player, snapshot);
+                    logger.info("Inventory snapshot saved for " + player.getName());
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (event.getPlayer() instanceof Player player) {
+            String title = event.getView().getOriginalTitle();
+            Optional<Type> type = Type.getType(title);
+            if (type.isPresent()) {
+                Type menuType = type.get();
+                if (menuType == Type.CHANGE_MATERIAL) {
+                    List<ItemStack> oldSnapshot = playerInventorySnapshot.get(player);
+                    List<ItemStack> currentInventory = Arrays.asList(player.getInventory().getContents());
+
+                    if (oldSnapshot != null) {
+                        List<ItemStack> removedItems = calculateDifference(oldSnapshot, currentInventory);
+                        if (!removedItems.isEmpty()) {
+                            removedItems.forEach(item -> {
+                                player.getInventory().addItem(item);
+                                TextComponent message = Component.text()
+                                    .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                                    .appendNewline()
+                                    .append(Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
+                                    .build();
+                                
+                                player.sendMessage(message);
+                            });
+                        }
+                    }
+                    playerInventorySnapshot.remove(player);
+                }
+            }
+        }
+    }
+
+    @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             ClickType clickType = event.getClick();
             ItemStack clickedItem = event.getCurrentItem();
+            int slot = event.getRawSlot();
+
             if (clickedItem != null) {
                 switch (clickedItem.getType()) {
                     case ENCHANTED_BOOK -> {
@@ -185,12 +239,14 @@ public final class EventListener implements Listener {
                 }
             }
 
-            String title = event.getView().getTitle();
+            String title = event.getView().getOriginalTitle();
             Optional<Type> type = Type.getType(title);
             if (type.isPresent()) {
-                event.setCancelled(true);
                 Type menuType = type.get();
-                menu.runMenuAction(player, menuType, event.getRawSlot(), clickType);
+                if (!menuType.equals(Type.CHANGE_MATERIAL)) {
+                    event.setCancelled(true);
+                }
+                menu.runMenuEventAction(player, menuType, slot, event);
             } else if (title.endsWith(" server")) {
                 event.setCancelled(true);
                 Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
@@ -205,11 +261,11 @@ public final class EventListener implements Listener {
                         return false;
                     }));
                 if (iskey) {
-                    menu.runMenuAction(player, Type.SERVER, event.getRawSlot(), clickType);
+                    menu.runMenuEventAction(player, Type.SERVER, slot, event);
                 }
             } else if (title.endsWith(" servers")) {
                 event.setCancelled(true);
-                menu.runMenuAction(player, Type.SERVER_EACH_TYPE, event.getRawSlot(), clickType);
+                menu.runMenuEventAction(player, Type.SERVER_EACH_TYPE, slot, event);
             }
         }
     }
@@ -282,18 +338,38 @@ public final class EventListener implements Listener {
         }
     }
     
-	// MCVCをONにすると、ベッドで寝れなくなるため、必要なメソッド
-	@EventHandler
-    public void onPlayerBedEnter(PlayerBedEnterEvent e) {
-		if (Rcon.isMCVC) {
-	        if (e.getBedEnterResult() == PlayerBedEnterEvent.BedEnterResult.OK) {
-	            World world = e.getPlayer().getWorld();
-	            world.setTime(1000);
-	            world.setStorm(false);
-	            world.setThundering(false);
-	            e.getPlayer().sendMessage("おはようございます！時間を朝にしました。");
-	        }
-		}
+    // 差分を計算するメソッド
+    private List<ItemStack> calculateDifference(List<ItemStack> oldInventory, List<ItemStack> newInventory) {
+        Map<ItemStack, Integer> oldCount = countItems(oldInventory);
+        Map<ItemStack, Integer> newCount = countItems(newInventory);
+
+        List<ItemStack> removedItems = new ArrayList<>();
+
+        for (Map.Entry<ItemStack, Integer> entry : oldCount.entrySet()) {
+            ItemStack item = entry.getKey();
+            int oldAmount = entry.getValue();
+            int newAmount = newCount.getOrDefault(item, 0);
+
+            if (newAmount < oldAmount) {
+                ItemStack removed = item.clone();
+                removed.setAmount(oldAmount - newAmount);
+                removedItems.add(removed);
+            }
+        }
+
+        return removedItems;
+    }
+
+    // アイテムの種類と数をカウント
+    private Map<ItemStack, Integer> countItems(List<ItemStack> inventory) {
+        Map<ItemStack, Integer> itemCount = new HashMap<>();
+        for (ItemStack item : inventory) {
+            if (item != null) {
+                itemCount.put(item, itemCount.getOrDefault(item, 0) + item.getAmount());
+            }
+        }
+ 
+        return itemCount;
     }
 
     private boolean isWithinBounds(Location loc, Location corner1, Location corner2) {

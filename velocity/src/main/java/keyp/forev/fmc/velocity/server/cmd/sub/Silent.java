@@ -22,20 +22,17 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import keyp.forev.fmc.common.util.PlayerUtils;
 
 public class Silent {
 	private final Logger logger;
 	private final Database db;
 	private final Luckperms lp;
-    private final PlayerUtils pu;
     public static List<String> args1 = new ArrayList<>(Arrays.asList("add","remove","list"));
 	@Inject
-    public Silent(Logger logger, Database db, Luckperms lp, PlayerUtils pu) {
+    public Silent(Logger logger, Database db, Luckperms lp) {
 		this.logger = logger;
 		this.db = db;
 		this.lp = lp;
-        this.pu = pu;
 	}
 
 	public void execute(@NotNull CommandSource source, String[] args) {

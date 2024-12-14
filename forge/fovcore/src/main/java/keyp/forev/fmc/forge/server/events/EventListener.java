@@ -15,9 +15,7 @@ import keyp.forev.fmc.forge.Main;
 import keyp.forev.fmc.forge.module.Module;
 import keyp.forev.fmc.forge.server.AutoShutdown;
 import keyp.forev.fmc.forge.server.ForgeLuckperms;
-import keyp.forev.fmc.forge.server.Rcon;
 import keyp.forev.fmc.forge.server.cmd.main.FMCCommand;
-import keyp.forev.fmc.forge.util.config.ForgeConfig;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.minecraft.commands.CommandSourceStack;
@@ -35,7 +33,6 @@ public class EventListener {
 	public static void onServerStarting(ServerStartingEvent event) {
 		Main.injector = Guice.createInjector(new Module(logger, event.getServer()));
 		Main.getInjector().getInstance(AutoShutdown.class).start();
-		Main.getInjector().getInstance(Rcon.class).startMCVC();
 		try {
 			LuckPerms luckperms = LuckPermsProvider.get();
 			Main.getInjector().getInstance(ForgeLuckperms.class).triggerNetworkSync();
@@ -54,9 +51,6 @@ public class EventListener {
 	public static void onServerStopping(ServerStoppingEvent event) {
 		Main.getInjector().getInstance(DoServerOffline.class).updateDatabase();
 		Main.getInjector().getInstance(AutoShutdown.class).stop();
-	    if (Main.getInjector().getInstance(ForgeConfig.class).getBoolean("MCVC.Mode", false)) {
-	    	Main.getInjector().getInstance(Rcon.class).stopMCVC();
-	    }
 	}
 	
 	@SubscribeEvent

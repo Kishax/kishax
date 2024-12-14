@@ -36,6 +36,7 @@ public class FMCItemFrame {
         this.im = im;
     }
 
+    @Deprecated
     public void loadWorldsItemFrames() {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             Bukkit.getScheduler().runTask(plugin, () -> {

@@ -9,6 +9,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class ColorItems {
+
+    @Deprecated
     public static Map<ItemStack, Color> getColorItems() {
         Map<ItemStack, Color> colorItems = new LinkedHashMap<>();
         ItemStack white = new ItemStack(Material.WHITE_WOOL);

@@ -23,12 +23,12 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.hover.content.Text;
 import keyp.forev.fmc.spigot.server.cmd.sub.portal.PortalsWand;
 import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 
@@ -81,27 +81,35 @@ public class WandListener implements Listener {
                         newPortal.put("corner2", Arrays.asList(corner2.getX(), corner2.getY(), corner2.getZ()));
                         portals.add(newPortal);
                         try {
-                            psConfig.replaceValue("portals", portals);
+                            psConfig.replaceValue("portals", portals);Component.text();
                             isMakePortal = true;
-                            player.sendMessage(ChatColor.GREEN + "2番目のコーナーを選択しました。\nポータルUUID: "+portalUUID+"\n"+ChatColor.AQUA+"("+clickedBlock.getX()+", "+clickedBlock.getY()+", "+clickedBlock.getZ()+")"+ChatColor.GREEN+"\nポータルが保存されました。");
-                            BaseComponent[] component = new ComponentBuilder()
-                                    .append(ChatColor.WHITE + "もし、取り消す場合は、")
-                                    .append(ChatColor.GOLD + "ココ")
-                                        .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmc portal delete " + portalUUID))
-                                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルを削除")))
-                                    .append(ChatColor.WHITE + "をクリックしてね")
-                                    .append("\n" + ChatColor.WHITE + "ポータルの名前を変えるには、")
-                                    .append(ChatColor.GOLD + "ココ")
-                                        .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,"/fmc portal rename " + portalUUID + " "))
-                                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルの名前を変更")))
-                                    .append(ChatColor.WHITE + "をクリックしてね")
-                                    .append("\n" + ChatColor.WHITE + "ポータルにネザーゲートを付与するには")
-                                    .append(ChatColor.GOLD + "ココ")
-                                        .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,"/fmc portal nether " + portalUUID))
-                                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("ポータルにネザーゲートを付与")))
-                                    .append(ChatColor.WHITE + "をクリックしてね")
-                                    .create();
-                            player.spigot().sendMessage(component);
+
+                            double x = clickedBlock.getX();
+                            double y = clickedBlock.getY();
+                            double z = clickedBlock.getZ();
+
+                            TextComponent messages = Component.text()
+                                .append(Component.text("2番目のコーナーを選択しました。").color(NamedTextColor.GREEN))
+                                .appendNewline()
+                                .append(Component.text("ポータルUUID: " + portalUUID))
+                                .appendNewline()
+                                .append(Component.text("(" + x + ", " + y + ", " + z + ")"))
+                                .append(Component.text("ポータルが保存されました。").color(NamedTextColor.GREEN))
+                                .appendNewline()
+                                .append(Component.text("もし、取り消す場合は、"))
+                                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルを削除"))).clickEvent(ClickEvent.runCommand("/fmc portal delete " + portalUUID)))
+                                .append(Component.text("をクリックしてね。"))
+                                .appendNewline()
+                                .append(Component.text("ポータルの名前を変えるには、"))
+                                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルの名前を変更"))).clickEvent(ClickEvent.suggestCommand("/fmc portal rename " + portalUUID + " ")))
+                                .append(Component.text("をクリックしてね。"))
+                                .appendNewline()
+                                .append(Component.text("ポータルにネザーゲートを付与するには"))
+                                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルにネザーゲートを付与"))).clickEvent(ClickEvent.runCommand("/fmc portal nether " + portalUUID)))
+                                .append(Component.text("をクリックしてね。"))
+                                .build();
+
+                            player.sendMessage(messages);
                             firstCorner.remove(player);
                         } catch (Exception e) {
                             player.sendMessage(ChatColor.RED + "ポータルの保存に失敗しました。");

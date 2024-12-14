@@ -20,6 +20,7 @@ public class PortalsWand {
         this.plugin = plugin;
 	}
 	
+    @Deprecated
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
         if (plugin.getConfig().getBoolean("Portals.Wand", false)) {
             if (sender instanceof Player player) {

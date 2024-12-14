@@ -57,9 +57,9 @@ import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.CalcUtil;
-import keyp.forev.fmc.spigot.server.interfaces.MenuRunnable;
 import keyp.forev.fmc.spigot.server.menu.Menu;
 import keyp.forev.fmc.spigot.server.menu.Type;
+import keyp.forev.fmc.spigot.server.menu.interfaces.MenuEventRunnable;
 import keyp.forev.fmc.spigot.server.render.ImageMapRenderer;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils2;
@@ -275,6 +275,7 @@ public class ImageMap {
         }
     }
 
+    @Deprecated
     @SuppressWarnings("null")
 	private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2, Object[] inputs3) {
         if (sender instanceof Player) {
@@ -477,7 +478,7 @@ public class ImageMap {
 
                         player.sendMessage(note.append(TCUtils.INPUT_MODE.get()));
 
-                        Map<Integer, MenuRunnable> playerMenuActions = new HashMap<>();
+                        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
                         Inventory inv = Bukkit.createInventory(null, 27, Type.CHOOSE_COLOR.get());
                         Map<ItemStack, java.awt.Color> colorItems = ColorItems.getColorItems();
                         //logger.info("colorItems: {}", colorItems);
@@ -593,7 +594,7 @@ public class ImageMap {
                             });
                             rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                         });
-                        Menu.menuActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.CHOOSE_COLOR, playerMenuActions);
+                        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.CHOOSE_COLOR, playerMenuActions);
                         player.sendMessage(TCUtils.LATER_OPEN_INV_5.get());
                         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                             player.openInventory(inv);
@@ -945,6 +946,7 @@ public class ImageMap {
         executeImageMap(sender, args, dArgs, false);
     }
     
+    @Deprecated
     @SuppressWarnings("null")
 	private void executeImageMap(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
         if (sender instanceof Player player) {
@@ -1245,6 +1247,7 @@ public class ImageMap {
         rt.addTaskRunnable(player, playerActions, key);
     }
 
+    @Deprecated
     private void executeImageMapFromMenu(Player player, Object[] mArgs, boolean isGiveMap) {
         // このサーバーにはないマップを生成する
         try (Connection conn = db.getConnection()) {

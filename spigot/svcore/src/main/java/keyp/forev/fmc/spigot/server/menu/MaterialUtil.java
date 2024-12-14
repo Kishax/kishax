@@ -1,13 +1,13 @@
-package keyp.forev.fmc.spigot.util;
+package keyp.forev.fmc.spigot.server.menu;
 
 import org.bukkit.Material;
 
 public class MaterialUtil {
     public static String materialToDatabase(Material material) {
-        return material.name(); // Material名を取得
+        return material.name();
     }
 
-    public static Material databaseToMaterial(String materialName) {
+    public static Material stringToMaterial(String materialName) {
         try {
             return Material.valueOf(materialName);
         } catch (IllegalArgumentException e) {
