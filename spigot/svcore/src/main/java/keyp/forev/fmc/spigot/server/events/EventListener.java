@@ -198,7 +198,7 @@ public final class EventListener implements Listener {
                         List<ItemStack> removedItems = calculateDifference(oldSnapshot, currentInventory);
                         if (!removedItems.isEmpty()) {
                             removedItems.forEach(item -> {
-                                player.getInventory().addItem(item);
+                                //player.getInventory().addItem(item);
                                 TextComponent message = Component.text()
                                     .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
                                     .appendNewline()
