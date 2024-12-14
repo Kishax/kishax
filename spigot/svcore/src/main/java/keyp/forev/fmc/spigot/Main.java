@@ -88,6 +88,8 @@ public class Main extends JavaPlugin {
 			tprmCmd = getCommand("tprm"),
 			tprmaCmd = getCommand("tprma"),
 			tpraCmd = getCommand("tpra"),
+			tprdCmd = getCommand("tprd"),
+			tprmdCmd = getCommand("tprmd"),
 			registerpointCmd = getCommand("registerpoint"),
 			backCmd = getCommand("back"),
 			nvCmd = getCommand("nv");
@@ -97,11 +99,13 @@ public class Main extends JavaPlugin {
 		if (qCmd != null) {
 			qCmd.setExecutor(getInjector().getInstance(Q.class));
 		}
-		if (tprCmd != null && tprmCmd != null && tpraCmd != null && tprmaCmd != null) {
+		if (tprCmd != null && tprmCmd != null && tpraCmd != null && tprmaCmd != null && tprdCmd != null && tprmdCmd != null) {
 			tprCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
 			tprmCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
 			tpraCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
 			tprmaCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
+			tprdCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
+			tprmdCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));
 		}
 		if (registerpointCmd != null) {
 			registerpointCmd.setExecutor(getInjector().getInstance(RegisterTeleportPoint.class));

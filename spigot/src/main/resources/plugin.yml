@@ -33,6 +33,14 @@ commands:
     usage: /<command>
     description: You can accept teleport request
     executor: keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept
+  tprd:
+    usage: /<command>
+    description: You can accept teleport request
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept
+  tprmd:
+    usage: /<command>
+    description: You can accept teleport request
+    executor: keyp.forev.fmc.spigot.cmd.sub.teleport.TeleportAccept
   back:
     usage: /<command>
     description: You can teleport to back

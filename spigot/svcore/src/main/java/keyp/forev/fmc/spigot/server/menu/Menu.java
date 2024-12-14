@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -63,6 +64,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 @Singleton
 public class Menu {
     public static final Map<Player, Map<Type, Map<Integer, MenuEventRunnable>>> menuEventActions = new ConcurrentHashMap<>();
+    public static final Map<Player, Map<Type, AtomicBoolean>> menuEventFlags = new ConcurrentHashMap<>();
     public static final String PUBLIC = "public", PRIVATE = "private";
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     public static final int[] FACE_POSITIONS = {46, 47, 48, 49, 50, 51, 52};
@@ -580,6 +582,8 @@ public class Menu {
 
     @Deprecated
     public void changeMaterial(Player player, int id) {
+        Menu.menuEventFlags.computeIfAbsent(player, (key) -> new HashMap<>()).put(Type.CHANGE_MATERIAL, new AtomicBoolean(false));
+
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
 
         playerMenuActions.put(0, (event) -> teleportPointManager(player, id));
@@ -651,7 +655,7 @@ public class Menu {
                                     logger.error("An error occurred in Menu#changeMaterial method: {}", e);
                                 }
 
-                                //Menu.menuEventFlags.get(player).get(Type.CHANGE_MATERIAL).set(true);
+                                Menu.menuEventFlags.get(player).get(Type.CHANGE_MATERIAL).set(true);
                                 player.closeInventory();
                                 player.getInventory().addItem(currentItem);
                             });
