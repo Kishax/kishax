@@ -13,7 +13,6 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.StringUtil;
-import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
@@ -27,12 +26,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class TeleportAccept implements TabExecutor {
     private final JavaPlugin plugin;
-    private final Logger logger;
     private final Luckperms lp;
     @Inject
-    public TeleportAccept(JavaPlugin plugin, Logger logger, Luckperms lp) {
+    public TeleportAccept(JavaPlugin plugin, Luckperms lp) {
         this.plugin = plugin;
-        this.logger = logger;
         this.lp = lp;
     }
 
@@ -48,7 +45,8 @@ public class TeleportAccept implements TabExecutor {
                 return true;
             }
             String targetName = args[0];
-            logger.info("targetName: " + targetName);
+            String playerName = player.getName(); // リクエストを選択する側
+            //logger.info("targetName: " + targetName);
             Player targetPlayer = plugin.getServer().getPlayer(targetName);
             if (targetPlayer == null) {
                 player.sendMessage(ChatColor.RED + "プレイヤーが見つかりません。");
@@ -107,6 +105,74 @@ public class TeleportAccept implements TabExecutor {
                                 player.sendMessage(messages);
 
                                 targetPlayer.sendMessage(messages);
+                                
+                                return true;
+                            }
+                        }
+                        if (!isRequested.get()) {
+                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
+                        }
+                    } else {
+                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
+                    }
+                }
+                case "tprd" -> {
+                    Map<Player, List<Map<Player, BukkitTask>>> teleportMap = TeleportRequest.teleportMap;
+                    if (teleportMap.containsKey(targetPlayer)) {
+                        List<Map<Player, BukkitTask>> requestedPlayers = teleportMap.get(targetPlayer);
+                        AtomicBoolean isRequested = new AtomicBoolean(false);
+                        for (Map<Player, BukkitTask> requestedPlayer : requestedPlayers) {
+                            if (requestedPlayer.containsKey(player)) {
+                                isRequested.set(true);
+                                BukkitTask task = requestedPlayer.get(player);
+                                task.cancel();
+                                requestedPlayers.remove(requestedPlayer);
+
+                                Component messagePlayer = Component.text(targetName + "のテレポートリクエストを拒否しました。")
+                                    .color(NamedTextColor.RED)
+                                    .decorate(TextDecoration.BOLD);
+
+                                player.sendMessage(messagePlayer);
+
+                                Component messageTargetPlayer = Component.text(playerName + "がテレポートリクエストを拒否しました。")
+                                    .color(NamedTextColor.RED)
+                                    .decorate(TextDecoration.BOLD);
+
+                                targetPlayer.sendMessage(messageTargetPlayer);
+
+                                return true;
+                            }
+                        }
+                        if (!isRequested.get()) {
+                            player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
+                        }
+                    } else {
+                        player.sendMessage(ChatColor.RED + "リクエストが見つかりません。");
+                    }
+                }
+                case "tprmd" -> {
+                    Map<Player, List<Map<Player, BukkitTask>>> teleportMeMap = TeleportRequest.teleportMeMap;
+                    if (teleportMeMap.containsKey(targetPlayer)) {
+                        List<Map<Player, BukkitTask>> requestedPlayers = teleportMeMap.get(targetPlayer);
+                        AtomicBoolean isRequested = new AtomicBoolean(false);
+                        for (Map<Player, BukkitTask> requestedPlayer : requestedPlayers) {
+                            if (requestedPlayer.containsKey(player)) {
+                                isRequested.set(true);
+                                BukkitTask task = requestedPlayer.get(player);
+                                task.cancel();
+                                requestedPlayers.remove(requestedPlayer);
+
+                                Component messagePlayer = Component.text(targetName + "からの逆テレポートリクエストを拒否しました。")
+                                    .color(NamedTextColor.RED)
+                                    .decorate(TextDecoration.BOLD);
+
+                                player.sendMessage(messagePlayer);
+
+                                Component messageTargetPlayer = Component.text(playerName + "が逆テレポートリクエストを拒否しました。")
+                                    .color(NamedTextColor.RED)
+                                    .decorate(TextDecoration.BOLD);
+
+                                targetPlayer.sendMessage(messageTargetPlayer);
                                 
                                 return true;
                             }

@@ -191,24 +191,32 @@ public final class EventListener implements Listener {
             if (type.isPresent()) {
                 Type menuType = type.get();
                 if (menuType == Type.CHANGE_MATERIAL) {
-                    List<ItemStack> oldSnapshot = playerInventorySnapshot.get(player);
-                    List<ItemStack> currentInventory = Arrays.asList(player.getInventory().getContents());
+                    AtomicBoolean isDone = Menu.menuEventFlags.get(player).get(Type.CHANGE_MATERIAL);
+                    if (isDone.compareAndSet(false, true)) {
+                        List<ItemStack> oldSnapshot = playerInventorySnapshot.get(player);
+                        List<ItemStack> currentInventory = Arrays.asList(player.getInventory().getContents());
 
-                    if (oldSnapshot != null) {
-                        List<ItemStack> removedItems = calculateDifference(oldSnapshot, currentInventory);
-                        if (!removedItems.isEmpty()) {
-                            removedItems.forEach(item -> {
-                                //player.getInventory().addItem(item);
-                                TextComponent message = Component.text()
-                                    .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
-                                    .appendNewline()
-                                    .append(Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
-                                    .build();
-                                
-                                player.sendMessage(message);
-                            });
+                        if (oldSnapshot != null) {
+                            List<ItemStack> removedItems = calculateDifference(oldSnapshot, currentInventory);
+                            if (!removedItems.isEmpty()) {
+                                removedItems.forEach(item -> {
+                                    player.getInventory().addItem(item);
+                                    TextComponent message = Component.text()
+                                        .append(Component.text("アイテムセット中にインベントリから離れました。").color(NamedTextColor.RED).decorate(TextDecoration.BOLD))
+                                        .appendNewline()
+                                        .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                                        .appendNewline()
+                                        .append(Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
+                                        .appendNewline()
+                                        .append(Component.text("※アイテムを返却しました。").color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                                        .build();
+                                    
+                                    player.sendMessage(message);
+                                });
+                            }
                         }
                     }
+                    
                     playerInventorySnapshot.remove(player);
                 }
             }

@@ -195,6 +195,7 @@ public class TeleportRequest implements TabExecutor {
                 
                 TextComponent messages = Component.text()
                     .append(message)
+                    .appendNewline()
                     .append(accept)
                     .appendSpace()
                     .append(deny)
