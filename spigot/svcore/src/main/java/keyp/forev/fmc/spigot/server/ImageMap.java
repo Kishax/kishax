@@ -1043,21 +1043,46 @@ public class ImageMap {
                 } else {
                     db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
                 }
-                player.getInventory().addItem(mapItem);
-                if (!confirm) {
-                    try (Connection conn3 = db.getConnection()) {
-                        TextComponent messages = Component.text()
-                            .append(Component.text("画像マップを渡しました。"))
-                            .append(getPlayerTimesComponent(conn3, playerName)[0])
-                            .build();
 
-                        player.sendMessage(messages);
-                    } catch (SQLException | ClassNotFoundException e) {
-                        player.sendMessage("すべての画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
-                        logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-                        for (StackTraceElement element : e.getStackTrace()) {
-                            logger.error(element.toString());
+                HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(mapItem);
+
+                Location playerLocation = player.getLocation();
+                World world = player.getWorld();
+                Block block = playerLocation.getBlock();
+
+                if (remaining.isEmpty()) {
+                    if (!confirm) {
+                        try (Connection conn3 = db.getConnection()) {
+                            TextComponent messages = Component.text()
+                                .append(Component.text("画像マップを渡しました。"))
+                                .append(getPlayerTimesComponent(conn3, playerName)[0])
+                                .build();
+    
+                            player.sendMessage(messages);
+                        } catch (SQLException | ClassNotFoundException e) {
+                            player.sendMessage("すべての画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
+                            logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                            for (StackTraceElement element : e.getStackTrace()) {
+                                logger.error(element.toString());
+                            }
                         }
+                    }
+                } else {
+                    // プレイヤーが浮いているかどうかを確認する
+                    // プレイヤーがブロックの上にいる場合、地面にドロップする
+                    if (block.getType() != Material.AIR) {
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            player.sendMessage("インベントリに入り切らないマップは、ドロップしました。");
+                            remaining.values().forEach(item -> {
+                                world.dropItemNaturally(playerLocation, item);
+                            });
+                        });
+                    } else {
+                        Component message = Component.text("空中で実行しないでください！")
+                            .color(NamedTextColor.RED)
+                            .decorate(TextDecoration.BOLD);
+                            
+                        player.sendMessage(message);
                     }
                 }
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {

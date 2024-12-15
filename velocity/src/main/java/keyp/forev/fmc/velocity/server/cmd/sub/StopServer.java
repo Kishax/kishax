@@ -114,7 +114,7 @@ public class StopServer {
 								.append(Component.text("ALL CORRECT"))
 								.appendNewline()
 							.color(NamedTextColor.GREEN))
-							.append(Component.text(targetServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN))
+							.append(Component.text(targetServerName+"サーバーがまもなく停止します。").color(NamedTextColor.RED))
 							.build();
 						player.sendMessage(component);
 						TextComponent notifyComponent = Component.text()
