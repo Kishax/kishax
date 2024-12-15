@@ -363,7 +363,7 @@ public class Menu {
     @Deprecated
     public void openFaceIconMenu(Player player, int page) {
         int inventorySize = 27;
-        int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_NV_PLAYER.get());
 
@@ -505,7 +505,7 @@ public class Menu {
     @Deprecated
     public void teleportResponseHeadMenu(Player player, int page) {
         int inventorySize = 27;
-        int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_RESPONSE_HEAD.get());
@@ -758,7 +758,7 @@ public class Menu {
     @Deprecated
     private void teleportRequestMenu(Player player, int page, boolean me) {
         int inventorySize = 27;
-        int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_REQUEST.get());
@@ -878,7 +878,7 @@ public class Menu {
     @Deprecated
     public void openImageMenu(Player player, int page) {
         int inventorySize = 54;
-        int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.IMAGE.get());
         try (Connection conn = db.getConnection()) {
@@ -1405,7 +1405,7 @@ public class Menu {
         String playerUUID = player.getUniqueId().toString();
 
         int inventorySize = 54;
-        int usingSlots = 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
         Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_POINT.get());
 

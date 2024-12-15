@@ -190,9 +190,9 @@ public class VelocitySocketResponse implements SocketResponse {
             java.util.regex.Matcher m = r.matcher(res);
             if (m.find()) {
             	String execplayerName = m.group(1);
-                String playerName = m.group(2);
+                String targetPlayerName = m.group(2);
                 String command = m.group(3);
-                cf.forwardCommand(execplayerName, command, playerName);
+                cf.forwardCommand(execplayerName, command, targetPlayerName);
             }
     	} else if (res.contains("プレイヤー不在")) {
     		bc.broadCastMessage(Component.text(res).color(NamedTextColor.RED));
