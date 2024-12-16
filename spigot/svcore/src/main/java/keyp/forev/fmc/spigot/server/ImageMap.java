@@ -48,6 +48,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -55,6 +56,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
+import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.CalcUtil;
 import keyp.forev.fmc.common.util.ExtUtil;
 import keyp.forev.fmc.spigot.server.menu.Menu;
@@ -85,14 +87,16 @@ public class ImageMap {
     private final Database db;
     private final RunnableTaskUtil rt;
     private final String serverName;
+    private final Provider<SocketSwitch> sswProvider;
     
     @Inject
-    public ImageMap(JavaPlugin plugin, Logger logger, Database db, ServerHomeDir shd, RunnableTaskUtil rt) {
+    public ImageMap(JavaPlugin plugin, Logger logger, Database db, ServerHomeDir shd, RunnableTaskUtil rt, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
         this.logger = logger;
         this.db = db;
         this.serverName = shd.getServerName();
         this.rt = rt;
+        this.sswProvider = sswProvider;
     }
 
     public void leadAction(Connection conn, Player player, RunnableTaskUtil.Key key, String[] usingArgs, Object[] qArgs) throws SQLException, ClassNotFoundException {
@@ -966,6 +970,12 @@ public class ImageMap {
                                                 rt.addTaskRunnable(player, playerActions2, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                                             }
                                         }
+                                        SocketSwitch ssw = sswProvider.get();
+                                        try (Connection connection = db.getConnection()) {
+                                            ssw.sendVelocityServer(connection, "imagemap->large->name->" + playerName + "->");
+                                        } catch (SQLException | ClassNotFoundException e) {
+                                            logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
+                                        }
                                     } catch (IOException | SQLException | ClassNotFoundException e) {
                                         player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
                                         logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
@@ -1153,6 +1163,12 @@ public class ImageMap {
 
                         player.sendMessage(message);
                     }
+                }
+                SocketSwitch ssw = sswProvider.get();
+                try (Connection connection = db.getConnection()) {
+                    ssw.sendVelocityServer(connection, "imagemap->" + (isQr ? "qr" : "1x1") + "->name->" + playerName + "->");
+                } catch (SQLException | ClassNotFoundException e) {
+                    logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                 }
             } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {
                 player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);

@@ -1,5 +1,7 @@
 package keyp.forev.fmc.spigot.server.cmd.sub.teleport;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,22 +17,32 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.StringUtil;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
+import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.slf4j.Logger;
+import keyp.forev.fmc.common.database.Database;
 
 public class TeleportAccept implements TabExecutor {
     private final JavaPlugin plugin;
+    private final Logger logger;
+    private final Database db;
     private final Luckperms lp;
+    private final Provider<SocketSwitch> sswProvider;
     @Inject
-    public TeleportAccept(JavaPlugin plugin, Luckperms lp) {
+    public TeleportAccept(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
+        this.logger = logger;
+        this.db = db;
         this.lp = lp;
+        this.sswProvider = sswProvider;
     }
 
     @Override
@@ -75,6 +87,13 @@ public class TeleportAccept implements TabExecutor {
 
                                 targetPlayer.sendMessage(message);
 
+                                SocketSwitch ssw = sswProvider.get();
+                                try (Connection conn = db.getConnection()) {
+                                    ssw.sendVelocityServer(conn, "teleport->player->name->" + playerName +"->at->" + targetName + "->isreverse->false->");
+                                } catch (SQLException | ClassNotFoundException e) {
+                                    logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
+                                }
+
                                 return true;
                             }
                         }
@@ -106,6 +125,13 @@ public class TeleportAccept implements TabExecutor {
 
                                 targetPlayer.sendMessage(messages);
                                 
+                                SocketSwitch ssw = sswProvider.get();
+                                try (Connection conn = db.getConnection()) {
+                                    ssw.sendVelocityServer(conn, "teleport->player->name->" + targetName +"->at->" + playerName + "->isreverse->true->");
+                                } catch (SQLException | ClassNotFoundException e) {
+                                    logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
+                                }
+
                                 return true;
                             }
                         }
