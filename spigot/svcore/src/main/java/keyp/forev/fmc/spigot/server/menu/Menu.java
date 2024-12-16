@@ -1451,7 +1451,7 @@ public class Menu {
 
     @Deprecated
     public void teleportPointMenu(Player player, int page, String type) {
-        boolean isPrivate = type == Menu.PRIVATE;
+        boolean isPrivate = type.equals(Menu.PRIVATE);
         String playerUUID = player.getUniqueId().toString();
 
         int inventorySize = 54;
