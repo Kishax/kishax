@@ -120,7 +120,7 @@ public class SpigotSocketResponse implements SocketResponse {
                                     player.sendMessage(messages);
                                     
                                     plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                                        menu.openServerInventoryFromOnlineServerInventory(player, extractedServer, 1);
+                                        menu.serverMenuFromOnlineServerMenu(player, extractedServer, 1);
                                     }, 60L);
                                 }
                             }

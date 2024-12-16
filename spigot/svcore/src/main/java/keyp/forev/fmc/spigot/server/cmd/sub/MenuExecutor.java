@@ -25,6 +25,7 @@ public class MenuExecutor {
     public static final List<String> args1 = new ArrayList<>(Arrays.asList("server", "image", "get", "tp"));
     public static final List<String> args2 = new ArrayList<>(Arrays.asList("online","survival","minigame","dev","mod","distributed","others","before"));
     public static final List<String> args2tp = new ArrayList<>(Arrays.asList("point","player", "navi"));
+    public static final List<String> args2image = new ArrayList<>(Arrays.asList("list","register"));
     public static final List<String> args3tpsp = new ArrayList<>(Arrays.asList("private","public"));
 
     private final JavaPlugin plugin;
@@ -87,13 +88,13 @@ public class MenuExecutor {
                             if (args.length > 2) {
                                 String serverType = args[2].toLowerCase();
                                 switch (serverType) {
-                                    case "online" -> menu.openOnlineServerInventory(player, 1);
-                                    case "survival", "minigame", "mod", "distributed", "others", "dev" -> menu.openServerEachTypeInventory(player, serverType, 1);
-                                    case "before" -> menu.openServerInventory(player, FMCSettings.NOW_ONLINE.getValue(), 1);
+                                    case "online" -> menu.onlineServerMenu(player, 1);
+                                    case "survival", "minigame", "mod", "distributed", "others", "dev" -> menu.serverEachTypeMenu(player, serverType, 1);
+                                    case "before" -> menu.serverMenu(player, FMCSettings.NOW_ONLINE.getValue(), 1);
                                     default -> sender.sendMessage("Usage: /fmc menu server <survival|minigame|dev|mod|distributed|others>");
                                 }
                             } else {
-                                menu.openServerTypeInventory((Player) sender, 1);
+                                menu.serverTypeMenu((Player) sender, 1);
                             }
                         } else {
                             sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
@@ -101,7 +102,16 @@ public class MenuExecutor {
                     }
                     case "image" -> {
                         if (plugin.getConfig().getBoolean("Menu.ImageMap", false)) {
-                            menu.openImageMenu(player, 1);
+                            menu.imageMapMenu(player);
+                            if (args.length > 2) {
+                                switch (args[2].toLowerCase()) {
+                                    case "list" -> menu.imageMapListMenu(player, 1);
+                                    case "register" -> player.performCommand("registerimagemap");
+                                    default -> menu.imageMapMenu(player);
+                                }
+                            } else {
+                                menu.imageMapMenu(player);
+                            }
                         } else {
                             sender.sendMessage(ChatColor.RED + "このサーバーでは、この機能は無効になっています。");
                         }
@@ -113,24 +123,24 @@ public class MenuExecutor {
                         }
                         if (args.length > 2) {
                             switch (args[2].toLowerCase()) {
-                                case "navi" -> menu.openFaceIconMenu(player, 1);
+                                case "navi" -> menu.faceIconNaviMenu(player, 1);
                                 case "point" -> menu.teleportPointTypeMenu(player, 1);
                                 case "player" -> menu.playerTeleportMenu(player, 1);
-                                default -> sender.sendMessage("Usage: /fmc menu tp <point|player>");
+                                default -> menu.serverTypeMenu(player, 1);
                             }
                         } else if (args.length > 3) {
                             switch (args[2].toLowerCase()) {
                                 case "point" -> {
                                     if (args[3].equalsIgnoreCase("private") || args[3].equalsIgnoreCase("public")) {
-                                        menu.openTeleportPointMenu(player, 1, args[3]);
+                                        menu.teleportPointMenu(player, 1, args[3]);
                                     } else {
                                         sender.sendMessage("Usage: /fmc menu tp point <private|public>");
                                     }
                                 }
-                                default -> sender.sendMessage("Usage: /fmc menu tp point <private|public>");
+                                default -> menu.serverTypeMenu(player, 1);
                             }
                         } else {
-                            menu.openServerTypeInventory((Player) sender, 1);
+                            menu.serverTypeMenu(player, 1);
                         }
                     }
                 }

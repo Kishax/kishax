@@ -98,7 +98,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                 Component note = Component.text("※タイトルとコメントは「:」で区切ってください。")
                     .color(NamedTextColor.GRAY);
                 
-                Component note2 = Component.text("※コメントがなければ、「:」は必要ありません。")
+                Component note2 = Component.text("※タイトルのみの場合、「:」は必要ありません。")
                     .color(NamedTextColor.GRAY);
 
                 final double roundX = JavaUtils.roundToFirstDecimalPlace(x);

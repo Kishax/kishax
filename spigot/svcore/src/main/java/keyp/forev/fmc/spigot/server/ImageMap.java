@@ -6,7 +6,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -57,6 +56,7 @@ import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
 import keyp.forev.fmc.common.util.CalcUtil;
+import keyp.forev.fmc.common.util.ExtUtil;
 import keyp.forev.fmc.spigot.server.menu.Menu;
 import keyp.forev.fmc.spigot.server.menu.Type;
 import keyp.forev.fmc.spigot.server.menu.interfaces.MenuEventRunnable;
@@ -93,6 +93,78 @@ public class ImageMap {
         this.db = db;
         this.serverName = shd.getServerName();
         this.rt = rt;
+    }
+
+    public void leadAction(Connection conn, Player player, RunnableTaskUtil.Key key, String[] usingArgs, Object[] qArgs) throws SQLException, ClassNotFoundException {
+        String playerName = player.getName();
+        boolean fromQ = (qArgs != null);
+        String url = usingArgs[0],
+            title = usingArgs[1],
+            comment = usingArgs[2];
+        // ラージか1✕1かをプレイヤーに問う
+        Component message = Component.empty();
+        if (fromQ) {
+            message = message.append(
+                Component.text("操作が途中で中断された場合、メニュー->画像マップより再開できます。")
+                    .appendNewline()
+                    .color(NamedTextColor.GRAY)
+            );
+        }
+
+        Component[] times = getPlayerTimesComponent(conn, playerName);
+
+        TextComponent messages = Component.text()
+            .append(Component.text("1✕1の画像マップを作成する場合は、"))
+            .append(TCUtils.ZERO.get())
+            .append(Component.text("と入力してください。"))
+            .append(times[0])
+            .appendNewline()
+            .append(Component.text("1✕1のQRコードを作成する場合は、"))
+            .append(TCUtils.ONE.get())
+            .append(Component.text("と入力してください。"))
+            .append(times[0])
+            .appendNewline()
+            .append(Component.text("ラージマップを作成する場合は、"))
+            .append(TCUtils.TWO.get())
+            .append(Component.text("と入力してください。"))
+            .append(times[1])
+            .appendNewline()
+            .append(message)
+            .append(TCUtils.INPUT_MODE.get())
+            .build();
+        
+        player.sendMessage(messages);
+
+        Map<RunnableTaskUtil.Key, MessageRunnable> playerActions = new HashMap<>();
+        playerActions.put(key, (input) -> {
+            player.sendMessage(TCUtils2.getResponseComponent(input));
+            switch (input) {
+                case "0" -> {
+                    rt.removeCancelTaskRunnable(player, key);
+                    String[] imageArgs = new String[] {"im", "create", url, title, comment};
+                    executeImageMap(player, imageArgs, qArgs);
+                }
+                case "1" -> {
+                    rt.removeCancelTaskRunnable(player, key);
+                    String[] imageArgs = new String[] {"im", "createqr", url, title, comment};
+                    executeImageMap(player, imageArgs, qArgs);
+                }
+                case "2" -> {
+                    rt.removeCancelTaskRunnable(player, key);
+                    String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
+                    executeLargeImageMap(player, imageArgs, qArgs, null, null, null);
+                }
+                default -> {
+                    Component errorMessage = Component.text("無効な入力です。")
+                        .appendNewline()
+                        .append(Component.text("0, 1, 2のいずれかを入力してください。"))
+                        .color(NamedTextColor.RED);
+                    player.sendMessage(errorMessage);
+                    rt.extendTask(player, key);
+                }
+            }
+        });
+        rt.addTaskRunnable(player, playerActions, key);
     }
 
     public void executeQFromMenu(Player player, Object[] Args) {
@@ -324,26 +396,26 @@ public class ImageMap {
                         player.sendMessage("無効なURLです。");
                         return;
                     }
+
                     URL getUrl = new URI(url).toURL();
-                    HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.connect();
-                    String contentType = connection.getContentType();
-                    switch (contentType) {
-                        case "image/png" -> ext = "png";
-                        case "image/jpeg" -> ext = "jpeg";
-                        case "image/jpg" -> ext = "jpg";
-                        default -> {
-                            player.sendMessage("指定のURLは規定の拡張子を持ちません。");
-                            return;
-                        }
+
+                    ext = ExtUtil.getExtension(getUrl);
+                    if (ext == null) {
+                        Component errorMessage = Component.text("指定のURLは規定の拡張子を持ちません。")
+                        .color(NamedTextColor.RED)
+                        .decorate(TextDecoration.BOLD);
+                        player.sendMessage(errorMessage);
+                        return;
                     }
+                    
                     LocalDate localDate = LocalDate.now();
                     now = fromDiscord ? (String) dArgs[1] : localDate.toString();
                     image =  ImageIO.read(getUrl);
                     if (image == null) {
-                        Component errorMessage = Component.text("指定のURLは規定の拡張子を持ちません。")
-                            .color(NamedTextColor.RED);
+                        Component errorMessage = Component.text("URLより画像を取得できませんでした。")
+                            .color(NamedTextColor.RED)
+                            .decorate(TextDecoration.BOLD);
+
                         player.sendMessage(errorMessage);
                         return;
                     }
@@ -992,22 +1064,19 @@ public class ImageMap {
                     saveImageToFileSystem(image, imageUUID, ext);
                 } else {
                     URL getUrl = new URI(url).toURL();
-                    HttpURLConnection connection = (HttpURLConnection) getUrl.openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.connect();
-                    String contentType = connection.getContentType();
-                    switch (contentType) {
-                        case "image/png" -> ext = "png";
-                        case "image/jpeg" -> ext = "jpeg";
-                        case "image/jpg" -> ext = "jpg";
-                        default -> {
-                            player.sendMessage("指定のURLは規定の拡張子を持ちません。");
-                            return;
-                        }
+
+                    ext = ExtUtil.getExtension(getUrl);
+                    if (ext == null) {
+                        Component errorMessage = Component.text("指定のURLは規定の拡張子を持ちません。")
+                        .color(NamedTextColor.RED)
+                        .decorate(TextDecoration.BOLD);
+                        player.sendMessage(errorMessage);
+                        return;
                     }
+
                     BufferedImage imageDefault =  ImageIO.read(getUrl);
                     if (imageDefault == null) {
-                        Component errorMessage = Component.text("指定のURLは規定の拡張子を持ちません。")
+                        Component errorMessage = Component.text("URLより画像を取得できませんでした。")
                             .color(NamedTextColor.RED);
 
                         player.sendMessage(errorMessage);
@@ -1019,8 +1088,8 @@ public class ImageMap {
                 List<String> lores = new ArrayList<>();
                 lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
                 List<String> commentLines = Arrays.stream(comment.split("\n"))
-                            .map(String::trim)
-                            .collect(Collectors.toList());
+                    .map(String::trim)
+                    .collect(Collectors.toList());
                 lores.addAll(commentLines);
                 lores.add("created by " + playerName);
                 lores.add("created at " + now.replace("-", "/"));
@@ -1081,7 +1150,7 @@ public class ImageMap {
                         Component message = Component.text("空中で実行しないでください！")
                             .color(NamedTextColor.RED)
                             .decorate(TextDecoration.BOLD);
-                            
+
                         player.sendMessage(message);
                     }
                 }
@@ -1197,79 +1266,6 @@ public class ImageMap {
         }
 
         return new Component[] {smallTimes, largeTimes};
-    }
-
-    private void leadAction(Connection conn, Player player, RunnableTaskUtil.Key key, String[] usingArgs, Object[] qArgs) throws SQLException, ClassNotFoundException {
-        String playerName = player.getName();
-        boolean fromQ = (qArgs != null);
-        String url = usingArgs[0],
-            title = usingArgs[1],
-            comment = usingArgs[2];
-        // ラージか1✕1かをプレイヤーに問う
-        Component message = Component.empty();
-        if (fromQ) {
-            message = message.append(
-                Component.text("操作が途中で中断された場合、メニュー->画像マップより再開できます。")
-                    .appendNewline()
-                    .color(NamedTextColor.GRAY)
-            );
-        }
-
-        Component[] times = getPlayerTimesComponent(conn, playerName);
-
-        TextComponent messages = Component.text()
-            .append(Component.text("1✕1の画像マップを作成する場合は、"))
-            .append(TCUtils.ZERO.get())
-            .append(Component.text("と入力してください。"))
-            .append(times[0])
-            .appendNewline()
-            .append(Component.text("1✕1のQRコードを作成する場合は、"))
-            .append(TCUtils.ONE.get())
-            .append(Component.text("と入力してください。"))
-            .append(times[0])
-            .appendNewline()
-            .append(Component.text("ラージマップを作成する場合は、"))
-            .append(TCUtils.TWO.get())
-            .append(Component.text("と入力してください。"))
-            .append(times[1])
-            .appendNewline()
-            .append(message)
-            .append(TCUtils.INPUT_MODE.get())
-            .build();
-        
-        player.sendMessage(messages);
-
-        Map<RunnableTaskUtil.Key, MessageRunnable> playerActions = new HashMap<>();
-        playerActions.put(key, (input) -> {
-            player.sendMessage(TCUtils2.getResponseComponent(input));
-            switch (input) {
-                case "0", "1" -> {
-                    rt.removeCancelTaskRunnable(player, key);
-                    String cmd;
-                    if (input.equals("0")) {
-                        cmd = "create";
-                    } else {
-                        cmd = "createqr";
-                    }
-                    String[] imageArgs = new String[] {"im", cmd, url, title, comment};
-                    executeImageMap(player, imageArgs, qArgs);
-                }
-                case "2" -> {
-                    rt.removeCancelTaskRunnable(player, key);
-                    String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
-                    executeLargeImageMap(player, imageArgs, qArgs, null, null, null);
-                }
-                default -> {
-                    Component errorMessage = Component.text("無効な入力です。")
-                        .appendNewline()
-                        .append(Component.text("0, 1, 2のいずれかを入力してください。"))
-                        .color(NamedTextColor.RED);
-                    player.sendMessage(errorMessage);
-                    rt.extendTask(player, key);
-                }
-            }
-        });
-        rt.addTaskRunnable(player, playerActions, key);
     }
 
     @Deprecated

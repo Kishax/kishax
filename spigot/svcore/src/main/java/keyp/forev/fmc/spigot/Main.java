@@ -22,7 +22,8 @@ import keyp.forev.fmc.spigot.module.Module;
 import keyp.forev.fmc.spigot.server.AutoShutdown;
 import keyp.forev.fmc.spigot.server.ImageMap;
 import keyp.forev.fmc.spigot.server.cmd.main.FMCCommand;
-import keyp.forev.fmc.spigot.server.cmd.sub.Q;
+import keyp.forev.fmc.spigot.server.cmd.sub.imagemap.Q;
+import keyp.forev.fmc.spigot.server.cmd.sub.imagemap.RegisterImageMap;
 import keyp.forev.fmc.spigot.server.cmd.sub.teleport.Navi;
 import keyp.forev.fmc.spigot.server.cmd.sub.teleport.RegisterTeleportPoint;
 import keyp.forev.fmc.spigot.server.cmd.sub.teleport.TeleportAccept;
@@ -91,6 +92,7 @@ public class Main extends JavaPlugin {
 			tprdCmd = getCommand("tprd"),
 			tprmdCmd = getCommand("tprmd"),
 			registerpointCmd = getCommand("registerpoint"),
+			registerimagemapCmd = getCommand("registerimagemap"),
 			backCmd = getCommand("back"),
 			nvCmd = getCommand("nv");
 		if (fmcCmd != null) {
@@ -115,6 +117,9 @@ public class Main extends JavaPlugin {
 		}
 		if (nvCmd != null) {
 			nvCmd.setExecutor(getInjector().getInstance(Navi.class));
+		}
+		if (registerimagemapCmd != null) {
+			registerimagemapCmd.setExecutor(getInjector().getInstance(RegisterImageMap.class));
 		}
 	}
 
