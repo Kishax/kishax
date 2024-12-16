@@ -36,6 +36,7 @@ public class RunnableTaskUtil {
     }
 
     public enum Key {
+        IMAGEMAP_REGISTER_MAP("registerImageMap"),
         IMAGEMAP_CREATE_LARGE_IMAGE("createLargeImageMap"),
         IMAGEMAP_CREATE_IMAGE_MAP_FROM_Q("createImageMapFromQ"),
         IMAGEMAP_CREATE_IMAGE_MAP_FROM_CMD("createImageMapFromCommandLine"),
