@@ -16,8 +16,10 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.settings.PermSettings;
+import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.JavaUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils2;
@@ -41,12 +43,14 @@ public class RegisterTeleportPoint implements TabExecutor {
     private final Luckperms lp;
     private final RunnableTaskUtil rt;
     private final String thisServerName;
+    private final Provider<SocketSwitch> sswProvider;
     @Inject
-    public RegisterTeleportPoint(Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ServerHomeDir shd) {
+    public RegisterTeleportPoint(Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
         this.logger = logger;
         this.db = db;
         this.lp = lp;
         this.rt = rt;
+        this.sswProvider = sswProvider;
         this.thisServerName = shd.getServerName();
     }
 
@@ -249,6 +253,12 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                     for (StackTraceElement element : e.getStackTrace()) {
                                                         logger.error(element.toString());
                                                     }
+                                                }
+                                                SocketSwitch ssw = sswProvider.get();
+                                                try (Connection conn2 = db.getConnection()) {
+                                                    ssw.sendVelocityServer(conn2, "teleport->register->name->" + playerName + "->at->" + title + "->");
+                                                } catch (SQLException | ClassNotFoundException e) {
+                                                    logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                                                 }
                                             } catch (Exception e) {
                                                 player.sendMessage("処理中にエラーが発生しました。");

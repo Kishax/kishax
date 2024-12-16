@@ -86,8 +86,8 @@ public class BroadCast {
         }
     }
     
-    public void sendExceptPlayerMessage(Component component, String specificPlayer) {
-    	sendPlayerMessageManager(component, specificPlayer, true);
+    public void sendExceptPlayerMessage(Component component, String exceptedPlayer) {
+    	sendPlayerMessageManager(component, exceptedPlayer, true);
     }
     
     public void sendSpecificPlayerMessage(Component component, String specificPlayer) {

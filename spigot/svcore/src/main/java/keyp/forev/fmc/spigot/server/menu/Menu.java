@@ -38,6 +38,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import keyp.forev.fmc.common.database.Database;
@@ -57,6 +58,7 @@ import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.server.menu.interfaces.MenuEventRunnable;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
+import keyp.forev.fmc.common.socket.SocketSwitch;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -83,10 +85,11 @@ public class Menu {
     private final ServerHomeDir shd;
     private final Book book;
     private final CommandForward cf;
+    private final Provider<SocketSwitch> sswProvider;
     private int currentOreIndex = 0;
 
 	@Inject
-	public Menu(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf) {  
+	public Menu(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf, Provider<SocketSwitch> sswProvider) {  
 		this.plugin = plugin;
         this.logger = logger;
         this.db = db;
@@ -96,6 +99,7 @@ public class Menu {
         this.shd = shd;
         this.book = book;
         this.cf = cf;
+        this.sswProvider = sswProvider;
 	}
 
     public void runMenuEventAction(Player player, Type menuType, int slot, InventoryClickEvent event) {
@@ -1629,7 +1633,7 @@ public class Menu {
                                 }
                                 Location loc = new Location(world, x, y, z, yaw, pitch);
                                 player.teleport(loc);
-
+                                
                                 Component message = Component.text("テレポートしました。")
                                     .color(NamedTextColor.GREEN)
                                     .decorate(TextDecoration.BOLD);
@@ -1645,6 +1649,13 @@ public class Menu {
                                     .build();
 
                                 player.sendMessage(messages);
+
+                                SocketSwitch ssw = sswProvider.get();
+                                try (Connection conn = db.getConnection()) {
+                                    ssw.sendVelocityServer(conn, "teleport->point->name->" + player.getName() +"->at->" + title + "->");
+                                } catch (SQLException | ClassNotFoundException e) {
+                                    logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
+                                }
                             }
                         }.runTaskLater(plugin, 20 * 3);
                     });

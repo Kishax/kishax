@@ -67,6 +67,7 @@ public class VelocitySocketResponse implements SocketResponse {
 	public void resaction(String res) {
     	if (Objects.isNull(res)) return;
 		res = res.replace("\n", "").replace("\r", "");
+		//logger.info("res: {}", res);
 		if (res.contains("inputMode")) {
 			if (res.contains("name")) {
 				String pattern = "inputMode->(.*?)->name->(.*?)->";
@@ -194,7 +195,79 @@ public class VelocitySocketResponse implements SocketResponse {
                 String command = m.group(3);
                 cf.forwardCommand(execplayerName, command, targetPlayerName);
             }
-    	} else if (res.contains("プレイヤー不在")) {
+    	} else if (res.contains("teleport")) {
+			if (res.contains("point")) {
+				String pattern = "teleport->point->name->(.*?)->at->(.*?)->";
+				Pattern compiledPattern = Pattern.compile(pattern);
+				Matcher matcher = compiledPattern.matcher(res);
+				if (matcher.find()) {
+					String playerName = matcher.group(1);
+					String pointName = matcher.group(2);
+
+					Component message = Component.text(playerName + "がポイント: " + pointName + "にテレポートしました。")
+						.color(NamedTextColor.GRAY)
+						.decorate(TextDecoration.ITALIC);
+
+					bc.sendExceptPlayerMessage(message, playerName);
+				}
+			} else if (res.contains("player")) {
+				String pattern = "teleport->player->name->(.*?)->at->(.*?)->isreverse->(.*?)->";
+				Pattern compiledPattern = Pattern.compile(pattern);
+				Matcher matcher = compiledPattern.matcher(res);
+				if (matcher.find()) {
+					String playerName = matcher.group(1);
+					String targetName = matcher.group(2);
+					boolean reverse = Boolean.valueOf(matcher.group(3));
+
+					Component message = Component.text(playerName + "が" + targetName + "に" + (reverse ? "逆" : "") + "テレポートしました。")
+						.color(NamedTextColor.GRAY)
+						.decorate(TextDecoration.ITALIC);
+
+					bc.sendExceptPlayerMessage(message, playerName);
+				}
+			} else if (res.contains("illbeback")) {
+				String pattern = "teleport->illbeback->name->(.*?)->";
+				Pattern compiledPattern = Pattern.compile(pattern);
+				Matcher matcher = compiledPattern.matcher(res);
+				if (matcher.find()) {
+					String playerName = matcher.group(1);
+
+					Component message = Component.text(playerName + "がもとの場所に戻りました。")
+						.color(NamedTextColor.GRAY)
+						.decorate(TextDecoration.ITALIC);
+
+					bc.sendExceptPlayerMessage(message, playerName);
+				}
+			} else if (res.contains("register")) {
+				String pattern = "teleport->register->name->(.*?)->at->(.*?)->";
+				Pattern compiledPattern = Pattern.compile(pattern);
+				Matcher matcher = compiledPattern.matcher(res);
+				if (matcher.find()) {
+					String playerName = matcher.group(1);
+					String title = matcher.group(2);
+
+					Component message = Component.text(playerName + "がポイント: " + title + "を設定しました。")
+						.color(NamedTextColor.GRAY)
+						.decorate(TextDecoration.ITALIC);
+
+					bc.sendExceptPlayerMessage(message, playerName);
+				}
+			}
+		} else if (res.contains("imagemap")) {
+			String pattern = "imagemap->(.*?)->name->(.*?)->";
+			Pattern compiledPattern = Pattern.compile(pattern);
+			Matcher matcher = compiledPattern.matcher(res);
+			if (matcher.find()) {
+				String type = matcher.group(1);
+				String playerName = matcher.group(2);
+
+				Component message = Component.text(playerName + "が画像マップを作成しました。(タイプ: " + type + ")")
+					.color(NamedTextColor.GRAY)
+					.decorate(TextDecoration.ITALIC);
+
+				bc.sendExceptPlayerMessage(message, playerName);
+			}
+		} else if (res.contains("プレイヤー不在")) {
     		bc.broadCastMessage(Component.text(res).color(NamedTextColor.RED));
     	} else {
     		// Discordからのメッセージ処理
