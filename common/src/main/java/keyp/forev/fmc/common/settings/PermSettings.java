@@ -11,6 +11,7 @@ public enum PermSettings {
     TPR("fmc.tpr"),
     SILENT("fmc.proxy.silent"),
     TELEPORT_REGISTER_POINT("fmc.registerpoint"),
+    IMAGEMAP_REGISTER_MAP("fmc.registermap")
     ;
 
 	private final String value;

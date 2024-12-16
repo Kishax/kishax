@@ -224,8 +224,8 @@ public class Menu {
         switch (page) {
             case 1 -> {
                 playerMenuActions.put(11, (event) -> teleportMenu(player));
-                playerMenuActions.put(13, (event) -> openServerTypeInventory(player, 1));
-                playerMenuActions.put(15, (event) -> openImageMenu(player, 1));
+                playerMenuActions.put(13, (event) -> serverTypeMenu(player, 1));
+                playerMenuActions.put(15, (event) -> imageMapMenu(player));
                 playerMenuActions.put(26, (event) -> generalMenu(player, page + 1));
                 ItemStack teleportItem = new ItemStack(Material.ENDER_PEARL);
                 ItemMeta teleportMeta = teleportItem.getItemMeta();
@@ -308,13 +308,12 @@ public class Menu {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.TELEPORT_POINT_TYPE.get());
         playerMenuActions.put(0, (event) -> teleportMenu(player));
-        playerMenuActions.put(11, (event) -> openTeleportPointMenu(player, 1, Menu.PRIVATE));
+        playerMenuActions.put(11, (event) -> teleportPointMenu(player, 1, Menu.PRIVATE));
         playerMenuActions.put(13, (event) -> {
             player.closeInventory();
             player.performCommand("registerpoint");
         });
-        playerMenuActions.put(15, (event) -> openTeleportPointMenu(player, 1, Menu.PUBLIC));
-        playerMenuActions.put(26, (event) -> teleportMenu(player));
+        playerMenuActions.put(15, (event) -> teleportPointMenu(player, 1, Menu.PUBLIC));
 
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -361,7 +360,7 @@ public class Menu {
     }
 
     @Deprecated
-    public void openFaceIconMenu(Player player, int page) {
+    public void faceIconNaviMenu(Player player, int page) {
         int inventorySize = 27;
         int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
@@ -410,7 +409,7 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
-            playerMenuActions.put(53, (event) -> openFaceIconMenu(player, page + 1));
+            playerMenuActions.put(53, (event) -> faceIconNaviMenu(player, page + 1));
         }
         if (page > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -420,7 +419,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
-            playerMenuActions.put(45, (event) -> openFaceIconMenu(player, page - 1));
+            playerMenuActions.put(45, (event) -> faceIconNaviMenu(player, page - 1));
         }
 
         for (int i = startIndex; i < endIndex; i++) {
@@ -455,7 +454,7 @@ public class Menu {
         playerMenuActions.put(0, (event) -> generalMenu(player, 1));
         playerMenuActions.put(11, (event) -> teleportPointTypeMenu(player, 1));
         playerMenuActions.put(13, (event) -> playerTeleportMenu(player, 1));
-        playerMenuActions.put(15, (event) -> openFaceIconMenu(player, 1));
+        playerMenuActions.put(15, (event) -> faceIconNaviMenu(player, 1));
 
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -644,7 +643,7 @@ public class Menu {
                                     new BukkitRunnable() {
                                         @Override
                                         public void run() {
-                                            openTeleportPointMenu(player, 1, type);
+                                            teleportPointMenu(player, 1, type);
                                         }
                                     }.runTaskLater(plugin, 20 * 3);
 
@@ -876,11 +875,60 @@ public class Menu {
     }
 
     @Deprecated
-    public void openImageMenu(Player player, int page) {
+    public void imageMapMenu(Player player) {
+        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
+        Inventory inv = Bukkit.createInventory(null, 27, Type.IMAGE_MAP.get());
+        playerMenuActions.put(0, (event) -> generalMenu(player, 1));
+        playerMenuActions.put(11, (event) -> {
+            player.closeInventory();
+            player.performCommand("registerimagemap");
+        });
+        playerMenuActions.put(15, (event) -> imageMapListMenu(player, 1));
+
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+
+        ItemStack registerImageItem = new ItemStack(Material.CARTOGRAPHY_TABLE);
+        ItemMeta registerImageMeta = registerImageItem.getItemMeta();
+        if (registerImageMeta != null) {
+            registerImageMeta.setDisplayName(ChatColor.GREEN + "イメージマップの登録");
+            registerImageMeta.setLore(new ArrayList<>(
+                Arrays.asList("画像URLよりイメージマップを登録できるよ。"))
+                );
+                registerImageItem.setItemMeta(registerImageMeta);
+        }
+        inv.setItem(11, registerImageItem);
+
+        ItemStack imageMapListItem = new ItemStack(Material.MAP);
+        ItemMeta imageMapListMeta = imageMapListItem.getItemMeta();
+        if (imageMapListMeta != null) {
+            imageMapListMeta.setDisplayName(ChatColor.GREEN + "イメージマップリスト");
+            imageMapListMeta.setLore(new ArrayList<>(
+                Arrays.asList("今までに登録されたイメージマップが見れる！"))
+                );
+                imageMapListItem.setItemMeta(imageMapListMeta);
+        }
+        inv.setItem(15, imageMapListItem);
+
+        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.IMAGE_MAP, playerMenuActions);
+        player.openInventory(inv);
+    }
+
+    @Deprecated
+    public void imageMapListMenu(Player player, int page) {
         int inventorySize = 54;
         int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
-        Inventory inv = Bukkit.createInventory(null, inventorySize, Type.IMAGE.get());
+        Inventory inv = Bukkit.createInventory(null, inventorySize, Type.IMAGE_MAP_LIST.get());
+
+        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
+        playerMenuActions.put(0, (event) -> imageMapMenu(player));
+
         try (Connection conn = db.getConnection()) {
             Map<Integer, Map<String, Object>> thisServerImageInfo = im.getThisServerImages(conn);
             Map<Integer, Map<String, Object>> imageMap = im.getImageMap(conn);
@@ -890,7 +938,6 @@ public class Menu {
             int startIndex = (page - 1) * itemsPerPage;
             int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
 
-            Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
             ItemStack backItem = new ItemStack(Material.STICK);
             ItemMeta backMeta = backItem.getItemMeta();
             if (backMeta != null) {
@@ -898,8 +945,7 @@ public class Menu {
                 backItem.setItemMeta(backMeta);
             }
             inv.setItem(0, backItem);
-
-            playerMenuActions.put(0, (event) -> generalMenu(player, 1));
+            
             if (page < totalPages) {
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
@@ -908,7 +954,7 @@ public class Menu {
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(53, nextPageItem);
-                playerMenuActions.put(53, (event) -> openImageMenu(player, page + 1));
+                playerMenuActions.put(53, (event) -> imageMapListMenu(player, page + 1));
             }
             if (page > 1) {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -918,7 +964,7 @@ public class Menu {
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(45, prevPageItem);
-                playerMenuActions.put(45, (event) -> openImageMenu(player, page - 1));
+                playerMenuActions.put(45, (event) -> imageMapListMenu(player, page - 1));
             }
             int index = 0;
             for (int i = startIndex; i < endIndex; i++) {
@@ -1052,7 +1098,7 @@ public class Menu {
                     index++;
                 }
             }
-            Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.IMAGE, playerMenuActions);
+            Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.IMAGE_MAP_LIST, playerMenuActions);
             player.openInventory(inv);
         } catch (SQLException | ClassNotFoundException e) {
             player.openInventory(inv);
@@ -1066,7 +1112,7 @@ public class Menu {
     }
 
     @Deprecated
-    public void openOnlineServerInventory(Player player, int page) {
+    public void onlineServerMenu(Player player, int page) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 54, Type.ONLINE_SERVER.get());
         ItemStack backItem = new ItemStack(Material.STICK);
@@ -1076,7 +1122,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, (event) -> openServerTypeInventory(player, 1));
+        playerMenuActions.put(0, (event) -> serverTypeMenu(player, 1));
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         // オンラインサーバーのみを抽出
         Map<String, Map<String, Object>> serverStatusOnlineMap = serverStatusMap.values().stream()
@@ -1105,7 +1151,7 @@ public class Menu {
             }
             int slot = SLOT_POSITIONS[i - startIndex];
             inv.setItem(slot, serverItem);
-            playerMenuActions.put(slot, (event) -> openServerInventoryFromOnlineServerInventory(player, serverName, 1));
+            playerMenuActions.put(slot, (event) -> serverMenuFromOnlineServerMenu(player, serverName, 1));
         }
         if (page > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -1115,7 +1161,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
-            playerMenuActions.put(45, (event) -> openOnlineServerInventory(player, page - 1));
+            playerMenuActions.put(45, (event) -> onlineServerMenu(player, page - 1));
         }
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
@@ -1125,7 +1171,7 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
-            playerMenuActions.put(53, (event) -> openOnlineServerInventory(player, page + 1));
+            playerMenuActions.put(53, (event) -> onlineServerMenu(player, page + 1));
         }
         Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.ONLINE_SERVER, playerMenuActions);
         //logger.info("menuActions: {}", menuActions);
@@ -1133,7 +1179,7 @@ public class Menu {
     }
 
     @Deprecated
-    public void openServerEachTypeInventory(Player player, String serverType, int page) {
+    public void serverEachTypeMenu(Player player, String serverType, int page) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
         ItemStack backItem = new ItemStack(Material.STICK);
@@ -1144,7 +1190,7 @@ public class Menu {
         }
         inv.setItem(0, backItem);
         playerMenuActions.put(0, (event) -> {
-            openServerTypeInventory(player, 1);
+            serverTypeMenu(player, 1);
         });
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusTypeMap = serverStatusMap.get(serverType);
@@ -1168,7 +1214,7 @@ public class Menu {
                 serverItem.setItemMeta(serverMeta);
             }
             int slot = SLOT_POSITIONS[i - startIndex];
-            playerMenuActions.put(slot, (event) -> openServerInventory(player, serverName, 1));
+            playerMenuActions.put(slot, (event) -> serverMenu(player, serverName, 1));
             inv.setItem(slot, serverItem);
         }
         if (page > 1) {
@@ -1179,7 +1225,7 @@ public class Menu {
                 prevPageItem.setItemMeta(prevPageMeta);
             }
             inv.setItem(45, prevPageItem);
-            playerMenuActions.put(45, (event) -> openServerEachTypeInventory(player, serverType, page - 1));
+            playerMenuActions.put(45, (event) -> serverEachTypeMenu(player, serverType, page - 1));
         }
         if (page < totalPages) {
             ItemStack nextPageItem = new ItemStack(Material.ARROW);
@@ -1189,22 +1235,22 @@ public class Menu {
                 nextPageItem.setItemMeta(nextPageMeta);
             }
             inv.setItem(53, nextPageItem);
-            playerMenuActions.put(53, (event) -> openServerEachTypeInventory(player, serverType, page + 1));
+            playerMenuActions.put(53, (event) -> serverEachTypeMenu(player, serverType, page + 1));
         }
         Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SERVER_EACH_TYPE, playerMenuActions);
         player.openInventory(inv);
     }
 
-    public void openServerInventory(Player player, String serverName, int page) {
-        openServerInventory(player, serverName, page, false);
+    public void serverMenu(Player player, String serverName, int page) {
+        serverMenu(player, serverName, page, false);
     }
 
-    public void openServerInventoryFromOnlineServerInventory(Player player, String serverName, int page) {
-        openServerInventory(player, serverName, page, true);
+    public void serverMenuFromOnlineServerMenu(Player player, String serverName, int page) {
+        serverMenu(player, serverName, page, true);
     }
 
     @Deprecated
-    private void openServerInventory(Player player, String serverName, int page, boolean fromOnlineServerInventory) {
+    private void serverMenu(Player player, String serverName, int page, boolean fromOnlineServerInventory) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         int permLevel = lp.getPermLevel(player.getName());
         Inventory inv = Bukkit.createInventory(null, 54, serverName + " server");
@@ -1353,7 +1399,7 @@ public class Menu {
                                             prevPageItem.setItemMeta(prevPageMeta);
                                         }
                                         inv.setItem(45, prevPageItem);
-                                        playerMenuActions.put(45, (event) -> openServerInventory(player, serverName, page - 1));
+                                        playerMenuActions.put(45, (event) -> serverMenu(player, serverName, page - 1));
                                     }
                                     // ページ進むブロックを配置
                                     if (page < totalPages) {
@@ -1364,7 +1410,7 @@ public class Menu {
                                             nextPageItem.setItemMeta(nextPageMeta);
                                         }
                                         inv.setItem(53, nextPageItem);
-                                        playerMenuActions.put(53, (event) -> openServerInventory(player, serverName, page + 1));
+                                        playerMenuActions.put(53, (event) -> serverMenu(player, serverName, page + 1));
                                     }
                                 } else {
                                     ItemStack noPlayerItem = new ItemStack(Material.BARRIER);
@@ -1390,9 +1436,9 @@ public class Menu {
         }
         playerMenuActions.put(0, (event) -> {
             if (fromOnlineServerInventory) {
-                openOnlineServerInventory(player, 1);
+                onlineServerMenu(player, 1);
             } else {
-                openServerEachTypeInventory(player, thisServerType.get(), 1);
+                serverEachTypeMenu(player, thisServerType.get(), 1);
             }
         });
         Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SERVER, playerMenuActions);
@@ -1400,7 +1446,7 @@ public class Menu {
     }
 
     @Deprecated
-    public void openTeleportPointMenu(Player player, int page, String type) {
+    public void teleportPointMenu(Player player, int page, String type) {
         boolean isPrivate = type == Menu.PRIVATE;
         String playerUUID = player.getUniqueId().toString();
 
@@ -1478,7 +1524,7 @@ public class Menu {
                     nextPageItem.setItemMeta(nextPageMeta);
                 }
                 inv.setItem(53, nextPageItem);
-                playerMenuActions.put(53, (event) -> openTeleportPointMenu(player, page + 1, type));
+                playerMenuActions.put(53, (event) -> teleportPointMenu(player, page + 1, type));
             }
             if (page > 1) {
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -1488,7 +1534,7 @@ public class Menu {
                     prevPageItem.setItemMeta(prevPageMeta);
                 }
                 inv.setItem(45, prevPageItem);
-                playerMenuActions.put(45, (event) -> openTeleportPointMenu(player, page - 1, type));
+                playerMenuActions.put(45, (event) -> teleportPointMenu(player, page - 1, type));
             }
             int index = 0;
             for (int i = startIndex; i < endIndex; i++) {
@@ -1625,14 +1671,14 @@ public class Menu {
         Inventory inv = Bukkit.createInventory(null, 27, Type.TP_POINT_MANAGER.get());
 
         playerMenuActions.put(11, (event) -> changeMaterial(player, id));
-        playerMenuActions.put(15, (event) -> openDeleteInventory(player, id));
+        playerMenuActions.put(15, (event) -> deleteTeleportPointMenu(player, id));
 
         try (Connection dconn = db.getConnection()) {
             try (PreparedStatement ps = dconn.prepareStatement("SELECT * FROM tp_points WHERE id = " + id + " LIMIT 1;")) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         String type = rs.getString("type");
-                        playerMenuActions.put(0, (event) -> openTeleportPointMenu(player, 1, type));
+                        playerMenuActions.put(0, (event) -> teleportPointMenu(player, 1, type));
                     }
                 }
             }
@@ -1680,7 +1726,7 @@ public class Menu {
     }
 
     @Deprecated
-    private void openDeleteInventory(Player player, int id) {
+    private void deleteTeleportPointMenu(Player player, int id) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
 
         Inventory inv = Bukkit.createInventory(null, 27, Type.DELETE.get());
@@ -1728,7 +1774,7 @@ public class Menu {
                                         new BukkitRunnable() {
                                             @Override
                                             public void run() {
-                                                openTeleportPointMenu(player, 1, type);
+                                                teleportPointMenu(player, 1, type);
                                             }
                                         }.runTaskLater(plugin, 20 * 3);
                 
@@ -1780,7 +1826,7 @@ public class Menu {
     }
 
     @Deprecated
-    public void openServerTypeInventory(Player player, int page) {
+    public void serverTypeMenu(Player player, int page) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         playerMenuActions.put(0, (event) -> generalMenu(player, 1));
         Inventory inv = Bukkit.createInventory(null, 27, Type.SERVER_TYPE.get());
@@ -1793,11 +1839,11 @@ public class Menu {
         inv.setItem(0, backItem);
         switch (page) {
             case 1 -> {
-                playerMenuActions.put(11, (event) -> openServerEachTypeInventory(player, "survival", 1));
-                playerMenuActions.put(13, (event) -> openServerEachTypeInventory(player, "minigame", 1));
-                playerMenuActions.put(15, (event) -> openServerEachTypeInventory(player, "dev", 1));
-                playerMenuActions.put(18, (event) -> openOnlineServerInventory(player, 1));
-                playerMenuActions.put(26, (event) -> openServerTypeInventory(player, 2));
+                playerMenuActions.put(11, (event) -> serverEachTypeMenu(player, "survival", 1));
+                playerMenuActions.put(13, (event) -> serverEachTypeMenu(player, "minigame", 1));
+                playerMenuActions.put(15, (event) -> serverEachTypeMenu(player, "dev", 1));
+                playerMenuActions.put(18, (event) -> onlineServerMenu(player, 1));
+                playerMenuActions.put(26, (event) -> serverTypeMenu(player, 2));
                 ItemStack lifeServerItem = new ItemStack(Material.BREAD);
                 ItemMeta lifeMeta = lifeServerItem.getItemMeta();
                 if (lifeMeta != null) {
@@ -1835,10 +1881,10 @@ public class Menu {
                 inv.setItem(26, nextPageItem);
             }
             case 2 -> {
-                playerMenuActions.put(11, (event) -> openServerEachTypeInventory(player, "distributed", 1));
-                playerMenuActions.put(13, (event) -> openServerEachTypeInventory(player, "mod", 1));
-                playerMenuActions.put(15, (event) -> openServerEachTypeInventory(player, "others", 1));
-                playerMenuActions.put(18, (event) -> openServerTypeInventory(player, 1));
+                playerMenuActions.put(11, (event) -> serverEachTypeMenu(player, "distributed", 1));
+                playerMenuActions.put(13, (event) -> serverEachTypeMenu(player, "mod", 1));
+                playerMenuActions.put(15, (event) -> serverEachTypeMenu(player, "others", 1));
+                playerMenuActions.put(18, (event) -> serverTypeMenu(player, 1));
                 ItemStack distributionServerItem = new ItemStack(Material.CHORUS_FRUIT);
                 ItemMeta distributionMeta = distributionServerItem.getItemMeta();
                 if (distributionMeta != null) {

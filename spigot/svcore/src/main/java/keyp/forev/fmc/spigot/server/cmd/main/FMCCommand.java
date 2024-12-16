@@ -173,6 +173,12 @@ public class FMCCommand implements TabExecutor {
 								}
 								return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
 							}
+							case "image" -> {
+								for (String imageArg : MenuExecutor.args2image) {
+									ret.add(imageArg);
+								}
+								return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
+							}
 						}
 					}
 					case "portal" -> {

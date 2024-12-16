@@ -11,7 +11,8 @@ public enum Type {
     ONLINE_SERVER("online servers"),
     SERVER_TYPE("server type"),
     SERVER_EACH_TYPE("server each type"),
-    IMAGE("image maps"),
+    IMAGE_MAP("image maps"),
+    IMAGE_MAP_LIST("image maps list"),
     SETTING("settings"),
     TELEPORT("teleport"),
     PLAYER_TELEPORT("player teleport"),
@@ -25,6 +26,7 @@ public enum Type {
     DELETE("delete"),
     CHANGE_MATERIAL("material change"),
     TP_POINT_MANAGER("teleport point manager"),
+
     ;
 
     private final String name;

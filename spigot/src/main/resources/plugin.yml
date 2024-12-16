@@ -49,6 +49,10 @@ commands:
     usage: /<command>
     description: You can register point
     executor: keyp.forev.fmc.spigot.cmd.sub.teleport.RegisterTeleportPoint
+  registerimagemap:
+    usage: /<command>
+    description: You can register image map
+    executor: keyp.forev.fmc.spigot.cmd.sub.imagemap.RegisterImageMap
   nv:
     usage: /<command>
     description: You can open navi menu

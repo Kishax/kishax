@@ -23,7 +23,7 @@ dependencies {
 	compileOnly 'club.minnced:discord-webhooks:0.8.0'
 	shadowImpl 'de.timongcraft:VeloBoard:1.4.0-EXPERIMENTAL-CHANGES'
 	shadowImpl 'org.ow2.asm:asm:9.7.1'
-	shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
+	//shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
 	shadowImpl project(':common')
 }
 

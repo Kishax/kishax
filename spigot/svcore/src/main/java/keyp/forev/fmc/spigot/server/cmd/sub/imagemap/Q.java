@@ -1,4 +1,4 @@
-package keyp.forev.fmc.spigot.server.cmd.sub;
+package keyp.forev.fmc.spigot.server.cmd.sub.imagemap;
 
 import java.util.Collections;
 

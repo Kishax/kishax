@@ -40,6 +40,7 @@ public class RunnableTaskUtil {
         IMAGEMAP_CREATE_LARGE_IMAGE("createLargeImageMap"),
         IMAGEMAP_CREATE_IMAGE_MAP_FROM_Q("createImageMapFromQ"),
         IMAGEMAP_CREATE_IMAGE_MAP_FROM_CMD("createImageMapFromCommandLine"),
+        IMAGEMAP_CREATE_IMAGE_MAP_FROM_MENU("createImageMapFromMenu"),
         TELEPORT_REGISTER_POINT("registerTeleportPoint"),
         ;
         private final String key;
@@ -53,8 +54,11 @@ public class RunnableTaskUtil {
     }
 
     public void addTaskRunnable(Player player, Map<Key, MessageRunnable> playerActions, Key key) {
+        //EventListener.playerInputerMap.computeIfAbsent(player, (somekey) -> playerActions);
         EventListener.playerInputerMap.put(player, playerActions);
+
         scheduleNewTask(player, inputPeriod, key);
+
         try (Connection connection3 = db.getConnection()) {
             SocketSwitch ssw = sswProvider.get();
             ssw.sendVelocityServer(connection3, "inputMode->on->name->" + player.getName() + "->");
@@ -72,19 +76,15 @@ public class RunnableTaskUtil {
     }
 
     private void scheduleNewTask(Player player, int delaySeconds, Key key) {
+        //removeCancelTaskRunnable(player, key); // 新しいタスクをセットする前に
+
         BukkitTask newTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
             player.sendMessage(ChatColor.RED + "入力がタイムアウトしました。");
             removeCancelTaskRunnable(player, key);
+            //logger.info("key: {}", key);
         }, 20 * delaySeconds);
-        if (EventListener.playerTaskMap.containsKey(player)) {
-            Map<Key, BukkitTask> playerTasks = EventListener.playerTaskMap.get(player);
-            playerTasks.put(key, newTask);
-            EventListener.playerTaskMap.put(player, playerTasks);
-        } else {
-            Map<Key, BukkitTask> playerTasks = new HashMap<>();
-            playerTasks.put(key, newTask);
-            EventListener.playerTaskMap.put(player, playerTasks);
-        }
+
+        EventListener.playerTaskMap.computeIfAbsent(player, (somekey) -> new HashMap<>()).put(key, newTask);
     }
 
     public boolean checkIsOtherInputMode(Player player, Key exceptedKey)  {
