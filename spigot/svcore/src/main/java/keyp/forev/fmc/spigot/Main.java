@@ -35,7 +35,7 @@ import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 
 public class Main extends JavaPlugin {
 	private static Injector injector = null;
-	private final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("FMC-Plugin");
+	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("FMC-Plugin");
 	
 	@Override
 	public void onEnable() {
