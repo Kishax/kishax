@@ -228,7 +228,6 @@ public final class EventListener implements Listener {
 
     @EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
-        logger.info("inventoryopen!");
         if (event.getPlayer() instanceof Player player) {
             String title = event.getView().getOriginalTitle();
 

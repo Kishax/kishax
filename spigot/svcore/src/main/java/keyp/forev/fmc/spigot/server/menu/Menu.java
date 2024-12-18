@@ -683,8 +683,8 @@ public class Menu {
                 ResultSet rs = ps1.executeQuery()) {
                 if (rs.next()) {
                     final String defaultMaterialName = rs.getString("material");
-                    final String typeName = rs.getString("type");
-                    Optional<Type> optionalType = Type.search(typeName);
+                    final String typePersistantKey = rs.getString("type");
+                    Optional<Type> optionalType = Type.searchPersistantKeys(typePersistantKey);
                     if (optionalType.isPresent()) {
                         Type type = optionalType.get();
                         for (int i = 1; i <= invSize -1; i++) {
@@ -1276,7 +1276,7 @@ public class Menu {
             }
             try (PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setString(1, thisServerName);
-                ps.setString(2, type.get());
+                ps.setString(2, type.getPersistantKey());
                 if (isPrivate) {
                     ps.setString(3, playerUUID);
                 }
@@ -2056,8 +2056,8 @@ public class Menu {
             try (PreparedStatement ps = dconn.prepareStatement("SELECT * FROM tp_points WHERE id = " + id + " LIMIT 1;")) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        String typeName = rs.getString("type");
-                        Optional<Type> optionalType = Type.search(typeName);
+                        String typePersistantKey = rs.getString("type");
+                        Optional<Type> optionalType = Type.searchPersistantKeys(typePersistantKey);
                         if (optionalType.isPresent()) {
                             Type type = optionalType.get();
                             playerMenuActions.put(0, (event) -> teleportPointMenu(player, type));
@@ -2120,9 +2120,9 @@ public class Menu {
                     if (rs.next()) {
                         final String title = rs.getString("title");
                         final String comment = rs.getString("comment");
-                        final String typeName = rs.getString("type");
+                        final String typePersistantKey = rs.getString("type");
 
-                        Optional<Type> optionalType = Type.search(typeName);
+                        Optional<Type> optionalType = Type.searchPersistantKeys(typePersistantKey);
                         if (optionalType.isPresent()) {
                             Type type = optionalType.get();
                             playerMenuActions.put(0, (event) -> teleportPointManager(player, id));
