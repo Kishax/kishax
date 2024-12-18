@@ -6,10 +6,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +28,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -56,6 +59,7 @@ import keyp.forev.fmc.spigot.server.cmd.sub.CommandForward;
 import keyp.forev.fmc.spigot.server.cmd.sub.teleport.TeleportRequest;
 import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.server.menu.interfaces.MenuEventRunnable;
+import keyp.forev.fmc.spigot.server.menu.interfaces.PlayerRunnable;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.SocketSwitch;
@@ -67,7 +71,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class Menu {
     public static final Map<Player, Map<Type, Map<Integer, MenuEventRunnable>>> menuEventActions = new ConcurrentHashMap<>();
     public static final Map<Player, Map<Type, AtomicBoolean>> menuEventFlags = new ConcurrentHashMap<>();
-    public static final String PUBLIC = "public", PRIVATE = "private";
     public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
     public static final int[] FACE_POSITIONS = {46, 47, 48, 49, 50, 51, 52};
     private final List<Material> ORE_BLOCKS = Arrays.asList(
@@ -102,6 +105,149 @@ public class Menu {
         this.sswProvider = sswProvider;
 	}
 
+    private final Map<Type, PlayerRunnable> shortCutMap = Map.ofEntries(
+        new SimpleEntry<>(Type.GENERAL, this::generalMenu),
+        new SimpleEntry<>(Type.IMAGE_MAP_LIST, this::imageMapMenu),
+        new SimpleEntry<>(Type.ONLINE_SERVER, this::onlineServerMenu),
+        new SimpleEntry<>(Type.PLAYER_TELEPORT, this::playerTeleportMenu),
+        new SimpleEntry<>(Type.SETTING, this::settingMenu),
+        new SimpleEntry<>(Type.TELEPORT, this::teleportMenu),
+        new SimpleEntry<>(Type.TELEPORT_REQUEST, this::teleportRequestMenu),
+        new SimpleEntry<>(Type.TELEPORT_REQUEST_ME, this::teleportMeRequestMenu),
+        new SimpleEntry<>(Type.TELEPORT_POINT_PRIVATE, this::teleportPointPrivateHandler),
+        new SimpleEntry<>(Type.TELEPORT_POINT_PUBLIC, this::teleportPointPublicHandler),
+        new SimpleEntry<>(Type.TELEPORT_POINT_TYPE, this::teleportPointTypeMenu),
+        new SimpleEntry<>(Type.TELEPORT_NV_PLAYER, this::faceIconNaviMenu)
+    );
+
+    public void shortCutMenu(Player player) {
+        shortCutMenu(player, 1);
+    }
+
+    public Map<Type, PlayerRunnable> getShortCutMap() {
+        return shortCutMap;
+    }
+    
+    @Deprecated
+    private void shortCutMenu(Player player, int page) {
+        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
+        Inventory inv = Bukkit.createInventory(null, 27, Type.SHORTCUT.get());
+        playerMenuActions.put(0, (event) -> generalMenu(player));
+        
+        int inventorySize = 27;
+        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
+        
+        Map<Type, PlayerRunnable> thisShortCutMap = shortCutMap.entrySet().stream()
+            .filter(entry -> !entry.getKey().equals(Type.GENERAL))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        int totalItems = thisShortCutMap.size();
+        int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
+        int startIndex = (page - 1) * itemsPerPage;
+        int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+        
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+
+        if (page < totalPages) {
+            ItemStack nextPageItem = new ItemStack(Material.ARROW);
+            ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+            if (nextPageMeta != null) {
+                nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
+                nextPageItem.setItemMeta(nextPageMeta);
+            }
+            inv.setItem(53, nextPageItem);
+            playerMenuActions.put(53, (event) -> shortCutMenu(player, page + 1));
+        }
+        if (page > 1) {
+            ItemStack prevPageItem = new ItemStack(Material.ARROW);
+            ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+            if (prevPageMeta != null) {
+                prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
+                prevPageItem.setItemMeta(prevPageMeta);
+            }
+            inv.setItem(45, prevPageItem);
+            playerMenuActions.put(45, (event) -> shortCutMenu(player, page - 1));
+        }
+
+        Iterator<Map.Entry<Type, PlayerRunnable>> iterator = thisShortCutMap.entrySet().iterator();
+
+        int i = 0;
+        while (iterator.hasNext()) {
+            Map.Entry<Type, PlayerRunnable> entry = iterator.next();
+
+            if (i >= startIndex && i < endIndex) {
+                Type type = entry.getKey();
+                String typeName = type.get();
+                String typePersistantKey = type.getPersistantKey();
+
+                ItemStack item = new ItemStack(type.getMaterial());
+                ItemMeta meta = item.getItemMeta();
+                if (meta != null) {
+                    meta.setDisplayName(type.get());
+                    meta.getPersistentDataContainer().set(new NamespacedKey(plugin, typePersistantKey), PersistentDataType.STRING, "true");
+                    item.setItemMeta(meta);
+                }
+                inv.addItem(item);
+
+                playerMenuActions.put(inv.first(item), (event) -> {
+                    player.closeInventory();
+                    HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(item);
+
+                    Component message = Component.text("ショートカットアイテム(to: " + typeName + ")を渡しました。")
+                        .color(NamedTextColor.GRAY)
+                        .decorate(TextDecoration.ITALIC);
+                    
+                    player.sendMessage(message);
+
+                    if (!remaining.isEmpty()) {
+                        World world = player.getWorld();
+                        Location playerLocation = player.getLocation();
+                        Block block = playerLocation.getBlock();
+
+                        if (block.getType() != Material.AIR) {
+                            Bukkit.getScheduler().runTask(plugin, () -> {
+                                Component message2 = Component.text("インベントリに入り切らないマップは、ドロップしました。")
+                                    .color(NamedTextColor.GREEN)
+                                    .decorate(TextDecoration.BOLD);
+                                
+                                player.sendMessage(message2);
+
+                                remaining.forEach((key, value) -> {
+                                    world.dropItemNaturally(playerLocation, value);
+                                });
+                            });
+                        } else {
+                            Component message2 = Component.text("空中で実行しないでください！")
+                                .color(NamedTextColor.RED)
+                                .decorate(TextDecoration.BOLD);
+
+                            player.sendMessage(message2);
+                        }
+                    }
+                });
+            }
+            i++;
+        }
+
+        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SHORTCUT, playerMenuActions);
+        player.openInventory(inv);
+    }
+
+    public void teleportPointPublicHandler(Player player) {
+        teleportPointMenu(player, Type.TELEPORT_POINT_PUBLIC);
+    }
+
+    public void teleportPointPrivateHandler(Player player) {
+        teleportPointMenu(player, Type.TELEPORT_POINT_PRIVATE);
+    }
+
     public void runMenuEventAction(Player player, Type menuType, int slot, InventoryClickEvent event) {
         Map<Type, Map<Integer, MenuEventRunnable>> playerMenuActions = getPlayerMenuEventActions(player);
         if (playerMenuActions != null) {
@@ -120,117 +266,26 @@ public class Menu {
         return Menu.menuEventActions.get(player);
     }
 
-    @Deprecated
-    public void settingMenu(Player player, int page) {
-        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
-        Inventory inv = Bukkit.createInventory(null, 27,Type.SETTING.get());
-        try (Connection conn = db.getConnection()) {
-            Map<String, Object> memberMap = db.getMemberMap(conn, player.getUniqueId().toString());
-            switch (page) {
-                case 1 -> {
-                    if (memberMap.get("hubinv") instanceof Boolean hubinv) {
-                        playerMenuActions.put(11, (event) -> {
-                            try (Connection connection = db.getConnection()) {
-                                db.updateMemberToggle(connection, "hubinv", !hubinv, player.getUniqueId().toString());
-                                player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (hubinv ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
-                            } catch (SQLException | ClassNotFoundException e) {
-                                player.closeInventory();
-                                player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
-                                logger.error("An error occurred while communicating with the database: {}", e.getMessage());
-                                for (StackTraceElement ste : e.getStackTrace()) {
-                                    logger.error(ste.toString());
-                                }
-                            }
-                            settingMenu(player, 1);
-                        });
-                        if (hubinv) {
-                            ItemStack hubinvItem = new ItemStack(Material.OAK_SIGN);
-                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
-                            if (hubinvMeta != null) {
-                                hubinvMeta.setDisplayName(ChatColor.GOLD + "サーバー起動時のアクション");
-                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "チャットタイプに切り替えます。"));
-                                hubinvItem.setItemMeta(hubinvMeta);
-                            }
-                            inv.setItem(11, hubinvItem);
-                        } else {
-                            ItemStack hubinvItem = new ItemStack(Material.CHEST);
-                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
-                            if (hubinvMeta != null) {
-                                hubinvMeta.setDisplayName(ChatColor.GOLD + "サーバー起動時のアクション");
-                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "オープンインベントリタイプに切り替えます。"));
-                                hubinvItem.setItemMeta(hubinvMeta);
-                            }
-                            inv.setItem(11, hubinvItem);
-                        }
-                    }
-                    if (memberMap.get("tptype") instanceof Boolean tptype) {
-                        playerMenuActions.put(13, (event) -> {
-                            try (Connection connection = db.getConnection()) {
-                                db.updateMemberToggle(connection, "tptype", !tptype, player.getUniqueId().toString());
-                                player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (tptype ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
-                            } catch (SQLException | ClassNotFoundException e) {
-                                player.closeInventory();
-                                player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
-                                logger.error("An error occurred while communicating with the database: {}", e.getMessage());
-                                for (StackTraceElement ste : e.getStackTrace()) {
-                                    logger.error(ste.toString());
-                                }
-                            }
-                            settingMenu(player, 1);
-                        });
-                        if (tptype) {
-                            ItemStack hubinvItem = new ItemStack(Material.OAK_SIGN);
-                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
-                            if (hubinvMeta != null) {
-                                hubinvMeta.setDisplayName(ChatColor.GOLD + "テレポート時のアクション");
-                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "チャットタイプに切り替えます。"));
-                                hubinvItem.setItemMeta(hubinvMeta);
-                            }
-                            inv.setItem(13, hubinvItem);
-                        } else {
-                            ItemStack hubinvItem = new ItemStack(Material.CHEST);
-                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
-                            if (hubinvMeta != null) {
-                                hubinvMeta.setDisplayName(ChatColor.GOLD + "テレポート時のアクション");
-                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "オープンインベントリタイプに切り替えます。"));
-                                hubinvItem.setItemMeta(hubinvMeta);
-                            }
-                            inv.setItem(13, hubinvItem);
-                        }
-                    }
-                }
-            }
-            Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SETTING, playerMenuActions);
-        } catch (SQLException | ClassNotFoundException e) {
-            player.closeInventory();
-            player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
-            logger.error("An error occurred while communicating with the database: {}", e.getMessage());
-            for (StackTraceElement ste : e.getStackTrace()) {
-                logger.error(ste.toString());
-            }
-        }
-        ItemStack backItem = new ItemStack(Material.STICK);
-        ItemMeta backMeta = backItem.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
-            backItem.setItemMeta(backMeta);
-        }
-        inv.setItem(0, backItem);
-        playerMenuActions.put(0, (event) -> generalMenu(player, 2));
-        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SETTING, playerMenuActions);
-        player.openInventory(inv);
+    public void settingMenu(Player player) {
+        settingMenu(player, 1);
+    }
+
+    public void generalMenu(Player player) {
+        generalMenu(player, 1);
     }
 
     @Deprecated
-    public void generalMenu(Player player, int page) {
+    private void generalMenu(Player player, int page) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.GENERAL.get());
         switch (page) {
             case 1 -> {
                 playerMenuActions.put(11, (event) -> teleportMenu(player));
-                playerMenuActions.put(13, (event) -> serverTypeMenu(player, 1));
+                playerMenuActions.put(13, (event) -> serverTypeMenu(player));
                 playerMenuActions.put(15, (event) -> imageMapMenu(player));
+                playerMenuActions.put(18, (event) -> shortCutMenu(player));
                 playerMenuActions.put(26, (event) -> generalMenu(player, page + 1));
+
                 ItemStack teleportItem = new ItemStack(Material.ENDER_PEARL);
                 ItemMeta teleportMeta = teleportItem.getItemMeta();
                 if (teleportMeta != null) {
@@ -239,6 +294,7 @@ public class Menu {
                     teleportItem.setItemMeta(teleportMeta);
                 }
                 inv.setItem(11, teleportItem);
+
                 ItemStack serverItem = new ItemStack(Material.COMPASS);
                 ItemMeta serverMeta = serverItem.getItemMeta();
                 if (serverMeta != null) {
@@ -247,6 +303,7 @@ public class Menu {
                     serverItem.setItemMeta(serverMeta);
                 }
                 inv.setItem(13, serverItem);
+
                 ItemStack imageItem = new ItemStack(Material.MAP);
                 ItemMeta imageMeta = imageItem.getItemMeta();
                 if (imageMeta != null) {
@@ -255,6 +312,16 @@ public class Menu {
                     imageItem.setItemMeta(imageMeta);
                 }
                 inv.setItem(15, imageItem);
+
+                ItemStack shortCutItem = new ItemStack(Material.LEAD);
+                ItemMeta shortCutMeta = shortCutItem.getItemMeta();
+                if (shortCutMeta != null) {
+                    shortCutMeta.setDisplayName(ChatColor.GREEN + "ショートカットメニュー");
+                    shortCutMeta.setLore(Arrays.asList(ChatColor.GRAY + "特定のメニューまでのショートカットアイテムをゲットできるよ。"));
+                    shortCutItem.setItemMeta(shortCutMeta);
+                }
+                inv.setItem(18, shortCutItem);
+
                 ItemStack nextPageItem = new ItemStack(Material.ARROW);
                 ItemMeta nextPageMeta = nextPageItem.getItemMeta();
                 if (nextPageMeta != null) {
@@ -264,13 +331,14 @@ public class Menu {
                 inv.setItem(26, nextPageItem);
             }
             case 2 -> {
-                playerMenuActions.put(11, (event) -> settingMenu(player, 1));
+                playerMenuActions.put(11, (event) -> settingMenu(player));
                 playerMenuActions.put(13, (event) -> book.giveRuleBook(player));
                 playerMenuActions.put(15, (event) -> {
                     player.closeInventory();
                     player.sendMessage(ChatColor.GREEN + "ここにあればいいなと思う機能があればDiscordで教えてね");
                 });
                 playerMenuActions.put(18, (event) -> generalMenu(player, page - 1));
+
                 ItemStack settingItem = new ItemStack(Material.ENCHANTING_TABLE);
                 ItemMeta settingMeta = settingItem.getItemMeta();
                 if (settingMeta != null) {
@@ -279,6 +347,7 @@ public class Menu {
                     settingItem.setItemMeta(settingMeta);
                 }
                 inv.setItem(11, settingItem);
+
                 ItemStack ruleBookItem = new ItemStack(Material.WRITTEN_BOOK);
                 ItemMeta ruleBookMeta = ruleBookItem.getItemMeta();
                 if (ruleBookMeta != null) {
@@ -287,6 +356,7 @@ public class Menu {
                     ruleBookItem.setItemMeta(ruleBookMeta);
                 }
                 inv.setItem(13, ruleBookItem);
+
                 ItemStack anyItem = new ItemStack(Material.COOKIE);
                 ItemMeta anyMeta = anyItem.getItemMeta();
                 if (anyMeta != null) {
@@ -294,6 +364,7 @@ public class Menu {
                     anyItem.setItemMeta(anyMeta);
                 }
                 inv.setItem(15, anyItem);
+
                 ItemStack prevPageItem = new ItemStack(Material.ARROW);
                 ItemMeta prevPageMeta = prevPageItem.getItemMeta();
                 if (prevPageMeta != null) {
@@ -307,17 +378,21 @@ public class Menu {
         player.openInventory(inv);
     }
 
+    public void teleportPointTypeMenu(Player player) {
+        teleportPointTypeMenu(player, 1);
+    }
+
     @Deprecated
-    public void teleportPointTypeMenu(Player player, int page) {
+    private void teleportPointTypeMenu(Player player, int page) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.TELEPORT_POINT_TYPE.get());
         playerMenuActions.put(0, (event) -> teleportMenu(player));
-        playerMenuActions.put(11, (event) -> teleportPointMenu(player, 1, Menu.PRIVATE));
+        playerMenuActions.put(11, (event) -> teleportPointMenu(player, Type.TELEPORT_POINT_PRIVATE));
         playerMenuActions.put(13, (event) -> {
             player.closeInventory();
             player.performCommand("registerpoint");
         });
-        playerMenuActions.put(15, (event) -> teleportPointMenu(player, 1, Menu.PUBLIC));
+        playerMenuActions.put(15, (event) -> teleportPointMenu(player, Type.TELEPORT_POINT_PUBLIC));
 
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -363,8 +438,12 @@ public class Menu {
         player.openInventory(inv);
     }
 
+    public void faceIconNaviMenu(Player player) {
+        faceIconNaviMenu(player, 1);
+    }
+
     @Deprecated
-    public void faceIconNaviMenu(Player player, int page) {
+    private void faceIconNaviMenu(Player player, int page) {
         int inventorySize = 27;
         int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
@@ -399,7 +478,7 @@ public class Menu {
             player.openInventory(inv);
             return;
         }
-
+        
         int totalItems = onlinePlayers.size();
         int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
         int startIndex = (page - 1) * itemsPerPage;
@@ -455,10 +534,10 @@ public class Menu {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.TELEPORT.get());
 
-        playerMenuActions.put(0, (event) -> generalMenu(player, 1));
-        playerMenuActions.put(11, (event) -> teleportPointTypeMenu(player, 1));
-        playerMenuActions.put(13, (event) -> playerTeleportMenu(player, 1));
-        playerMenuActions.put(15, (event) -> faceIconNaviMenu(player, 1));
+        playerMenuActions.put(0, (event) -> generalMenu(player));
+        playerMenuActions.put(11, (event) -> teleportPointTypeMenu(player));
+        playerMenuActions.put(13, (event) -> playerTeleportMenu(player));
+        playerMenuActions.put(15, (event) -> faceIconNaviMenu(player));
 
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -505,8 +584,12 @@ public class Menu {
         player.openInventory(inv);
     }
 
+    public void teleportResponseHeadMenu(Player player) {
+        teleportResponseHeadMenu(player, 1);
+    }
+    
     @Deprecated
-    public void teleportResponseHeadMenu(Player player, int page) {
+    private void teleportResponseHeadMenu(Player player, int page) {
         int inventorySize = 27;
         int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
@@ -570,7 +653,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, (event) -> playerTeleportMenu(player, 1));
+        playerMenuActions.put(0, (event) -> playerTeleportMenu(player));
         Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_RESPONSE_HEAD, playerMenuActions);
         player.openInventory(inv);
     }
@@ -599,88 +682,91 @@ public class Menu {
             try (PreparedStatement ps1 = conn.prepareStatement("SELECT * FROM tp_points WHERE id = " + id + ";");
                 ResultSet rs = ps1.executeQuery()) {
                 if (rs.next()) {
-                    final String defaultMaterialName = rs.getString("material"),
-                        type = rs.getString("type");
-
-                    for (int i = 1; i <= invSize -1; i++) {
-                        if (i == setSlot) {
-                            // 何も置かない。プレイヤーがアイテムを置くのを待つ
-                            playerMenuActions.put(i, (event) -> {
-                                ItemStack currentItem = event.getCurrentItem();
-                                
-                                if (currentItem == null) {
-                                    return;
-                                }
-
-                                boolean isEnchanted = EnchantmentUtils.isEnchanted(currentItem);
-                                Material material = currentItem.getType();
-
-                                String newMaterialName = material.name();
-
-                                try (Connection connection = db.getConnection()) {
-                                    db.updateLog(connection, "UPDATE tp_points SET `material`=?, `enchanted`=? WHERE `id`=?", new Object[] {newMaterialName, isEnchanted, id});
-
-                                    event.setCancelled(true);
-
-                                    Component success = Component.text("アイテムタイプを変更しました。")
-                                        .color(NamedTextColor.GREEN)
-                                        .decorate(TextDecoration.BOLD);
-
-                                    Component changeContent = Component.text(defaultMaterialName + " -> " + newMaterialName)
-                                        .color(NamedTextColor.GRAY)
-                                        .decorate(TextDecoration.ITALIC);
-
-                                    Component back = Component.text("※もとのメニューに戻ります。")
-                                        .color(NamedTextColor.GRAY)
-                                        .decorate(TextDecoration.ITALIC);
-
-                                    TextComponent messages = Component.text()
-                                        .append(changeContent)
-                                        .appendNewline()
-                                        .append(success)
-                                        .appendNewline()
-                                        .append(TCUtils.LATER_OPEN_INV_3.get())
-                                        .appendNewline()
-                                        .append(back)
-                                        .build();
-
-                                    new BukkitRunnable() {
-                                        @Override
-                                        public void run() {
-                                            teleportPointMenu(player, 1, type);
-                                        }
-                                    }.runTaskLater(plugin, 20 * 3);
-
-                                    player.sendMessage(messages);
-                                } catch (SQLException | ClassNotFoundException e) {
+                    final String defaultMaterialName = rs.getString("material");
+                    final String typeName = rs.getString("type");
+                    Optional<Type> optionalType = Type.search(typeName);
+                    if (optionalType.isPresent()) {
+                        Type type = optionalType.get();
+                        for (int i = 1; i <= invSize -1; i++) {
+                            if (i == setSlot) {
+                                // 何も置かない。プレイヤーがアイテムを置くのを待つ
+                                playerMenuActions.put(i, (event) -> {
+                                    ItemStack currentItem = event.getCurrentItem();
+                                    
+                                    if (currentItem == null) {
+                                        return;
+                                    }
+    
+                                    boolean isEnchanted = EnchantmentUtils.isEnchanted(currentItem);
+                                    Material material = currentItem.getType();
+    
+                                    String newMaterialName = material.name();
+    
+                                    try (Connection connection = db.getConnection()) {
+                                        db.updateLog(connection, "UPDATE tp_points SET `material`=?, `enchanted`=? WHERE `id`=?", new Object[] {newMaterialName, isEnchanted, id});
+    
+                                        event.setCancelled(true);
+    
+                                        Component success = Component.text("アイテムタイプを変更しました。")
+                                            .color(NamedTextColor.GREEN)
+                                            .decorate(TextDecoration.BOLD);
+    
+                                        Component changeContent = Component.text(defaultMaterialName + " -> " + newMaterialName)
+                                            .color(NamedTextColor.GRAY)
+                                            .decorate(TextDecoration.ITALIC);
+    
+                                        Component back = Component.text("※もとのメニューに戻ります。")
+                                            .color(NamedTextColor.GRAY)
+                                            .decorate(TextDecoration.ITALIC);
+    
+                                        TextComponent messages = Component.text()
+                                            .append(changeContent)
+                                            .appendNewline()
+                                            .append(success)
+                                            .appendNewline()
+                                            .append(TCUtils.LATER_OPEN_INV_3.get())
+                                            .appendNewline()
+                                            .append(back)
+                                            .build();
+    
+                                        new BukkitRunnable() {
+                                            @Override
+                                            public void run() {
+                                                teleportPointMenu(player, type);
+                                            }
+                                        }.runTaskLater(plugin, 20 * 3);
+    
+                                        player.sendMessage(messages);
+                                    } catch (SQLException | ClassNotFoundException e) {
+                                        player.closeInventory();
+                                        player.sendMessage(ChatColor.RED + "データベースとの通信にエラーが発生しました。");
+                                        logger.error("An error occurred in Menu#changeMaterial method: {}", e);
+                                    }
+    
+                                    Menu.menuEventFlags.get(player).get(Type.CHANGE_MATERIAL).set(true);
                                     player.closeInventory();
-                                    player.sendMessage(ChatColor.RED + "データベースとの通信にエラーが発生しました。");
-                                    logger.error("An error occurred in Menu#changeMaterial method: {}", e);
-                                }
-
-                                Menu.menuEventFlags.get(player).get(Type.CHANGE_MATERIAL).set(true);
-                                player.closeInventory();
-                                player.getInventory().addItem(currentItem);
-                            });
-                            continue;
+                                    player.getInventory().addItem(currentItem);
+                                });
+                                continue;
+                            }
+    
+                            ItemStack glassItem = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+                            ItemMeta glassMeta = glassItem.getItemMeta();
+                            if (glassMeta != null) {
+                                glassMeta.setDisplayName(ChatColor.GREEN + "アイテムタイプの変更");
+                                glassMeta.setLore(new ArrayList<>(
+                                    Arrays.asList(
+                                        "真ん中の空いているスロットに",
+                                        "アイテムをセットしよう。",
+                                        "最後にそれをクリック。",
+                                        "※アイテムは返却されます。"
+                                    )
+                                ));
+                                glassItem.setItemMeta(glassMeta);
+                            }
+                            inv.setItem(i, glassItem);
+                            playerMenuActions.put(i, (event) -> event.setCancelled(true));
                         }
-
-                        ItemStack glassItem = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-                        ItemMeta glassMeta = glassItem.getItemMeta();
-                        if (glassMeta != null) {
-                            glassMeta.setDisplayName(ChatColor.GREEN + "アイテムタイプの変更");
-                            glassMeta.setLore(new ArrayList<>(
-                                Arrays.asList(
-                                    "真ん中の空いているスロットに",
-                                    "アイテムをセットしよう。",
-                                    "最後にそれをクリック。",
-                                    "※アイテムは返却されます。"
-                                )
-                            ));
-                            glassItem.setItemMeta(glassMeta);
-                        }
-                        inv.setItem(i, glassItem);
-                        playerMenuActions.put(i, (event) -> event.setCancelled(true));
                     }
                 }
             }
@@ -703,144 +789,28 @@ public class Menu {
         player.openInventory(inv);
     }
 
-    @Deprecated
-    private void teleportResponseMenu(Player player, Player targetPlayer, boolean me) {
-        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
-        Inventory inv = Bukkit.createInventory(null, 27, Type.TELEPORT_RESPONSE.get());
-        ItemStack backItem = new ItemStack(Material.STICK);
-        ItemMeta backMeta = backItem.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
-            backItem.setItemMeta(backMeta);
-        }
-        inv.setItem(0, backItem);
-        playerMenuActions.put(0, (event) -> playerTeleportMenu(player, 1));
-        ItemStack acceptItem = new ItemStack(Material.DROPPER);
-        ItemMeta acceptMeta = acceptItem.getItemMeta();
-        if (acceptMeta != null) {
-            acceptMeta.setDisplayName(ChatColor.GREEN + "受け入れる");
-            acceptItem.setItemMeta(acceptMeta);
-        }
-        inv.setItem(11, acceptItem);
-        playerMenuActions.put(11, (event) -> {
-            player.closeInventory();
-            if (!me) {
-                player.performCommand("tpra " + targetPlayer.getName());
-            } else {
-                player.performCommand("tprma " + targetPlayer.getName());
-            }
-        });
-        ItemStack denyItem = new ItemStack(Material.BARRIER);
-        ItemMeta denyMeta = denyItem.getItemMeta();
-        if (denyMeta != null) {
-            denyMeta.setDisplayName(ChatColor.RED + "拒否する");
-            denyItem.setItemMeta(denyMeta);
-        }
-        inv.setItem(15, denyItem);
-        playerMenuActions.put(15, (event) -> {
-            player.closeInventory();
-            if (!me) {
-                player.performCommand("tprd " + targetPlayer.getName());
-            } else {
-                player.performCommand("tprmd " + targetPlayer.getName());
-            }
-        });
-        // ここ、targetPlayerがキーになっているのがあってるかわからない
-        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_RESPONSE, playerMenuActions);
-        player.openInventory(inv);
+    public void teleportRequestMenu(Player player) {
+        teleportRequestMenu(player, 1, false);
     }
 
-    public void teleportRequestMenu(Player player, int page) {
-        teleportRequestMenu(player, page, false);
+    public void teleportMeRequestMenu(Player player) {
+        teleportRequestMenu(player, 1, true);
     }
 
-    public void teleportMeRequestMenu(Player player, int page) {
-        teleportRequestMenu(player, page, true);
+    public void playerTeleportMenu(Player player) {
+        playerTeleportMenu(player, 1);
     }
 
     @Deprecated
-    private void teleportRequestMenu(Player player, int page, boolean me) {
-        int inventorySize = 27;
-        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
-        int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
-        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
-        Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_REQUEST.get());
-        ItemStack backItem = new ItemStack(Material.STICK);
-        ItemMeta backMeta = backItem.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
-            backItem.setItemMeta(backMeta);
-        }
-        inv.setItem(0, backItem);
-        playerMenuActions.put(0, (event) -> playerTeleportMenu(player, 1));
-        int totalItems = Bukkit.getOnlinePlayers().size();
-        if (totalItems != 1) {
-            int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
-            int startIndex = (page - 1) * itemsPerPage;
-            int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-            if (page < totalPages) {
-                ItemStack nextPageItem = new ItemStack(Material.ARROW);
-                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
-                if (nextPageMeta != null) {
-                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
-                    nextPageItem.setItemMeta(nextPageMeta);
-                }
-                inv.setItem(26, nextPageItem);
-                playerMenuActions.put(26, (event) -> teleportRequestMenu(player, page + 1));
-            }
-            if (page > 1) {
-                ItemStack prevPageItem = new ItemStack(Material.ARROW);
-                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
-                if (prevPageMeta != null) {
-                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
-                    prevPageItem.setItemMeta(prevPageMeta);
-                }
-                inv.setItem(18, prevPageItem);
-                playerMenuActions.put(18, (event) -> teleportRequestMenu(player, page - 1));
-            }
-            for (int i = startIndex; i < endIndex; i++) {
-                Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
-                if (targetPlayer.equals(player)) continue;
-                ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
-                SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
-                if (playerMeta != null) {
-                    playerMeta.setOwningPlayer(targetPlayer);
-                    playerMeta.setDisplayName(ChatColor.GREEN + targetPlayer.getName());
-                    playerItem.setItemMeta(playerMeta);
-                }
-                inv.addItem(playerItem);
-                playerMenuActions.put(inv.first(playerItem), (event) -> {
-                    player.closeInventory();
-                    if (!me) {
-                        player.performCommand("tpr " + targetPlayer.getName());
-                    } else {
-                        player.performCommand("tprm " + targetPlayer.getName());
-                    }
-                });
-            }
-        } else {
-            ItemStack noRequestItem = new ItemStack(Material.BARRIER);
-            ItemMeta noRequestMeta = noRequestItem.getItemMeta();
-            if (noRequestMeta != null) {
-                noRequestMeta.setDisplayName(ChatColor.RED + "テレポートできるプレイヤーがいません");
-                noRequestItem.setItemMeta(noRequestMeta);
-            }
-            inv.setItem(13, noRequestItem);
-        }
-        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_REQUEST, playerMenuActions);
-        player.openInventory(inv);
-    }
-
-    @Deprecated
-    public void playerTeleportMenu(Player player, int page) {
+    private void playerTeleportMenu(Player player, int page) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.PLAYER_TELEPORT.get());
         switch (page) {
             case 1 -> {
                 playerMenuActions.put(0, (event) -> teleportMenu(player));
-                playerMenuActions.put(11, (event) -> teleportRequestMenu(player, 1));
-                playerMenuActions.put(13, (event) -> teleportMeRequestMenu(player, 1));
-                playerMenuActions.put(15, (event) -> teleportResponseHeadMenu(player, 1));
+                playerMenuActions.put(11, (event) -> teleportRequestMenu(player));
+                playerMenuActions.put(13, (event) -> teleportMeRequestMenu(player));
+                playerMenuActions.put(15, (event) -> teleportResponseHeadMenu(player));
                 ItemStack backItem = new ItemStack(Material.STICK);
                 ItemMeta backMeta = backItem.getItemMeta();
                 if (backMeta != null) {
@@ -882,12 +852,12 @@ public class Menu {
     public void imageMapMenu(Player player) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 27, Type.IMAGE_MAP.get());
-        playerMenuActions.put(0, (event) -> generalMenu(player, 1));
+        playerMenuActions.put(0, (event) -> generalMenu(player));
         playerMenuActions.put(11, (event) -> {
             player.closeInventory();
             player.performCommand("registerimagemap");
         });
-        playerMenuActions.put(15, (event) -> imageMapListMenu(player, 1));
+        playerMenuActions.put(15, (event) -> imageMapListMenu(player));
 
         ItemStack backItem = new ItemStack(Material.STICK);
         ItemMeta backMeta = backItem.getItemMeta();
@@ -923,8 +893,12 @@ public class Menu {
         player.openInventory(inv);
     }
 
+    public void imageMapListMenu(Player player) {
+        imageMapListMenu(player, 1);
+    }
+
     @Deprecated
-    public void imageMapListMenu(Player player, int page) {
+    private void imageMapListMenu(Player player, int page) {
         int inventorySize = 54;
         int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
         int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
@@ -1115,8 +1089,12 @@ public class Menu {
         }
     }
 
+    public void onlineServerMenu(Player player) {
+        onlineServerMenu(player, 1);
+    }
+
     @Deprecated
-    public void onlineServerMenu(Player player, int page) {
+    private void onlineServerMenu(Player player, int page) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 54, Type.ONLINE_SERVER.get());
         ItemStack backItem = new ItemStack(Material.STICK);
@@ -1126,7 +1104,7 @@ public class Menu {
             backItem.setItemMeta(backMeta);
         }
         inv.setItem(0, backItem);
-        playerMenuActions.put(0, (event) -> serverTypeMenu(player, 1));
+        playerMenuActions.put(0, (event) -> serverTypeMenu(player));
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         // オンラインサーバーのみを抽出
         Map<String, Map<String, Object>> serverStatusOnlineMap = serverStatusMap.values().stream()
@@ -1155,7 +1133,7 @@ public class Menu {
             }
             int slot = SLOT_POSITIONS[i - startIndex];
             inv.setItem(slot, serverItem);
-            playerMenuActions.put(slot, (event) -> serverMenuFromOnlineServerMenu(player, serverName, 1));
+            playerMenuActions.put(slot, (event) -> serverMenuFromOnlineServerMenu(player, serverName));
         }
         if (page > 1) {
             ItemStack prevPageItem = new ItemStack(Material.ARROW);
@@ -1182,8 +1160,12 @@ public class Menu {
         player.openInventory(inv);
     }
 
+    public void serverEachTypeMenu(Player player, String serverType) {
+        serverEachTypeMenu(player, serverType, 1);
+    }
+
     @Deprecated
-    public void serverEachTypeMenu(Player player, String serverType, int page) {
+    private void serverEachTypeMenu(Player player, String serverType, int page) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
         Inventory inv = Bukkit.createInventory(null, 54, serverType + " servers");
         ItemStack backItem = new ItemStack(Material.STICK);
@@ -1194,7 +1176,7 @@ public class Menu {
         }
         inv.setItem(0, backItem);
         playerMenuActions.put(0, (event) -> {
-            serverTypeMenu(player, 1);
+            serverTypeMenu(player);
         });
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         Map<String, Map<String, Object>> serverStatusTypeMap = serverStatusMap.get(serverType);
@@ -1218,7 +1200,7 @@ public class Menu {
                 serverItem.setItemMeta(serverMeta);
             }
             int slot = SLOT_POSITIONS[i - startIndex];
-            playerMenuActions.put(slot, (event) -> serverMenu(player, serverName, 1));
+            playerMenuActions.put(slot, (event) -> serverMenu(player, serverName));
             inv.setItem(slot, serverItem);
         }
         if (page > 1) {
@@ -1245,14 +1227,627 @@ public class Menu {
         player.openInventory(inv);
     }
 
-    public void serverMenu(Player player, String serverName, int page) {
+    public void serverMenu(Player player, String serverName) {
+        serverMenu(player, serverName, 1, false);
+    }
+
+    private void serverMenu(Player player, String serverName, int page) {
         serverMenu(player, serverName, page, false);
     }
 
-    public void serverMenuFromOnlineServerMenu(Player player, String serverName, int page) {
-        serverMenu(player, serverName, page, true);
+    public void serverMenuFromOnlineServerMenu(Player player, String serverName) {
+        serverMenu(player, serverName, 1, true);
     }
 
+    public void teleportPointMenu(Player player, Type type) {
+        teleportPointMenu(player, 1, type);
+    }
+
+    @Deprecated
+    private void teleportPointMenu(Player player, int page, Type type) {
+        boolean isPrivate = type.equals(Type.TELEPORT_POINT_PRIVATE);
+        String playerUUID = player.getUniqueId().toString();
+
+        int inventorySize = 54;
+        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
+        Inventory inv = Bukkit.createInventory(null, inventorySize, type.get());
+
+        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
+
+        playerMenuActions.put(0, (event) -> teleportPointTypeMenu(player));
+
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+
+        try (Connection conn = db.getConnection()) {
+            Map<Integer, Map<String, Object>> thisServerTeleportPoints = new HashMap<>();
+            String thisServerName = shd.getServerName();
+            String query;
+            if (isPrivate) {
+                query = "SELECT * FROM tp_points WHERE server=? AND type=? AND uuid=?;";
+            } else {
+                query = "SELECT * FROM tp_points WHERE server=? AND type=?;";
+            }
+            try (PreparedStatement ps = conn.prepareStatement(query)) {
+                ps.setString(1, thisServerName);
+                ps.setString(2, type.get());
+                if (isPrivate) {
+                    ps.setString(3, playerUUID);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    int rsIndex = 0;
+                    while (rs.next()) {
+                        Map<String, Object> rowMap = new HashMap<>();
+                        int columnCount = rs.getMetaData().getColumnCount();
+                        for (int i = 1; i <= columnCount; i++) {
+                            String columnName = rs.getMetaData().getColumnName(i);
+                            rowMap.put(columnName, rs.getObject(columnName));
+                        }
+                        thisServerTeleportPoints.computeIfAbsent(rsIndex, _p -> rowMap);
+                        rsIndex++;
+                    }
+                }
+            }
+            
+            if (thisServerTeleportPoints.isEmpty()) {
+                ItemStack barrierItem = new ItemStack(Material.BARRIER);
+                ItemMeta barrierMeta = barrierItem.getItemMeta();
+                if (barrierMeta != null) {
+                    barrierMeta.setDisplayName(ChatColor.GOLD + "データがありません。");
+                    barrierItem.setItemMeta(barrierMeta);
+                }
+                inv.setItem(22, barrierItem);
+
+                Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(type, playerMenuActions);
+                player.openInventory(inv);
+                return;
+            }
+
+            int totalItems = thisServerTeleportPoints.size();
+            int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
+            int startIndex = (page - 1) * itemsPerPage;
+            int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            
+            if (page < totalPages) {
+                ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                if (nextPageMeta != null) {
+                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
+                    nextPageItem.setItemMeta(nextPageMeta);
+                }
+                inv.setItem(53, nextPageItem);
+                playerMenuActions.put(53, (event) -> teleportPointMenu(player, page + 1, type));
+            }
+            if (page > 1) {
+                ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                if (prevPageMeta != null) {
+                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
+                    prevPageItem.setItemMeta(prevPageMeta);
+                }
+                inv.setItem(45, prevPageItem);
+                playerMenuActions.put(45, (event) -> teleportPointMenu(player, page - 1, type));
+            }
+            int index = 0;
+            for (int i = startIndex; i < endIndex; i++) {
+                Map<String, Object> tpPoint = thisServerTeleportPoints.get(i);
+                if (tpPoint != null) {
+                    String authorName = (String) tpPoint.get("name");
+                    String authorUUID = (String) tpPoint.get("uuid");
+                    boolean isAuthor = authorUUID.equals(playerUUID);
+                    String title = (String) tpPoint.get("title");
+                    String comment  = (String) tpPoint.get("comment");
+                    double x = (Double) tpPoint.get("x");
+                    double y = (Double) tpPoint.get("y");
+                    double z =  (Double) tpPoint.get("z");
+                    float yaw = (Float) tpPoint.get("yaw");
+                    float pitch = (Float) tpPoint.get("pitch");
+                    String worldName = (String) tpPoint.get("world");
+                    Timestamp ts = (Timestamp) tpPoint.get("created_at");
+                    String date = JavaUtils.Time.Format.YYYY_MM_DD.format(ts);
+                    int id = (int) tpPoint.get("id"); // 管理画面用
+                    String materialName = (String) tpPoint.get("material");
+                    boolean isEnchanted = (boolean) tpPoint.get("enchanted");
+
+                    double roundx = JavaUtils.roundToFirstDecimalPlace(x);
+                    double roundy = JavaUtils.roundToFirstDecimalPlace(y);
+                    double roundz = JavaUtils.roundToFirstDecimalPlace(z);
+
+                    List<String> lores = new ArrayList<>();
+
+                    if (!comment.isBlank()) {
+                        List<String> commentLines = Arrays.stream(comment.split("\n"))
+                            .map(String::trim)
+                            .collect(Collectors.toList());
+                        lores.addAll(commentLines);
+                    }
+
+                    lores.add("World: " + worldName);
+                    lores.add("Location: (" + roundx + ", " + roundy + ", " + roundz + ")");
+                    lores.add("created by " + authorName);
+                    lores.add("created at " + date.replace("-", "/"));
+                    if (isAuthor) {
+                        lores.add("右クリックで" + ChatColor.GREEN + "管理メニュー");
+                    }
+
+                    Material material = MaterialUtil.stringToMaterial(materialName);
+                    ItemStack item = new ItemStack(material);
+                    ItemMeta meta = item.getItemMeta();
+                    if (meta != null) {
+                        meta.setDisplayName(ChatColor.GREEN + title);
+                        meta.setLore(lores);
+                        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, String.valueOf(index)), PersistentDataType.STRING, "true");
+                        if (isEnchanted) {
+                            meta.addEnchant(Enchantment.LUCK, 1, true);
+                            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS); 
+                        }
+                        item.setItemMeta(meta);
+                    }
+                    inv.addItem(item);
+                    //inv.setItem(slot, item);
+                    playerMenuActions.put(inv.first(item), (event) -> {
+                        ClickType clickType = event.getClick();
+
+                        // 右クリックかつ作成者本人なら削除ダイアログへ
+                        if (clickType.isRightClick() && isAuthor) {
+                            teleportPointManager(player, id);
+                            return;
+                        }
+
+                        player.closeInventory();
+
+                        int permLevel = lp.getPermLevel(player.getName());
+                        if (permLevel < 1) {
+                            player.sendMessage(ChatColor.RED + "まだFMCのWEB認証が完了していません。");
+                            return;
+                        }
+
+                        // ここで、テレポートさせる前の座標を記録し、/backコマンドで戻れるようにする
+                        final Location beforeLoc = player.getLocation();
+
+                        Component message = Component.text("3秒後にテレポートします。")
+                            .color(NamedTextColor.GOLD)
+                            .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED);
+                        
+                        player.sendMessage(message);
+                        
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                EventListener.playerBeforeLocationMap.put(player, beforeLoc);
+                                World world = Bukkit.getWorld(worldName);
+                                if (world == null) {
+                                    throw new IllegalArgumentException("World not found: " + worldName);
+                                }
+                                Location loc = new Location(world, x, y, z, yaw, pitch);
+                                player.teleport(loc);
+                                
+                                Component message = Component.text("テレポートしました。")
+                                    .color(NamedTextColor.GREEN)
+                                    .decorate(TextDecoration.BOLD);
+                                    
+                                Component backMessage = Component.text("※/backコマンドで戻れます。")
+                                    .color(NamedTextColor.GRAY)
+                                    .decorate(TextDecoration.ITALIC);
+                                
+                                TextComponent messages = Component.text()
+                                    .append(message)
+                                    .appendNewline()
+                                    .append(backMessage)
+                                    .build();
+
+                                player.sendMessage(messages);
+
+                                SocketSwitch ssw = sswProvider.get();
+                                try (Connection conn = db.getConnection()) {
+                                    ssw.sendVelocityServer(conn, "teleport->point->name->" + player.getName() +"->at->" + title + "->");
+                                } catch (SQLException | ClassNotFoundException e) {
+                                    logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
+                                }
+                            }
+                        }.runTaskLater(plugin, 20 * 3);
+                    });
+                    index++;
+                }
+            }
+
+            Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(type, playerMenuActions);
+            player.openInventory(inv);
+        } catch (SQLException | ClassNotFoundException e) {
+            player.openInventory(inv);
+            player.closeInventory();
+            player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+            logger.error("An error occurred while communicating with the database: {}", e.getMessage());
+            for (StackTraceElement ste : e.getStackTrace()) {
+                logger.error(ste.toString());
+            }
+        }
+    }
+
+    public void serverTypeMenu(Player player) {
+        serverTypeMenu(player, 1);
+    }
+
+    @Deprecated
+    private void serverTypeMenu(Player player, int page) {
+        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
+        playerMenuActions.put(0, (event) -> generalMenu(player));
+        Inventory inv = Bukkit.createInventory(null, 27, Type.SERVER_TYPE.get());
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+        switch (page) {
+            case 1 -> {
+                playerMenuActions.put(11, (event) -> serverEachTypeMenu(player, "survival"));
+                playerMenuActions.put(13, (event) -> serverEachTypeMenu(player, "minigame"));
+                playerMenuActions.put(15, (event) -> serverEachTypeMenu(player, "dev"));
+                playerMenuActions.put(18, (event) -> onlineServerMenu(player));
+
+                playerMenuActions.put(26, (event) -> serverTypeMenu(player, 2));
+
+                ItemStack lifeServerItem = new ItemStack(Material.BREAD);
+                ItemMeta lifeMeta = lifeServerItem.getItemMeta();
+                if (lifeMeta != null) {
+                    lifeMeta.setDisplayName(ChatColor.GREEN + "サバイバル鯖");
+                    lifeServerItem.setItemMeta(lifeMeta);
+                }
+                inv.setItem(11, lifeServerItem);
+                ItemStack eventServerItem = new ItemStack(Material.EGG);
+                ItemMeta eventMeta = eventServerItem.getItemMeta();
+                if (eventMeta != null) {
+                    eventMeta.setDisplayName(ChatColor.YELLOW + "ミニゲーム鯖");
+                    eventServerItem.setItemMeta(eventMeta);
+                }
+                inv.setItem(13, eventServerItem);
+                ItemStack devServerItem = new ItemStack(Material.PUFFERFISH);
+                ItemMeta devMeta = devServerItem.getItemMeta();
+                if (devMeta != null) {
+                    devMeta.setDisplayName(ChatColor.AQUA + "開発鯖");
+                    devServerItem.setItemMeta(devMeta);
+                }
+                inv.setItem(15, devServerItem);
+                ItemStack onlineServerItem = new ItemStack(Material.GREEN_WOOL);
+                ItemMeta onlineMeta = onlineServerItem.getItemMeta();
+                if (onlineMeta != null) {
+                    onlineMeta.setDisplayName(ChatColor.GREEN + "オンラインサーバー");
+                    onlineServerItem.setItemMeta(onlineMeta);
+                }
+                inv.setItem(18, onlineServerItem);
+                ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                if (nextPageMeta != null) {
+                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
+                    nextPageItem.setItemMeta(nextPageMeta);
+                }
+                inv.setItem(26, nextPageItem);
+            }
+            case 2 -> {
+                playerMenuActions.put(11, (event) -> serverEachTypeMenu(player, "distributed"));
+                playerMenuActions.put(13, (event) -> serverEachTypeMenu(player, "mod"));
+                playerMenuActions.put(15, (event) -> serverEachTypeMenu(player, "others"));
+                playerMenuActions.put(18, (event) -> serverTypeMenu(player));
+                ItemStack distributionServerItem = new ItemStack(Material.CHORUS_FRUIT);
+                ItemMeta distributionMeta = distributionServerItem.getItemMeta();
+                if (distributionMeta != null) {
+                    distributionMeta.setDisplayName(ChatColor.YELLOW + "配布鯖");
+                    distributionServerItem.setItemMeta(distributionMeta);
+                }
+                inv.setItem(11, distributionServerItem);
+                ItemStack modServerItem = new ItemStack(Material.MELON_SLICE);
+                ItemMeta modMeta = modServerItem.getItemMeta();
+                if (modMeta != null) {
+                    modMeta.setDisplayName(ChatColor.BLUE + "モッド鯖");
+                    modServerItem.setItemMeta(modMeta);
+                }
+                inv.setItem(13, modServerItem);
+                ItemStack otherServerItem = new ItemStack(Material.ROTTEN_FLESH);
+                ItemMeta otherMeta = otherServerItem.getItemMeta();
+                if (otherMeta != null) {
+                    otherMeta.setDisplayName(ChatColor.RED + "その他");
+                    otherServerItem.setItemMeta(otherMeta);
+                }
+                inv.setItem(15, otherServerItem);
+                ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                if (prevPageMeta != null) {
+                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
+                    prevPageItem.setItemMeta(prevPageMeta);
+                }
+                inv.setItem(18, prevPageItem);
+            }
+        }
+        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SERVER_TYPE, playerMenuActions);
+        player.openInventory(inv);
+    }
+
+    public void enterServer(Player player, String serverName) {
+        player.closeInventory();
+        cf.executeProxyCommand(player, "fmcp stp " + serverName);
+    }
+
+    public void serverSwitch(Player player, String serverName) {
+        int permLevel = lp.getPermLevel(player.getName());
+        if (checkServerOnline(serverName)) {
+            if (permLevel >= 2) {
+                player.closeInventory();
+                cf.executeProxyCommand(player, "fmcp stop " + serverName);
+            }
+        } else {
+            player.closeInventory();
+            if (permLevel == 1) {
+                cf.executeProxyCommand(player, "fmcp req " + serverName);
+            } else if (permLevel >= 2) {
+                cf.executeProxyCommand(player, "fmcp start " + serverName);
+            }
+        }
+    }
+
+    public boolean isAllowedToEnter(Connection conn, String serverName) throws SQLException, ClassNotFoundException {
+        String query = "SELECT entry FROM status WHERE name = ?;";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, serverName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean("entry");
+                }
+            }
+        }
+        return false;
+    }
+
+    public int getTotalPlayers(String serverName) {
+        return ssc.getStatusMap().values().stream()
+            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+            .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
+            .map(serverDataEntry -> serverDataEntry.getValue().get("player_list"))
+            .filter(playerList -> playerList instanceof String)
+            .map(playerList -> (String) playerList)
+            .mapToInt(playerList -> playerList.split(",\\s*").length)
+            .findFirst()
+            .orElse(0);
+    }
+
+    public int getTotalServers(String serverType) {
+        Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
+        Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
+        return serverStatusList != null ? serverStatusList.size() : 0;
+    }
+
+    @Deprecated
+    private void settingMenu(Player player, int page) {
+        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
+        Inventory inv = Bukkit.createInventory(null, 27,Type.SETTING.get());
+        try (Connection conn = db.getConnection()) {
+            Map<String, Object> memberMap = db.getMemberMap(conn, player.getUniqueId().toString());
+            switch (page) {
+                case 1 -> {
+                    if (memberMap.get("hubinv") instanceof Boolean hubinv) {
+                        playerMenuActions.put(11, (event) -> {
+                            try (Connection connection = db.getConnection()) {
+                                db.updateMemberToggle(connection, "hubinv", !hubinv, player.getUniqueId().toString());
+                                player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (hubinv ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
+                            } catch (SQLException | ClassNotFoundException e) {
+                                player.closeInventory();
+                                player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+                                logger.error("An error occurred while communicating with the database: {}", e.getMessage());
+                                for (StackTraceElement ste : e.getStackTrace()) {
+                                    logger.error(ste.toString());
+                                }
+                            }
+                            settingMenu(player);
+                        });
+                        if (hubinv) {
+                            ItemStack hubinvItem = new ItemStack(Material.OAK_SIGN);
+                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
+                            if (hubinvMeta != null) {
+                                hubinvMeta.setDisplayName(ChatColor.GOLD + "サーバー起動時のアクション");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "チャットタイプに切り替えます。"));
+                                hubinvItem.setItemMeta(hubinvMeta);
+                            }
+                            inv.setItem(11, hubinvItem);
+                        } else {
+                            ItemStack hubinvItem = new ItemStack(Material.CHEST);
+                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
+                            if (hubinvMeta != null) {
+                                hubinvMeta.setDisplayName(ChatColor.GOLD + "サーバー起動時のアクション");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "オープンインベントリタイプに切り替えます。"));
+                                hubinvItem.setItemMeta(hubinvMeta);
+                            }
+                            inv.setItem(11, hubinvItem);
+                        }
+                    }
+                    if (memberMap.get("tptype") instanceof Boolean tptype) {
+                        playerMenuActions.put(13, (event) -> {
+                            try (Connection connection = db.getConnection()) {
+                                db.updateMemberToggle(connection, "tptype", !tptype, player.getUniqueId().toString());
+                                player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (tptype ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
+                            } catch (SQLException | ClassNotFoundException e) {
+                                player.closeInventory();
+                                player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+                                logger.error("An error occurred while communicating with the database: {}", e.getMessage());
+                                for (StackTraceElement ste : e.getStackTrace()) {
+                                    logger.error(ste.toString());
+                                }
+                            }
+                            settingMenu(player);
+                        });
+                        if (tptype) {
+                            ItemStack hubinvItem = new ItemStack(Material.OAK_SIGN);
+                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
+                            if (hubinvMeta != null) {
+                                hubinvMeta.setDisplayName(ChatColor.GOLD + "テレポート時のアクション");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "チャットタイプに切り替えます。"));
+                                hubinvItem.setItemMeta(hubinvMeta);
+                            }
+                            inv.setItem(13, hubinvItem);
+                        } else {
+                            ItemStack hubinvItem = new ItemStack(Material.CHEST);
+                            ItemMeta hubinvMeta = hubinvItem.getItemMeta();
+                            if (hubinvMeta != null) {
+                                hubinvMeta.setDisplayName(ChatColor.GOLD + "テレポート時のアクション");
+                                hubinvMeta.setLore(Arrays.asList(ChatColor.GRAY + "オープンインベントリタイプに切り替えます。"));
+                                hubinvItem.setItemMeta(hubinvMeta);
+                            }
+                            inv.setItem(13, hubinvItem);
+                        }
+                    }
+                }
+            }
+            Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SETTING, playerMenuActions);
+        } catch (SQLException | ClassNotFoundException e) {
+            player.closeInventory();
+            player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
+            logger.error("An error occurred while communicating with the database: {}", e.getMessage());
+            for (StackTraceElement ste : e.getStackTrace()) {
+                logger.error(ste.toString());
+            }
+        }
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+        playerMenuActions.put(0, (event) -> generalMenu(player, 2));
+        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SETTING, playerMenuActions);
+        player.openInventory(inv);
+    }
+
+    @Deprecated
+    private void teleportResponseMenu(Player player, Player targetPlayer, boolean me) {
+        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
+        Inventory inv = Bukkit.createInventory(null, 27, Type.TELEPORT_RESPONSE.get());
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+        playerMenuActions.put(0, (event) -> playerTeleportMenu(player));
+        ItemStack acceptItem = new ItemStack(Material.DROPPER);
+        ItemMeta acceptMeta = acceptItem.getItemMeta();
+        if (acceptMeta != null) {
+            acceptMeta.setDisplayName(ChatColor.GREEN + "受け入れる");
+            acceptItem.setItemMeta(acceptMeta);
+        }
+        inv.setItem(11, acceptItem);
+        playerMenuActions.put(11, (event) -> {
+            player.closeInventory();
+            if (!me) {
+                player.performCommand("tpra " + targetPlayer.getName());
+            } else {
+                player.performCommand("tprma " + targetPlayer.getName());
+            }
+        });
+        ItemStack denyItem = new ItemStack(Material.BARRIER);
+        ItemMeta denyMeta = denyItem.getItemMeta();
+        if (denyMeta != null) {
+            denyMeta.setDisplayName(ChatColor.RED + "拒否する");
+            denyItem.setItemMeta(denyMeta);
+        }
+        inv.setItem(15, denyItem);
+        playerMenuActions.put(15, (event) -> {
+            player.closeInventory();
+            if (!me) {
+                player.performCommand("tprd " + targetPlayer.getName());
+            } else {
+                player.performCommand("tprmd " + targetPlayer.getName());
+            }
+        });
+        // ここ、targetPlayerがキーになっているのがあってるかわからない
+        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_RESPONSE, playerMenuActions);
+        player.openInventory(inv);
+    }
+    
+    @Deprecated
+    private void teleportRequestMenu(Player player, int page, boolean me) {
+        Type thisKey = me ? Type.TELEPORT_REQUEST_ME : Type.TELEPORT_REQUEST;
+
+        int inventorySize = 27;
+        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
+        int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
+
+        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
+        Inventory inv = Bukkit.createInventory(null, inventorySize, thisKey.get());
+
+        ItemStack backItem = new ItemStack(Material.STICK);
+        ItemMeta backMeta = backItem.getItemMeta();
+        if (backMeta != null) {
+            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
+            backItem.setItemMeta(backMeta);
+        }
+        inv.setItem(0, backItem);
+        playerMenuActions.put(0, (event) -> playerTeleportMenu(player));
+        int totalItems = Bukkit.getOnlinePlayers().size();
+        if (totalItems != 1) {
+            int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
+            int startIndex = (page - 1) * itemsPerPage;
+            int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            if (page < totalPages) {
+                ItemStack nextPageItem = new ItemStack(Material.ARROW);
+                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
+                if (nextPageMeta != null) {
+                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
+                    nextPageItem.setItemMeta(nextPageMeta);
+                }
+                inv.setItem(26, nextPageItem);
+                playerMenuActions.put(26, (event) -> teleportRequestMenu(player, page + 1, me));
+            }
+            if (page > 1) {
+                ItemStack prevPageItem = new ItemStack(Material.ARROW);
+                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
+                if (prevPageMeta != null) {
+                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
+                    prevPageItem.setItemMeta(prevPageMeta);
+                }
+                inv.setItem(18, prevPageItem);
+                playerMenuActions.put(18, (event) -> teleportRequestMenu(player, page - 1, me));
+            }
+            for (int i = startIndex; i < endIndex; i++) {
+                Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
+                if (targetPlayer.equals(player)) continue;
+                ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
+                SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
+                if (playerMeta != null) {
+                    playerMeta.setOwningPlayer(targetPlayer);
+                    playerMeta.setDisplayName(ChatColor.GREEN + targetPlayer.getName());
+                    playerItem.setItemMeta(playerMeta);
+                }
+                inv.addItem(playerItem);
+                playerMenuActions.put(inv.first(playerItem), (event) -> {
+                    player.closeInventory();
+                    if (!me) {
+                        player.performCommand("tpr " + targetPlayer.getName());
+                    } else {
+                        player.performCommand("tprm " + targetPlayer.getName());
+                    }
+                });
+            }
+        } else {
+            ItemStack noRequestItem = new ItemStack(Material.BARRIER);
+            ItemMeta noRequestMeta = noRequestItem.getItemMeta();
+            if (noRequestMeta != null) {
+                noRequestMeta.setDisplayName(ChatColor.RED + "テレポートできるプレイヤーがいません");
+                noRequestItem.setItemMeta(noRequestMeta);
+            }
+            inv.setItem(13, noRequestItem);
+        }
+        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(thisKey, playerMenuActions);
+        player.openInventory(inv);
+    }
+    
     @Deprecated
     private void serverMenu(Player player, String serverName, int page, boolean fromOnlineServerInventory) {
         Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
@@ -1440,240 +2035,13 @@ public class Menu {
         }
         playerMenuActions.put(0, (event) -> {
             if (fromOnlineServerInventory) {
-                onlineServerMenu(player, 1);
+                onlineServerMenu(player);
             } else {
-                serverEachTypeMenu(player, thisServerType.get(), 1);
+                serverEachTypeMenu(player, thisServerType.get());
             }
         });
         Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SERVER, playerMenuActions);
         player.openInventory(inv);
-    }
-
-    @Deprecated
-    public void teleportPointMenu(Player player, int page, String type) {
-        boolean isPrivate = type.equals(Menu.PRIVATE);
-        String playerUUID = player.getUniqueId().toString();
-
-        int inventorySize = 54;
-        int usingSlots = page == 1 ? 2 : 3; // 戻るボタンやページネーションボタンに使用するスロット数
-        int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
-        Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_POINT.get());
-
-        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
-
-        playerMenuActions.put(0, (event) -> teleportPointTypeMenu(player, 1));
-
-        ItemStack backItem = new ItemStack(Material.STICK);
-        ItemMeta backMeta = backItem.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
-            backItem.setItemMeta(backMeta);
-        }
-        inv.setItem(0, backItem);
-
-        try (Connection conn = db.getConnection()) {
-            Map<Integer, Map<String, Object>> thisServerTeleportPoints = new HashMap<>();
-            String thisServerName = shd.getServerName();
-            String query;
-            if (isPrivate) {
-                query = "SELECT * FROM tp_points WHERE server=? AND type=? AND uuid=?;";
-            } else {
-                query = "SELECT * FROM tp_points WHERE server=? AND type=?;";
-            }
-            try (PreparedStatement ps = conn.prepareStatement(query)) {
-                ps.setString(1, thisServerName);
-                ps.setString(2, type);
-                if (isPrivate) {
-                    ps.setString(3, playerUUID);
-                }
-                try (ResultSet rs = ps.executeQuery()) {
-                    int rsIndex = 0;
-                    while (rs.next()) {
-                        Map<String, Object> rowMap = new HashMap<>();
-                        int columnCount = rs.getMetaData().getColumnCount();
-                        for (int i = 1; i <= columnCount; i++) {
-                            String columnName = rs.getMetaData().getColumnName(i);
-                            rowMap.put(columnName, rs.getObject(columnName));
-                        }
-                        thisServerTeleportPoints.computeIfAbsent(rsIndex, _p -> rowMap);
-                        rsIndex++;
-                    }
-                }
-            }
-            
-            if (thisServerTeleportPoints.isEmpty()) {
-                ItemStack barrierItem = new ItemStack(Material.BARRIER);
-                ItemMeta barrierMeta = barrierItem.getItemMeta();
-                if (barrierMeta != null) {
-                    barrierMeta.setDisplayName(ChatColor.GOLD + "データがありません。");
-                    barrierItem.setItemMeta(barrierMeta);
-                }
-                inv.setItem(22, barrierItem);
-
-                Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_POINT, playerMenuActions);
-                player.openInventory(inv);
-                return;
-            }
-
-            int totalItems = thisServerTeleportPoints.size();
-            int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
-            int startIndex = (page - 1) * itemsPerPage;
-            int endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-            
-            if (page < totalPages) {
-                ItemStack nextPageItem = new ItemStack(Material.ARROW);
-                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
-                if (nextPageMeta != null) {
-                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
-                    nextPageItem.setItemMeta(nextPageMeta);
-                }
-                inv.setItem(53, nextPageItem);
-                playerMenuActions.put(53, (event) -> teleportPointMenu(player, page + 1, type));
-            }
-            if (page > 1) {
-                ItemStack prevPageItem = new ItemStack(Material.ARROW);
-                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
-                if (prevPageMeta != null) {
-                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
-                    prevPageItem.setItemMeta(prevPageMeta);
-                }
-                inv.setItem(45, prevPageItem);
-                playerMenuActions.put(45, (event) -> teleportPointMenu(player, page - 1, type));
-            }
-            int index = 0;
-            for (int i = startIndex; i < endIndex; i++) {
-                Map<String, Object> tpPoint = thisServerTeleportPoints.get(i);
-                if (tpPoint != null) {
-                    String authorName = (String) tpPoint.get("name");
-                    String authorUUID = (String) tpPoint.get("uuid");
-                    boolean isAuthor = authorUUID.equals(playerUUID);
-                    String title = (String) tpPoint.get("title");
-                    String comment  = (String) tpPoint.get("comment");
-                    double x = (Double) tpPoint.get("x");
-                    double y = (Double) tpPoint.get("y");
-                    double z =  (Double) tpPoint.get("z");
-                    float yaw = (Float) tpPoint.get("yaw");
-                    float pitch = (Float) tpPoint.get("pitch");
-                    String worldName = (String) tpPoint.get("world");
-                    Timestamp ts = (Timestamp) tpPoint.get("created_at");
-                    String date = JavaUtils.Time.Format.YYYY_MM_DD.format(ts);
-                    int id = (int) tpPoint.get("id"); // 管理画面用
-                    String materialName = (String) tpPoint.get("material");
-                    boolean isEnchanted = (boolean) tpPoint.get("enchanted");
-
-                    double roundx = JavaUtils.roundToFirstDecimalPlace(x);
-                    double roundy = JavaUtils.roundToFirstDecimalPlace(y);
-                    double roundz = JavaUtils.roundToFirstDecimalPlace(z);
-
-                    List<String> lores = new ArrayList<>();
-
-                    if (!comment.isBlank()) {
-                        List<String> commentLines = Arrays.stream(comment.split("\n"))
-                            .map(String::trim)
-                            .collect(Collectors.toList());
-                        lores.addAll(commentLines);
-                    }
-
-                    lores.add("World: " + worldName);
-                    lores.add("Location: (" + roundx + ", " + roundy + ", " + roundz + ")");
-                    lores.add("created by " + authorName);
-                    lores.add("created at " + date.replace("-", "/"));
-                    if (isAuthor) {
-                        lores.add("右クリックで" + ChatColor.GREEN + "管理メニュー");
-                    }
-
-                    Material material = MaterialUtil.stringToMaterial(materialName);
-                    ItemStack item = new ItemStack(material);
-                    ItemMeta meta = item.getItemMeta();
-                    if (meta != null) {
-                        meta.setDisplayName(ChatColor.GREEN + title);
-                        meta.setLore(lores);
-                        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, String.valueOf(index)), PersistentDataType.STRING, "true");
-                        if (isEnchanted) {
-                            meta.addEnchant(Enchantment.LUCK, 1, true);
-                            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS); 
-                        }
-                        item.setItemMeta(meta);
-                    }
-                    inv.addItem(item);
-                    //inv.setItem(slot, item);
-                    playerMenuActions.put(inv.first(item), (event) -> {
-                        ClickType clickType = event.getClick();
-
-                        // 右クリックかつ作成者本人なら削除ダイアログへ
-                        if (clickType.isRightClick() && isAuthor) {
-                            teleportPointManager(player, id);
-                            return;
-                        }
-
-                        player.closeInventory();
-
-                        int permLevel = lp.getPermLevel(player.getName());
-                        if (permLevel < 1) {
-                            player.sendMessage(ChatColor.RED + "まだFMCのWEB認証が完了していません。");
-                            return;
-                        }
-
-                        // ここで、テレポートさせる前の座標を記録し、/backコマンドで戻れるようにする
-                        final Location beforeLoc = player.getLocation();
-
-                        Component message = Component.text("3秒後にテレポートします。")
-                            .color(NamedTextColor.GOLD)
-                            .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED);
-                        
-                        player.sendMessage(message);
-                        
-                        new BukkitRunnable() {
-                            @Override
-                            public void run() {
-                                EventListener.playerBeforeLocationMap.put(player, beforeLoc);
-                                World world = Bukkit.getWorld(worldName);
-                                if (world == null) {
-                                    throw new IllegalArgumentException("World not found: " + worldName);
-                                }
-                                Location loc = new Location(world, x, y, z, yaw, pitch);
-                                player.teleport(loc);
-                                
-                                Component message = Component.text("テレポートしました。")
-                                    .color(NamedTextColor.GREEN)
-                                    .decorate(TextDecoration.BOLD);
-                                    
-                                Component backMessage = Component.text("※/backコマンドで戻れます。")
-                                    .color(NamedTextColor.GRAY)
-                                    .decorate(TextDecoration.ITALIC);
-                                
-                                TextComponent messages = Component.text()
-                                    .append(message)
-                                    .appendNewline()
-                                    .append(backMessage)
-                                    .build();
-
-                                player.sendMessage(messages);
-
-                                SocketSwitch ssw = sswProvider.get();
-                                try (Connection conn = db.getConnection()) {
-                                    ssw.sendVelocityServer(conn, "teleport->point->name->" + player.getName() +"->at->" + title + "->");
-                                } catch (SQLException | ClassNotFoundException e) {
-                                    logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
-                                }
-                            }
-                        }.runTaskLater(plugin, 20 * 3);
-                    });
-                    index++;
-                }
-            }
-
-            Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_POINT, playerMenuActions);
-            player.openInventory(inv);
-        } catch (SQLException | ClassNotFoundException e) {
-            player.openInventory(inv);
-            player.closeInventory();
-            player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
-            logger.error("An error occurred while communicating with the database: {}", e.getMessage());
-            for (StackTraceElement ste : e.getStackTrace()) {
-                logger.error(ste.toString());
-            }
-        }
     }
 
     @Deprecated
@@ -1688,8 +2056,12 @@ public class Menu {
             try (PreparedStatement ps = dconn.prepareStatement("SELECT * FROM tp_points WHERE id = " + id + " LIMIT 1;")) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        String type = rs.getString("type");
-                        playerMenuActions.put(0, (event) -> teleportPointMenu(player, 1, type));
+                        String typeName = rs.getString("type");
+                        Optional<Type> optionalType = Type.search(typeName);
+                        if (optionalType.isPresent()) {
+                            Type type = optionalType.get();
+                            playerMenuActions.put(0, (event) -> teleportPointMenu(player, type));
+                        }
                     }
                 }
             }
@@ -1746,59 +2118,63 @@ public class Menu {
             try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM tp_points WHERE id = " + id + " LIMIT 1;")) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        final String title = rs.getString("title"),
-                            comment = rs.getString("comment"),
-                            type = rs.getString("type");
+                        final String title = rs.getString("title");
+                        final String comment = rs.getString("comment");
+                        final String typeName = rs.getString("type");
 
-                        playerMenuActions.put(0, (event) -> teleportPointManager(player, id));
-                        playerMenuActions.put(13, (event) -> {
-                            try (Connection dconn = db.getConnection()) {
-                                try (PreparedStatement dps = dconn.prepareStatement("DELETE FROM tp_points WHERE id = " + id + ";")) {
-                                    int dpsAffected = dps.executeUpdate();
-                                    if (dpsAffected > 0) {
-                                        player.closeInventory();
-                
-                                        Component success = Component.text("削除しました。(id: " + id + ")")
-                                            .color(NamedTextColor.RED)
-                                            .decorate(TextDecoration.BOLD);
-                
-                                        Component deleteContent = Component.text("タイトル: " + title)
-                                            .appendNewline()
-                                            .append(Component.text("コメント: " + (comment.isBlank() ? "なし" : comment)))
-                                            .color(NamedTextColor.GRAY)
-                                            .decorate(TextDecoration.ITALIC);
-                
-                                        Component back = Component.text("※もとのメニューに戻ります。")
-                                            .color(NamedTextColor.GRAY)
-                                            .decorate(TextDecoration.ITALIC);
-                
-                                        TextComponent messages = Component.text()
-                                            .append(deleteContent)
-                                            .appendNewline()
-                                            .append(success)
-                                            .appendNewline()
-                                            .append(TCUtils.LATER_OPEN_INV_3.get())
-                                            .appendNewline()
-                                            .append(back)
-                                            .build();
-                
-                                        new BukkitRunnable() {
-                                            @Override
-                                            public void run() {
-                                                teleportPointMenu(player, 1, type);
-                                            }
-                                        }.runTaskLater(plugin, 20 * 3);
-                
-                                        player.sendMessage(messages);
-                                    }
-                                } 
-                            } catch (SQLException | ClassNotFoundException e) {
-                                player.closeInventory();
-                                player.sendMessage(ChatColor.RED + "削除中にデータベースとの通信にエラーが発生しました。");
-                                logger.error("A SQLException occurred: ", e);
-                                return;
-                            }
-                        });
+                        Optional<Type> optionalType = Type.search(typeName);
+                        if (optionalType.isPresent()) {
+                            Type type = optionalType.get();
+                            playerMenuActions.put(0, (event) -> teleportPointManager(player, id));
+                            playerMenuActions.put(13, (event) -> {
+                                try (Connection dconn = db.getConnection()) {
+                                    try (PreparedStatement dps = dconn.prepareStatement("DELETE FROM tp_points WHERE id = " + id + ";")) {
+                                        int dpsAffected = dps.executeUpdate();
+                                        if (dpsAffected > 0) {
+                                            player.closeInventory();
+                    
+                                            Component success = Component.text("削除しました。(id: " + id + ")")
+                                                .color(NamedTextColor.RED)
+                                                .decorate(TextDecoration.BOLD);
+                    
+                                            Component deleteContent = Component.text("タイトル: " + title)
+                                                .appendNewline()
+                                                .append(Component.text("コメント: " + (comment.isBlank() ? "なし" : comment)))
+                                                .color(NamedTextColor.GRAY)
+                                                .decorate(TextDecoration.ITALIC);
+                    
+                                            Component back = Component.text("※もとのメニューに戻ります。")
+                                                .color(NamedTextColor.GRAY)
+                                                .decorate(TextDecoration.ITALIC);
+                    
+                                            TextComponent messages = Component.text()
+                                                .append(deleteContent)
+                                                .appendNewline()
+                                                .append(success)
+                                                .appendNewline()
+                                                .append(TCUtils.LATER_OPEN_INV_3.get())
+                                                .appendNewline()
+                                                .append(back)
+                                                .build();
+                    
+                                            new BukkitRunnable() {
+                                                @Override
+                                                public void run() {
+                                                    teleportPointMenu(player, type);
+                                                }
+                                            }.runTaskLater(plugin, 20 * 3);
+                    
+                                            player.sendMessage(messages);
+                                        }
+                                    } 
+                                } catch (SQLException | ClassNotFoundException e) {
+                                    player.closeInventory();
+                                    player.sendMessage(ChatColor.RED + "削除中にデータベースとの通信にエラーが発生しました。");
+                                    logger.error("A SQLException occurred: ", e);
+                                    return;
+                                }
+                            });
+                        }
                     } else {
                         player.closeInventory();
                         player.sendMessage(ChatColor.RED + "エラーが発生しました。");
@@ -1834,153 +2210,6 @@ public class Menu {
 
         Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.DELETE, playerMenuActions);
         player.openInventory(inv);
-    }
-
-    @Deprecated
-    public void serverTypeMenu(Player player, int page) {
-        Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
-        playerMenuActions.put(0, (event) -> generalMenu(player, 1));
-        Inventory inv = Bukkit.createInventory(null, 27, Type.SERVER_TYPE.get());
-        ItemStack backItem = new ItemStack(Material.STICK);
-        ItemMeta backMeta = backItem.getItemMeta();
-        if (backMeta != null) {
-            backMeta.setDisplayName(ChatColor.GOLD + "戻る");
-            backItem.setItemMeta(backMeta);
-        }
-        inv.setItem(0, backItem);
-        switch (page) {
-            case 1 -> {
-                playerMenuActions.put(11, (event) -> serverEachTypeMenu(player, "survival", 1));
-                playerMenuActions.put(13, (event) -> serverEachTypeMenu(player, "minigame", 1));
-                playerMenuActions.put(15, (event) -> serverEachTypeMenu(player, "dev", 1));
-                playerMenuActions.put(18, (event) -> onlineServerMenu(player, 1));
-                playerMenuActions.put(26, (event) -> serverTypeMenu(player, 2));
-                ItemStack lifeServerItem = new ItemStack(Material.BREAD);
-                ItemMeta lifeMeta = lifeServerItem.getItemMeta();
-                if (lifeMeta != null) {
-                    lifeMeta.setDisplayName(ChatColor.GREEN + "サバイバル鯖");
-                    lifeServerItem.setItemMeta(lifeMeta);
-                }
-                inv.setItem(11, lifeServerItem);
-                ItemStack eventServerItem = new ItemStack(Material.EGG);
-                ItemMeta eventMeta = eventServerItem.getItemMeta();
-                if (eventMeta != null) {
-                    eventMeta.setDisplayName(ChatColor.YELLOW + "ミニゲーム鯖");
-                    eventServerItem.setItemMeta(eventMeta);
-                }
-                inv.setItem(13, eventServerItem);
-                ItemStack devServerItem = new ItemStack(Material.PUFFERFISH);
-                ItemMeta devMeta = devServerItem.getItemMeta();
-                if (devMeta != null) {
-                    devMeta.setDisplayName(ChatColor.AQUA + "開発鯖");
-                    devServerItem.setItemMeta(devMeta);
-                }
-                inv.setItem(15, devServerItem);
-                ItemStack onlineServerItem = new ItemStack(Material.GREEN_WOOL);
-                ItemMeta onlineMeta = onlineServerItem.getItemMeta();
-                if (onlineMeta != null) {
-                    onlineMeta.setDisplayName(ChatColor.GREEN + "オンラインサーバー");
-                    onlineServerItem.setItemMeta(onlineMeta);
-                }
-                inv.setItem(18, onlineServerItem);
-                ItemStack nextPageItem = new ItemStack(Material.ARROW);
-                ItemMeta nextPageMeta = nextPageItem.getItemMeta();
-                if (nextPageMeta != null) {
-                    nextPageMeta.setDisplayName(ChatColor.GOLD + "次のページ");
-                    nextPageItem.setItemMeta(nextPageMeta);
-                }
-                inv.setItem(26, nextPageItem);
-            }
-            case 2 -> {
-                playerMenuActions.put(11, (event) -> serverEachTypeMenu(player, "distributed", 1));
-                playerMenuActions.put(13, (event) -> serverEachTypeMenu(player, "mod", 1));
-                playerMenuActions.put(15, (event) -> serverEachTypeMenu(player, "others", 1));
-                playerMenuActions.put(18, (event) -> serverTypeMenu(player, 1));
-                ItemStack distributionServerItem = new ItemStack(Material.CHORUS_FRUIT);
-                ItemMeta distributionMeta = distributionServerItem.getItemMeta();
-                if (distributionMeta != null) {
-                    distributionMeta.setDisplayName(ChatColor.YELLOW + "配布鯖");
-                    distributionServerItem.setItemMeta(distributionMeta);
-                }
-                inv.setItem(11, distributionServerItem);
-                ItemStack modServerItem = new ItemStack(Material.MELON_SLICE);
-                ItemMeta modMeta = modServerItem.getItemMeta();
-                if (modMeta != null) {
-                    modMeta.setDisplayName(ChatColor.BLUE + "モッド鯖");
-                    modServerItem.setItemMeta(modMeta);
-                }
-                inv.setItem(13, modServerItem);
-                ItemStack otherServerItem = new ItemStack(Material.ROTTEN_FLESH);
-                ItemMeta otherMeta = otherServerItem.getItemMeta();
-                if (otherMeta != null) {
-                    otherMeta.setDisplayName(ChatColor.RED + "その他");
-                    otherServerItem.setItemMeta(otherMeta);
-                }
-                inv.setItem(15, otherServerItem);
-                ItemStack prevPageItem = new ItemStack(Material.ARROW);
-                ItemMeta prevPageMeta = prevPageItem.getItemMeta();
-                if (prevPageMeta != null) {
-                    prevPageMeta.setDisplayName(ChatColor.GOLD + "前のページ");
-                    prevPageItem.setItemMeta(prevPageMeta);
-                }
-                inv.setItem(18, prevPageItem);
-            }
-        }
-        Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.SERVER_TYPE, playerMenuActions);
-        player.openInventory(inv);
-    }
-
-    public void enterServer(Player player, String serverName) {
-        player.closeInventory();
-        cf.executeProxyCommand(player, "fmcp stp " + serverName);
-    }
-
-    public void serverSwitch(Player player, String serverName) {
-        int permLevel = lp.getPermLevel(player.getName());
-        if (checkServerOnline(serverName)) {
-            if (permLevel >= 2) {
-                player.closeInventory();
-                cf.executeProxyCommand(player, "fmcp stop " + serverName);
-            }
-        } else {
-            player.closeInventory();
-            if (permLevel == 1) {
-                cf.executeProxyCommand(player, "fmcp req " + serverName);
-            } else if (permLevel >= 2) {
-                cf.executeProxyCommand(player, "fmcp start " + serverName);
-            }
-        }
-    }
-
-    public boolean isAllowedToEnter(Connection conn, String serverName) throws SQLException, ClassNotFoundException {
-        String query = "SELECT entry FROM status WHERE name = ?;";
-        try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, serverName);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getBoolean("entry");
-                }
-            }
-        }
-        return false;
-    }
-
-    public int getTotalPlayers(String serverName) {
-        return ssc.getStatusMap().values().stream()
-            .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
-            .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
-            .map(serverDataEntry -> serverDataEntry.getValue().get("player_list"))
-            .filter(playerList -> playerList instanceof String)
-            .map(playerList -> (String) playerList)
-            .mapToInt(playerList -> playerList.split(",\\s*").length)
-            .findFirst()
-            .orElse(0);
-    }
-
-    public int getTotalServers(String serverType) {
-        Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
-        Map<String, Map<String, Object>> serverStatusList = serverStatusMap.get(serverType);
-        return serverStatusList != null ? serverStatusList.size() : 0;
     }
 
     private boolean checkServerOnline(String serverName) {

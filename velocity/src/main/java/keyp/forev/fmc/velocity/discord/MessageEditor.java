@@ -357,7 +357,7 @@ public class MessageEditor {
 						if (Objects.nonNull(FaceEmoji)) {
 							try {
 								if (discordMessageType) {
-									logger.info("embed mode");
+									//logger.info("embed mode");
 									// 編集embedによるChatメッセージ送信
 									if (chatMessageId == null) {
 										// 直前にEmbedによるChatメッセージを送信しなかった場合

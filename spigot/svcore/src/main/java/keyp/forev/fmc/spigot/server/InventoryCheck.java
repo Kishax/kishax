@@ -8,7 +8,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 import org.bukkit.persistence.PersistentDataType;
@@ -20,6 +20,7 @@ import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.spigot.server.cmd.sub.Book;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import keyp.forev.fmc.spigot.server.menu.Type;
 
 public class InventoryCheck {
     private final JavaPlugin plugin;
@@ -46,38 +47,47 @@ public class InventoryCheck {
                 try (Connection conn = db.getConnection()) {
                     for (ItemStack item : player.getInventory().getContents()) {
                         if (item != null) {
-                            switch (item.getType()) {
-                                case WRITTEN_BOOK -> {
-                                    BookMeta meta = (BookMeta) item.getItemMeta();
-                                    if (meta != null) {
-                                        item.setItemMeta(book.setBookItemMeta(meta));
-                                        logger.info("Updating book in {}\'s inventory...", playerName);
+                            ItemMeta meta = item.getItemMeta();
+                            if (meta != null) {
+                                switch (item.getType()) {
+                                    case WRITTEN_BOOK -> {
+                                        BookMeta bookMeta = (BookMeta) meta;
+                                        if (meta != null) {
+                                            item.setItemMeta(book.setBookItemMeta(bookMeta));
+                                            logger.info("Updating book in {}\'s inventory...", playerName);
+                                        }
                                     }
-                                }
-                                case ENCHANTED_BOOK -> {
-                                    EnchantmentStorageMeta meta = (EnchantmentStorageMeta) item.getItemMeta();
-                                    if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, keyp.forev.fmc.spigot.server.cmd.sub.MenuExecutor.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                        hasMenuBook = true;
+                                    case ENCHANTED_BOOK -> {
+                                        if (meta != null) {
+                                            // 旧FMCメニューの削除
+                                            if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, "fmcmenu"), PersistentDataType.STRING)) {
+                                                logger.info("Removed old-FMC-Menu-Book from {}\'s inventory ", playerName);
+                                                player.getInventory().remove(item);
+                                            }
+                                            if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Type.GENERAL.getPersistantKey()), PersistentDataType.STRING)) {
+                                                hasMenuBook = true;
+                                            }
+                                        }
                                     }
-                                }
-                                case FILLED_MAP -> {
-                                    MapMeta mapMeta = (MapMeta) item.getItemMeta();
-                                    if (mapMeta != null && mapMeta.hasMapView()) {
-                                        MapView mapView = mapMeta.getMapView();
-                                        if (mapView != null) {
-                                            int mapId = mapView.getId();
-                                            // FMCItemFrameですでに設定済みのマップはスキップ
-                                            if (!ImageMap.thisServerMapIds.contains(mapId)) {
-                                                if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                                    im.loadAndSetImage(conn, mapId, item, mapMeta, mapView);
-                                                } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                                    im.loadAndSetImageTile(conn, mapId, item, mapMeta, mapView);
+                                    case FILLED_MAP -> {
+                                        MapMeta mapMeta = (MapMeta) item.getItemMeta();
+                                        if (mapMeta != null && mapMeta.hasMapView()) {
+                                            MapView mapView = mapMeta.getMapView();
+                                            if (mapView != null) {
+                                                int mapId = mapView.getId();
+                                                // FMCItemFrameですでに設定済みのマップはスキップ
+                                                if (!ImageMap.thisServerMapIds.contains(mapId)) {
+                                                    if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                                        im.loadAndSetImage(conn, mapId, item, mapMeta, mapView);
+                                                    } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
+                                                        im.loadAndSetImageTile(conn, mapId, item, mapMeta, mapView);
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
-                                default -> {
+                                    default -> {
+                                    }
                                 }
                             }
                         }

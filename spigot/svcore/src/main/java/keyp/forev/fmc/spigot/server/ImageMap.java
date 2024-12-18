@@ -880,7 +880,12 @@ public class ImageMap {
                                             // プレイヤーがブロックの上にいる場合、地面にドロップする
                                             if (block.getType() != Material.AIR) {
                                                 Bukkit.getScheduler().runTask(plugin, () -> {
-                                                    player.sendMessage("インベントリに入り切らないマップは、ドロップしました。");
+                                                    Component message = Component.text("インベントリに入り切らないマップは、ドロップしました。")
+                                                        .color(NamedTextColor.GREEN)
+                                                        .decorate(TextDecoration.BOLD);
+
+                                                    player.sendMessage(message);
+                                                    
                                                     for (ItemStack remainingItem : remainingItems) {
                                                         world.dropItemNaturally(playerLocation, remainingItem);
                                                     }
