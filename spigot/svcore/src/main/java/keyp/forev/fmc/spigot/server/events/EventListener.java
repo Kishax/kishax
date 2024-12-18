@@ -1,7 +1,6 @@
 package keyp.forev.fmc.spigot.server.events;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,14 +17,17 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -42,6 +44,7 @@ import com.google.inject.Inject;
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.spigot.server.FMCItemFrame;
+import keyp.forev.fmc.spigot.server.InvSaver;
 import keyp.forev.fmc.spigot.server.InventoryCheck;
 import keyp.forev.fmc.spigot.server.cmd.sub.Confirm;
 import keyp.forev.fmc.spigot.server.menu.Menu;
@@ -62,9 +65,8 @@ import net.md_5.bungee.api.ChatColor;
 public final class EventListener implements Listener {
     public static Map<Player, Map<RunnableTaskUtil.Key, MessageRunnable>> playerInputerMap = new HashMap<>();
     public static Map<Player, Map<RunnableTaskUtil.Key, BukkitTask>> playerTaskMap = new HashMap<>();
-    public static final AtomicBoolean isHub = new AtomicBoolean(false);
     public static final Map<Player, Location> playerBeforeLocationMap = new HashMap<>();
-    private final Map<Player, List<ItemStack>> playerInventorySnapshot = new HashMap<>();
+    public static final AtomicBoolean isHub = new AtomicBoolean(false);
     private final JavaPlugin plugin;
     private final Logger logger;
 	private final PortalsConfig psConfig;
@@ -86,6 +88,58 @@ public final class EventListener implements Listener {
         this.inv = inv;
         this.fif = fif;
 	}
+
+    @EventHandler
+    public void onBowShoot(EntityShootBowEvent event) {
+        if (event.getEntity() instanceof Player && event.getProjectile() instanceof Arrow) {
+            Player player = (Player) event.getEntity();
+            Arrow arrowTile = (Arrow) event.getProjectile();
+            ItemStack arrow = arrowTile.getItemStack();
+            if (arrow != null) {
+                ItemMeta arrowMeta = arrow.getItemMeta();
+                if (arrowMeta != null) {
+                    if (arrowMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, Type.TELEPORT_REQUEST.getPersistantKey()), PersistentDataType.STRING)) {
+                        event.setCancelled(true);
+                        Component message = Component.text("ショートカットメニュー属性の矢を放つことはできません！")
+                            .color(NamedTextColor.RED)
+                            .decorate(TextDecoration.BOLD);
+                        
+                        player.sendMessage(message);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPrepareItemCraft(PrepareItemCraftEvent event) {
+        if (event.getView().getPlayer() instanceof Player player) {
+            ItemStack[] items = event.getInventory().getMatrix();
+            for (ItemStack item : items) {
+                if (item != null) {
+                    Material material = item.getType();
+                    Set<Material> materials = Type.getMaterials();
+                    if (materials.contains(material)) {
+                        ItemMeta meta = item.getItemMeta();
+                        if (meta != null) {
+                            menu.getShortCutMap().forEach((key, value) -> {
+                                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
+                                    player.closeInventory();
+                                    Component message = Component.text("ショートカットメニュー属性のアイテムを作業台にセットすることはできません！")
+                                        .color(NamedTextColor.RED)
+                                        .decorate(TextDecoration.BOLD);
+                                    
+                                    player.sendMessage(message);
+                                    return;
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
@@ -174,6 +228,7 @@ public final class EventListener implements Listener {
 
     @EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
+        logger.info("inventoryopen!");
         if (event.getPlayer() instanceof Player player) {
             String title = event.getView().getOriginalTitle();
 
@@ -181,11 +236,7 @@ public final class EventListener implements Listener {
             if (type.isPresent()) {
                 Type menuType = type.get();
                 if (menuType == Type.CHANGE_MATERIAL) {
-                    List<ItemStack> snapshot = new ArrayList<>();
-                    for (ItemStack item : player.getInventory().getContents()) {
-                        snapshot.add(item == null ? null : item.clone());
-                    }
-                    playerInventorySnapshot.put(player, snapshot);
+                    InvSaver.save(player);
                     logger.info("Inventory snapshot saved for " + player.getName());
                 }
             }
@@ -202,31 +253,23 @@ public final class EventListener implements Listener {
                 if (menuType == Type.CHANGE_MATERIAL) {
                     AtomicBoolean isDone = Menu.menuEventFlags.get(player).get(Type.CHANGE_MATERIAL);
                     if (isDone.compareAndSet(false, true)) {
-                        List<ItemStack> oldSnapshot = playerInventorySnapshot.get(player);
-                        List<ItemStack> currentInventory = Arrays.asList(player.getInventory().getContents());
-
-                        if (oldSnapshot != null) {
-                            List<ItemStack> removedItems = calculateDifference(oldSnapshot, currentInventory);
-                            if (!removedItems.isEmpty()) {
-                                removedItems.forEach(item -> {
-                                    player.getInventory().addItem(item);
-                                    TextComponent message = Component.text()
-                                        .append(Component.text("アイテムセット中にインベントリから離れました。").color(NamedTextColor.RED).decorate(TextDecoration.BOLD))
-                                        .appendNewline()
-                                        .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
-                                        .appendNewline()
-                                        .append(Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
-                                        .appendNewline()
-                                        .append(Component.text("※アイテムを返却しました。").color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
-                                        .build();
-                                    
-                                    player.sendMessage(message);
-                                });
-                            }
-                        }
+                        InvSaver.getDiffItems(player).forEach(item -> {
+                            player.getInventory().addItem(item);
+                            TextComponent message = Component.text()
+                                .append(Component.text("アイテムセット中にインベントリから離れました。").color(NamedTextColor.RED).decorate(TextDecoration.BOLD))
+                                .appendNewline()
+                                .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                                .appendNewline()
+                                .append(Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
+                                .appendNewline()
+                                .append(Component.text("※アイテムを返却しました。").color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                                .build();
+                            
+                            player.sendMessage(message);
+                        });
                     }
                     
-                    playerInventorySnapshot.remove(player);
+                    InvSaver.playerInventorySnapshot.remove(player);
                 }
             }
         }
@@ -238,7 +281,7 @@ public final class EventListener implements Listener {
         Confirm.confirmMap.remove(player);
         playerInputerMap.remove(player);
         playerTaskMap.remove(player);
-        playerBeforeLocationMap.remove(player);
+        EventListener.playerBeforeLocationMap.remove(player);
     }
     
     @Deprecated
@@ -352,40 +395,6 @@ public final class EventListener implements Listener {
         }
     }
     
-    // 差分を計算するメソッド
-    private List<ItemStack> calculateDifference(List<ItemStack> oldInventory, List<ItemStack> newInventory) {
-        Map<ItemStack, Integer> oldCount = countItems(oldInventory);
-        Map<ItemStack, Integer> newCount = countItems(newInventory);
-
-        List<ItemStack> removedItems = new ArrayList<>();
-
-        for (Map.Entry<ItemStack, Integer> entry : oldCount.entrySet()) {
-            ItemStack item = entry.getKey();
-            int oldAmount = entry.getValue();
-            int newAmount = newCount.getOrDefault(item, 0);
-
-            if (newAmount < oldAmount) {
-                ItemStack removed = item.clone();
-                removed.setAmount(oldAmount - newAmount);
-                removedItems.add(removed);
-            }
-        }
-
-        return removedItems;
-    }
-
-    // アイテムの種類と数をカウント
-    private Map<ItemStack, Integer> countItems(List<ItemStack> inventory) {
-        Map<ItemStack, Integer> itemCount = new HashMap<>();
-        for (ItemStack item : inventory) {
-            if (item != null) {
-                itemCount.put(item, itemCount.getOrDefault(item, 0) + item.getAmount());
-            }
-        }
- 
-        return itemCount;
-    }
-
     private boolean isWithinBounds(Location loc, Location corner1, Location corner2) {
         double x1 = Math.min(corner1.getX(), corner2.getX());
         double x2 = Math.max(corner1.getX(), corner2.getX());
