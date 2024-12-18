@@ -77,4 +77,10 @@ public enum Type {
             .filter(type -> type.get().equalsIgnoreCase(titleName))
             .findFirst();
     }
+
+    public static Optional<Type> searchPersistantKeys(String key) {
+        return Arrays.stream(Type.values())
+            .filter(type -> type.getPersistantKey().equalsIgnoreCase(key))
+            .findFirst();
+    }
 }

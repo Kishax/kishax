@@ -36,6 +36,7 @@ import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.database.Database;
 import org.slf4j.Logger;
+import keyp.forev.fmc.spigot.server.menu.Type;
 
 public class RegisterTeleportPoint implements TabExecutor {
     private final Logger logger;
@@ -229,8 +230,8 @@ public class RegisterTeleportPoint implements TabExecutor {
                                             //boolean isPublic = input2.equals("1");
                                             final String type;
                                             switch (input2) {
-                                                case "1" -> type = "public";
-                                                case "2" -> type = "private";
+                                                case "1" -> type = Type.TELEPORT_POINT_PUBLIC.getPersistantKey();
+                                                case "2" -> type = Type.TELEPORT_POINT_PRIVATE.getPersistantKey();
                                                 default -> {
                                                     rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                                     player.sendMessage(ChatColor.RED + "処理中にエラーが発生しました。");

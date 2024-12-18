@@ -363,9 +363,9 @@ public class MessageEditor {
 										// 直前にEmbedによるChatメッセージを送信しなかった場合
 										// EmbedChatMessageを送って、MessageIdを
 										addMessage = MessageFormat.format("<{0}{1}> {2}", FaceEmoji, playerName, chatMessage);
-										logger.info("Creating embed...");
+										//logger.info("Creating embed...");
 										Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
-										logger.info("Sending message...");
+										//logger.info("Sending message...");
 										return discord.sendBotMessageAndgetMessageId(createEmbed, true).thenAccept(messageId2 -> {
 											DiscordEventListener.playerChatMessageId = messageId2;
 										}).exceptionally(e -> {
