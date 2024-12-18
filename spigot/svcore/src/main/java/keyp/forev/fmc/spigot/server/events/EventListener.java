@@ -26,6 +26,7 @@ import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
@@ -113,6 +114,24 @@ public final class EventListener implements Listener {
     }
 
     @EventHandler
+    public void onInventoryMoveItem(InventoryMoveItemEvent event) {
+        ItemStack item = event.getItem();
+        if (item != null && item.hasItemMeta()) {
+            ItemMeta meta = item.getItemMeta();
+            Set<Material> materials = Type.getMaterials();
+            if (materials.contains(item.getType())) {
+                menu.getShortCutMap().forEach((key, value) -> {
+                    NamespacedKey keyKey = new NamespacedKey(plugin, key.getPersistantKey());
+                    if (meta.getPersistentDataContainer().has(keyKey, PersistentDataType.STRING)) {
+                        event.setCancelled(true); // 移動をキャンセル
+                    }
+                });
+        
+            }
+        }
+    }
+
+    @EventHandler
     public void onPrepareItemCraft(PrepareItemCraftEvent event) {
         if (event.getView().getPlayer() instanceof Player player) {
             ItemStack[] items = event.getInventory().getMatrix();
@@ -126,7 +145,7 @@ public final class EventListener implements Listener {
                             menu.getShortCutMap().forEach((key, value) -> {
                                 if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
                                     player.closeInventory();
-                                    Component message = Component.text("ショートカットメニュー属性のアイテムを作業台にセットすることはできません！")
+                                    Component message = Component.text("ショートカットメニュー属性のアイテムをクラフトエリアにセットすることはできません！")
                                         .color(NamedTextColor.RED)
                                         .decorate(TextDecoration.BOLD);
                                     
