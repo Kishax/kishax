@@ -2,8 +2,10 @@ package keyp.forev.fmc.spigot.util;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -50,6 +52,12 @@ public class RunnableTaskUtil {
 
         public String get() {
             return key;
+        }
+
+        public static Optional<Key> search(String name) {
+        return Arrays.stream(Key.values())
+            .filter(type -> type.get().equalsIgnoreCase(name))
+            .findFirst();
         }
     }
 

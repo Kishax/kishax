@@ -32,7 +32,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
@@ -88,36 +88,157 @@ public final class EventListener implements Listener {
 	}
 
     @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        Action action = event.getAction();
+        ItemStack item = player.getInventory().getItemInMainHand();
+
+        if (item != null) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                if (action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR) {
+                    Material material = item.getType();
+                    Set<Material> materials = Type.getMaterials();
+                    if (materials.contains(material)) {
+                        menu.getShortCutMap().forEach((key, value) -> {
+                            if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
+                                event.setCancelled(true);
+                                player.closeInventory();
+                                value.run(player);
+                                return;
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) throws SQLException {
+        if (event.getWhoClicked() instanceof Player player) {
+            ClickType clickType = event.getClick();
+            int slot = event.getRawSlot();
+            String title = event.getView().getOriginalTitle();
+
+            ItemStack item = event.getCurrentItem();
+            if (item != null) {
+                ItemMeta meta = item.getItemMeta();
+                if (meta != null) {
+                    if (clickType.isRightClick() || clickType == ClickType.CREATIVE) {
+                        Material material = item.getType();
+                        Set<Material> materials = Type.getMaterials();
+                        if (materials.contains(material)) {
+                            menu.getShortCutMap().forEach((key, value) -> {
+                                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
+                                    event.setCancelled(true);
+                                    player.closeInventory();
+                                    value.run(player);
+                                    return;
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            Optional<Type> type = Type.search(title);
+            if (type.isPresent()) {
+                Type menuType = type.get();
+                if (!menuType.equals(Type.CHANGE_MATERIAL)) {
+                    event.setCancelled(true);
+                }
+                menu.runMenuEventAction(player, menuType, slot, event);
+            } else if (title.endsWith(" server")) {
+                event.setCancelled(true);
+                Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
+                String serverName = title.split(" ")[0];
+                boolean iskey = serverStatusMap.entrySet().stream()
+                    .anyMatch(e -> e.getValue().entrySet().stream()
+                    .anyMatch(e2 -> {
+                        if (e2.getKey() instanceof String) {
+                            String statusServerName = (String) e2.getKey();
+                            return statusServerName.equals(serverName);
+                        }
+                        return false;
+                    }));
+                if (iskey) {
+                    menu.runMenuEventAction(player, Type.SERVER, slot, event);
+                }
+            } else if (title.endsWith(" servers")) {
+                event.setCancelled(true);
+                menu.runMenuEventAction(player, Type.SERVER_EACH_TYPE, slot, event);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        if (event.getPlayer() instanceof Player player) {
+            String title = event.getView().getOriginalTitle();
+
+            Optional<Type> type = Type.search(title);
+            if (type.isPresent()) {
+                Type menuType = type.get();
+                if (menuType == Type.CHANGE_MATERIAL) {
+                    List<ItemStack> snapshot = new ArrayList<>();
+                    for (ItemStack item : player.getInventory().getContents()) {
+                        snapshot.add(item == null ? null : item.clone());
+                    }
+                    playerInventorySnapshot.put(player, snapshot);
+                    logger.info("Inventory snapshot saved for " + player.getName());
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (event.getPlayer() instanceof Player player) {
+            String title = event.getView().getOriginalTitle();
+            Optional<Type> type = Type.search(title);
+            if (type.isPresent()) {
+                Type menuType = type.get();
+                if (menuType == Type.CHANGE_MATERIAL) {
+                    AtomicBoolean isDone = Menu.menuEventFlags.get(player).get(Type.CHANGE_MATERIAL);
+                    if (isDone.compareAndSet(false, true)) {
+                        List<ItemStack> oldSnapshot = playerInventorySnapshot.get(player);
+                        List<ItemStack> currentInventory = Arrays.asList(player.getInventory().getContents());
+
+                        if (oldSnapshot != null) {
+                            List<ItemStack> removedItems = calculateDifference(oldSnapshot, currentInventory);
+                            if (!removedItems.isEmpty()) {
+                                removedItems.forEach(item -> {
+                                    player.getInventory().addItem(item);
+                                    TextComponent message = Component.text()
+                                        .append(Component.text("アイテムセット中にインベントリから離れました。").color(NamedTextColor.RED).decorate(TextDecoration.BOLD))
+                                        .appendNewline()
+                                        .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                                        .appendNewline()
+                                        .append(Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
+                                        .appendNewline()
+                                        .append(Component.text("※アイテムを返却しました。").color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                                        .build();
+                                    
+                                    player.sendMessage(message);
+                                });
+                            }
+                        }
+                    }
+                    
+                    playerInventorySnapshot.remove(player);
+                }
+            }
+        }
+    }
+
+    @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         Confirm.confirmMap.remove(player);
         playerInputerMap.remove(player);
         playerTaskMap.remove(player);
         playerBeforeLocationMap.remove(player);
-    }
-
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-        Action action = event.getAction();
-        //Block clickedBlock = event.getClickedBlock();
-        ItemStack itemInHand = player.getInventory().getItemInMainHand();
-        switch (action) {
-            case RIGHT_CLICK_BLOCK, RIGHT_CLICK_AIR -> {
-                switch (itemInHand.getType()) {
-                    case ENCHANTED_BOOK -> {
-                        EnchantmentStorageMeta meta = (EnchantmentStorageMeta) itemInHand.getItemMeta();
-                        if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, keyp.forev.fmc.spigot.server.cmd.sub.MenuExecutor.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                            player.performCommand("fmc menu");
-                        }
-                    }
-                    default -> {
-                    }
-                }
-            }
-            default -> {
-            }
-        }
     }
     
     @Deprecated
@@ -163,121 +284,6 @@ public final class EventListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onInventoryOpen(InventoryOpenEvent event) {
-        if (event.getPlayer() instanceof Player player) {
-            String title = event.getView().getOriginalTitle();
-
-            Optional<Type> type = Type.getType(title);
-            if (type.isPresent()) {
-                Type menuType = type.get();
-                if (menuType == Type.CHANGE_MATERIAL) {
-                    List<ItemStack> snapshot = new ArrayList<>();
-                    for (ItemStack item : player.getInventory().getContents()) {
-                        snapshot.add(item == null ? null : item.clone());
-                    }
-                    playerInventorySnapshot.put(player, snapshot);
-                    logger.info("Inventory snapshot saved for " + player.getName());
-                }
-            }
-        }
-    }
-
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player player) {
-            String title = event.getView().getOriginalTitle();
-            Optional<Type> type = Type.getType(title);
-            if (type.isPresent()) {
-                Type menuType = type.get();
-                if (menuType == Type.CHANGE_MATERIAL) {
-                    AtomicBoolean isDone = Menu.menuEventFlags.get(player).get(Type.CHANGE_MATERIAL);
-                    if (isDone.compareAndSet(false, true)) {
-                        List<ItemStack> oldSnapshot = playerInventorySnapshot.get(player);
-                        List<ItemStack> currentInventory = Arrays.asList(player.getInventory().getContents());
-
-                        if (oldSnapshot != null) {
-                            List<ItemStack> removedItems = calculateDifference(oldSnapshot, currentInventory);
-                            if (!removedItems.isEmpty()) {
-                                removedItems.forEach(item -> {
-                                    player.getInventory().addItem(item);
-                                    TextComponent message = Component.text()
-                                        .append(Component.text("アイテムセット中にインベントリから離れました。").color(NamedTextColor.RED).decorate(TextDecoration.BOLD))
-                                        .appendNewline()
-                                        .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
-                                        .appendNewline()
-                                        .append(Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
-                                        .appendNewline()
-                                        .append(Component.text("※アイテムを返却しました。").color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
-                                        .build();
-                                    
-                                    player.sendMessage(message);
-                                });
-                            }
-                        }
-                    }
-                    
-                    playerInventorySnapshot.remove(player);
-                }
-            }
-        }
-    }
-
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) throws SQLException {
-        if (event.getWhoClicked() instanceof Player player) {
-            ClickType clickType = event.getClick();
-            ItemStack clickedItem = event.getCurrentItem();
-            int slot = event.getRawSlot();
-
-            if (clickedItem != null) {
-                switch (clickedItem.getType()) {
-                    case ENCHANTED_BOOK -> {
-                        EnchantmentStorageMeta meta = (EnchantmentStorageMeta) clickedItem.getItemMeta();
-                        if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, keyp.forev.fmc.spigot.server.cmd.sub.MenuExecutor.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                            if (clickType.isRightClick() || clickType == ClickType.CREATIVE) {
-                                player.closeInventory();
-                                player.performCommand("fmc menu");
-                                return;
-                            }
-                        }
-                    }
-                    default -> {
-                    }
-                }
-            }
-
-            String title = event.getView().getOriginalTitle();
-            Optional<Type> type = Type.getType(title);
-            if (type.isPresent()) {
-                Type menuType = type.get();
-                if (!menuType.equals(Type.CHANGE_MATERIAL)) {
-                    event.setCancelled(true);
-                }
-                menu.runMenuEventAction(player, menuType, slot, event);
-            } else if (title.endsWith(" server")) {
-                event.setCancelled(true);
-                Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
-                String serverName = title.split(" ")[0];
-                boolean iskey = serverStatusMap.entrySet().stream()
-                    .anyMatch(e -> e.getValue().entrySet().stream()
-                    .anyMatch(e2 -> {
-                        if (e2.getKey() instanceof String) {
-                            String statusServerName = (String) e2.getKey();
-                            return statusServerName.equals(serverName);
-                        }
-                        return false;
-                    }));
-                if (iskey) {
-                    menu.runMenuEventAction(player, Type.SERVER, slot, event);
-                }
-            } else if (title.endsWith(" servers")) {
-                event.setCancelled(true);
-                menu.runMenuEventAction(player, Type.SERVER_EACH_TYPE, slot, event);
-            }
-        }
-    }
-    
 	@EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         if (plugin.getConfig().getBoolean("Portals.Move", false)) {
