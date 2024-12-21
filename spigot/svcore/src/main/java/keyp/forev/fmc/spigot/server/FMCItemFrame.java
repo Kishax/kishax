@@ -44,34 +44,7 @@ public class FMCItemFrame {
                     for (World world : Bukkit.getWorlds()) {
                         logger.info("Loading item frames in the world: {}", world.getName());
                         for (ItemFrame itemFrame : world.getEntitiesByClass(ItemFrame.class)) {
-                            ItemStack item = itemFrame.getItem();
-                            switch (item.getType()) {
-                                case FILLED_MAP -> {
-                                    MapMeta mapMeta = (MapMeta) item.getItemMeta();
-                                    if (mapMeta != null && mapMeta.hasMapView()) {
-                                        MapView mapView = mapMeta.getMapView();
-                                        if (mapView != null) {
-                                            int mapId = mapView.getId();
-                                            if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                                im.loadAndSetImage(conn, mapId, item, mapMeta, mapView);
-                                            } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                                im.loadAndSetImageTile(conn, mapId, item, mapMeta, mapView);
-                                            }
-                                        }
-                                    }
-                                }
-                                case WRITTEN_BOOK -> {
-                                    BookMeta meta = (BookMeta) item.getItemMeta();
-                                    if (meta != null) {
-                                        if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Book.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                                            item.setItemMeta(book.setBookItemMeta((BookMeta) meta));
-                                            logger.info("Updated book item frame: {}", itemFrame.getLocation());
-                                        }
-                                    }
-                                }
-                                default -> {
-                                }
-                            }
+                            replaceImageMap(conn, itemFrame);
                         }
                     }
                     logger.info("Loaded all item frames.");
@@ -83,5 +56,37 @@ public class FMCItemFrame {
                 }
             });
         });
+    }
+
+    @Deprecated
+    public void replaceImageMap(Connection conn, ItemFrame itemFrame) throws SQLException, ClassNotFoundException {
+        ItemStack item = itemFrame.getItem();
+        switch (item.getType()) {
+            case FILLED_MAP -> {
+                MapMeta mapMeta = (MapMeta) item.getItemMeta();
+                if (mapMeta != null && mapMeta.hasMapView()) {
+                    MapView mapView = mapMeta.getMapView();
+                    if (mapView != null) {
+                        int mapId = mapView.getId();
+                        if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                            im.loadAndSetImage(conn, mapId, item, mapMeta, mapView);
+                        } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
+                            im.loadAndSetImageTile(conn, mapId, item, mapMeta, mapView);
+                        }
+                    }
+                }
+            }
+            case WRITTEN_BOOK -> {
+                BookMeta meta = (BookMeta) item.getItemMeta();
+                if (meta != null) {
+                    if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Book.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                        item.setItemMeta(book.setBookItemMeta((BookMeta) meta));
+                        logger.info("Updated book item frame: {}", itemFrame.getLocation());
+                    }
+                }
+            }
+            default -> {
+            }
+        }
     }
 }

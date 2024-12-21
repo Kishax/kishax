@@ -1,5 +1,6 @@
 package keyp.forev.fmc.spigot.server.events;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,6 +12,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,6 +21,8 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -35,6 +40,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -44,6 +50,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.spigot.server.FMCItemFrame;
@@ -74,6 +81,7 @@ public final class EventListener implements Listener {
     private final JavaPlugin plugin;
     private final BukkitAudiences audiences;
     private final Logger logger;
+    private final Database db;
 	private final PortalsConfig psConfig;
     private final Menu menu;
     private final ServerStatusCache ssc;
@@ -83,10 +91,11 @@ public final class EventListener implements Listener {
     private final Set<Player> playersInPortal = new HashSet<>();
 
     @Inject
-	public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, FMCItemFrame fif) {
+	public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, FMCItemFrame fif) {
 		this.plugin = plugin;
         this.audiences = audiences;
         this.logger = logger;
+        this.db = db;
 		this.psConfig = psConfig;
         this.menu = menu;
         this.ssc = ssc;
@@ -131,7 +140,6 @@ public final class EventListener implements Listener {
                         event.setCancelled(true); // 移動をキャンセル
                     }
                 });
-        
             }
         }
     }
@@ -153,7 +161,6 @@ public final class EventListener implements Listener {
                                     Component message = Component.text("ショートカットメニュー属性のアイテムをクラフトエリアにセットすることはできません！")
                                         .color(NamedTextColor.RED)
                                         .decorate(TextDecoration.BOLD);
-                                    
                                     audiences.player(player).sendMessage(message);
                                     return;
                                 }
@@ -332,7 +339,6 @@ public final class EventListener implements Listener {
     @Deprecated
 	@EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        fif.loadWorldsItemFrames();
         event.setJoinMessage(null);
         Player player = event.getPlayer();
         if (EventListener.isHub.get()) {
@@ -348,7 +354,31 @@ public final class EventListener implements Listener {
             }
         }
         inv.updatePlayerInventory(player);
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            fif.loadWorldsItemFrames();
+        }, 20L);
     }
+
+    @Deprecated
+    @EventHandler
+    public void onChunkLoad(ChunkLoadEvent event) {
+        Chunk chunk = event.getChunk();
+        try (Connection conn = db.getConnection()) {
+            for (Entity entity : chunk.getEntities()) {
+                if (entity instanceof ItemFrame) {
+                    ItemFrame itemFrame = (ItemFrame) entity;
+                    fif.replaceImageMap(conn, itemFrame);
+                }
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            logger.error("Error updating item frames: {}", e.getMessage());
+            for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+            }
+        }
+    }
+
 
     @Deprecated
     @EventHandler
