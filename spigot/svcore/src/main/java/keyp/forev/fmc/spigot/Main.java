@@ -32,15 +32,18 @@ import keyp.forev.fmc.spigot.server.cmd.sub.teleport.TeleportRequest;
 import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.server.events.WandListener;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 
 public class Main extends JavaPlugin {
 	private static Injector injector = null;
+	private BukkitAudiences audiences;
 	public static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("FMC-Plugin");
 	
 	@Override
 	public void onEnable() {
 		logger.info("detected spigot platform.");
-        injector = Guice.createInjector(new Module(this, logger));
+		this.audiences = BukkitAudiences.create(this);
+        injector = Guice.createInjector(new Module(this, logger, audiences));
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 		Database db = getInjector().getInstance(Database.class);
 		saveDefaultConfig();
@@ -72,6 +75,9 @@ public class Main extends JavaPlugin {
 	
 	@Override
     public void onDisable() {
+		if (audiences != null) {
+            audiences.close();
+        }
 		try {
 			getInjector().getInstance(DoServerOffline.class).updateDatabase();
 		} catch (Exception e) {

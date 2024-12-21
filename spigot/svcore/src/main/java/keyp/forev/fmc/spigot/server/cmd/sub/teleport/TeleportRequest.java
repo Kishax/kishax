@@ -25,6 +25,7 @@ import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.spigot.server.menu.Menu;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -38,13 +39,15 @@ public class TeleportRequest implements TabExecutor {
     public static Map<Player, List<Map<Player, BukkitTask>>> teleportMap = new ConcurrentHashMap<>();
     public static Map<Player ,List<Map<Player, BukkitTask>>> teleportMeMap = new ConcurrentHashMap<>();
     private final JavaPlugin plugin;
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
     private final Menu menu;
     @Inject
-    public TeleportRequest(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, Menu menu) {
+    public TeleportRequest(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, Menu menu) {
         this.plugin = plugin;
+        this.audiences = audiences;
         this.logger = logger;
         this.db = db;
         this.lp = lp;
@@ -57,13 +60,15 @@ public class TeleportRequest implements TabExecutor {
             if (!lp.hasPermission(player.getName(), PermSettings.TPR.get())) {
                 Component errorMessage = Component.text("権限がありません。")
                     .color(NamedTextColor.RED);
-                player.sendMessage(errorMessage);
+                
+                audiences.player(player).sendMessage(errorMessage);
                 return true;
             }
             if (args.length < 1) {
                 Component errorMessage = Component.text("引数が不足しています。")
                     .color(NamedTextColor.RED);
-                player.sendMessage(errorMessage);
+
+                audiences.player(player).sendMessage(errorMessage);
                 return true;
             }
             String targetName = args[0];
@@ -71,7 +76,8 @@ public class TeleportRequest implements TabExecutor {
             if (targetPlayer == null) {
                 Component errorMessage = Component.text("プレイヤーが見つかりません。")
                     .color(NamedTextColor.RED);
-                player.sendMessage(errorMessage);
+
+                audiences.player(player).sendMessage(errorMessage);
                 return true;
             }
             String cmdName = cmd.getName();
@@ -83,7 +89,7 @@ public class TeleportRequest implements TabExecutor {
             if (sender != null) {
                 Component errorMessage = Component.text("このコマンドはプレイヤーのみ実行可能です。")
                     .color(NamedTextColor.RED);
-                sender.sendMessage(errorMessage);
+                audiences.console().sendMessage(errorMessage);
             }
         }
         return true;
@@ -123,7 +129,7 @@ public class TeleportRequest implements TabExecutor {
         if (player.equals(targetPlayer)) {
             Component errorMessage = Component.text("自分自身にはテレポートできません。")
                 .color(NamedTextColor.RED);
-            player.sendMessage(errorMessage);
+            audiences.player(player).sendMessage(errorMessage);
             return;
         }
         if (!me ? TeleportRequest.teleportMap.containsKey(player) : TeleportRequest.teleportMeMap.containsKey(player)) {
@@ -138,7 +144,7 @@ public class TeleportRequest implements TabExecutor {
                 if (isRequested) {
                     Component errorMessage = Component.text("既にリクエストを送信しています。")
                         .color(NamedTextColor.RED);
-                    player.sendMessage(errorMessage);
+                    audiences.player(player).sendMessage(errorMessage);
                     return;
                 }
             }
@@ -163,7 +169,7 @@ public class TeleportRequest implements TabExecutor {
                     .append(TCUtils.SETTINGS_ENTER.get())
                     .build();
 
-                targetPlayer.sendMessage(messages);
+                    audiences.player(targetPlayer).sendMessage(messages);
 
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     if (!me) {
@@ -201,7 +207,7 @@ public class TeleportRequest implements TabExecutor {
                     .append(deny)
                     .build();
 
-                targetPlayer.sendMessage(messages);
+                    audiences.player(targetPlayer).sendMessage(messages);
             }
 
             Component message2 = Component.text("リクエストを送信しました。")
@@ -213,12 +219,14 @@ public class TeleportRequest implements TabExecutor {
                 .color(NamedTextColor.GRAY)
                 .decorate(TextDecoration.ITALIC);
 
-            player.sendMessage(message2.append(message3));
+            audiences.player(player).sendMessage(message2.append(message3));
         } catch (ClassNotFoundException | SQLException e) {
             player.closeInventory();
+
             Component errorMessage = Component.text("データベースとの通信に失敗しました。")
                 .color(NamedTextColor.RED);
-            player.sendMessage(errorMessage);
+            audiences.player(player).sendMessage(errorMessage);
+
 			logger.error("A ClassNotFoundException | SQLException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
                 logger.error(element.toString());
@@ -234,9 +242,9 @@ public class TeleportRequest implements TabExecutor {
                         .color(NamedTextColor.RED)
                         .decorate(TextDecoration.BOLD);
                     
-                    player.sendMessage(timeout);
+                    audiences.player(player).sendMessage(timeout);
 
-                    targetPlayer.sendMessage(timeout);
+                    audiences.player(targetPlayer).sendMessage(timeout);
 
                     List<Map<Player, BukkitTask>> futureList = !me ? TeleportRequest.teleportMap.get(player) : TeleportRequest.teleportMeMap.get(player);
                     if (futureList != null) {

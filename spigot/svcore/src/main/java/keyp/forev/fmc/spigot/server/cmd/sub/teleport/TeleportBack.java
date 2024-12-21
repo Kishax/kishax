@@ -17,6 +17,7 @@ import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.settings.FMCCoords;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -24,12 +25,14 @@ import net.md_5.bungee.api.ChatColor;
 import org.slf4j.Logger;
 
 public class TeleportBack implements TabExecutor {
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
     private final Provider<SocketSwitch> sswProvider;
     @Inject
-    public TeleportBack(Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+    public TeleportBack(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+        this.audiences = audiences;
         this.logger = logger;
         this.db = db;
         this.lp = lp;
@@ -58,7 +61,7 @@ public class TeleportBack implements TabExecutor {
                         .color(NamedTextColor.GREEN)
                         .decorate(TextDecoration.BOLD);
 
-                    player.sendMessage(message);
+                    audiences.player(player).sendMessage(message);
 
                     player.teleport(EventListener.playerBeforeLocationMap.get(player));
                     EventListener.playerBeforeLocationMap.remove(player);
@@ -66,7 +69,8 @@ public class TeleportBack implements TabExecutor {
                     Component message = Component.text("テレポート前の座標がありません。")
                         .color(NamedTextColor.RED)
                         .decorate(TextDecoration.BOLD);
-                    player.sendMessage(message);
+                    
+                    audiences.player(player).sendMessage(message);
                 }
             }
         } else {

@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -37,13 +38,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class WandListener implements Listener {
     public static boolean isMakePortal = false;
     private final JavaPlugin plugin;
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Map<Player, Location> firstCorner = new HashMap<>();
     private final PortalsConfig psConfig;
 
     @Inject
-    public WandListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig) {
+    public WandListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, PortalsConfig psConfig) {
         this.plugin = plugin;
+        this.audiences = audiences;
         this.logger = logger;
         this.psConfig = psConfig;
     }
@@ -109,7 +112,7 @@ public class WandListener implements Listener {
                                 .append(Component.text("をクリックしてね。"))
                                 .build();
 
-                            player.sendMessage(messages);
+                            audiences.player(player).sendMessage(messages);
                             firstCorner.remove(player);
                         } catch (Exception e) {
                             player.sendMessage(ChatColor.RED + "ポータルの保存に失敗しました。");

@@ -48,6 +48,7 @@ import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.util.JavaUtils;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -80,6 +81,7 @@ public class Menu {
         Material.COPPER_BLOCK
     );
     private final JavaPlugin plugin;
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Database db;
     private final ServerStatusCache ssc;
@@ -92,8 +94,9 @@ public class Menu {
     private int currentOreIndex = 0;
 
 	@Inject
-	public Menu(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf, Provider<SocketSwitch> sswProvider) {  
+	public Menu(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf, Provider<SocketSwitch> sswProvider) {  
 		this.plugin = plugin;
+        this.audiences = audiences;
         this.logger = logger;
         this.db = db;
         this.ssc = ssc;
@@ -204,7 +207,7 @@ public class Menu {
                         .color(NamedTextColor.GRAY)
                         .decorate(TextDecoration.ITALIC);
                     
-                    player.sendMessage(message);
+                    audiences.player(player).sendMessage(message);
 
                     if (!remaining.isEmpty()) {
                         World world = player.getWorld();
@@ -217,7 +220,7 @@ public class Menu {
                                     .color(NamedTextColor.GREEN)
                                     .decorate(TextDecoration.BOLD);
                                 
-                                player.sendMessage(message2);
+                                audiences.player(player).sendMessage(message2);
 
                                 remaining.forEach((key, value) -> {
                                     world.dropItemNaturally(playerLocation, value);
@@ -228,7 +231,7 @@ public class Menu {
                                 .color(NamedTextColor.RED)
                                 .decorate(TextDecoration.BOLD);
 
-                            player.sendMessage(message2);
+                            audiences.player(player).sendMessage(message2);
                         }
                     }
                 });
@@ -736,7 +739,7 @@ public class Menu {
                                             }
                                         }.runTaskLater(plugin, 20 * 3);
     
-                                        player.sendMessage(messages);
+                                        audiences.player(player).sendMessage(messages);
                                     } catch (SQLException | ClassNotFoundException e) {
                                         player.closeInventory();
                                         player.sendMessage(ChatColor.RED + "データベースとの通信にエラーが発生しました。");
@@ -1032,7 +1035,7 @@ public class Menu {
                                     .append(Component.text("作成者のみロック後のアクションを選択できます。"))
                                     .build();
 
-                                player.sendMessage(messages);
+                                audiences.player(player).sendMessage(messages);
                             });
                         }
                     } else if (large) {
@@ -1056,7 +1059,7 @@ public class Menu {
                                 .append(alert)
                                 .build();
 
-                            player.sendMessage(messages);
+                            audiences.player(player).sendMessage(messages);
                         });
                     } else if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
                         // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
@@ -1384,7 +1387,7 @@ public class Menu {
                         meta.setLore(lores);
                         meta.getPersistentDataContainer().set(new NamespacedKey(plugin, String.valueOf(index)), PersistentDataType.STRING, "true");
                         if (isEnchanted) {
-                            meta.addEnchant(Enchantment.LUCK, 1, true);
+                            meta.addEnchant(Enchantment.LURE, 1, true);
                             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS); 
                         }
                         item.setItemMeta(meta);
@@ -1415,7 +1418,7 @@ public class Menu {
                             .color(NamedTextColor.GOLD)
                             .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED);
                         
-                        player.sendMessage(message);
+                        audiences.player(player).sendMessage(message);
                         
                         new BukkitRunnable() {
                             @Override
@@ -1442,7 +1445,7 @@ public class Menu {
                                     .append(backMessage)
                                     .build();
 
-                                player.sendMessage(messages);
+                                audiences.player(player).sendMessage(messages);
 
                                 SocketSwitch ssw = sswProvider.get();
                                 try (Connection conn = db.getConnection()) {
@@ -2164,7 +2167,7 @@ public class Menu {
                                                 }
                                             }.runTaskLater(plugin, 20 * 3);
                     
-                                            player.sendMessage(messages);
+                                            audiences.player(player).sendMessage(messages);
                                         }
                                     } 
                                 } catch (SQLException | ClassNotFoundException e) {

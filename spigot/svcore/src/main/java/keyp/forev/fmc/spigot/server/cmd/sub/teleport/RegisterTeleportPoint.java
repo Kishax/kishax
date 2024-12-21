@@ -25,6 +25,7 @@ import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils2;
 import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -39,6 +40,7 @@ import org.slf4j.Logger;
 import keyp.forev.fmc.spigot.server.menu.Type;
 
 public class RegisterTeleportPoint implements TabExecutor {
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
@@ -46,7 +48,8 @@ public class RegisterTeleportPoint implements TabExecutor {
     private final String thisServerName;
     private final Provider<SocketSwitch> sswProvider;
     @Inject
-    public RegisterTeleportPoint(Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
+    public RegisterTeleportPoint(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
+        this.audiences = audiences;
         this.logger = logger;
         this.db = db;
         this.lp = lp;
@@ -139,11 +142,11 @@ public class RegisterTeleportPoint implements TabExecutor {
                     .append(TCUtils.INPUT_MODE.get())
                     .build();
 
-                player.sendMessage(messages);
+                audiences.player(player).sendMessage(messages);
                 
                 Map<RunnableTaskUtil.Key, MessageRunnable> playerActions = new HashMap<>();
                 playerActions.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT, (input) -> {
-                    player.sendMessage(TCUtils2.getResponseComponent(input));
+                    audiences.player(player).sendMessage(TCUtils2.getResponseComponent(input));
                     switch (input) {
                         case "0" -> {
                             rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
@@ -151,7 +154,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                                 .color(NamedTextColor.RED)
                                 .decorate(TextDecoration.BOLD);
 
-                            player.sendMessage(message);
+                            audiences.player(player).sendMessage(message);
                         }
                         default -> {
                             final String title;
@@ -164,7 +167,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                                         .append(Component.text("「:」もしくは全角の「：」は1つだけ入力してください。"))
                                         .color(NamedTextColor.RED);
 
-                                    player.sendMessage(errorMessage);
+                                    audiences.player(player).sendMessage(errorMessage);
 
                                     rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                     return;
@@ -211,11 +214,11 @@ public class RegisterTeleportPoint implements TabExecutor {
                                     .append(TCUtils.INPUT_MODE.get())
                                     .build();
 
-                                player.sendMessage(message);
+                                audiences.player(player).sendMessage(message);
 
                                 Map<RunnableTaskUtil.Key, MessageRunnable> playerActions2 = new HashMap<>();
                                 playerActions2.put(RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT, (input2) -> {
-                                    player.sendMessage(TCUtils2.getResponseComponent(input2));
+                                    audiences.player(player).sendMessage(TCUtils2.getResponseComponent(input2));
                                     switch (input2) {
                                         case "0" -> {
                                             rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
@@ -223,7 +226,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                 .color(NamedTextColor.RED)
                                                 .decorate(TextDecoration.BOLD);
                                                 
-                                            player.sendMessage(message2);
+                                            audiences.player(player).sendMessage(message2);
                                             return;
                                         }
                                         case "1", "2" -> {
@@ -247,7 +250,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                         .color(NamedTextColor.GREEN)
                                                         .decorate(TextDecoration.BOLD);
 
-                                                    player.sendMessage(message3);
+                                                    audiences.player(player).sendMessage(message3);
                                                 } catch (SQLException | ClassNotFoundException e) {
                                                     player.sendMessage(ChatColor.RED + "座標の保存に失敗しました。");
                                                     logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
@@ -268,7 +271,8 @@ public class RegisterTeleportPoint implements TabExecutor {
                                         default -> {
                                             Component errorMessage2 = Component.text("無効な入力です。")
                                                 .color(NamedTextColor.RED);
-                                            player.sendMessage(errorMessage2);
+
+                                            audiences.player(player).sendMessage(errorMessage2);
                                             rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                                         }
                                     }
@@ -289,7 +293,7 @@ public class RegisterTeleportPoint implements TabExecutor {
         } else {
             Component errorMessage = Component.text("プレイヤーのみが実行できます。")
                 .color(NamedTextColor.RED);
-            sender.sendMessage(errorMessage);
+            audiences.console().sendMessage(errorMessage);
         }
         return true;
     }

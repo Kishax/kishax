@@ -102,6 +102,7 @@ public class FMCCommand implements TabExecutor {
 		return true;
 	}
 
+	@Deprecated
 	@Override
 	public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
     	List<String> ret = new ArrayList<>();
