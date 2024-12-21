@@ -27,6 +27,7 @@ import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils2;
 import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -39,13 +40,15 @@ import keyp.forev.fmc.common.database.Database;
 import org.slf4j.Logger;
 
 public class RegisterImageMap implements TabExecutor {
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
     private final RunnableTaskUtil rt;
     private final ImageMap im;
     @Inject
-    public RegisterImageMap(Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ImageMap im) {
+    public RegisterImageMap(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ImageMap im) {
+        this.audiences = audiences;
         this.logger = logger;
         this.db = db;
         this.lp = lp;
@@ -106,12 +109,12 @@ public class RegisterImageMap implements TabExecutor {
                 .append(TCUtils.INPUT_MODE.get())
                 .build();
 
-            player.sendMessage(messages);
+            audiences.player(player).sendMessage(messages);
 
             Map<RunnableTaskUtil.Key, MessageRunnable> playerActions = new HashMap<>();
 
             playerActions.put(RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP, (input) -> {
-                player.sendMessage(TCUtils2.getResponseComponent(input));
+                audiences.player(player).sendMessage(TCUtils2.getResponseComponent(input));
 
                 switch (input) {
                     case "0" -> {
@@ -120,7 +123,7 @@ public class RegisterImageMap implements TabExecutor {
                             .color(NamedTextColor.RED)
                             .decorate(TextDecoration.BOLD);
 
-                        player.sendMessage(message);
+                            audiences.player(player).sendMessage(message);
                     }
                     default -> {
                         if (!PatternUtil.URL.check(input)) {
@@ -136,7 +139,7 @@ public class RegisterImageMap implements TabExecutor {
                                 .append(Component.text("を再入力してください。"))
                                 .build();
                             
-                            player.sendMessage(errorMessages);
+                            audiences.player(player).sendMessage(errorMessages);
                             rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
                             return;
                         }
@@ -156,7 +159,7 @@ public class RegisterImageMap implements TabExecutor {
                                     .append(Component.text("を再入力してください。"))
                                     .build();
 
-                                player.sendMessage(errorMessages);
+                                audiences.player(player).sendMessage(errorMessages);
                                 rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
                                 return;
                             }
@@ -173,7 +176,7 @@ public class RegisterImageMap implements TabExecutor {
                                 .append(Component.text("を再入力してください。"))
                                 .build();
                             
-                            player.sendMessage(errorMessages);
+                            audiences.player(player).sendMessage(errorMessages);
                             rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
 
                             logger.info("An error occurred at RegisterImageMap#onCommand: {}", e);
@@ -223,11 +226,11 @@ public class RegisterImageMap implements TabExecutor {
                                 .append(TCUtils.INPUT_MODE.get())
                                 .build();
 
-                            player.sendMessage(nextMessages);
+                            audiences.player(player).sendMessage(nextMessages);
 
                             Map<RunnableTaskUtil.Key, MessageRunnable> playerActions2 = new HashMap<>();
                             playerActions2.put(RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP, (input2) -> {
-                                player.sendMessage(TCUtils2.getResponseComponent(input2));
+                                audiences.player(player).sendMessage(TCUtils2.getResponseComponent(input2));
 
                                 final String title;
                                 final String comment;
@@ -240,7 +243,7 @@ public class RegisterImageMap implements TabExecutor {
                                             .append(Component.text("「:」もしくは全角の「：」は1つだけ入力してください。"))
                                             .color(NamedTextColor.RED);
 
-                                        player.sendMessage(errorMessage);
+                                        audiences.player(player).sendMessage(errorMessage);
 
                                         rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
                                         return;
@@ -275,7 +278,7 @@ public class RegisterImageMap implements TabExecutor {
         } else {
             Component errorMessage = Component.text("プレイヤーのみが実行できます。")
                 .color(NamedTextColor.RED);
-            sender.sendMessage(errorMessage);
+            audiences.console().sendMessage(errorMessage);
         }
         return true;
     }

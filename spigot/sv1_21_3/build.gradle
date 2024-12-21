@@ -16,6 +16,8 @@ dependencies {
     shadowImpl 'net.coobird:thumbnailator:0.4.20'
     shadowImpl 'com.google.zxing:core:3.4.1'
     shadowImpl 'com.google.zxing:javase:3.4.1'
+	shadowImpl 'net.kyori:adventure-api:4.17.0'
+    shadowImpl 'net.kyori:adventure-platform-bukkit:4.3.4'
     compileOnly project(':spigot:svcore')
     shadowImpl project(':common')
 }

@@ -42,18 +42,22 @@ import java.nio.file.Path;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 
 public class Module extends AbstractModule {
 	private final JavaPlugin plugin;
 	private final Logger logger;
-	public Module(JavaPlugin plugin, Logger logger) {
+	private final BukkitAudiences audiences;
+	public Module(JavaPlugin plugin, Logger logger, BukkitAudiences audiences) {
 		this.plugin = plugin;
 		this.logger = logger;
+		this.audiences = audiences;
     }
 	
 	@Override
     protected void configure() {
 		bind(JavaPlugin.class).toInstance(plugin);
+		bind(BukkitAudiences.class).toInstance(audiences);
 		bind(PortalsConfig.class);
 		bind(DatabaseInfo.class).to(SpigotDatabaseInfo.class).in(Singleton.class);
 		bind(Database.class);
@@ -102,7 +106,7 @@ public class Module extends AbstractModule {
 	        Menu menu,
 	        Luckperms lp,
 	        BroadCast bc) {
-	    return new SpigotSocketResponse(plugin, logger, db, ssc, shd, sswProvider, asd, inv, menu, lp, bc);
+	    return new SpigotSocketResponse(plugin, audiences, logger, db, ssc, shd, sswProvider, asd, inv, menu, lp, bc);
 	}
 	
 	@Provides

@@ -61,7 +61,7 @@ public class EnchantmentUtils {
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
                 // ダミーのエンチャントを追加
-                meta.addEnchant(Enchantment.LUCK, 1, true); // レベルは1でOK
+                meta.addEnchant(Enchantment.LURE, 1, true); // レベルは1でOK
                 meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS); // エンチャント表示を非表示に
                 item.setItemMeta(meta);
                 return true;

@@ -17,6 +17,7 @@ import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -35,6 +36,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class SpigotSocketResponse implements SocketResponse {
     private final JavaPlugin plugin;
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Database db;
     private final ServerStatusCache ssc;
@@ -46,8 +48,9 @@ public class SpigotSocketResponse implements SocketResponse {
     private final BroadCast bc;
     private final String thisServerName;
     @Inject
-    public SpigotSocketResponse(JavaPlugin plugin, Logger logger, Database db, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, InventoryCheck inv, Menu menu, Luckperms lp, BroadCast bc) {
+    public SpigotSocketResponse(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, ServerStatusCache ssc, ServerHomeDir shd, Provider<SocketSwitch> sswProvider, AutoShutdown asd, InventoryCheck inv, Menu menu, Luckperms lp, BroadCast bc) {
         this.plugin = plugin;
+        this.audiences = audiences;
         this.logger = logger;
         this.db = db;
         this.ssc = ssc;
@@ -109,7 +112,7 @@ public class SpigotSocketResponse implements SocketResponse {
                                         .append(TCUtils.SETTINGS_ENTER.get())
                                         .build();
                                     
-                                    player.sendMessage(messages);
+                                    audiences.player(player).sendMessage(messages);
                                 } else {
                                     TextComponent messages = Component.text()
                                         .append(TCUtils.LATER_OPEN_INV_3.get())
@@ -117,7 +120,7 @@ public class SpigotSocketResponse implements SocketResponse {
                                         .append(TCUtils.SETTINGS_ENTER.get())
                                         .build();
 
-                                    player.sendMessage(messages);
+                                    audiences.player(player).sendMessage(messages);
                                     
                                     plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                                         menu.serverMenuFromOnlineServerMenu(player, extractedServer);

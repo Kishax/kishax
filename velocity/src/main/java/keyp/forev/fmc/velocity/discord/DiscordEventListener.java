@@ -188,7 +188,7 @@ public class DiscordEventListener {
 						int limitUploadTimes = FMCSettings.DISCORD_IMAGE_LIMIT_TIMES.getIntValue(),
 							userUploadTimes = getDiscordUserTodayRegisterImageMetaTimes(conn, userId),
 							thisTimes = userUploadTimes + 1;
-						if (thisTimes >= limitUploadTimes) {
+						if (thisTimes > limitUploadTimes) {
 							replyMessage(event, "1日の登録回数は"+limitUploadTimes+"回までです。", true);
 							return;
 						}
@@ -401,12 +401,14 @@ public class DiscordEventListener {
 		String userName = (String) getEffectiveNameMethod.invoke(member);
 
 		if (!content.isEmpty()) {
+			DiscordEventListener.playerChatMessageId = null; // マイクラからのメッセージを通知ありで新しくembedを作成させるのに必要
 			content = "(discord) " + userName + " -> " + content;
 			sendMixUrl(content);
 		}
 
 		int attachmentsSize = attachments.size();
 		if (attachmentsSize > 0) {
+			DiscordEventListener.playerChatMessageId = null; // マイクラからのメッセージを通知ありで新しくembedを作成させるのに必要
 			TextComponent component = Component.text()
 					.append(Component.text("(discord) " + userName+" -> Discordで画像か動画を上げています！").color(NamedTextColor.AQUA))
 					.build();

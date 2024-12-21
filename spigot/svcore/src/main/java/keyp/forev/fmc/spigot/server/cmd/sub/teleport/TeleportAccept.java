@@ -22,6 +22,7 @@ import com.google.inject.Provider;
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.common.socket.SocketSwitch;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -32,13 +33,15 @@ import keyp.forev.fmc.common.database.Database;
 
 public class TeleportAccept implements TabExecutor {
     private final JavaPlugin plugin;
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
     private final Provider<SocketSwitch> sswProvider;
     @Inject
-    public TeleportAccept(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+    public TeleportAccept(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
         this.plugin = plugin;
+        this.audiences = audiences;
         this.logger = logger;
         this.db = db;
         this.lp = lp;
@@ -83,9 +86,9 @@ public class TeleportAccept implements TabExecutor {
                                     .color(NamedTextColor.GREEN)
                                     .decorate(TextDecoration.BOLD);
 
-                                player.sendMessage(message);
+                                audiences.player(player).sendMessage(message);
 
-                                targetPlayer.sendMessage(message);
+                                audiences.player(targetPlayer).sendMessage(message);
 
                                 SocketSwitch ssw = sswProvider.get();
                                 try (Connection conn = db.getConnection()) {
@@ -121,9 +124,9 @@ public class TeleportAccept implements TabExecutor {
                                     .color(NamedTextColor.GREEN)
                                     .decorate(TextDecoration.BOLD);
 
-                                player.sendMessage(messages);
+                                audiences.player(player).sendMessage(messages);
 
-                                targetPlayer.sendMessage(messages);
+                                audiences.player(targetPlayer).sendMessage(messages);
                                 
                                 SocketSwitch ssw = sswProvider.get();
                                 try (Connection conn = db.getConnection()) {
@@ -158,13 +161,13 @@ public class TeleportAccept implements TabExecutor {
                                     .color(NamedTextColor.RED)
                                     .decorate(TextDecoration.BOLD);
 
-                                player.sendMessage(messagePlayer);
+                                audiences.player(player).sendMessage(messagePlayer);
 
                                 Component messageTargetPlayer = Component.text(playerName + "がテレポートリクエストを拒否しました。")
                                     .color(NamedTextColor.RED)
                                     .decorate(TextDecoration.BOLD);
 
-                                targetPlayer.sendMessage(messageTargetPlayer);
+                                    audiences.player(targetPlayer).sendMessage(messageTargetPlayer);
 
                                 return true;
                             }
@@ -192,13 +195,13 @@ public class TeleportAccept implements TabExecutor {
                                     .color(NamedTextColor.RED)
                                     .decorate(TextDecoration.BOLD);
 
-                                player.sendMessage(messagePlayer);
+                                audiences.player(player).sendMessage(messagePlayer);
 
                                 Component messageTargetPlayer = Component.text(playerName + "が逆テレポートリクエストを拒否しました。")
                                     .color(NamedTextColor.RED)
                                     .decorate(TextDecoration.BOLD);
 
-                                targetPlayer.sendMessage(messageTargetPlayer);
+                                    audiences.player(targetPlayer).sendMessage(messageTargetPlayer);
                                 
                                 return true;
                             }

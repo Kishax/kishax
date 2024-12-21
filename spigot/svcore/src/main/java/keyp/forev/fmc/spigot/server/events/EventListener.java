@@ -28,12 +28,14 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -57,6 +59,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -69,6 +72,7 @@ public final class EventListener implements Listener {
     public static final Map<Player, Location> playerBeforeLocationMap = new HashMap<>();
     public static final AtomicBoolean isHub = new AtomicBoolean(false);
     private final JavaPlugin plugin;
+    private final BukkitAudiences audiences;
     private final Logger logger;
 	private final PortalsConfig psConfig;
     private final Menu menu;
@@ -79,8 +83,9 @@ public final class EventListener implements Listener {
     private final Set<Player> playersInPortal = new HashSet<>();
 
     @Inject
-	public EventListener(JavaPlugin plugin, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, FMCItemFrame fif) {
+	public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, FMCItemFrame fif) {
 		this.plugin = plugin;
+        this.audiences = audiences;
         this.logger = logger;
 		this.psConfig = psConfig;
         this.menu = menu;
@@ -105,7 +110,7 @@ public final class EventListener implements Listener {
                             .color(NamedTextColor.RED)
                             .decorate(TextDecoration.BOLD);
                         
-                        player.sendMessage(message);
+                        audiences.player(player).sendMessage(message);
                         return;
                     }
                 }
@@ -149,7 +154,7 @@ public final class EventListener implements Listener {
                                         .color(NamedTextColor.RED)
                                         .decorate(TextDecoration.BOLD);
                                     
-                                    player.sendMessage(message);
+                                    audiences.player(player).sendMessage(message);
                                     return;
                                 }
                             });
@@ -187,18 +192,38 @@ public final class EventListener implements Listener {
         }
     }
     
+    @Deprecated
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) throws SQLException {
         if (event.getWhoClicked() instanceof Player player) {
             ClickType clickType = event.getClick();
             int slot = event.getRawSlot();
             String title = event.getView().getOriginalTitle();
+            Inventory inv = event.getInventory();
+            InventoryType invType = inv.getType();
 
             ItemStack item = event.getCurrentItem();
             if (item != null) {
                 ItemMeta meta = item.getItemMeta();
                 if (meta != null) {
-                    if (clickType.isRightClick() || clickType == ClickType.CREATIVE) {
+                    // 自動作業台を利用する間はイベントをキャンセル
+                    if (invType.equals(InventoryType.CRAFTER)) {
+                        Material material = item.getType();
+                        Set<Material> materials = Type.getMaterials();
+                        if (materials.contains(material)) {
+                            menu.getShortCutMap().forEach((key, value) -> {
+                                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
+                                    player.closeInventory();
+                                    Component message = Component.text("ショートカットメニュー属性のアイテムをクラフトエリアにセットすることはできません！")
+                                        .color(NamedTextColor.RED)
+                                        .decorate(TextDecoration.BOLD);
+                                    
+                                    audiences.player(player).sendMessage(message);
+                                    return;
+                                }
+                            });
+                        }
+                    } else if (clickType.isRightClick() || clickType == ClickType.CREATIVE) {
                         Material material = item.getType();
                         Set<Material> materials = Type.getMaterials();
                         if (materials.contains(material)) {
@@ -245,6 +270,7 @@ public final class EventListener implements Listener {
         }
     }
 
+    @Deprecated
     @EventHandler
     public void onInventoryOpen(InventoryOpenEvent event) {
         if (event.getPlayer() instanceof Player player) {
@@ -261,6 +287,7 @@ public final class EventListener implements Listener {
         }
     }
 
+    @Deprecated
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player player) {
@@ -283,7 +310,7 @@ public final class EventListener implements Listener {
                                 .append(Component.text("※アイテムを返却しました。").color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
                                 .build();
                             
-                            player.sendMessage(message);
+                            audiences.player(player).sendMessage(message);
                         });
                     }
                     

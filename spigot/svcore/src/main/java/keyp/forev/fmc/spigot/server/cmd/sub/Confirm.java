@@ -22,6 +22,7 @@ import keyp.forev.fmc.common.util.OTPGenerator;
 import keyp.forev.fmc.spigot.server.ImageMap;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -33,14 +34,16 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class Confirm {
     public static final Set<Player> confirmMap = new HashSet<>();
     private final JavaPlugin plugin;
+    private final BukkitAudiences audiences;
     private final Logger logger;
     private final Database db;
     private final Luckperms lp;
     private final ImageMap im;
     private final String thisServerName;
     @Inject
-    public Confirm(JavaPlugin plugin, Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
+    public Confirm(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
         this.plugin = plugin;
+        this.audiences = audiences;
         this.logger = logger;
         this.db = db;
         this.lp = lp;
@@ -75,14 +78,14 @@ public class Confirm {
                                 } else {
                                     Component errorMessage = Component.text("エラーが発生しました。")
                                         .color(NamedTextColor.RED);
-                                    player.sendMessage(errorMessage);
+                                    audiences.player(player).sendMessage(errorMessage);
                                 }
                             }
                         }
                     } catch (SQLException | ClassNotFoundException e2) {
                         Component errorMessage = Component.text("WEB認証のQRコード生成に失敗しました。")
                             .color(NamedTextColor.RED);
-                        player.sendMessage(errorMessage);
+                        audiences.player(player).sendMessage(errorMessage);
                         logger.error("A SQLException error occurred: " + e2.getMessage());
                         for (StackTraceElement element : e2.getStackTrace()) {
                             logger.error(element.toString());
@@ -91,7 +94,7 @@ public class Confirm {
                 } else {
                     Component message = Component.text("WEB認証済みプレイヤーが通過しました！")
                         .color(NamedTextColor.GREEN);
-                    player.sendMessage(message);
+                        audiences.player(player).sendMessage(message);
                 }
                 Confirm.confirmMap.add(player);
             }
@@ -254,7 +257,7 @@ public class Confirm {
                     }
                 }
                 if (message != Component.empty()) {
-                    player.sendMessage(message);
+                    audiences.player(player).sendMessage(message);
                 }             
                 countdown--;
             }
