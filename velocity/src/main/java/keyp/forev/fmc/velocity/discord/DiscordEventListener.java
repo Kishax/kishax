@@ -296,7 +296,7 @@ public class DiscordEventListener {
 		Object adCraRole = getRoleByIdMethod.invoke(guild, config.getLong("Discord.AdCraRoleId"));
 
 		if (!roles.contains(adCraRole)) {
-			replyMessage(event, userMention + " あなたはこの操作を行う権限がありません。", false);
+			replyMessage(event, userMention + " この操作を行う権限がありません。", true);
 			return;
 		}
 		String replyMessage = null;
@@ -308,15 +308,24 @@ public class DiscordEventListener {
 				if (!reqMap.isEmpty()) {
 					String reqPlayerName = reqMap.get("playerName"),
 						reqServerName = reqMap.get("serverName"),
-						reqPlayerUUID = reqMap.get("playerUUID");
+						reqPlayerUUID = reqMap.get("playerUUID"),
+						reqId = reqMap.get("reqId");
+					
+					if (isChecked(reqId)) {
+						replyMessage(event, userMention + " __すでにレスポンスを返しています。__", false);
+						return;
+					}
+
 					try (Connection conn = db.getConnection()) {
 						db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "ok"});
+						db.updateLog(conn, "UPDATE requests SET checked = ? WHERE requuid = ?;", new Object[] {true, reqId});
 					} catch (SQLException | ClassNotFoundException e2) {
 						logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
 						for (StackTraceElement element : e2.getStackTrace()) {
 							logger.error(element.toString());
 						}
 					}
+
 					String execPath = req.getExecPath(reqServerName);
 					ProcessBuilder processBuilder = new ProcessBuilder(execPath);
 					try {
@@ -343,27 +352,37 @@ public class DiscordEventListener {
 				Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage);
 				if (!reqMap.isEmpty()) {
 					String reqPlayerName = reqMap.get("playerName"),
-					reqServerName = reqMap.get("serverName"),
-					reqPlayerUUID = reqMap.get("playerUUID");
+						reqServerName = reqMap.get("serverName"),
+						reqPlayerUUID = reqMap.get("playerUUID"),
+						reqId = reqMap.get("reqId");
+					
+					if (isChecked(reqId)) {
+						replyMessage(event, userMention + " __すでにレスポンスを返しています。__", false);
+						return;
+					}
+
 					try (Connection conn = db.getConnection()) {
 						db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "cancel"});
+						db.updateLog(conn, "UPDATE requests SET checked = ? WHERE requuid = ?;", new Object[] {true, reqId});
 					} catch (SQLException | ClassNotFoundException e2) {
 						logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
 						for (StackTraceElement element : e2.getStackTrace()) {
 							logger.error(element.toString());
 						}
 					}
+
 					discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
 					bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
 					VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
-				if (replyMessage != null) {
-					replyMessage(event, replyMessage, false);
-				}
             }
         }
+
+		if (replyMessage != null) {
+			replyMessage(event, replyMessage, false);
+		}
     }
 
 	@ReflectionHandler(event = "net.dv8tion.jda.api.events.message.MessageReceivedEvent")
@@ -437,6 +456,21 @@ public class DiscordEventListener {
 				}
 		    }
 		}
+	}
+
+	public boolean isChecked(String reqId) {
+		try (Connection conn = db.getConnection()) {
+			try (PreparedStatement ps = conn.prepareStatement("SELECT checked FROM requests WHERE requuid = ?;")) {
+				ps.setString(1, reqId);
+				try (ResultSet rs = ps.executeQuery()) {
+					return rs.next() && rs.getBoolean("checked");
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An error occurred at DiscordEventListener#isChecked: {}", e);
+		}
+
+		return false;
 	}
 
 	private void replyMessage(Object event, String message, boolean isEphemeral) throws Exception {
