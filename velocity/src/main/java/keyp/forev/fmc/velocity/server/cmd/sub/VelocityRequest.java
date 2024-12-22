@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -153,12 +154,15 @@ public class VelocityRequest implements Request {
 											if (success != null && !success.isEmpty()) {
 												String playerEmoji = emoji.getEmojiString(playerName, success);
 												try {
-													discord.sendRequestButtonWithMessage(playerEmoji + playerName + "が" + targetServerName + "サーバーの起動リクエストを送信しました。\n起動しますか？\n(管理者のみ実行可能です。)");
-												} catch (Exception e) {
-													logger.error("An exception occurred while executing the sendRequestButtonWithMessage method: {}", e.getMessage());
-													for (StackTraceElement ste : e.getStackTrace()) {
-														logger.error(ste.toString());
+													String randomUUID = UUID.randomUUID().toString();
+													try (Connection conn0 = db.getConnection()) {
+														db.insertLog(conn, "INSERT INTO requests (name, uuid, requuid, server) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, randomUUID, targetServerName});
 													}
+
+													discord.sendRequestButtonWithMessage(playerEmoji + playerName + "が" + targetServerName + "サーバーの起動リクエストを送信しました。\n起動しますか？(reqId: " + randomUUID + ")\n(管理者のみ実行可能です。)");
+												} catch (Exception e) {
+													logger.error("An error occurred at VelocityRequest#execute: {}", e);
+													return false;
 												}
 												Component message = Component.text("送信されました。")
 													.appendNewline()
@@ -188,7 +192,7 @@ public class VelocityRequest implements Request {
 													for (StackTraceElement element : e.getStackTrace()) {
 														logger.error(element.toString());
 													}
-												}											
+												}
 												return true;
 											} else {
 												return false;
@@ -251,26 +255,32 @@ public class VelocityRequest implements Request {
 		return null;
 	}
 
-    @Override
+	@Override
 	public Map<String, String> paternFinderMapForReq(String buttonMessage) {
-		String pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\n起動しますか？(.*?)";
+		// 正規表現パターンを更新して、reqIdもキャプチャできるようにする
+		String pattern = "<(.*?)>(.*?)が(.*?)サーバーの起動リクエストを送信しました。\\n起動しますか？\\(reqId: (.*?)\\)\\n\\(管理者のみ実行可能です。\\)";
 		Pattern compiledPattern = Pattern.compile(pattern);
 		Matcher matcher = compiledPattern.matcher(buttonMessage);
 		Map<String, String> resultMap = new HashMap<>();
+
 		if (matcher.find()) {
 			Optional<String> reqPlayerName = Optional.ofNullable(matcher.group(2));
 			Optional<String> reqServerName = Optional.ofNullable(matcher.group(3));
-			if (reqPlayerName.isPresent() && reqServerName.isPresent()) {
+			Optional<String> reqId = Optional.ofNullable(matcher.group(4));
+
+			if (reqPlayerName.isPresent() && reqServerName.isPresent() && reqId.isPresent()) {
 				String reqPlayerUUID = pu.getPlayerUUIDByNameFromDB(reqPlayerName.get());
 				resultMap.put("playerName", reqPlayerName.get());
 				resultMap.put("serverName", reqServerName.get());
 				resultMap.put("playerUUID", reqPlayerUUID);
+				resultMap.put("reqId", reqId.get());
 			} else {
 				logger.error("必要な情報が見つかりませんでした。");
 			}
 		} else {
 			logger.error("パターンに一致するメッセージが見つかりませんでした。");
 		}
+
 		return resultMap;
 	}
 }

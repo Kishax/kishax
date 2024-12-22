@@ -26,12 +26,14 @@ import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.libs.VClassManager;
 import keyp.forev.fmc.velocity.libs.VPackageManager;
+import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.server.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 import com.google.inject.Singleton;
-
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -45,7 +47,9 @@ public class Discord {
     private final Logger logger;
     private final VelocityConfig config;
     private final Database db;
+    private final Provider<MessageEditor> discordMEProvider;
     private final Provider<Request> reqProvider;
+    private final BroadCast bc;
     // JDA
     private final URLClassLoader jdaURLClassLoader;
     private final Class<?> jdaClazz, jdaBuilderClazz, listenerAdapterClazz,
@@ -55,11 +59,13 @@ public class Discord {
         presenceActivityClazz, embedBuilderClazz, errorResponseExceptionClazz, 
         cmdCreateActionClazz, restActionClazz, itemComponentClazz;
     @Inject
-    public Discord(Logger logger, VelocityConfig config, Database db, Provider<Request> reqProvider) throws ClassNotFoundException {
+    public Discord(Logger logger, VelocityConfig config, Database db, Provider<MessageEditor> discordMEProvider, Provider<Request> reqProvider, BroadCast bc) throws ClassNotFoundException {
     	this.logger = logger;
     	this.config = config;
         this.db = db;
         this.reqProvider = reqProvider;
+        this.discordMEProvider = discordMEProvider;
+        this.bc = bc;
         this.jdaURLClassLoader = ClassManager.urlClassLoaderMap.get(VPackageManager.VPackage.JDA);
         this.jdaClazz = VClassManager.JDA.JDA.get().getClazz();
         this.jdaBuilderClazz = VClassManager.JDA.JDA_BUILDER.get().getClazz();
@@ -439,15 +445,43 @@ public class Discord {
                             String buttonMessage2 = (String) entityMessageClazz.getMethod("getContentRaw").invoke(message);
                             Request req = reqProvider.get();
                             Map<String, String> reqMap = req.paternFinderMapForReq(buttonMessage2);
+                            String reqPlayerName = reqMap.get("playerName"),
+                                reqPlayerUUID = reqMap.get("playerUUID"),
+                                reqServerName = reqMap.get("serverName"),
+                                reqId = reqMap.get("reqId");
+                            
+                            try (Connection conn = db.getConnection()) {
+                                db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "ok"});
+                                db.updateLog(conn, "UPDATE requests SET checked = ? WHERE requuid = ?;", new Object[] {true, reqId});
+                            } catch (SQLException | ClassNotFoundException e2) {
+                                logger.error("A SQLException | ClassNotFoundException error occurred: {}", e2.getMessage());
+                                for (StackTraceElement element : e2.getStackTrace()) {
+                                    logger.error(element.toString());
+                                }
+                            }
+
                             if (!reqMap.isEmpty()) {
                                 try (Connection conn = db.getConnection()) {
-                                    db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqMap.get("playerName"), reqMap.get("playerUUID"), true, reqMap.get("serverName"), "nores"});
+                                    db.insertLog(conn, "INSERT INTO log (name, uuid, reqsul, reqserver, reqsulstatus) VALUES (?, ?, ?, ?, ?);", new Object[] {reqPlayerName, reqPlayerUUID, true, reqServerName, "nores"});
                                 } catch (SQLException | ClassNotFoundException e) {
                                     logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
                                     for (StackTraceElement element : e.getStackTrace()) {
                                         logger.error(element.toString());
                                     }
                                 }
+
+                                try {
+                                    MessageEditor discordME = discordMEProvider.get();
+                                    discordME.AddEmbedSomeMessage("RequestNoRes", reqPlayerName);
+                                } catch (Exception e1) {
+                                    logger.error("An Exception error occurred: " + e1.getMessage());
+                                    for (StackTraceElement element : e1.getStackTrace()) {
+                                        logger.error(element.toString());
+                                    }
+                                }
+
+                                bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストに応答しませんでした。").color(NamedTextColor.BLUE));
+                                VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
                             }
                         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
                                 | NoSuchMethodException | SecurityException e) {

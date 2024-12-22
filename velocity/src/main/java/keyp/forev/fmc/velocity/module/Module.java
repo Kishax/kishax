@@ -110,10 +110,12 @@ public class Module extends AbstractModule {
         Logger logger, 
         VelocityConfig config, 
         Database db, 
-        Provider<Request> req
+        Provider<Request> reqProvider,
+        Provider<MessageEditor> discordMEProvider,
+        BroadCast bc
     ) {
         try {
-            return new Discord(logger, config, db, req);
+            return new Discord(logger, config, db, discordMEProvider, reqProvider, bc);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
