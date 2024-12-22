@@ -105,7 +105,7 @@ public class EventListener {
 		this.mt = mt;
 		this.fb = fb;
 	}
-	
+
 	@Subscribe
 	public void onChat(PlayerChatEvent e) {
 		if (e.getMessage().startsWith("/")) return;
@@ -524,7 +524,7 @@ public class EventListener {
 											.append(Component.text("WEB認証")
 												.color(NamedTextColor.LIGHT_PURPLE)
 												.decorate(
-													TextDecoration.BOLD, 
+													TextDecoration.BOLD,
 													TextDecoration.UNDERLINED))
 											.append(Component.text("を必須としています。")
 												.color(NamedTextColor.AQUA))

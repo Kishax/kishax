@@ -335,7 +335,7 @@ public final class EventListener implements Listener {
         playerTaskMap.remove(player);
         EventListener.playerBeforeLocationMap.remove(player);
     }
-    
+
     @Deprecated
 	@EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
