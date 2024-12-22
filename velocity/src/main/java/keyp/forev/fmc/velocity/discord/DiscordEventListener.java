@@ -343,9 +343,6 @@ public class DiscordEventListener {
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 				}
-				if (replyMessage != null) {
-					replyMessage(event, replyMessage, false);
-				}
             }
         	case "reqCancel" -> {
 				replyMessage = userMention + " リクエストを拒否しました。";
