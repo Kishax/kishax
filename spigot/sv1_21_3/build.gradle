@@ -12,7 +12,7 @@ configurations {
 
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.21.3-R0.1-SNAPSHOT'
-    compileOnly 'io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT'
+    //compileOnly 'io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT'
     shadowImpl 'net.coobird:thumbnailator:0.4.20'
     shadowImpl 'com.google.zxing:core:3.4.1'
     shadowImpl 'com.google.zxing:javase:3.4.1'

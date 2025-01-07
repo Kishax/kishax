@@ -109,19 +109,15 @@ public final class EventListener implements Listener {
         if (event.getEntity() instanceof Player && event.getProjectile() instanceof Arrow) {
             Player player = (Player) event.getEntity();
             Arrow arrowTile = (Arrow) event.getProjectile();
-            ItemStack arrow = arrowTile.getItemStack();
-            if (arrow != null) {
-                ItemMeta arrowMeta = arrow.getItemMeta();
-                if (arrowMeta != null) {
-                    if (arrowMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, Type.TELEPORT_REQUEST.getPersistantKey()), PersistentDataType.STRING)) {
-                        event.setCancelled(true);
-                        Component message = Component.text("ショートカットメニュー属性の矢を放つことはできません！")
-                            .color(NamedTextColor.RED)
-                            .decorate(TextDecoration.BOLD);
-                        
-                        audiences.player(player).sendMessage(message);
-                        return;
-                    }
+            if (arrowTile != null) {
+                if (arrowTile.getPersistentDataContainer().has(new NamespacedKey(plugin, Type.TELEPORT_REQUEST.getPersistantKey()), PersistentDataType.STRING)) {
+                    event.setCancelled(true);
+                    Component message = Component.text("ショートカットメニュー属性の矢を放つことはできません！")
+                        .color(NamedTextColor.RED)
+                        .decorate(TextDecoration.BOLD);
+
+                    audiences.player(player).sendMessage(message);
+                    return;
                 }
             }
         }
