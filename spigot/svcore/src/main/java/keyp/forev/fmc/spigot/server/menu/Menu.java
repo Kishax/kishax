@@ -2169,7 +2169,7 @@ public class Menu {
                     
                                             audiences.player(player).sendMessage(messages);
                                         }
-                                    } 
+                                    }
                                 } catch (SQLException | ClassNotFoundException e) {
                                     player.closeInventory();
                                     player.sendMessage(ChatColor.RED + "削除中にデータベースとの通信にエラーが発生しました。");

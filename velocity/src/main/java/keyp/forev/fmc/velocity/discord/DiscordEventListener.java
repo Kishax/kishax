@@ -310,9 +310,9 @@ public class DiscordEventListener {
 						reqServerName = reqMap.get("serverName"),
 						reqPlayerUUID = reqMap.get("playerUUID"),
 						reqId = reqMap.get("reqId");
-					
+
 					if (isChecked(reqId)) {
-						replyMessage(event, userMention + " __すでにレスポンスを返しています。__", false);
+						replyMessage(event, userMention + " __すでにレスポンスを返しています。__", true);
 						return;
 					}
 
@@ -333,8 +333,10 @@ public class DiscordEventListener {
 						discordME.AddEmbedSomeMessage("RequestOK", reqPlayerName);
 						bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
 						VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
+						replyMessage(event, replyMessage, false);
 					} catch (IOException e1) {
 						replyMessage = "内部エラーが発生しました。\nサーバーが起動できません。";
+						replyMessage(event, replyMessage, false);
 						logger.error("An IOException error occurred: " + e1.getMessage());
 						for (StackTraceElement element : e1.getStackTrace()) {
 							logger.error(element.toString());
@@ -342,6 +344,7 @@ public class DiscordEventListener {
 					}
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
+					replyMessage(event, replyMessage, false);
 				}
             }
         	case "reqCancel" -> {
@@ -352,9 +355,9 @@ public class DiscordEventListener {
 						reqServerName = reqMap.get("serverName"),
 						reqPlayerUUID = reqMap.get("playerUUID"),
 						reqId = reqMap.get("reqId");
-					
+
 					if (isChecked(reqId)) {
-						replyMessage(event, userMention + " __すでにレスポンスを返しています。__", false);
+						replyMessage(event, userMention + " __すでにレスポンスを返しています。__", true);
 						return;
 					}
 
@@ -371,15 +374,13 @@ public class DiscordEventListener {
 					discordME.AddEmbedSomeMessage("RequestCancel", reqPlayerName);
 					bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
 					VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
+					replyMessage(event, replyMessage, false);
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
+					replyMessage(event, replyMessage, false);
 				}
             }
         }
-
-		if (replyMessage != null) {
-			replyMessage(event, replyMessage, false);
-		}
     }
 
 	@ReflectionHandler(event = "net.dv8tion.jda.api.events.message.MessageReceivedEvent")
@@ -474,7 +475,7 @@ public class DiscordEventListener {
 		Method replyMethod = event.getClass().getMethod("reply", String.class);
 		Object replyResult = replyMethod.invoke(event, message);
 		Method setEphemeralMethod = replyResult.getClass().getMethod("setEphemeral", boolean.class);
-		Object ephemeralReplyResult = setEphemeralMethod.invoke(replyResult, true);
+		Object ephemeralReplyResult = setEphemeralMethod.invoke(replyResult, isEphemeral);
 		Method queueMethod = ephemeralReplyResult.getClass().getMethod("queue");
 		queueMethod.invoke(ephemeralReplyResult);
 	}
