@@ -11,10 +11,10 @@ pluginManagement {
             url = 'https://maven.minecraftforge.net/'
         }
         maven { url = 'https://maven.parchmentmc.org' }
-        maven {
-            name = "papermc"
-            url = uri("https://repo.papermc.io/repository/maven-public/")
-        }
+        //maven {
+        //    name = "papermc"
+        //    url = uri("https://repo.papermc.io/repository/maven-public/")
+        //}
     }
 }
 
