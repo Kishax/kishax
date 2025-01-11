@@ -1,0 +1,18 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+issueTrackerURL="${projectIssueTracker}"
+[[mods]]
+modId="fmc"
+version="${projectVersion}"
+displayName="${projectName}"
+displayURL="${projectHP}"
+logoFile="fmc.png"
+authors="Bella"
+description="${projectDescription}"
+[[dependencies.fmc]]
+    modId="luckperms"
+    mandatory=false
+    versionRange="[5.4,)"
+    ordering="NONE"
+    side="SERVER"

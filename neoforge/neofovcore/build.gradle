@@ -1,0 +1,44 @@
+plugins {
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.neoforgemoddev)
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    sourceCompatibility = 17
+    targetCompatibility = 21
+}
+
+neoForge {
+    version = '21.1.93'
+
+    validateAccessTransformers = true
+
+    parchment {
+        mappingsVersion = '2024.11.13'
+        minecraftVersion = '1.21.1'
+    }
+
+    mods {
+        "fmc" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+dependencies {
+    implementation('com.google.code.gson:gson:2.11.0') {
+        version { strictly '2.11.0' }
+    }
+    implementation project(':common')
+}
+
+jar {
+    from(sourceSets.main.output)
+}
+
+build {
+    dependsOn(':common:build')
+}
