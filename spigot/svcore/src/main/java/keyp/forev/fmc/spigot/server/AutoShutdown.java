@@ -76,16 +76,7 @@ public class AutoShutdown {
             public void run() {
                 if (countdown <= 0) {
                 	bc.broadCastMessage(ChatColor.RED + "サーバーを停止します。");
-					try (Connection conn = db.getConnection()) {
-						SocketSwitch ssw = sswProvider.get();
-						ssw.sendVelocityServer(conn, thisServerName + "サーバーが停止しました。");
-					} catch (SQLException | ClassNotFoundException e) {
-						logger.error("An error occurred while updating the database: " + e.getMessage(), e);
-						for (StackTraceElement element : e.getStackTrace()) {
-							logger.error(element.toString());
-						}
-					}
-					
+
                     plugin.getServer().shutdown();
                     cancel();
                     return;
@@ -96,7 +87,7 @@ public class AutoShutdown {
             }
         }.runTaskTimer(plugin, 0, 20);
     }
-    
+
     public void stopCheckForPlayers() {
     	if (Objects.nonNull(task) && !task.isCancelled()) {
             task.cancel();
