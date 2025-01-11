@@ -3,9 +3,15 @@ shadow = "8.3.0"
 forgegradle = "[6.0,6.2)"
 loom = "1.7-SNAPSHOT"
 parchment = "1.+"
+neoforgemoddev = "1.0.21"
+neoforge = "21.1.93"
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 forgegradle = { id = "net.minecraftforge.gradle", version.ref = "forgegradle" }
 loom = { id = "fabric-loom", version.ref = "loom" }
 parchment = { id = "org.parchmentmc.librarian.forgegradle", version.ref = "parchment" }
+neoforgemoddev = { id = "net.neoforged.moddev", version.ref = "neoforgemoddev" }
+
+[libraries]
+neoforge = { group = "net.neoforged", name = "neoforge", version.ref = "neoforge" }
