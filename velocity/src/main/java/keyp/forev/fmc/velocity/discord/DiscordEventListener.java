@@ -34,6 +34,7 @@ import keyp.forev.fmc.velocity.discord.interfaces.ReflectionHandler;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.server.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.server.events.EventListener;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import com.google.inject.Inject;
 
@@ -334,6 +335,9 @@ public class DiscordEventListener {
 						bc.broadCastMessage(Component.text("管理者がリクエストを受諾しました。"+reqServerName+"サーバーがまもなく起動します。").color(NamedTextColor.GREEN));
 						VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
 						replyMessage(event, replyMessage, false);
+						if (EventListener.startingServers.contains(reqServerName)) {
+							EventListener.startingServers.remove(reqServerName);
+						}
 					} catch (IOException e1) {
 						replyMessage = "内部エラーが発生しました。\nサーバーが起動できません。";
 						replyMessage(event, replyMessage, false);
@@ -375,6 +379,9 @@ public class DiscordEventListener {
 					bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストをキャンセルしました。").color(NamedTextColor.RED));
 					VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
 					replyMessage(event, replyMessage, false);
+					if (EventListener.startingServers.contains(reqServerName)) {
+						EventListener.startingServers.remove(reqServerName);
+					}
 				} else {
 					replyMessage = "エラーが発生しました。\npattern形式が無効です。";
 					replyMessage(event, replyMessage, false);
