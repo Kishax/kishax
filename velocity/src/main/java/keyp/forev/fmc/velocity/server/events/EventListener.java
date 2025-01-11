@@ -281,9 +281,20 @@ public class EventListener {
 		String playerName = player.getUsername();
 		String playerUUID = player.getUniqueId().toString();
 
-		List<String> allowOtherServers = new ArrayList<>(Arrays.asList(
-			"twillight_forest"
-		));
+		Set<String> allowOtherServers = new HashSet<>();
+		try (Connection connection = db.getConnection()) {
+			try (PreparedStatement ps = connection.prepareStatement(
+				"SELECT name FROM status WHERE allow_prestart=?;")) {
+				ps.setBoolean(1, true);
+				try (ResultSet rs = ps.executeQuery()) {
+					while (rs.next()) {
+						allowOtherServers.add(rs.getString("name"));
+					}
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An error occurred at EventListener#onServerPreConnectEvent: ", e);
+		}
 
 		String serverName = event.getOriginalServer().getServerInfo().getName();
 		if (!allowOtherServers.contains(serverName)) {
