@@ -1,79 +1,58 @@
 package keyp.forev.fmc.forge.server;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.google.inject.Inject;
+import keyp.forev.fmc.forge.util.config.ForgeConfig;
+import net.minecraft.server.MinecraftServer;
+
+import java.lang.reflect.Method;
 
 import org.slf4j.Logger;
 
-import com.google.inject.Inject;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-
-import keyp.forev.fmc.forge.util.config.ForgeConfig;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.MinecraftServer;
-
-public class CountdownTask implements Runnable {
+public class CountdownTask {
 
     private final MinecraftServer server;
     private final Logger logger;
-    private final AtomicBoolean isShutdown;
-    private final long delayMillis; // タイマーの遅延時間
-    private final ScheduledExecutorService scheduler;
-    private ScheduledFuture<?> shutdownTask;
+    private final long delayTicks;
+    private long remainingTicks;
 
     @Inject
     public CountdownTask(MinecraftServer server, ForgeConfig config, Logger logger) {
         this.server = server;
         this.logger = logger;
-        this.isShutdown = new AtomicBoolean(false);
-        this.delayMillis = config.getLong("AutoStop.Interval", 3) * 60 * 1000;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor();
+        this.delayTicks = config.getLong("AutoStop.Interval", 3) * 60 * 20; // 分 -> チック
+        this.remainingTicks = -1; // 未開始状態
     }
 
-    @Override
-    public void run() {
-        if (isShutdown.get()) return;
-
-        // プレイヤーがいない場合にのみシャットダウンタスクをスケジュール
-        if (server.getPlayerCount() == 0) {
-            if (shutdownTask == null || shutdownTask.isCancelled()) {
-                shutdownTask = scheduler.schedule(this::shutdownServer, delayMillis, TimeUnit.MILLISECONDS);
-                //logger.info("プレイヤー不在のため、サーバーを停止するタスクがスケジュールされました。");
+    public void tick() {
+        try {
+            Method getPlayerCountMethod = MinecraftServer.class.getDeclaredMethod("getPlayerCount");
+            getPlayerCountMethod.setAccessible(true);
+            int playerCount = (int) getPlayerCountMethod.invoke(server);
+            if (playerCount == 0) {
+                if (remainingTicks == -1) {
+                    remainingTicks = delayTicks;
+                    logger.info("プレイヤーがいないため、サーバー停止カウントダウンを開始します。");
+                } else if (remainingTicks > 0) {
+                    remainingTicks--;
+                    if (remainingTicks % 20 == 0) { // 1秒毎にログ出力
+                        //logger.info("サーバー停止まで {} 秒", remainingTicks / 20);
+                    }
+                } else {
+                    shutdownServer();
+                }
+            } else {
+                if (remainingTicks != -1) {
+                    logger.info("プレイヤーが戻ったため、カウントダウンをリセットします。");
+                    remainingTicks = -1;
+                }
             }
-        } else {
-            // プレイヤーがいる場合はシャットダウンタスクをキャンセル
-            if (shutdownTask != null && !shutdownTask.isCancelled()) {
-                shutdownTask.cancel(false);
-                //logger.info("プレイヤーがいるため、サーバーの停止タスクをキャンセルしました。");
-            }
+        } catch (Exception e) {
+            logger.error("An error occurred at CountdownTask#tick: ", e);
         }
-
-        // 定期的にチェックを続けるために、次のチェックをスケジュール
-        scheduler.schedule(this, 1, TimeUnit.SECONDS);
     }
 
     private void shutdownServer() {
-        if (isShutdown.get()) return;
-
-        logger.info("サーバーを停止します。");
-        isShutdown.set(true);
-
-        // コマンドを実行するためのコマンドディスパッチャーを取得
-        CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
-        CommandSourceStack source = server.createCommandSourceStack();
-        try {
-            dispatcher.execute("stop", source);
-        } catch (CommandSyntaxException e) {
-            logger.error("An IOException error occurred: " + e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-        }
-
-        scheduler.shutdown();
+        logger.info("プレイヤーがいないため、サーバーを停止します。");
+        AutoShutdown.safeStopServer2(server);
     }
 }
