@@ -10,21 +10,23 @@ java {
 
 subprojects {
 	apply plugin: 'java'
-	
+	apply plugin: 'java-library'
+	apply plugin: 'eclipse'
+
 	group = 'keyp.forev.fmc'
 	version = '1.0.0'
-	
+
 	sourceCompatibility = 17
 	targetCompatibility = 17
-	
+
 	tasks.withType(JavaCompile).configureEach {
 	    options.encoding = 'UTF-8'
 	}
-	
+
 	repositories {
 		mavenCentral()
 	}
-	
+
 	dependencies {
 		compileOnly 'net.luckperms:api:5.4'
 		compileOnly 'redis.clients:jedis:5.2.0'
@@ -32,7 +34,7 @@ subprojects {
 		compileOnly 'org.slf4j:slf4j-simple:2.0.9'
 		compileOnly 'org.yaml:snakeyaml:2.0'
 		compileOnly 'com.google.inject:guice:5.1.0'
-		compileOnly 'mysql:mysql-connector-java:8.0.30'
+		compileOnly 'mysql:mysql-connector-java:8.0.33'
 		compileOnly 'org.json:json:20180813'
 		compileOnly 'com.squareup.okhttp3:okhttp:4.9.3'
     }
