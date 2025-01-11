@@ -29,6 +29,7 @@ import keyp.forev.fmc.velocity.libs.VPackageManager;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.server.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.server.events.EventListener;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -482,6 +483,9 @@ public class Discord {
 
                                 bc.broadCastMessage(Component.text("管理者が"+reqPlayerName+"の"+reqServerName+"サーバーの起動リクエストに応答しませんでした。").color(NamedTextColor.BLUE));
                                 VelocityRequest.PlayerReqFlags.remove(reqPlayerUUID);
+                                if (EventListener.startingServers.contains(reqServerName)) {
+                                    EventListener.startingServers.remove(reqServerName);
+                                }
                             }
                         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
                                 | NoSuchMethodException | SecurityException e) {
