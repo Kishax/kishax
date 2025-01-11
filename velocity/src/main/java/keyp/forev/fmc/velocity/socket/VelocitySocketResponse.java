@@ -1,7 +1,10 @@
 package keyp.forev.fmc.velocity.socket;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.Connection;
-
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -166,6 +169,11 @@ public class VelocitySocketResponse implements SocketResponse {
 						player.sendMessage(component);
 					}
 				}
+				console.sendMessage(Component.text(extracted+"サーバーが停止しました。").color(NamedTextColor.DARK_PURPLE));
+				String endPath = getEndScriptPath(extracted);
+				if (endPath != null) {
+					execScript(endPath);
+				}
 			}
 		} else if (res.contains("起動")) {
             String pattern = "(.*?)サーバーが起動しました。";
@@ -181,6 +189,9 @@ public class VelocitySocketResponse implements SocketResponse {
 						player.sendMessage(component);
         			}
                 }
+				if (EventListener.startingServers.contains(extracted)) {
+					EventListener.startingServers.remove(extracted);
+				}
 				console.sendMessage(Component.text(extracted+"サーバーが起動しました。").color(NamedTextColor.GREEN));
             }
     	} else if (res.contains("fv")) {
@@ -274,8 +285,50 @@ public class VelocitySocketResponse implements SocketResponse {
     		sendMixUrl(res);
     	}
     }
-    
-    public void sendMixUrl(String string) {
+
+	private void execScript(String scriptPath) {
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(scriptPath);
+            processBuilder.redirectErrorStream(true);
+
+            Process process = processBuilder.start();
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    logger.info(line);
+                }
+            }
+
+            //int exitCode = process.waitFor();
+            //logger.info("Bash script exited with code: " + exitCode);
+        } catch (Exception e) {
+            logger.error("An error occurred at VelocitySocketResponse#execScript: ", e);
+        }
+    }
+
+	private String getEndScriptPath(String serverName) {
+		try (Connection conn = db.getConnection()) {
+			try (PreparedStatement ps = conn.prepareStatement(
+				"SELECT * FROM status WHERE name=?;")) {
+				ps.setString(1, serverName);
+				try (ResultSet rs = ps.executeQuery()) {
+					if (rs.next()) {
+						String path = rs.getString("end_script");
+						if (path != null && !path.isBlank()) {
+							return path;
+						}
+					}
+				}
+			}
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("An error occurred at VelocitySocketResponse#execEndScript: ", e);
+		}
+
+		return null;
+	}
+
+    private void sendMixUrl(String string) {
     	// 正規表現パターンを定義（URLを見つけるための正規表現）
         String urlRegex = "https?://\\S+";
         Pattern pattern = Pattern.compile(urlRegex);

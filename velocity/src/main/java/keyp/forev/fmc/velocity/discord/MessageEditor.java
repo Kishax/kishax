@@ -445,10 +445,18 @@ public class MessageEditor {
 						return CompletableFuture.completedFuture(null);
 					}
 	                case "Start" -> {
-						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
-							addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーを起動させました。", Emoji, FaceEmoji, playerName, targetServerName);
+						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
+							addMessage = MessageFormat.format("{0}{1}{2}が{3}サーバーを起動させました。", Emoji, FaceEmoji, playerName, targetServerName);
 							try {
-								discord.editBotEmbed(messageId, addMessage);
+								Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
+								if (messageId != null) {
+									addMessage = "\n\n" + addMessage;
+									discord.editBotEmbed(messageId, addMessage);
+								} else {
+									discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+										EventListener.PlayerMessageIds.put(uuid, messageId2);
+									});
+								}
 							} catch (Exception e) {
 								logger.error("An Exception error occurred: " + e.getMessage());
 								for (StackTraceElement element : e.getStackTrace()) {
@@ -459,10 +467,18 @@ public class MessageEditor {
 						return CompletableFuture.completedFuture(null);
                     }
 	                case "Move" -> {
-						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
-							addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーへ移動しました。", Emoji, FaceEmoji, playerName, currentServerName);
+						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
+							addMessage = MessageFormat.format("{0}{1}{2}が{3}サーバーへ移動しました。", Emoji, FaceEmoji, playerName, currentServerName);
 							try {
-								discord.editBotEmbed(messageId, addMessage);
+								Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
+								if (messageId != null) {
+									addMessage = "\n\n" + addMessage;
+									discord.editBotEmbed(messageId, addMessage);
+								} else {
+									discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+										EventListener.PlayerMessageIds.put(uuid, messageId2);
+									});
+								}
 							} catch (Exception e) {
 								logger.error("An Exception error occurred: " + e.getMessage());
 								for (StackTraceElement element : e.getStackTrace()) {
@@ -473,10 +489,18 @@ public class MessageEditor {
 						return CompletableFuture.completedFuture(null);
                     }
 	                case "Request" -> {
-						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji) && Objects.nonNull(messageId)) {
+						if (Objects.nonNull(Emoji) && Objects.nonNull(FaceEmoji)) {
+							addMessage = MessageFormat.format("{0}{1}{2}が{3}サーバーの起動リクエストを送りました。", Emoji, FaceEmoji, playerName, targetServerName);
 							try {
-								addMessage = MessageFormat.format("\n\n{0}{1}{2}が{3}サーバーの起動リクエストを送りました。", Emoji, FaceEmoji, playerName, targetServerName);
-								discord.editBotEmbed(messageId, addMessage);
+								Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
+								if (messageId != null) {
+									addMessage = "\n\n" + addMessage;
+									discord.editBotEmbed(messageId, addMessage);
+								} else {
+									discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+										EventListener.PlayerMessageIds.put(uuid, messageId2);
+									});
+								}
 							} catch (Exception e) {
 								logger.error("An Exception error occurred: " + e.getMessage());
 								for (StackTraceElement element : e.getStackTrace()) {
@@ -502,9 +526,14 @@ public class MessageEditor {
 							if (rsAffected > 0) {
 								try {
 									Object createEmbed = discord.createEmbed(addMessage, ColorUtil.GREEN.getRGB());
-									discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
-										EventListener.PlayerMessageIds.put(uuid, messageId2);
-									});
+									if (messageId != null) {
+										addMessage = "\n\n" + addMessage;
+										discord.editBotEmbed(messageId, addMessage);
+									} else {
+										discord.sendBotMessageAndgetMessageId(createEmbed).thenAccept(messageId2 -> {
+											EventListener.PlayerMessageIds.put(uuid, messageId2);
+										});
+									}
 								} catch (Exception e) {
 									logger.error("An Exception error occurred: " + e.getMessage());
 									for (StackTraceElement element : e.getStackTrace()) {
