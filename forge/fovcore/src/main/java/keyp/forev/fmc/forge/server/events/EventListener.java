@@ -26,8 +26,9 @@ import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = Main.MODID)
+@Mod.EventBusSubscriber(modid = Main.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class EventListener {
+	private static boolean isStop = false;
 	private static final Logger logger = Main.logger;
 	@SubscribeEvent
 	public static void onServerStarting(ServerStartingEvent event) {
@@ -49,8 +50,11 @@ public class EventListener {
 	
 	@SubscribeEvent
 	public static void onServerStopping(ServerStoppingEvent event) {
-		Main.getInjector().getInstance(DoServerOffline.class).updateDatabase();
-		Main.getInjector().getInstance(AutoShutdown.class).stop();
+		if (!isStop) {
+			isStop = true;
+			Main.getInjector().getInstance(DoServerOffline.class).updateDatabase();
+			Main.getInjector().getInstance(AutoShutdown.class).stop();
+		}
 	}
 	
 	@SubscribeEvent
