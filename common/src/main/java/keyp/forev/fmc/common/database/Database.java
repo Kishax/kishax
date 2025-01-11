@@ -34,7 +34,7 @@ public class Database {
         this.dInfo = dInfo;
         Database.staticInstance = this;
     }
-    
+
     public static synchronized Database getInstance() {
         return Database.staticInstance;
     }
@@ -42,7 +42,7 @@ public class Database {
     public synchronized Connection getConnection() throws SQLException, ClassNotFoundException {
 		return getConnection(null);
 	}
-    
+
 	public synchronized Connection getConnection(String customDatabase) throws SQLException, ClassNotFoundException {
         if (!dInfo.check()) {
             if (firstConnection.compareAndSet(false, true)) {
@@ -108,7 +108,7 @@ public class Database {
         setPreparedStatementValues(ps, args);
         ps.executeUpdate();
     }
-    
+
     public void deleteLog(Connection conn, String query, Object[] args) throws SQLException, ClassNotFoundException {
         insertLog(conn, query, args);
     }
@@ -208,7 +208,7 @@ public class Database {
         }
         return columnNames;
     }
-    
+
     public void updateMemberToggle(Connection conn, String columnName, boolean value, String nameOrUUID) throws SQLException {
         String query = "UPDATE members SET " + columnName + " = ? WHERE ";
         if (JavaUtils.isUUID(nameOrUUID)) {
@@ -222,7 +222,7 @@ public class Database {
             ps.executeUpdate();
         }
     }
-    
+
     public Map<String, Object> getMemberMap(Connection conn, String key) throws SQLException {
         Map<String, Object> rowMap = new HashMap<>();
         String query = "SELECT * FROM members WHERE ";
@@ -243,7 +243,7 @@ public class Database {
         }
         return rowMap;
     }
-    
+
     public int getPlayerTime(Connection conn, String playerUUID, int logId) throws SQLException{
         // 現在の時刻と最後のログの時刻の差を計算するメソッド
 		String query = "SELECT * FROM log WHERE uuid=? AND `join`=? AND `id`=? ORDER BY id DESC LIMIT 1;";

@@ -27,8 +27,9 @@ public class DoServerOffline {
 	
 	public void updateDatabase() {
 		try (Connection conn = db.getConnection()) {
-			db.updateLog(conn, "UPDATE status SET online=?, socketport=?, player_list=?, current_players=? WHERE name=?;", new Object[] {false, 0, null, 0, thisServerName});
 			SocketSwitch ssw = sswProvider.get();
+			ssw.sendVelocityServer(conn, thisServerName + "サーバーが停止しました。");
+			db.updateLog(conn, "UPDATE status SET online=?, socketport=?, player_list=?, current_players=? WHERE name=?;", new Object[] {false, 0, null, 0, thisServerName});
 			ssw.sendSpigotServer(conn, "MineStatusSync");
 			ssw.stopSocketServer();
 		} catch (SQLException | ClassNotFoundException e2) {
