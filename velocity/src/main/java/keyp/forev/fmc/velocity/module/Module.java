@@ -99,9 +99,10 @@ public class Module extends AbstractModule {
         EmojiManager emoji, 
         Luckperms lp, 
         PlayerUtils pu, 
-        DoServerOnline dso
+        DoServerOnline dso,
+        PlayerDisconnect pd
     ) {
-        return new VelocityRequest(server, logger, config, db, bc, discord, discordME, emoji, lp, pu, dso);
+        return new VelocityRequest(server, logger, config, db, bc, discord, discordME, emoji, lp, pu, dso, pd);
     }
 
     @Provides

@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +36,7 @@ import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
+import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -40,16 +44,19 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.velocity.util.RomaToKanji;
 import keyp.forev.fmc.velocity.util.RomajiConversion;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.discord.DiscordEventListener;
 import keyp.forev.fmc.velocity.discord.MessageEditor;
 import keyp.forev.fmc.velocity.server.BroadCast;
@@ -58,13 +65,16 @@ import keyp.forev.fmc.velocity.server.GeyserMC;
 import keyp.forev.fmc.velocity.server.MineStatus;
 import keyp.forev.fmc.velocity.server.PlayerDisconnect;
 import keyp.forev.fmc.velocity.server.cmd.sub.Maintenance;
+import keyp.forev.fmc.velocity.server.cmd.sub.StartServer;
 import keyp.forev.fmc.velocity.Main;
 
 public class EventListener {
 	public static Set<String> playerInputers = new HashSet<>();
 	public static Map<String, String> PlayerMessageIds = new HashMap<>();
 	public static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
+	public static final Map<Player, Runnable> otherServerConnectTasks =  new HashMap<>();
 	public static final Map<Player, Integer> playerJoinHubIds = new HashMap<>();
+	public static final Set<String> startingServers = new HashSet<>();
 	private final Main plugin;
 	private final ProxyServer server;
 	private final VelocityConfig config;
@@ -83,11 +93,12 @@ public class EventListener {
 	private final GeyserMC gm;
 	private final Maintenance mt;
 	private final FMCBoard fb;
+	private final Luckperms lp;
 	private ServerInfo serverInfo = null;
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
 	@Inject
-	public EventListener(Main plugin, Logger logger, ProxyServer server, VelocityConfig config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditor discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb) {
+	public EventListener(Main plugin, Logger logger, ProxyServer server, VelocityConfig config, Database db, BroadCast bc, ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc, MessageEditor discordME, MineStatus ms, GeyserMC gm, Maintenance mt, FMCBoard fb, Luckperms lp) {
 		this.plugin = plugin;
 		this.logger = logger;
 		this.server = server;
@@ -104,6 +115,7 @@ public class EventListener {
 		this.gm = gm;
 		this.mt = mt;
 		this.fb = fb;
+		this.lp = lp;
 	}
 
 	@Subscribe
@@ -256,7 +268,7 @@ public class EventListener {
 			}
         }).schedule();
 	}
-	
+
 	@Subscribe
 	public void onPostLogin(PostLoginEvent event) {
 		Player player = event.getPlayer();
@@ -264,11 +276,156 @@ public class EventListener {
 	}
 
 	@Subscribe
+	public void onServerPreConnectEvent(ServerPreConnectEvent event) {
+		Player player = event.getPlayer();
+		String playerName = player.getUsername();
+		String playerUUID = player.getUniqueId().toString();
+
+		List<String> allowOtherServers = new ArrayList<>(Arrays.asList(
+			"twillight_forest"
+		));
+
+		String serverName = event.getOriginalServer().getServerInfo().getName();
+		if (!allowOtherServers.contains(serverName)) {
+			return;
+		}
+
+		if (startingServers.contains(serverName)) {
+			pd.playerDisconnect (
+				false,
+				player,
+				Component.text(serverName + "サーバーは現在起動中です！").color(NamedTextColor.GOLD)
+			);
+			return;
+		}
+
+		final AtomicBoolean canConnect = new AtomicBoolean(false);
+        final CountDownLatch latch = new CountDownLatch(1);
+
+		CompletableFuture.runAsync(() -> {
+			try (Connection conn = db.getConnection()) {
+				try (PreparedStatement ps = conn.prepareStatement(
+					"SELECT * FROM members WHERE name=? AND uuid=?;");
+					PreparedStatement ps2 = conn.prepareStatement(
+						"SELECT * FROM status WHERE name=?;")) {
+					ps.setString(1, playerName);
+					ps.setString(2, playerUUID);
+					ps2.setString(1, serverName);
+					try (ResultSet rs = ps.executeQuery();
+						ResultSet rs2 = ps2.executeQuery()) {
+						if (rs2.next() && !rs2.getBoolean("online")) {
+							if (rs.next()) {
+								if (rs.getBoolean("ban")) {
+									pd.playerDisconnect (
+										false,
+										player,
+										Component.text("You are banned from this server.").color(NamedTextColor.RED)
+									);
+									return;
+								}
+
+								int permLevel = lp.getPermLevel(playerName);
+								boolean isSecond = false;
+								for (Player otherServerConnectedPlayer : otherServerConnectTasks.keySet()) {
+									if (otherServerConnectedPlayer.getUniqueId().equals(player.getUniqueId())) {
+										isSecond = true;
+										otherServerConnectTasks.remove(player);
+										startingServers.add(serverName);
+										scheduler.schedule(() -> {
+											if (startingServers.contains(serverName)) {
+												startingServers.remove(serverName);
+											}
+										}, 120, TimeUnit.SECONDS);
+
+										if (permLevel > 1) {
+											Main.getInjector().getInstance(StartServer.class).execute2(player, serverName);
+										} else if (permLevel == 1) {
+											Main.getInjector().getProvider(Request.class).get().execute2(player, serverName);;
+										}
+										return;
+									}
+								}
+
+								if (!isSecond) {
+									Runnable task = () -> {
+										if (otherServerConnectTasks.containsKey(player)) {
+											otherServerConnectTasks.remove(player);
+										}
+									};
+									otherServerConnectTasks.put(player, task);
+									scheduler.schedule(() -> {
+										if (otherServerConnectTasks.containsKey(player)) {
+											Runnable removeTask = otherServerConnectTasks.get(player);
+											removeTask.run();
+										}
+									}, 10, TimeUnit.SECONDS);
+
+									Component message = Component.text("あなたは認証ユーザーです。").color(NamedTextColor.GREEN);
+									Component message2;
+									if (permLevel > 1) {
+										message2 = Component.text(serverName + "サーバーを起動するには、10秒以内にもう一度接続してください。").color(NamedTextColor.GOLD);
+									} else if (permLevel == 1) {
+										message2 = Component.text(serverName + "サーバーに起動リクエストを送信するには、10秒以内にもう一度接続してください。").color(NamedTextColor.GOLD);
+									} else {
+										pd.playerDisconnect (
+											false,
+											player,
+											Component.text("認証ユーザーではありません。").color(NamedTextColor.RED)
+										);
+										throw new Error(playerName + "は認証ユーザーではありません。");
+									}
+
+									TextComponent messages = Component.text()
+										.append(message)
+										.appendNewline()
+										.append(message2)
+										.build();
+
+									pd.playerDisconnect (
+										false,
+										player,
+										messages
+									);
+									return;
+								}
+							} else {
+								pd.playerDisconnect (
+									false,
+									player,
+									Component.text("認証ユーザーではありません。").color(NamedTextColor.RED)
+								);
+								return;
+							}
+						}
+					}
+				}
+			} catch (SQLException | ClassNotFoundException e) {
+				logger.error("An error occurred at EventListener#onServerPreConnectEvent: ", e);
+				pd.playerDisconnect (
+					false,
+					player,
+					Component.text("データベース接続エラー: データベースに接続できませんでした。").color(NamedTextColor.RED)
+				);
+			} finally {
+				latch.countDown();
+			}
+		});
+
+		try {
+            latch.await(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warn("Thread interrupted while waiting for async task", e);
+        }
+
+        if (canConnect.get()) {  } else {  }
+	}
+
+	@Subscribe
     public void onServerPostConnect(ServerPostConnectEvent event) {
 		Player player = event.getPlayer();
         fb.resendBoard(player.getUniqueId());
 	}
-	
+
 	@Subscribe
 	public void onServerSwitch(ServerConnectedEvent e) {
 		Player player = e.getPlayer();

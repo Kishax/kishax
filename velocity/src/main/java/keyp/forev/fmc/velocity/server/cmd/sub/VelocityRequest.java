@@ -33,6 +33,7 @@ import keyp.forev.fmc.velocity.discord.EmojiManager;
 import keyp.forev.fmc.velocity.discord.MessageEditor;
 import keyp.forev.fmc.velocity.server.BroadCast;
 import keyp.forev.fmc.velocity.server.DoServerOnline;
+import keyp.forev.fmc.velocity.server.PlayerDisconnect;
 import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
@@ -49,10 +50,11 @@ public class VelocityRequest implements Request {
 	private final Luckperms lp;
 	private final PlayerUtils pu;
 	private final DoServerOnline dso;
+	private final PlayerDisconnect pd;
 	private String currentServerName = null;
 	
 	@Inject
-	public VelocityRequest(ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc, Discord discord, MessageEditor discordME, EmojiManager emoji, Luckperms lp, PlayerUtils pu, DoServerOnline dso) {
+	public VelocityRequest(ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc, Discord discord, MessageEditor discordME, EmojiManager emoji, Luckperms lp, PlayerUtils pu, DoServerOnline dso, PlayerDisconnect pd) {
 		this.server = server;
 		this.logger = logger;
 		this.config = config;
@@ -64,6 +66,7 @@ public class VelocityRequest implements Request {
 		this.lp = lp;
 		this.pu = pu;
 		this.dso = dso;
+		this.pd = pd;
 	}
 
 	@Override
@@ -225,6 +228,161 @@ public class VelocityRequest implements Request {
 						}
 					} else {
 						player.sendMessage(Component.text("実行パスが設定されていないため、サーバーを起動できません。").color(NamedTextColor.RED));
+					}
+			});
+		} catch (SQLException | ClassNotFoundException e) {
+			logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
+			for (StackTraceElement element : e.getStackTrace()) {
+				logger.error(element.toString());
+			}
+		}
+	}
+
+	@Override
+	public void execute2(Player player, String targetServerName) {
+		String playerName = player.getUsername(),
+			playerUUID = player.getUniqueId().toString();
+		int permLevel = lp.getPermLevel(playerName);
+		String query = "SELECT * FROM members WHERE uuid=?;";
+		try (Connection conn = db.getConnection();
+			PreparedStatement ps = conn.prepareStatement(query)) {
+			ps.setString(1,player.getUniqueId().toString());
+			try (ResultSet minecrafts = ps.executeQuery()) {
+				if (minecrafts.next()) {
+					Timestamp beforeReqTime = minecrafts.getTimestamp("req");
+					if (beforeReqTime != null) {
+						long now_timestamp = Instant.now().getEpochSecond();
+						long req_timestamp = beforeReqTime.getTime() / 1000L;
+						long req_sa = now_timestamp-req_timestamp;
+						long req_sa_minute = req_sa/60;
+						if (req_sa_minute <= config.getInt("Interval.Request",0)) {
+							pd.playerDisconnect (
+								false,
+								player,
+								Component.text("リクエストは"+config.getInt("Interval.Request",0)+"分に1回までです。").color(NamedTextColor.RED)
+							);
+							return;
+						}
+					}
+				}
+			}
+			Map<String, Map<String, Object>> statusMap = dso.loadStatusTable(conn);
+			statusMap.entrySet().stream()
+				.filter(entry -> entry.getKey() instanceof String && entry.getKey().equals(targetServerName))
+				.forEach(entry -> {
+					Map<String, Object> serverInfo = entry.getValue();
+					if (serverInfo.get("exec") instanceof String) {
+						if (permLevel < 3 && serverInfo.get("enter") instanceof Boolean enter && !enter) {
+							pd.playerDisconnect (
+								false,
+								player,
+								Component.text("許可されていません。").color(NamedTextColor.RED)
+							);
+							return;
+						}
+						if (serverInfo.get("memory") instanceof Integer memory) {
+							int currentUsedMemory = dso.getCurrentUsedMemory(statusMap),
+								maxMemory = config.getInt("MaxMemory", 0);
+							int futureMemory = currentUsedMemory + memory;
+							if (maxMemory < futureMemory) {
+								String message = "メモリ超過のため、サーバーを起動できません。(" + futureMemory + "GB/" + maxMemory + "GB)";
+								pd.playerDisconnect (
+									false,
+									player,
+									Component.text(message).color(NamedTextColor.RED)
+								);
+								logger.info(message);
+								return;
+							}
+							String query2 = "UPDATE members SET req=CURRENT_TIMESTAMP WHERE uuid=?;";
+							try (PreparedStatement ps2 = conn.prepareStatement(query2)) {
+								ps2.setString(1,player.getUniqueId().toString());
+								int rsAffected2 = ps2.executeUpdate();
+								if (rsAffected2 > 0) {
+									VelocityRequest.PlayerReqFlags.put(player.getUniqueId().toString(), true); // フラグを設定
+									try {
+										emoji.createOrgetEmojiId(playerName).thenApply(success -> {
+											if (success != null && !success.isEmpty()) {
+												String playerEmoji = emoji.getEmojiString(playerName, success);
+												try {
+													String randomUUID = UUID.randomUUID().toString();
+													try (Connection conn0 = db.getConnection()) {
+														db.insertLog(conn, "INSERT INTO requests (name, uuid, requuid, server) VALUES (?, ?, ?, ?);", new Object[] {playerName, playerUUID, randomUUID, targetServerName});
+													}
+
+													discord.sendRequestButtonWithMessage(playerEmoji + playerName + "が" + targetServerName + "サーバーの起動リクエストを送信しました。\n起動しますか？(reqId: " + randomUUID + ")\n(管理者のみ実行可能です。)");
+												} catch (Exception e) {
+													logger.error("An error occurred at VelocityRequest#execute: {}", e);
+													return false;
+												}
+
+												pd.playerDisconnect (
+													false,
+													player,
+													Component.text()
+														.append(Component.text("送信されました。"))
+														.appendNewline()
+														.append(Component.text("管理者が3分以内に対応しますのでしばらくお待ちくださいませ。"))
+														.color(NamedTextColor.GREEN)
+														.build()
+												);
+
+												try {
+													discordME.AddEmbedSomeMessage("Request", player, targetServerName);
+												} catch (Exception e) {
+													logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+													for (StackTraceElement ste : e.getStackTrace()) {
+														logger.error(ste.toString());
+													}
+												}
+												try (Connection connection = db.getConnection()) {
+													db.insertLog(connection, "INSERT INTO log (name,uuid,server,req,reqserver) VALUES (?,?,?,?,?);" , new Object[] {playerName, playerUUID, currentServerName, true, targetServerName});
+												} catch (SQLException | ClassNotFoundException e) {
+													logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+													for (StackTraceElement element : e.getStackTrace()) {
+														logger.error(element.toString());
+													}
+												}
+												return true;
+											} else {
+												return false;
+											}
+										}).thenAccept(result -> {
+											if (result) {
+												logger.info(playerName+"が"+targetServerName+"サーバーの起動リクエストを送信しました。");
+											} else {
+												logger.error("Start Error: Emoji is null or empty.");
+											}
+										}).exceptionally(ex -> {
+											logger.error("Start Error: " + ex.getMessage());
+											return null;
+										});
+									} catch (Exception e) {
+										logger.error("An exception occurred while executing the createOrgetEmojiId method: {}", e.getMessage());
+										for (StackTraceElement ste : e.getStackTrace()) {
+											logger.error(ste.toString());
+										}
+									}
+								}
+							} catch (SQLException e) {
+								logger.error("A SQLException error occurred: " + e.getMessage());
+								for (StackTraceElement element : e.getStackTrace()) {
+									logger.error(element.toString());
+								}
+							}
+						} else {
+							pd.playerDisconnect (
+								false,
+								player,
+								Component.text("メモリが設定されていないため、サーバーを起動できません。").color(NamedTextColor.RED)
+							);
+						}
+					} else {
+						pd.playerDisconnect (
+							false,
+							player,
+							Component.text("実行パスが設定されていないため、サーバーを起動できません。").color(NamedTextColor.RED)
+						);
 					}
 			});
 		} catch (SQLException | ClassNotFoundException e) {
