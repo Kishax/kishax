@@ -43,9 +43,8 @@ public class Maintenance {
 		String query = "SELECT online FROM status WHERE name=?;";
 		String query2 = "SELECT uuid FROM lp_user_permissions WHERE permission=?;";
 		try (Connection conn = db.getConnection(); 
-			Connection connLp = db.getConnection("fmc_lp");
 			PreparedStatement ps = conn.prepareStatement(query);
-			PreparedStatement ps2 = connLp.prepareStatement(query2)) {
+			PreparedStatement ps2 = conn.prepareStatement(query2)) {
 			ps.setString(1, "maintenance");
 			ps2.setString(1, "group.super-admin");
 			try (ResultSet ismente = ps.executeQuery();
