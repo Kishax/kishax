@@ -64,7 +64,7 @@ public class Luckperms {
 	public List<String> getPlayersWithPermission(String permission) {
 		pu.loadPlayers();
 		List<String> playersWithPermission = new ArrayList<>();
-		try (Connection conn = db.getConnection("fmc_lp");
+		try (Connection conn = db.getConnection();
 				PreparedStatement ps = conn.prepareStatement("SELECT * FROM lp_user_permissions WHERE permission = ?")) {
 			ps.setString(1, permission);
 			try (ResultSet rs = ps.executeQuery()) {
