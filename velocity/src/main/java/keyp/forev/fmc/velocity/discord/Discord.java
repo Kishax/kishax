@@ -279,6 +279,8 @@ public class Discord {
 
                 Constructor<?> subcommandC = subcommandDataClazz.getConstructor(String.class, String.class);
                 Object createImageSubcommand = subcommandC.newInstance("image_add_q", "画像マップをキューに追加するコマンド(urlか添付ファイルのどっちかを指定可能)");
+                Object teraSubcommand = subcommandC.newInstance("terraria", "テラリアに関するコマンド");
+
                 Object createSyncRuleBookSubcommand = subcommandC.newInstance("syncrulebook", "ルールブックの同期を行うコマンド");
 
                 Method addOptions = subcommandDataClazz.getMethod("addOptions", 
@@ -291,6 +293,15 @@ public class Discord {
                 optionData.add(optionDataC.newInstance(stringType, "title", "画像マップのタイトル設定項目"));
                 optionData.add(optionDataC.newInstance(stringType, "comment", "画像マップのコメント設定項目"));
 
+                Method addChoice = optionDataClazz.getMethod("addChoice", String.class, String.class);
+                List<Object> teraOptionData = new ArrayList<>();
+                Object teraOption = optionDataC.newInstance(stringType, "action", "選択してください。");
+                addChoice.invoke(teraOption, "Start", "start");
+                addChoice.invoke(teraOption, "Status", "status");
+                addChoice.invoke(teraOption, "Stop", "stop");
+
+                teraOptionData.add(teraOption);
+
                 // 正しい型の配列に変換
                 Object optionArray = Array.newInstance(optionDataClazz, optionData.size());
                 for (int i = 0; i < optionData.size(); i++) {
@@ -298,12 +309,19 @@ public class Discord {
                 }
                 addOptions.invoke(createImageSubcommand, (Object) optionArray);
 
+                Object teraOptionArray = Array.newInstance(optionDataClazz, teraOptionData.size());
+                for (int i = 0; i < teraOptionData.size(); i++) {
+                    Array.set(teraOptionArray, i, teraOptionData.get(i));
+                }
+                addOptions.invoke(teraSubcommand, (Object) teraOptionArray);
+
                 Method addSubcommands = cmdCreateActionClazz.getMethod("addSubcommands",
                     Array.newInstance(subcommandDataClazz, 0).getClass());
 
                 List<Object> subcommands = new ArrayList<>();
                 subcommands.add(createImageSubcommand);
                 subcommands.add(createSyncRuleBookSubcommand);
+                subcommands.add(teraSubcommand);
 
                 // 正しい型の配列に変換
                 Object subcommandsArray = Array.newInstance(subcommandDataClazz, subcommands.size());
