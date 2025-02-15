@@ -61,4 +61,5 @@ include (
     'forge:fov1_21_1',
     'neoforge:neofovcore',
     'neoforge:neofov1_21_1',
+    'libs',
 )
