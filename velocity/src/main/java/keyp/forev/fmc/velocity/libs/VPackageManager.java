@@ -21,7 +21,7 @@ public class VPackageManager {
             ),
         CLUB_MINNCED_WEBHOOK(
             "club.minnced:discord-webhooks:0.8.0", 
-            "https://github.com/bella2391/Dependency-Provider/releases/download/Dependency-Provider-67/FMC-Dependency-1.0.0.jar",
+            "https://github.com/bella2391/FMC/releases/download/libs/FMC-Dependency-1.0.0.jar",
             PackageType.MAIN, 
             WEBHOOK
             ),
