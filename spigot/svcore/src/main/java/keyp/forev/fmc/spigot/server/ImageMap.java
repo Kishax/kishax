@@ -56,6 +56,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.CalcUtil;
 import keyp.forev.fmc.common.util.ExtUtil;
@@ -980,9 +981,18 @@ public class ImageMap {
                                                 rt.addTaskRunnable(player, playerActions2, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                                             }
                                         }
+
+                                        Message msg = new Message();
+                                        msg.mc = new Message.Minecraft();
+                                        msg.mc.cmd = new Message.Minecraft.Command();
+                                        msg.mc.cmd.imagemap = new Message.Minecraft.Command.ImageMap();
+                                        msg.mc.cmd.imagemap.who = new Message.Minecraft.Who();
+                                        msg.mc.cmd.imagemap.who.name = playerName;
+                                        msg.mc.cmd.imagemap.type = "LARGE";
+
                                         SocketSwitch ssw = sswProvider.get();
                                         try (Connection connection = db.getConnection()) {
-                                            ssw.sendVelocityServer(connection, "imagemap->large->name->" + playerName + "->");
+                                            ssw.sendVelocityServer(connection, msg);
                                         } catch (SQLException | ClassNotFoundException e) {
                                             logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                                         }
@@ -1000,7 +1010,7 @@ public class ImageMap {
                                         .appendNewline()
                                         .append(Component.text("生成を中止しました。"))
                                         .build();
-                                    
+
                                     audiences.player(player).sendMessage(message);
 
                                     rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
@@ -1174,9 +1184,18 @@ public class ImageMap {
                         audiences.player(player).sendMessage(message);
                     }
                 }
+
+                Message msg = new Message();
+                msg.mc = new Message.Minecraft();
+                msg.mc.cmd = new Message.Minecraft.Command();
+                msg.mc.cmd.imagemap = new Message.Minecraft.Command.ImageMap();
+                msg.mc.cmd.imagemap.who = new Message.Minecraft.Who();
+                msg.mc.cmd.imagemap.who.name = playerName;
+                msg.mc.cmd.imagemap.type = isQr ? "QR" : "SINGLE";
+
                 SocketSwitch ssw = sswProvider.get();
                 try (Connection connection = db.getConnection()) {
-                    ssw.sendVelocityServer(connection, "imagemap->" + (isQr ? "qr" : "1x1") + "->name->" + playerName + "->");
+                    ssw.sendVelocityServer(connection, msg);
                 } catch (SQLException | ClassNotFoundException e) {
                     logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                 }

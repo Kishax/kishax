@@ -13,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.util.interfaces.MessageRunnable;
@@ -67,9 +68,11 @@ public class RunnableTaskUtil {
 
         scheduleNewTask(player, inputPeriod, key);
 
+        Message msg = getMessage(player, true);
+
         try (Connection connection3 = db.getConnection()) {
             SocketSwitch ssw = sswProvider.get();
-            ssw.sendVelocityServer(connection3, "inputMode->on->name->" + player.getName() + "->");
+            ssw.sendVelocityServer(connection3, msg);
         } catch (SQLException | ClassNotFoundException e) {
             logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
@@ -120,7 +123,6 @@ public class RunnableTaskUtil {
     }
 
     public void removeCancelTaskRunnable(Player player, Key key) {
-        String playerName = player.getName();
         EventListener.playerInputerMap.entrySet().removeIf(entry -> entry.getKey().equals(player) && entry.getValue().containsKey(key));
         // タスクをキャンセルしてから、playerTaskMapから削除する
         EventListener.playerTaskMap.entrySet().stream()
@@ -130,9 +132,12 @@ public class RunnableTaskUtil {
                 task.cancel();
                 entry.getValue().remove(key);
             });
+
+        Message msg = getMessage(player, false);
+
         try (Connection connection2 = db.getConnection()) {
             SocketSwitch ssw = sswProvider.get();
-            ssw.sendVelocityServer(connection2, "inputMode->off->name->" + playerName + "->");
+            ssw.sendVelocityServer(connection2, msg);
         } catch (SQLException | ClassNotFoundException e) {
             logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {
@@ -149,5 +154,17 @@ public class RunnableTaskUtil {
                 task.cancel();
             }
         }
+    }
+
+    private Message getMessage(Player player, Boolean mode) {
+        Message msg = new Message();
+        msg.mc = new Message.Minecraft();
+        msg.mc.cmd = new Message.Minecraft.Command();
+        msg.mc.cmd.input = new Message.Minecraft.Command.Input();
+        msg.mc.cmd.input.who = new Message.Minecraft.Who();
+        msg.mc.cmd.input.who.name = player.getName();
+        msg.mc.cmd.input.mode = mode;
+
+        return msg;
     }
 }

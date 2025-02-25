@@ -35,7 +35,7 @@ public class ReloadConfig {
 			} else {
 				logger.error("Config is not an instance of Config.");
 			}
-			dso.updateDatabaseFromCmd(conn);
+			dso.updateAndSyncDatabase(true);
 		} catch (IOException | SQLException | ClassNotFoundException e1) {
 			logger.error("An IOException | SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
 			for (StackTraceElement element : e1.getStackTrace()) {

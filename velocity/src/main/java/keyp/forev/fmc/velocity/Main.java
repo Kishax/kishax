@@ -146,7 +146,7 @@ public class Main {
             });
         Database db = getInjector().getInstance(Database.class);
 		try (Connection conn = db.getConnection()) {
-            getInjector().getInstance(DoServerOnline.class).updateDatabase(conn);
+            getInjector().getInstance(DoServerOnline.class).updateAndSyncDatabase(false);
 		} catch (SQLException | ClassNotFoundException e1) {
 			logger.error("An error occurred while updating the database: {}", e1.getMessage());
 		}

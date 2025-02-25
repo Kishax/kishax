@@ -12,6 +12,7 @@ import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 
 public class DoServerOnline {
@@ -30,12 +31,20 @@ public class DoServerOnline {
 	
 	public void updateDatabase(int socketport) {
 		String serverName = shd.getServerName();
+
 		Objects.requireNonNull(serverName);
 		try (Connection conn = db.getConnection()) {
 			db.updateLog( "UPDATE settings SET value=? WHERE name=?;", new Object[] {serverName, "now_online"});
 			SocketSwitch ssw = sswProvider.get();
-			ssw.sendVelocityServer(conn, serverName+"サーバーが起動しました。");
-			ssw.sendSpigotServer(conn, serverName+"サーバーが起動しました。");
+
+            Message msg = new Message();
+            msg.mc = new Message.Minecraft();
+            msg.mc.server = new Message.Minecraft.Server();
+            msg.mc.server.action = "START";
+            msg.mc.server.name = serverName;
+			ssw.sendVelocityServer(conn, msg);
+			ssw.sendSpigotServer(conn, msg);
+
 			// refreshManualOnlineServer()を呼び出しているので、MineStatusSyncは不要
 			String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
 			try (PreparedStatement ps = conn.prepareStatement(query)) {

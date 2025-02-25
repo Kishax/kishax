@@ -14,6 +14,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 
 public class MineStatus {
@@ -143,8 +144,13 @@ public class MineStatus {
                     }
                 }
                 if (rsAffecteds2.stream().anyMatch(rs2 -> rs2 > 0)) {
+                    Message msg = new Message();
+                    msg.mc = new Message.Minecraft();
+                    msg.mc.sync = new Message.Minecraft.Sync();
+                    msg.mc.sync.content = "STATUS";
+
                     SocketSwitch ssw = sswProvider.get();
-                    ssw.sendSpigotServer(conn, "MineStatusSync");
+                    ssw.sendSpigotServer(conn, msg);
                 }
             }
         } catch (SQLException | ClassNotFoundException e) {

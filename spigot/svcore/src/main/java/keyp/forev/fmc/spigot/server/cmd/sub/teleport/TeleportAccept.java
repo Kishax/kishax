@@ -21,6 +21,7 @@ import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.settings.PermSettings;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
@@ -90,9 +91,19 @@ public class TeleportAccept implements TabExecutor {
 
                                 audiences.player(targetPlayer).sendMessage(message);
 
+                                Message msg = new Message();
+                                msg.mc = new Message.Minecraft();
+                                msg.mc.cmd = new Message.Minecraft.Command();
+                                msg.mc.cmd.teleport = new Message.Minecraft.Command.Teleport();
+                                msg.mc.cmd.teleport.player = new Message.Minecraft.Command.Teleport.Player();
+                                msg.mc.cmd.teleport.player.who = new Message.Minecraft.Who();
+                                msg.mc.cmd.teleport.player.who.name = targetName;
+                                msg.mc.cmd.teleport.player.target = playerName;
+                                msg.mc.cmd.teleport.player.reverse = false;
+
                                 SocketSwitch ssw = sswProvider.get();
                                 try (Connection conn = db.getConnection()) {
-                                    ssw.sendVelocityServer(conn, "teleport->player->name->" + playerName +"->at->" + targetName + "->isreverse->false->");
+                                    ssw.sendVelocityServer(conn, msg);
                                 } catch (SQLException | ClassNotFoundException e) {
                                     logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                                 }
@@ -127,10 +138,20 @@ public class TeleportAccept implements TabExecutor {
                                 audiences.player(player).sendMessage(messages);
 
                                 audiences.player(targetPlayer).sendMessage(messages);
-                                
+
+                                Message msg = new Message();
+                                msg.mc = new Message.Minecraft();
+                                msg.mc.cmd = new Message.Minecraft.Command();
+                                msg.mc.cmd.teleport = new Message.Minecraft.Command.Teleport();
+                                msg.mc.cmd.teleport.player = new Message.Minecraft.Command.Teleport.Player();
+                                msg.mc.cmd.teleport.player.who = new Message.Minecraft.Who();
+                                msg.mc.cmd.teleport.player.who.name = targetName;
+                                msg.mc.cmd.teleport.player.target = playerName;
+                                msg.mc.cmd.teleport.player.reverse = true;
+
                                 SocketSwitch ssw = sswProvider.get();
                                 try (Connection conn = db.getConnection()) {
-                                    ssw.sendVelocityServer(conn, "teleport->player->name->" + targetName +"->at->" + playerName + "->isreverse->true->");
+                                    ssw.sendVelocityServer(conn, msg);
                                 } catch (SQLException | ClassNotFoundException e) {
                                     logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                                 }

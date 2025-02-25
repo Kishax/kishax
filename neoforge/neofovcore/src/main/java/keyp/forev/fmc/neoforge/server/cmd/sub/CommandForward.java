@@ -11,6 +11,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -31,18 +32,28 @@ public class CommandForward {
 	
 	public int execute(CommandContext<CommandSourceStack> context) {
 		CommandSourceStack source = context.getSource();
-		String playerName = StringArgumentType.getString(context, "player");
-		String args = StringArgumentType.getString(context, "proxy_cmds");
-		StringBuilder allcmd = new StringBuilder(); // コマンドを組み立てる
+		String targetPlayerName = StringArgumentType.getString(context, "player");
+		String cmds = StringArgumentType.getString(context, "proxy_cmds");
 		Entity entity = source.getEntity();
+
+        Message msg = new Message();
+        msg.mc = new Message.Minecraft();
+        msg.mc.cmd = new Message.Minecraft.Command();
+        msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
+        msg.mc.cmd.forward.cmd = cmds;
+        msg.mc.cmd.forward.target = targetPlayerName;
+        msg.mc.cmd.forward.who = new Message.Minecraft.Who();
+
 		if (entity instanceof ServerPlayer) {
-		    allcmd.append(source.getPlayer()).append(" fv ").append(playerName).append(" ").append(args); // コマンドを打ったプレイヤー名をallcmdに乗せる
+            msg.mc.cmd.forward.who.name = source.getTextName();
+            msg.mc.cmd.forward.who.system = false;
 		} else {
-		    allcmd.append("? fv ").append(playerName).append(" ").append(args); // コンソールから打った場合
+		    msg.mc.cmd.forward.who.system = true; // コンソールから打った場合
 		}
+
 		SocketSwitch ssw = sswProvider.get();
 		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, allcmd.toString());
+			ssw.sendVelocityServer(conn, msg);
 		} catch (SQLException | ClassNotFoundException e) {
 			source.sendFailure(Component.literal(ChatFormatting.RED + "データベースに接続できませんでした。"));
 			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
@@ -51,21 +62,5 @@ public class CommandForward {
 			}
 		}
 		return 0;
-	}
-	
-	public void executeProxyCommand(ServerPlayer player, String allcmd) {
-		// fmcp <command>
-		String playerName = player.getName().toString();
-		allcmd = playerName + " fv " + playerName + " " + allcmd;
-		SocketSwitch ssw = sswProvider.get();
-		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, allcmd);
-		} catch (SQLException | ClassNotFoundException e) {
-			player.sendSystemMessage(Component.literal(ChatFormatting.RED + "データベースに接続できませんでした。"));
-			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
-			for (StackTraceElement element : e.getStackTrace()) {
-				logger.error(element.toString());
-			}
-		}
 	}
 }

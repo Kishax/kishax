@@ -19,6 +19,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.settings.PermSettings;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.JavaUtils;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
@@ -258,9 +259,20 @@ public class RegisterTeleportPoint implements TabExecutor {
                                                         logger.error(element.toString());
                                                     }
                                                 }
+
+                                                Message msg = new Message();
+                                                msg.mc = new Message.Minecraft();
+                                                msg.mc.cmd = new Message.Minecraft.Command();
+                                                msg.mc.cmd.teleport = new Message.Minecraft.Command.Teleport();
+                                                msg.mc.cmd.teleport.point = new Message.Minecraft.Command.Teleport.Point();
+                                                msg.mc.cmd.teleport.point.who = new Message.Minecraft.Who();
+                                                msg.mc.cmd.teleport.point.who.name = playerName;
+                                                msg.mc.cmd.teleport.point.name = title;
+                                                msg.mc.cmd.teleport.point.register = true;
+
                                                 SocketSwitch ssw = sswProvider.get();
                                                 try (Connection conn2 = db.getConnection()) {
-                                                    ssw.sendVelocityServer(conn2, "teleport->register->name->" + playerName + "->at->" + title + "->");
+                                                    ssw.sendVelocityServer(conn2, msg);
                                                 } catch (SQLException | ClassNotFoundException e) {
                                                     logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                                                 }

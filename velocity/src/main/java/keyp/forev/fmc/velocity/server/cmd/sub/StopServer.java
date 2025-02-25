@@ -17,6 +17,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.server.Luckperms;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -93,9 +94,16 @@ public class StopServer {
 					logger.info(targetServerName+"サーバーは停止しています。");
 					return;
 				}
+
+                Message msg = new Message();
+                msg.mc = new Message.Minecraft();
+                msg.mc.server = new Message.Minecraft.Server();
+                msg.mc.server.action = "ADMIN_STOP";
+                msg.mc.server.name = targetServerName;
+
 				SocketSwitch ssw = sswProvider.get();
 				try (Connection connection = db.getConnection()) {
-					if (ssw.sendSpecificServer(connection, targetServerName, "proxy->stop")) {
+					if (ssw.sendSpecificServer(connection, msg)) {
 						db.insertLog(connection, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true, "stop"});
 						try {
 							discordME.AddEmbedSomeMessage("Stop", player, targetServerName);
