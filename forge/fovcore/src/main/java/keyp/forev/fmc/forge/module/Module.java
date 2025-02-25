@@ -16,7 +16,6 @@ import keyp.forev.fmc.common.server.DoServerOnline;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.PortFinder;
 import keyp.forev.fmc.common.socket.SocketSwitch;
-import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.forge.Main;
 import keyp.forev.fmc.forge.database.ForgeDatabaseInfo;
@@ -25,7 +24,6 @@ import keyp.forev.fmc.forge.server.CountdownTask;
 import keyp.forev.fmc.forge.server.ForgeLuckperms;
 import keyp.forev.fmc.forge.server.ForgeServerHomeDir;
 import keyp.forev.fmc.forge.server.cmd.sub.CommandForward;
-import keyp.forev.fmc.forge.socket.ForgeSocketResponse;
 import keyp.forev.fmc.forge.util.config.ForgeConfig;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -48,7 +46,6 @@ public class Module extends AbstractModule {
 		bind(Database.class);
 		bind(PlayerUtils.class);
 		bind(Logger.class).toInstance(logger);
-		bind(SocketSwitch.class);
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);
 		bind(PortFinder.class);
@@ -69,11 +66,5 @@ public class Module extends AbstractModule {
 	@Singleton
 	public ServerHomeDir providesForgeServerHomeDir() {
 		return new ForgeServerHomeDir(configPath);
-	}
-	
-	@Provides
-	@Singleton
-	public SocketResponse provideSocketResponse() {
-		return new ForgeSocketResponse();
 	}
 }
