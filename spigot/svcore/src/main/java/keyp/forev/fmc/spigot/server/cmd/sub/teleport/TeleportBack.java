@@ -14,6 +14,7 @@ import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.server.Luckperms;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.settings.FMCCoords;
@@ -49,10 +50,19 @@ public class TeleportBack implements TabExecutor {
                 player.teleport(FMCCoords.ROOM_POINT.getLocation());
             } else {
                 if (EventListener.playerBeforeLocationMap.containsKey(player)) {
-                    
+
+                    Message msg = new Message();
+                    msg.mc = new Message.Minecraft();
+                    msg.mc.cmd = new Message.Minecraft.Command();
+                    msg.mc.cmd.teleport = new Message.Minecraft.Command.Teleport();
+                    msg.mc.cmd.teleport.point = new Message.Minecraft.Command.Teleport.Point();
+                    msg.mc.cmd.teleport.point.who = new Message.Minecraft.Who();
+                    msg.mc.cmd.teleport.point.who.name = playerName;
+                    msg.mc.cmd.teleport.point.back = true;
+
                     SocketSwitch ssw = sswProvider.get();
                     try (Connection conn = db.getConnection()) {
-                        ssw.sendVelocityServer(conn, "teleport->illbeback->name->" + playerName + "->");
+                        ssw.sendVelocityServer(conn, msg);
                     } catch (SQLException | ClassNotFoundException e) {
                         logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                     }

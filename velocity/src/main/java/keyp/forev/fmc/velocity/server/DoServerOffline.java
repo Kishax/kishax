@@ -10,6 +10,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 
 public class DoServerOffline {
@@ -37,8 +38,13 @@ public class DoServerOffline {
                     ps2.setInt(2, 0);
                     int rsAffected2 = ps2.executeUpdate();
                     if (rsAffected2 > 0) {
+                        Message msg = new Message();
+                        msg.mc = new Message.Minecraft();
+                        msg.mc.sync = new Message.Minecraft.Sync();
+                        msg.mc.sync.content = "STATUS";
+
                         SocketSwitch ssw = sswProvider.get();
-                        ssw.sendSpigotServer(conn, "MineStatusSync");
+                        ssw.sendSpigotServer(conn, msg);
                     }
                 }
             }

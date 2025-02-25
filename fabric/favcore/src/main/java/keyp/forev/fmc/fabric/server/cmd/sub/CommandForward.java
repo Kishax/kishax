@@ -11,6 +11,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -32,36 +33,30 @@ public class CommandForward {
 	public void execute(CommandContext<ServerCommandSource> context) {
 		// fv <player> fmcp <command>
 		ServerCommandSource source = context.getSource();
-		String playerName = StringArgumentType.getString(context, "player"),
-			proxyCmd = StringArgumentType.getString(context, "proxy_cmds");
-		StringBuilder allcmd = new StringBuilder();
+		String targetPlayerName = StringArgumentType.getString(context, "player");
+        String cmds = StringArgumentType.getString(context, "proxy_cmds");
 		Entity entity = source.getEntity();
+
+        Message msg = new Message();
+        msg.mc = new Message.Minecraft();
+        msg.mc.cmd = new Message.Minecraft.Command();
+        msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
+        msg.mc.cmd.forward.cmd = cmds;
+        msg.mc.cmd.forward.target = targetPlayerName;
+        msg.mc.cmd.forward.who = new Message.Minecraft.Who();
+
 		if (entity instanceof PlayerEntity player) {
-			allcmd.append(player.getName().getString()).append(" fv ").append(playerName).append(" ").append(proxyCmd);
+            msg.mc.cmd.forward.who.name = player.getName().getString();
+            msg.mc.cmd.forward.who.system = false;
 		} else {
-			allcmd.append("? fv ").append(playerName).append(" ").append(proxyCmd);
+		    msg.mc.cmd.forward.who.system = true; // コンソールから打った場合
 		}
+
 		SocketSwitch ssw = sswProvider.get();
 		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, allcmd.toString());
+			ssw.sendVelocityServer(conn, msg);
 		} catch (SQLException | ClassNotFoundException e) {
 			source.sendError(Text.literal("データベースに接続できませんでした。").formatted(Formatting.RED));
-			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
-			for (StackTraceElement element : e.getStackTrace()) {
-				logger.error(element.toString());
-			}
-		}
-	}
-
-	public void executeProxyCommand(PlayerEntity player, String allcmd) {
-		// fmcp <command>
-		String playerName = player.getName().toString();
-		allcmd = playerName + " fv " + playerName + " " + allcmd;
-		SocketSwitch ssw = sswProvider.get();
-		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, allcmd);
-		} catch (SQLException | ClassNotFoundException e) {
-			player.sendMessage(Text.literal("データベースに接続できませんでした。").formatted(Formatting.RED));
 			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
 			for (StackTraceElement element : e.getStackTrace()) {
 				logger.error(element.toString());

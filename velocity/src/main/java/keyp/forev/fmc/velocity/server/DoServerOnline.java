@@ -22,6 +22,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -149,24 +150,26 @@ public class DoServerOnline {
 		}
 	}
 	
-	public void updateDatabaseFromCmd(Connection conn) throws SQLException, ClassNotFoundException {
-		updateDatabase(true);
-		SocketSwitch ssw = sswProvider.get();
-		ssw.sendSpigotServer(conn, "MineStatusSync");
-		logger.info("データベースとの同期を完了しました。");
-	}
+    public void updateAndSyncDatabase(Boolean fromReloadCmd) throws SQLException, ClassNotFoundException {
+        updateDatabase(fromReloadCmd);
 
-	public void updateDatabase(Connection conn) throws SQLException, ClassNotFoundException {
-		updateDatabase(false);
-		SocketSwitch ssw = sswProvider.get();
-		ssw.sendSpigotServer(conn, "MineStatusSync");
-	}
+        try (Connection conn2 = db.getConnection()) {
+            Message msg = new Message();
+            msg.mc = new Message.Minecraft();
+            msg.mc.sync = new Message.Minecraft.Sync();
+            msg.mc.sync.content = "STATUS";
 
-	private void updateDatabase(boolean isCmd) {
+            SocketSwitch ssw = sswProvider.get();
+            ssw.sendSpigotServer(conn2, msg);
+            logger.info("データベースとの同期を完了しました。");
+        }
+    }
+
+	private void updateDatabase(Boolean fromReloadCmd) throws SQLException, ClassNotFoundException {
 		server.getScheduler().buildTask(plugin, () -> {
 			try (Connection conn = db.getConnection()) {
 				// コマンドから実行していなければ
-				if (!isCmd) {
+				if (!fromReloadCmd) {
 					resetDBPlayerList(conn);
 					makeProxyOnline(conn);
 				}
@@ -216,7 +219,7 @@ public class DoServerOnline {
 				if (isAdded.get()) {
 					// 追加されたサーバーがある場合は、再度同期を行う
 					logger.info("追加されたサーバーがあるため、再度同期を実行します。");
-					updateDatabase(conn);
+					updateDatabase(fromReloadCmd);
 				}
 				// toml, db, configのキーが同期した
 				// ここから、configMapとDBの情報を比較

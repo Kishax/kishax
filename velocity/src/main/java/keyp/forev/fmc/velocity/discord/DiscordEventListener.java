@@ -34,6 +34,7 @@ import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.settings.FMCSettings;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import keyp.forev.fmc.common.util.OTPGenerator;
 import net.kyori.adventure.text.Component;
@@ -100,8 +101,14 @@ public class DiscordEventListener {
 
                 try (Connection conn = db.getConnection()) {
                     db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[]{newContent, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
+
+                    Message msg = new Message();
+                    msg.discord = new Message.Discord();
+                    msg.discord.rulebook = new Message.Discord.RuleBook();
+                    msg.discord.rulebook.sync = true;
+
                     SocketSwitch ssw = sswProvider.get();
-                    ssw.sendSpigotServer(conn, "RulebookSync");
+                    ssw.sendSpigotServer(conn, msg);
                     logger.info("detecting rulebook update.");
                     logger.info("updated rulebook content: {}", newContent);
                 } catch (SQLException | ClassNotFoundException e) {
@@ -169,8 +176,14 @@ public class DiscordEventListener {
 							if (content != null) {
 								try (Connection conn = db.getConnection()) {
 									db.updateLog(conn, "UPDATE settings SET value = ? WHERE name = ?;", new Object[] {content, FMCSettings.RULEBOOK_CONTENT.getColumnKey()});
-									SocketSwitch ssw = sswProvider.get();
-									ssw.sendSpigotServer(conn, "RulebookSync");
+
+                                    Message msg = new Message();
+                                    msg.discord = new Message.Discord();
+                                    msg.discord.rulebook = new Message.Discord.RuleBook();
+                                    msg.discord.rulebook.sync = true;
+
+                                    SocketSwitch ssw = sswProvider.get();
+									ssw.sendSpigotServer(conn, msg);
 									replyMessage(event, "ルールブックを更新しました。", true);
 								} catch (SQLException | ClassNotFoundException e1) {
 									replyMessage(event, "データベースに接続できませんでした。", true);
@@ -506,7 +519,7 @@ public class DiscordEventListener {
 		if (!content.isEmpty()) {
 			DiscordEventListener.playerChatMessageId = null; // マイクラからのメッセージを通知ありで新しくembedを作成させるのに必要
 			content = "(discord) " + userName + " -> " + content;
-			sendMixUrl(content);
+			bc.sendMixUrl(content);
 		}
 
 		int attachmentsSize = attachments.size();
@@ -676,67 +689,5 @@ public class DiscordEventListener {
 			return rs.getInt(1);
 		}
         return 0;
-    }
-
-	private void sendMixUrl(String string) {
-        String urlRegex = "https?://\\S+";
-        Pattern patternUrl = Pattern.compile(urlRegex);
-        Matcher matcher = patternUrl.matcher(string);
-        List<String> urls = new ArrayList<>();
-        List<String> textParts = new ArrayList<>();
-        int lastMatchEnd = 0;
-        Boolean isUrl = false;
-        while (matcher.find()) {
-        	isUrl = true;
-            urls.add(matcher.group());
-            textParts.add(string.substring(lastMatchEnd, matcher.start()));
-            lastMatchEnd = matcher.end();
-        }
-        if (!isUrl) {
-        	bc.broadCastMessage(Component.text(string).color(NamedTextColor.AQUA));
-        	return;
-        }
-        if (lastMatchEnd < string.length()) {
-            textParts.add(string.substring(lastMatchEnd));
-        }
-        TextComponent component = Component.text().build();
-        int textPartsSize = textParts.size();
-        int urlsSize = urls.size();
-        for (int i = 0; i < textPartsSize; i++) {
-        	Boolean isText = false;
-        	if (Objects.nonNull(textParts) && textPartsSize != 0) {
-        		String text;
-        		text = textParts.get(i);
-        		TextComponent additionalComponent;
-        		additionalComponent = Component.text()
-					.append(Component.text(text))
-					.color(NamedTextColor.AQUA)
-					.build();
-        		component = component.append(additionalComponent);
-        	} else {
-        		isText = true;
-        	}
-        	if (i < urlsSize) {
-        		String getUrl;
-        		if (isText) {
-        			// textがなかったら、先頭の改行は無くす(=URLのみ)
-        			getUrl = urls.get(i);
-        		} else if (i != textPartsSize - 1) {
-            		getUrl = "\n" + urls.get(i) + "\n";
-            	} else {
-            		getUrl = "\n" + urls.get(i);
-            	}
-        		TextComponent additionalComponent;
-        		additionalComponent = Component.text()
-            				.append(Component.text(getUrl)
-    						.color(NamedTextColor.GRAY)
-    						.decorate(TextDecoration.UNDERLINED))
-    						.clickEvent(ClickEvent.openUrl(urls.get(i)))
-    						.hoverEvent(HoverEvent.showText(Component.text("リンク"+(i+1))))
-                            .build();
-                component = component.append(additionalComponent);
-        	}
-        }
-        bc.broadCastMessage(component);
     }
 }

@@ -11,6 +11,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.md_5.bungee.api.ChatColor;
 
@@ -50,10 +51,16 @@ public class AutoShutdown {
 		task = new BukkitRunnable() {
 		    @Override
 		    public void run() {
+                Message msg = new Message();
+                msg.mc = new Message.Minecraft();
+                msg.mc.server = new Message.Minecraft.Server();
+                msg.mc.server.action = "EMPTY_STOP";
+                msg.mc.server.name = thisServerName;
+
 				SocketSwitch ssw = sswProvider.get();
 		        if (plugin.getServer().getOnlinePlayers().isEmpty()) {
 					try (Connection conn = db.getConnection()) {
-						ssw.sendVelocityServer(conn, "プレイヤー不在のため、"+thisServerName+"サーバーを停止させます。");
+						ssw.sendVelocityServer(conn, msg);
 					} catch (SQLException | ClassNotFoundException e) {
 						logger.error("An error occurred while updating the database: " + e.getMessage(), e);
 						for (StackTraceElement element : e.getStackTrace()) {

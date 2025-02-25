@@ -63,6 +63,7 @@ import keyp.forev.fmc.spigot.server.menu.interfaces.MenuEventRunnable;
 import keyp.forev.fmc.spigot.server.menu.interfaces.PlayerRunnable;
 import keyp.forev.fmc.spigot.server.textcomponent.TCUtils;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 
 import org.bukkit.plugin.java.JavaPlugin;
@@ -1447,9 +1448,18 @@ public class Menu {
 
                                 audiences.player(player).sendMessage(messages);
 
+                                Message msg = new Message();
+                                msg.mc = new Message.Minecraft();
+                                msg.mc.cmd = new Message.Minecraft.Command();
+                                msg.mc.cmd.teleport = new Message.Minecraft.Command.Teleport();
+                                msg.mc.cmd.teleport.point.who = new Message.Minecraft.Who();
+                                msg.mc.cmd.teleport.point.who.name = player.getName();
+                                msg.mc.cmd.teleport.point = new Message.Minecraft.Command.Teleport.Point();
+                                msg.mc.cmd.teleport.point.name = title;
+
                                 SocketSwitch ssw = sswProvider.get();
                                 try (Connection conn = db.getConnection()) {
-                                    ssw.sendVelocityServer(conn, "teleport->point->name->" + player.getName() +"->at->" + title + "->");
+                                    ssw.sendVelocityServer(conn, msg);
                                 } catch (SQLException | ClassNotFoundException e) {
                                     logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
                                 }

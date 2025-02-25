@@ -12,6 +12,7 @@ import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.server.Luckperms;
+import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.md_5.bungee.api.ChatColor;
 
@@ -29,29 +30,34 @@ public class CommandForward {
 	}
 	
 	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
-		// fv <player> fmcp <command>
-		//String playerName = player.getName();
-		//int permLevel = lp.getPermLevel(playerName);
+		String cmds = String.join(" ", args);
+        String targetPlayerName = args[1];
+        Message msg = new Message();
+        msg.mc = new Message.Minecraft();
+        msg.mc.cmd = new Message.Minecraft.Command();
+        msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
+        msg.mc.cmd.forward.cmd = cmds;
+        msg.mc.cmd.forward.target = targetPlayerName;
+        msg.mc.cmd.forward.who = new Message.Minecraft.Who();
 
-		String allcmd = String.join(" ", args);
 		if (sender instanceof Player player) {
-			allcmd = player.getName() + " " + allcmd;
-			if (!permCheck(player, allcmd)) {
+            String playerName = player.getName();
+
+			int permLevel = lp.getPermLevel(playerName);
+			if (!(permLevel >= 3 || playerName.equals(targetPlayerName))) {
 				player.sendMessage(ChatColor.RED + "権限がありません。");
 				return;
 			}
-		} else {
-			allcmd = "? " + allcmd;
-		}
 
-		if (!patternCheck(allcmd)) {
-			sender.sendMessage(ChatColor.RED + "コマンドのパターンが違います。");
-			return;
+            msg.mc.cmd.forward.who.name = playerName;
+            msg.mc.cmd.forward.who.system = false;
+		} else {
+		    msg.mc.cmd.forward.who.system = true; // コンソールから打った場合
 		}
 
 		SocketSwitch ssw = sswProvider.get();
 		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, allcmd);
+			ssw.sendVelocityServer(conn, msg);
 		} catch (SQLException | ClassNotFoundException e) {
 			if (sender != null) {
 				sender.sendMessage(ChatColor.RED + "データベースに接続できませんでした。");
@@ -63,13 +69,22 @@ public class CommandForward {
 		}
 	}
 
-	public void executeProxyCommand(Player player, String allcmd) {
-		// fmcp <command>
+	public void executeProxyCommand(Player player, String cmds) {
 		String playerName = player.getName();
-		allcmd = playerName + " fv " + playerName + " " + allcmd;
+
+        Message msg = new Message();
+        msg.mc = new Message.Minecraft();
+        msg.mc.cmd = new Message.Minecraft.Command();
+        msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
+        msg.mc.cmd.forward.cmd = cmds;
+        msg.mc.cmd.forward.target = playerName;
+        msg.mc.cmd.forward.who = new Message.Minecraft.Who();
+        msg.mc.cmd.forward.who.name = playerName;
+        msg.mc.cmd.forward.who.system = false;
+
 		SocketSwitch ssw = sswProvider.get();
 		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, allcmd);
+			ssw.sendVelocityServer(conn, msg);
 		} catch (SQLException | ClassNotFoundException e) {
 			player.sendMessage(ChatColor.RED + "データベースに接続できませんでした。");
 			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
@@ -77,34 +92,5 @@ public class CommandForward {
 				logger.error(element.toString());
 			}
 		}
-	}
-
-	private boolean patternCheck(String res) {
-		String pattern = "(\\S+) fv (\\S+) (.+)";
-		java.util.regex.Pattern r = java.util.regex.Pattern.compile(pattern);
-		java.util.regex.Matcher m = r.matcher(res);
-		if (m.find()) {
-			return true;
-		}
-		return false;
-	}
-
-	private boolean permCheck(Player player, String res) {
-		String pattern = "(\\S+) fv (\\S+) (.+)";
-		java.util.regex.Pattern r = java.util.regex.Pattern.compile(pattern);
-		java.util.regex.Matcher m = r.matcher(res);
-		if (m.find()) {
-			String execplayerName = m.group(1);
-			String targetPlayerName = m.group(2);
-			//String command = m.group(3);
-			int permLevel = lp.getPermLevel(player.getName());
-			if (permLevel >= 3) {
-				return true;
-			} else {
-				return execplayerName.equals(targetPlayerName);
-			}
-		}
-
-		return true;
 	}
 }
