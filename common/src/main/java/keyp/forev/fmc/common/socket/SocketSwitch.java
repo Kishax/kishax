@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 
 import keyp.forev.fmc.common.socket.message.Message;
 
