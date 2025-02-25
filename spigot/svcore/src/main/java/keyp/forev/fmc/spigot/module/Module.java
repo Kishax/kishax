@@ -16,7 +16,6 @@ import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.PortFinder;
 import keyp.forev.fmc.common.socket.SocketSwitch;
-import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import redis.clients.jedis.Jedis;
 import keyp.forev.fmc.spigot.database.SpigotDatabaseInfo;
@@ -33,7 +32,6 @@ import keyp.forev.fmc.spigot.server.cmd.sub.portal.PortalsDelete;
 import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.server.events.WandListener;
 import keyp.forev.fmc.spigot.server.menu.Menu;
-import keyp.forev.fmc.spigot.socket.SpigotSocketResponse;
 import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 
@@ -64,7 +62,6 @@ public class Module extends AbstractModule {
 		bind(PlayerUtils.class);
 		bind(Logger.class).toInstance(logger);
 		bind(Jedis.class).toProvider(JedisProvider.class);
-		bind(SocketSwitch.class);
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);
 		bind(Menu.class);
@@ -92,22 +89,6 @@ public class Module extends AbstractModule {
         return plugin.getDataFolder().toPath();
     }
 
-	@Provides
-	@Singleton
-	public SocketResponse provideSpigotSocketResponse(
-	        JavaPlugin plugin,
-	        Logger logger,
-	        Database db,
-	        ServerStatusCache ssc,
-	        SpigotServerHomeDir shd,
-	        Provider<SocketSwitch> sswProvider,
-	        AutoShutdown asd,
-	        InventoryCheck inv,
-	        Menu menu,
-	        Luckperms lp,
-	        BroadCast bc) {
-	    return new SpigotSocketResponse(plugin, audiences, logger, db, ssc, shd, sswProvider, asd, inv, menu, lp, bc);
-	}
 	
 	@Provides
 	@Singleton

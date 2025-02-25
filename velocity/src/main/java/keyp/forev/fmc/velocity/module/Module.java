@@ -16,7 +16,6 @@ import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.database.interfaces.DatabaseInfo;
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
-import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.database.VelocityDatabaseInfo;
@@ -35,7 +34,6 @@ import keyp.forev.fmc.velocity.server.cmd.sub.CommandForwarder;
 import keyp.forev.fmc.velocity.server.cmd.sub.Maintenance;
 import keyp.forev.fmc.velocity.server.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
-import keyp.forev.fmc.velocity.socket.VelocitySocketResponse;
 import keyp.forev.fmc.velocity.util.RomaToKanji;
 import keyp.forev.fmc.velocity.util.RomajiConversion;
 import keyp.forev.fmc.velocity.util.config.ConfigUtils;
@@ -64,7 +62,6 @@ public class Module extends AbstractModule {
         bind(Logger.class).toInstance(logger);
         bind(Path.class).annotatedWith(DataDirectory.class).toInstance(dataDirectory);
         bind(ConsoleCommandSource.class).toInstance(server.getConsoleCommandSource());
-        bind(SocketSwitch.class);
         bind(BroadCast.class);
         bind(RomaToKanji.class);
         bind(PlayerDisconnect.class);
@@ -124,17 +121,5 @@ public class Module extends AbstractModule {
 
     @Provides
     @Singleton
-    public SocketResponse provideVelocitySocketResponse(
-            Logger logger, 
-            ProxyServer server, 
-            Database db, 
-            VelocityConfig config, 
-            Luckperms lp, 
-            BroadCast bc, 
-            ConsoleCommandSource console, 
-            MessageEditor discordME, 
-            Provider<SocketSwitch> sswProvider, 
-            CommandForwarder cf) {
-        return new VelocitySocketResponse(logger, server, db, config, lp, bc, console, discordME, sswProvider, cf);
     }
 }

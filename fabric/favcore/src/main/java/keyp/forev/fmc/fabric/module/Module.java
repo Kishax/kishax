@@ -16,7 +16,6 @@ import keyp.forev.fmc.common.server.DoServerOnline;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.PortFinder;
 import keyp.forev.fmc.common.socket.SocketSwitch;
-import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.fabric.database.FabricDatabaseInfo;
 import keyp.forev.fmc.fabric.server.AutoShutdown;
@@ -24,7 +23,6 @@ import keyp.forev.fmc.fabric.server.CountdownTask;
 import keyp.forev.fmc.fabric.server.FabricLuckperms;
 import keyp.forev.fmc.fabric.server.FabricServerHomeDir;
 import keyp.forev.fmc.fabric.server.cmd.sub.CommandForward;
-import keyp.forev.fmc.fabric.socket.FabricSocketResponse;
 import keyp.forev.fmc.fabric.util.config.FabricConfig;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
@@ -48,7 +46,6 @@ public class Module extends AbstractModule {
 		bind(Database.class);
 		bind(PlayerUtils.class);
 		bind(Logger.class).toInstance(logger);
-		bind(SocketSwitch.class);
 		bind(DoServerOnline.class);
 		bind(DoServerOffline.class);
 		bind(PortFinder.class);
@@ -69,11 +66,5 @@ public class Module extends AbstractModule {
 	@Singleton
 	public ServerHomeDir provideServerHomeDir(FabricLoader fabric) {
 		return new FabricServerHomeDir(fabric);
-	}
-	
-	@Provides
-	@Singleton
-	public SocketResponse provideSocketResponse() {
-		return new FabricSocketResponse();
 	}
 }
