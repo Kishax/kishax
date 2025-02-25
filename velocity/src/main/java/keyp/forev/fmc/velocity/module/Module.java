@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -16,6 +17,13 @@ import keyp.forev.fmc.common.database.Database;
 import keyp.forev.fmc.common.database.interfaces.DatabaseInfo;
 import keyp.forev.fmc.common.server.Luckperms;
 import keyp.forev.fmc.common.socket.SocketSwitch;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.ServerActionHandler;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.commands.ForwardHandler;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.commands.ImageMapHandler;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.commands.InputHandler;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.commands.TeleportPlayerHandler;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.commands.TeleportPointHandler;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.web.MinecraftWebConfirmHandler;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import keyp.forev.fmc.velocity.Main;
 import keyp.forev.fmc.velocity.database.VelocityDatabaseInfo;
@@ -34,6 +42,13 @@ import keyp.forev.fmc.velocity.server.cmd.sub.CommandForwarder;
 import keyp.forev.fmc.velocity.server.cmd.sub.Maintenance;
 import keyp.forev.fmc.velocity.server.cmd.sub.VelocityRequest;
 import keyp.forev.fmc.velocity.server.cmd.sub.interfaces.Request;
+import keyp.forev.fmc.velocity.socket.message.handlers.minecraft.command.VelocityForwardHandler;
+import keyp.forev.fmc.velocity.socket.message.handlers.minecraft.command.VelocityImageMapHandler;
+import keyp.forev.fmc.velocity.socket.message.handlers.minecraft.command.VelocityInputHandler;
+import keyp.forev.fmc.velocity.socket.message.handlers.minecraft.command.VelocityTeleportPlayerHandler;
+import keyp.forev.fmc.velocity.socket.message.handlers.minecraft.command.VelocityTeleportPointHandler;
+import keyp.forev.fmc.velocity.socket.message.handlers.minecraft.server.VelocityServerActionHandler;
+import keyp.forev.fmc.velocity.socket.message.handlers.web.VelocityMinecraftWebConfirmHandler;
 import keyp.forev.fmc.velocity.util.RomaToKanji;
 import keyp.forev.fmc.velocity.util.RomajiConversion;
 import keyp.forev.fmc.velocity.util.config.ConfigUtils;
@@ -79,8 +94,16 @@ public class Module extends AbstractModule {
         bind(CommandForwarder.class);
         bind(Luckperms.class);
         bind(Webhooker.class);
-        // 試験要素
-        //bind(Discord2.class);
+
+        bind(ForwardHandler.class).to(VelocityForwardHandler.class);
+        bind(ImageMapHandler.class).to(VelocityImageMapHandler.class);
+        bind(InputHandler.class).to(VelocityInputHandler.class);
+        bind(TeleportPlayerHandler.class).to(VelocityTeleportPlayerHandler.class);
+        bind(TeleportPointHandler.class).to(VelocityTeleportPointHandler.class);
+
+        bind(ServerActionHandler.class).to(VelocityServerActionHandler.class);
+
+        bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
     }
 
     @Provides
@@ -121,5 +144,7 @@ public class Module extends AbstractModule {
 
     @Provides
     @Singleton
+    public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
+        return new SocketSwitch(logger, injector);
     }
 }

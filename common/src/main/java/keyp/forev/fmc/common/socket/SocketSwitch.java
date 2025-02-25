@@ -12,26 +12,27 @@ import java.sql.SQLException;
 
 import org.slf4j.Logger;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Provider;
 
-import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
+import keyp.forev.fmc.common.socket.message.Message;
 
 public class SocketSwitch {
     private final Logger logger;
-    private final Provider<SocketResponse> responseProvider;
-    private final String hostname = "localhost";
+    private final Injector injector;
+    private final Gson gson = new Gson();
     private ServerSocket serverSocket;
     private Thread clientThread, socketThread;
     private volatile boolean running = true;
     
     @Inject
-	public SocketSwitch(Logger logger, Provider<SocketResponse> responseProvider) {
+	public SocketSwitch(Logger logger, Injector injector) {
         this.logger = logger;
-        this.responseProvider = responseProvider;
+        this.injector = injector;
 	}
     
-    //Server side
     public void startSocketServer(int port) {
         socketThread = new Thread(() -> {
             try {
@@ -44,8 +45,8 @@ public class SocketSwitch {
                             socket2.close();
                             break;
                         }
-                        SocketResponse response = responseProvider.get();
-                        new SocketServerThread(logger, socket2, response).start();
+
+                        new SocketServerThread(logger, socket2, injector).start();
                     } catch (IOException e) {
                         if (running) {
                             logger.error("An IOException error occurred: {}", e.getMessage());
@@ -76,36 +77,31 @@ public class SocketSwitch {
         socketThread.start();
     }
 
-    public void startSocketClient(int port, String sendmsg) {
+    public void startSocketClient(int port, Message msg) {
 	    if (port == 0) return;
-	    //logger.info("Client Socket is Available");
 	    clientThread = new Thread(() -> {
-	        sendMessage(port, sendmsg);
+            try (Socket socket = new Socket("localhost", port);
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));) {
+                writer.write(gson.toJson(msg) + "\n");
+                writer.flush();
+            } catch (Exception e) {
+                logger.error("An Exception error occurred: {}", e.getMessage());
+                for (StackTraceElement element : e.getStackTrace()) {
+                    logger.error(element.toString());
+                }
+            }
 	    });
 	    clientThread.start();
 	}
 
-	private void sendMessage(int port, String sendmsg) {
-	    try (Socket socket = new Socket(hostname, port);
-	    	BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));) {
-	    	writer.write(sendmsg + "\n");
-	    	writer.flush();
-	    } catch (Exception e) {
-	        logger.error("An Exception error occurred: {}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-                logger.error(element.toString());
-            }
-	    }
-	}
-    
-    public void sendSpigotServer(Connection conn, String sendmsg) throws SQLException, ClassNotFoundException {
-        sendMessageToServer(conn, "spigot", sendmsg);
+    public void sendSpigotServer(Connection conn, Message msg) throws SQLException, ClassNotFoundException {
+        sendMessageToServer(conn, "spigot", msg);
     }
 
-    public void sendVelocityServer(Connection conn, String sendmsg) throws SQLException, ClassNotFoundException {
-        sendMessageToServer(conn, "velocity", sendmsg);
+    public void sendVelocityServer(Connection conn, Message msg) throws SQLException, ClassNotFoundException {
+        sendMessageToServer(conn, "velocity", msg);
     }
-    
+
     public void stopSocketClient() {
         try {
             if (clientThread != null && clientThread.isAlive()) {
@@ -124,7 +120,7 @@ public class SocketSwitch {
     	running = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close(); // これによりaccept()が解除される
+                serverSocket.close();
             }
         } catch (IOException e) {
             logger.error("An IOException error occurred: {}", e.getMessage());
@@ -135,9 +131,9 @@ public class SocketSwitch {
 
         try {
             if (socketThread != null && socketThread.isAlive()) {
-                socketThread.join(1000); // 1秒以内にスレッドの終了を待つ
+                socketThread.join(1000);
                 if (socketThread.isAlive()) {
-                    socketThread.interrupt(); // 強制的にスレッドを停止
+                    socketThread.interrupt();
                 }
             }
         } catch (InterruptedException e) {
@@ -148,7 +144,9 @@ public class SocketSwitch {
         }
     }
 
-    public boolean sendSpecificServer(Connection conn, String serverName, String msg) throws SQLException {
+    public boolean sendSpecificServer(Connection conn, Message msg) throws SQLException {
+        String serverName = msg.mc.server.name;
+
         try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status")) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -156,11 +154,9 @@ public class SocketSwitch {
                     int port = rs.getInt("socketport");
                     boolean online = rs.getBoolean("online");
                     if (port == 0) {
-                        //logger.info("sendSpecificServer: Server " + serverName + " has no socketport");
                         continue;
                     }
                     if (online && serverDBName.equalsIgnoreCase(serverName)) {
-                        //logger.info("sendSpecificServer: Starting client for server " + serverName + " on port " + port);
                         startSocketClient(port, msg);
                         return true;
                     }
@@ -170,21 +166,18 @@ public class SocketSwitch {
         return false;
     }
 
-    private void sendMessageToServer(Connection conn, String serverType, String sendmsg) throws SQLException, ClassNotFoundException {
+    private void sendMessageToServer(Connection conn, String serverType, Message msg) throws SQLException, ClassNotFoundException {
         try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    //String serverName = rs.getString("name");
                     String platform = rs.getString("platform");
                     int port = rs.getInt("socketport");
                     boolean online = rs.getBoolean("online");
                     if (port == 0) {
-                        //logger.info("sendSpigotServer: Server " + serverName + " has no socketport");
                         continue;
                     }
                     if (online && platform.equalsIgnoreCase(serverType)) {
-                        //logger.info("sendSpigotServer: Starting client for server " + serverName + " on port " + port);
-                        startSocketClient(port, sendmsg);
+                        startSocketClient(port, msg);
                     }
                 }
             }
