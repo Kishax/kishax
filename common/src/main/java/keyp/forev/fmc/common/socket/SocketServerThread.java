@@ -8,30 +8,37 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 
-import keyp.forev.fmc.common.socket.interfaces.SocketResponse;
+import keyp.forev.fmc.common.socket.message.Message;
+import keyp.forev.fmc.common.socket.message.MessageProcessor;
+
+import com.google.gson.Gson;
+import com.google.inject.Injector;
 
 public class SocketServerThread extends Thread {
-    public Logger logger;
+    private final Logger logger;
     private final Socket socket;
-    private final SocketResponse response;
-    
-    public SocketServerThread(Logger logger, Socket socket, SocketResponse response) {
+    private final Injector injector;
+
+    public SocketServerThread(Logger logger, Socket socket, Injector injector) {
         this.logger = logger;
         this.socket = socket;
-        this.response = response;
+        this.injector = injector;
     }
 
     @Override
     public void run() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));) {
-        	StringBuilder receivedMessageBuilder = new StringBuilder();
             String line;
             while (Objects.nonNull(line = reader.readLine())) {
-                receivedMessageBuilder.append(line).append("\n");
+                Gson gson = new Gson();
+                try {
+                    Message message = gson.fromJson(line, Message.class);
+                    MessageProcessor msgProcessor = injector.getInstance(MessageProcessor.class);
+                    msgProcessor.process(message);
+                } catch (Exception e) {
+                    logger.error("JSON parse error: {}", e.getMessage());
+                }
             }
-            String receivedMessage = receivedMessageBuilder.toString();
-            	// プラットフォームによって、receivedMessageを処理するメソッドを分ける
-            response.resaction(receivedMessage);
         } catch (Exception e) {
             logger.error("An Exception error occurred: {}", e.getMessage());
             for (StackTraceElement element : e.getStackTrace()) {

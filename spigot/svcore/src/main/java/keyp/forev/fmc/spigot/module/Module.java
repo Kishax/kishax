@@ -3,6 +3,7 @@ package keyp.forev.fmc.spigot.module;
 import org.slf4j.Logger;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Provides;
 
 import keyp.forev.fmc.common.database.Database;
@@ -16,6 +17,9 @@ import keyp.forev.fmc.common.server.ServerStatusCache;
 import keyp.forev.fmc.common.server.interfaces.ServerHomeDir;
 import keyp.forev.fmc.common.socket.PortFinder;
 import keyp.forev.fmc.common.socket.SocketSwitch;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.discord.RuleBookSyncHandler;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.ServerActionHandler;
+import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.SyncContentHandler;
 import keyp.forev.fmc.common.util.PlayerUtils;
 import redis.clients.jedis.Jedis;
 import keyp.forev.fmc.spigot.database.SpigotDatabaseInfo;
@@ -32,6 +36,9 @@ import keyp.forev.fmc.spigot.server.cmd.sub.portal.PortalsDelete;
 import keyp.forev.fmc.spigot.server.events.EventListener;
 import keyp.forev.fmc.spigot.server.events.WandListener;
 import keyp.forev.fmc.spigot.server.menu.Menu;
+import keyp.forev.fmc.spigot.socket.message.handlers.discord.SpigotRuleBookSyncHandler;
+import keyp.forev.fmc.spigot.socket.message.handlers.minecraft.SpigotSyncContentHandler;
+import keyp.forev.fmc.spigot.socket.message.handlers.minecraft.server.SpigotServerActionHandler;
 import keyp.forev.fmc.spigot.util.RunnableTaskUtil;
 import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 
@@ -80,6 +87,10 @@ public class Module extends AbstractModule {
 		bind(CommandForward.class);
 		bind(BroadCast.class);
 		bind(RunnableTaskUtil.class);
+
+        bind(RuleBookSyncHandler.class).to(SpigotRuleBookSyncHandler.class);
+        bind(ServerActionHandler.class).to(SpigotServerActionHandler.class);
+        bind(SyncContentHandler.class).to(SpigotSyncContentHandler.class);
     }
 
 	@Provides
@@ -89,6 +100,11 @@ public class Module extends AbstractModule {
         return plugin.getDataFolder().toPath();
     }
 
+    @Provides
+    @Singleton
+    public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
+        return new SocketSwitch(logger, injector);
+    }
 	
 	@Provides
 	@Singleton

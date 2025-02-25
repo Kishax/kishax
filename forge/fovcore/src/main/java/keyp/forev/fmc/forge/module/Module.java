@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
@@ -67,4 +68,10 @@ public class Module extends AbstractModule {
 	public ServerHomeDir providesForgeServerHomeDir() {
 		return new ForgeServerHomeDir(configPath);
 	}
+
+    @Provides
+    @Singleton
+    public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
+        return new SocketSwitch(logger, injector);
+    }
 }
