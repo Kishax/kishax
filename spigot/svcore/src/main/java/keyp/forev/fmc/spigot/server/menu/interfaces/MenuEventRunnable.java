@@ -4,5 +4,5 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 
 @FunctionalInterface
 public interface MenuEventRunnable {
-    void run(InventoryClickEvent event);
+  void run(InventoryClickEvent event);
 }

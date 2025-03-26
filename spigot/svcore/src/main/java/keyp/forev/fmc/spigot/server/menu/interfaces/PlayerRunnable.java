@@ -4,5 +4,5 @@ import org.bukkit.entity.Player;
 
 @FunctionalInterface
 public interface PlayerRunnable {
-    void run(Player player);
+  void run(Player player);
 }

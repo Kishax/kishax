@@ -7,18 +7,18 @@ import keyp.forev.fmc.common.socket.message.handlers.interfaces.discord.RuleBook
 import keyp.forev.fmc.spigot.server.InventoryCheck;
 
 public class SpigotRuleBookSyncHandler implements RuleBookSyncHandler {
-    private final InventoryCheck inv;
+  private final InventoryCheck inv;
 
-    @Inject
-    public SpigotRuleBookSyncHandler(InventoryCheck inv) {
-        this.inv = inv;
-    }
+  @Inject
+  public SpigotRuleBookSyncHandler(InventoryCheck inv) {
+    this.inv = inv;
+  }
 
-    @Override
-    public void handle(Message.Discord.RuleBook rulebook) {
-        if (rulebook.sync) {
-            inv.updateOnlinePlayerInventory();
-        }
+  @Override
+  public void handle(Message.Discord.RuleBook rulebook) {
+    if (rulebook.sync) {
+      inv.updateOnlinePlayerInventory();
     }
+  }
 }
 

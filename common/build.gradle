@@ -1,26 +1,26 @@
 plugins {
-	alias(libs.plugins.shadow)
+  alias(libs.plugins.shadow)
 }
 
 dependencies {
-	implementation 'org.slf4j:slf4j-api:2.0.9'
-	implementation 'org.slf4j:slf4j-simple:2.0.9'
-	implementation 'redis.clients:jedis:5.2.0'
-	implementation 'org.yaml:snakeyaml:2.0'
-	implementation 'com.google.inject:guice:5.1.0'
-	implementation 'mysql:mysql-connector-java:8.0.33'
-	implementation 'org.json:json:20180813'
-	implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+  implementation 'org.slf4j:slf4j-api:2.0.9'
+  implementation 'org.slf4j:slf4j-simple:2.0.9'
+  implementation 'redis.clients:jedis:5.2.0'
+  implementation 'org.yaml:snakeyaml:2.0'
+  implementation 'com.google.inject:guice:5.1.0'
+  implementation 'mysql:mysql-connector-java:8.0.33'
+  implementation 'org.json:json:20180813'
+  implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 }
 
 shadowJar {
-	archiveBaseName.set('FMC-Common')
-	archiveClassifier.set('')
-	archiveVersion.set('')
-	exclude('**/*.kotlin_*')
-	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  archiveBaseName.set('FMC-Common')
+  archiveClassifier.set('')
+  archiveVersion.set('')
+  exclude('**/*.kotlin_*')
+  exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 }
 
 tasks.build {
-    dependsOn tasks.shadowJar
+  dependsOn tasks.shadowJar
 }

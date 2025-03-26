@@ -30,48 +30,49 @@ import net.minecraft.server.MinecraftServer;
 import net.neoforged.fml.loading.FMLPaths;
 
 public class Module extends AbstractModule {
-	private final MinecraftServer server;
-	private final Logger logger;
-	private final Path configPath;
-	public Module(Logger logger, MinecraftServer server) {
-		this.logger = logger;
-		this.server = server;
-		this.configPath = FMLPaths.CONFIGDIR.get();
-	}
+  private final MinecraftServer server;
+  private final Logger logger;
+  private final Path configPath;
 
-	@Override
-    protected void configure() {
-		bind(MinecraftServer.class).toInstance(server);
-		bind(NeoForgeConfig.class);
-		bind(DatabaseInfo.class).to(NeoForgeDatabaseInfo.class).in(Singleton.class);
-		bind(Database.class);
-		bind(PlayerUtils.class);
-		bind(Logger.class).toInstance(logger);
-		bind(DoServerOnline.class);
-		bind(DoServerOffline.class);
-		bind(PortFinder.class);
-		bind(NeoForgeLuckperms.class);
-		bind(AutoShutdown.class);
-		bind(CommandForward.class);
-		bind(CountdownTask.class);
-    }
+  public Module(Logger logger, MinecraftServer server) {
+    this.logger = logger;
+    this.server = server;
+    this.configPath = FMLPaths.CONFIGDIR.get();
+  }
 
-	@Provides
-    @Singleton
-    @DataDirectory
-    public Path provideDataDirectory() {
-		return configPath.resolve(Main.MODID);
-    }
+  @Override
+  protected void configure() {
+    bind(MinecraftServer.class).toInstance(server);
+    bind(NeoForgeConfig.class);
+    bind(DatabaseInfo.class).to(NeoForgeDatabaseInfo.class).in(Singleton.class);
+    bind(Database.class);
+    bind(PlayerUtils.class);
+    bind(Logger.class).toInstance(logger);
+    bind(DoServerOnline.class);
+    bind(DoServerOffline.class);
+    bind(PortFinder.class);
+    bind(NeoForgeLuckperms.class);
+    bind(AutoShutdown.class);
+    bind(CommandForward.class);
+    bind(CountdownTask.class);
+  }
 
-	@Provides
-	@Singleton
-	public ServerHomeDir providesForgeServerHomeDir() {
-		return new NeoForgeServerHomeDir(configPath);
-	}
+  @Provides
+  @Singleton
+  @DataDirectory
+  public Path provideDataDirectory() {
+    return configPath.resolve(Main.MODID);
+  }
 
-    @Provides
-    @Singleton
-    public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
-        return new SocketSwitch(logger, injector);
-    }
+  @Provides
+  @Singleton
+  public ServerHomeDir providesForgeServerHomeDir() {
+    return new NeoForgeServerHomeDir(configPath);
+  }
+
+  @Provides
+  @Singleton
+  public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
+    return new SocketSwitch(logger, injector);
+  }
 }

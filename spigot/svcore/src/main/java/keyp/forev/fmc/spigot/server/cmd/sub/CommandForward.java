@@ -17,80 +17,81 @@ import keyp.forev.fmc.common.socket.SocketSwitch;
 import net.md_5.bungee.api.ChatColor;
 
 public class CommandForward {
-	private final Database db;
-	private final Logger logger;
-	private final Provider<SocketSwitch> sswProvider;
-	private final Luckperms lp;
-	@Inject
-	public CommandForward(Database db, Logger logger, Provider<SocketSwitch> sswProvider, Luckperms lp) {
-		this.db = db;
-		this.logger = logger;
-		this.sswProvider = sswProvider;
-		this.lp = lp;
-	}
-	
-	public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
-		String cmds = String.join(" ", args);
-        String targetPlayerName = args[1];
-        Message msg = new Message();
-        msg.mc = new Message.Minecraft();
-        msg.mc.cmd = new Message.Minecraft.Command();
-        msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
-        msg.mc.cmd.forward.cmd = cmds;
-        msg.mc.cmd.forward.target = targetPlayerName;
-        msg.mc.cmd.forward.who = new Message.Minecraft.Who();
+  private final Database db;
+  private final Logger logger;
+  private final Provider<SocketSwitch> sswProvider;
+  private final Luckperms lp;
 
-		if (sender instanceof Player player) {
-            String playerName = player.getName();
+  @Inject
+  public CommandForward(Database db, Logger logger, Provider<SocketSwitch> sswProvider, Luckperms lp) {
+    this.db = db;
+    this.logger = logger;
+    this.sswProvider = sswProvider;
+    this.lp = lp;
+  }
 
-			int permLevel = lp.getPermLevel(playerName);
-			if (!(permLevel >= 3 || playerName.equals(targetPlayerName))) {
-				player.sendMessage(ChatColor.RED + "権限がありません。");
-				return;
-			}
+  public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
+    String cmds = String.join(" ", args);
+    String targetPlayerName = args[1];
+    Message msg = new Message();
+    msg.mc = new Message.Minecraft();
+    msg.mc.cmd = new Message.Minecraft.Command();
+    msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
+    msg.mc.cmd.forward.cmd = cmds;
+    msg.mc.cmd.forward.target = targetPlayerName;
+    msg.mc.cmd.forward.who = new Message.Minecraft.Who();
 
-            msg.mc.cmd.forward.who.name = playerName;
-            msg.mc.cmd.forward.who.system = false;
-		} else {
-		    msg.mc.cmd.forward.who.system = true; // コンソールから打った場合
-		}
+    if (sender instanceof Player player) {
+      String playerName = player.getName();
 
-		SocketSwitch ssw = sswProvider.get();
-		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, msg);
-		} catch (SQLException | ClassNotFoundException e) {
-			if (sender != null) {
-				sender.sendMessage(ChatColor.RED + "データベースに接続できませんでした。");
-			}
-			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
-			for (StackTraceElement element : e.getStackTrace()) {
-				logger.error(element.toString());
-			}
-		}
-	}
+      int permLevel = lp.getPermLevel(playerName);
+      if (!(permLevel >= 3 || playerName.equals(targetPlayerName))) {
+        player.sendMessage(ChatColor.RED + "権限がありません。");
+        return;
+      }
 
-	public void executeProxyCommand(Player player, String cmds) {
-		String playerName = player.getName();
+      msg.mc.cmd.forward.who.name = playerName;
+      msg.mc.cmd.forward.who.system = false;
+    } else {
+      msg.mc.cmd.forward.who.system = true; // コンソールから打った場合
+    }
 
-        Message msg = new Message();
-        msg.mc = new Message.Minecraft();
-        msg.mc.cmd = new Message.Minecraft.Command();
-        msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
-        msg.mc.cmd.forward.cmd = cmds;
-        msg.mc.cmd.forward.target = playerName;
-        msg.mc.cmd.forward.who = new Message.Minecraft.Who();
-        msg.mc.cmd.forward.who.name = playerName;
-        msg.mc.cmd.forward.who.system = false;
+    SocketSwitch ssw = sswProvider.get();
+    try (Connection conn = db.getConnection()) {
+      ssw.sendVelocityServer(conn, msg);
+    } catch (SQLException | ClassNotFoundException e) {
+      if (sender != null) {
+        sender.sendMessage(ChatColor.RED + "データベースに接続できませんでした。");
+      }
+      logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+      for (StackTraceElement element : e.getStackTrace()) {
+        logger.error(element.toString());
+      }
+    }
+  }
 
-		SocketSwitch ssw = sswProvider.get();
-		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, msg);
-		} catch (SQLException | ClassNotFoundException e) {
-			player.sendMessage(ChatColor.RED + "データベースに接続できませんでした。");
-			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
-			for (StackTraceElement element : e.getStackTrace()) {
-				logger.error(element.toString());
-			}
-		}
-	}
+  public void executeProxyCommand(Player player, String cmds) {
+    String playerName = player.getName();
+
+    Message msg = new Message();
+    msg.mc = new Message.Minecraft();
+    msg.mc.cmd = new Message.Minecraft.Command();
+    msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
+    msg.mc.cmd.forward.cmd = cmds;
+    msg.mc.cmd.forward.target = playerName;
+    msg.mc.cmd.forward.who = new Message.Minecraft.Who();
+    msg.mc.cmd.forward.who.name = playerName;
+    msg.mc.cmd.forward.who.system = false;
+
+    SocketSwitch ssw = sswProvider.get();
+    try (Connection conn = db.getConnection()) {
+      ssw.sendVelocityServer(conn, msg);
+    } catch (SQLException | ClassNotFoundException e) {
+      player.sendMessage(ChatColor.RED + "データベースに接続できませんでした。");
+      logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+      for (StackTraceElement element : e.getStackTrace()) {
+        logger.error(element.toString());
+      }
+    }
+  }
 }

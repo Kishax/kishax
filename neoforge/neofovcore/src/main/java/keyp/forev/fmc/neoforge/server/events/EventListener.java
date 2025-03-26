@@ -26,63 +26,64 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 
 public class EventListener {
-	private static boolean isStop = false;
-	private static final Logger logger = Main.logger;
-	@SubscribeEvent
-	public static void onServerStarting(ServerStartingEvent event) {
-		Main.injector = Guice.createInjector(new Module(logger, event.getServer()));
-		Main.getInjector().getInstance(AutoShutdown.class).start();
-		try {
-			LuckPerms luckperms = LuckPermsProvider.get();
-			Main.getInjector().getInstance(NeoForgeLuckperms.class).triggerNetworkSync();
-			logger.info("linking with LuckPerms...");
-			logger.info(luckperms.getPlatform().toString());
-		} catch (IllegalStateException e1) {
-			logger.error("LuckPermsが見つかりませんでした。");
-			return;
-		}
-		Main.getInjector().getInstance(PlayerUtils.class).loadPlayers();
-		Main.getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
-		logger.info("fmc neoforge mod has been enabled.");
-	}
+  private static boolean isStop = false;
+  private static final Logger logger = Main.logger;
 
-	@SubscribeEvent
-	public static void onServerStopping(ServerStoppingEvent event) {
-		if (!isStop) {
-			isStop = true;
-			Main.getInjector().getInstance(DoServerOffline.class).updateDatabase();
-			Main.getInjector().getInstance(AutoShutdown.class).stop();
-		}
-	}
+  @SubscribeEvent
+  public static void onServerStarting(ServerStartingEvent event) {
+    Main.injector = Guice.createInjector(new Module(logger, event.getServer()));
+    Main.getInjector().getInstance(AutoShutdown.class).start();
+    try {
+      LuckPerms luckperms = LuckPermsProvider.get();
+      Main.getInjector().getInstance(NeoForgeLuckperms.class).triggerNetworkSync();
+      logger.info("linking with LuckPerms...");
+      logger.info(luckperms.getPlatform().toString());
+    } catch (IllegalStateException e1) {
+      logger.error("LuckPermsが見つかりませんでした。");
+      return;
+    }
+    Main.getInjector().getInstance(PlayerUtils.class).loadPlayers();
+    Main.getInjector().getInstance(ServerStatusCache.class).serverStatusCache();
+    logger.info("fmc neoforge mod has been enabled.");
+  }
 
-	@SubscribeEvent
-	public static void onRegisterCommands(RegisterCommandsEvent event) {
-		CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-		logger.info("Registering fmc commands...");
-		LiteralArgumentBuilder<CommandSourceStack> command = LiteralArgumentBuilder.<CommandSourceStack>literal("fmc")
-			.then(LiteralArgumentBuilder.<CommandSourceStack>literal("fv")
-				.then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("player", StringArgumentType.string())
-					.suggests((context, builder) ->
-						SharedSuggestionProvider.suggest(
-							context.getSource().getServer().getPlayerList().getPlayers().stream()
-							.map(player -> player.getGameProfile().getName()),
-						builder))
-					.then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("proxy_cmds", StringArgumentType.greedyString())
-						.executes(context -> FMCCommand.execute(context, "fv")))))
-			.then(LiteralArgumentBuilder.<CommandSourceStack>literal("reload")
-				.executes(context -> FMCCommand.execute(context, "reload")))
-			.then(LiteralArgumentBuilder.<CommandSourceStack>literal("test")
-				.then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("arg", StringArgumentType.string())
-					.suggests((context, builder) ->
-						SharedSuggestionProvider.suggest(
-							context.getSource().getServer().getPlayerList().getPlayers().stream()
-							.map(player -> player.getGameProfile().getName()),
-						builder))
-					.then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("option", StringArgumentType.string())
-						.suggests((context, builder) ->
-							SharedSuggestionProvider.suggest(FMCCommand.customList, builder))
-						.executes(context -> FMCCommand.execute(context, "test")))));
-		dispatcher.register(command);
-		logger.info("FMC command registered.");
-	}
+  @SubscribeEvent
+  public static void onServerStopping(ServerStoppingEvent event) {
+    if (!isStop) {
+      isStop = true;
+      Main.getInjector().getInstance(DoServerOffline.class).updateDatabase();
+      Main.getInjector().getInstance(AutoShutdown.class).stop();
+    }
+  }
+
+  @SubscribeEvent
+  public static void onRegisterCommands(RegisterCommandsEvent event) {
+    CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+    logger.info("Registering fmc commands...");
+    LiteralArgumentBuilder<CommandSourceStack> command = LiteralArgumentBuilder.<CommandSourceStack>literal("fmc")
+      .then(LiteralArgumentBuilder.<CommandSourceStack>literal("fv")
+          .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("player", StringArgumentType.string())
+            .suggests((context, builder) ->
+              SharedSuggestionProvider.suggest(
+                context.getSource().getServer().getPlayerList().getPlayers().stream()
+                .map(player -> player.getGameProfile().getName()),
+                builder))
+            .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("proxy_cmds", StringArgumentType.greedyString())
+              .executes(context -> FMCCommand.execute(context, "fv")))))
+      .then(LiteralArgumentBuilder.<CommandSourceStack>literal("reload")
+          .executes(context -> FMCCommand.execute(context, "reload")))
+      .then(LiteralArgumentBuilder.<CommandSourceStack>literal("test")
+          .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("arg", StringArgumentType.string())
+            .suggests((context, builder) ->
+              SharedSuggestionProvider.suggest(
+                context.getSource().getServer().getPlayerList().getPlayers().stream()
+                .map(player -> player.getGameProfile().getName()),
+                builder))
+            .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("option", StringArgumentType.string())
+              .suggests((context, builder) ->
+                SharedSuggestionProvider.suggest(FMCCommand.customList, builder))
+              .executes(context -> FMCCommand.execute(context, "test")))));
+    dispatcher.register(command);
+    logger.info("FMC command registered.");
+  }
 }

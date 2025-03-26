@@ -12,9 +12,9 @@ import keyp.forev.fmc.common.util.config.Config;
 
 @Singleton
 public class NeoForgeConfig extends Config {
-    @Inject
-    public NeoForgeConfig(Logger logger, @DataDirectory Path dataDirectory) {
-        super(logger, dataDirectory, "config.yml");
-        setConfig();
-    }
+  @Inject
+  public NeoForgeConfig(Logger logger, @DataDirectory Path dataDirectory) {
+    super(logger, dataDirectory, "config.yml");
+    setConfig();
+  }
 }

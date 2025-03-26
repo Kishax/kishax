@@ -8,13 +8,13 @@
     "Bella"
   ],
   "dependencies": [
-      {
-        "id": "luckperms",
-        "optional": true
-      },
-      {
-        "id": "floodgate",
-        "optional": true
-      }
-   ]
+    {
+      "id": "luckperms",
+      "optional": true
+    },
+    {
+      "id": "floodgate",
+      "optional": true
+    }
+  ]
 }

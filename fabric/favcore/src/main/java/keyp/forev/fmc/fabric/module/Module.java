@@ -29,49 +29,49 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 
 public class Module extends AbstractModule {
-	private final FabricLoader fabric;
-	private final Logger logger;
-	private final MinecraftServer server;
-	public Module(FabricLoader fabric, Logger logger, MinecraftServer server) {
-		this.fabric = fabric;
-		this.logger = logger;
-		this.server = server;
-	}
-	
-	@Override
-	protected void configure() {
-		bind(FabricLoader.class).toInstance(fabric);
-		bind(MinecraftServer.class).toInstance(server);
-		bind(FabricConfig.class);
-		bind(DatabaseInfo.class).to(FabricDatabaseInfo.class).in(Singleton.class);
-		bind(Database.class);
-		bind(PlayerUtils.class);
-		bind(Logger.class).toInstance(logger);
-		bind(DoServerOnline.class);
-		bind(DoServerOffline.class);
-		bind(PortFinder.class);
-		bind(FabricLuckperms.class);
-		bind(AutoShutdown.class);
-		bind(CommandForward.class);
-		bind(CountdownTask.class);
-	}
-	
-	@Provides
-    @Singleton
-    @DataDirectory
-    public Path provideDataDirectory() {
-		return fabric.getConfigDir().resolve("FMC");
-    }
+  private final FabricLoader fabric;
+  private final Logger logger;
+  private final MinecraftServer server;
+  public Module(FabricLoader fabric, Logger logger, MinecraftServer server) {
+    this.fabric = fabric;
+    this.logger = logger;
+    this.server = server;
+  }
 
-	@Provides
-	@Singleton
-	public ServerHomeDir provideServerHomeDir(FabricLoader fabric) {
-		return new FabricServerHomeDir(fabric);
-	}
+  @Override
+  protected void configure() {
+    bind(FabricLoader.class).toInstance(fabric);
+    bind(MinecraftServer.class).toInstance(server);
+    bind(FabricConfig.class);
+    bind(DatabaseInfo.class).to(FabricDatabaseInfo.class).in(Singleton.class);
+    bind(Database.class);
+    bind(PlayerUtils.class);
+    bind(Logger.class).toInstance(logger);
+    bind(DoServerOnline.class);
+    bind(DoServerOffline.class);
+    bind(PortFinder.class);
+    bind(FabricLuckperms.class);
+    bind(AutoShutdown.class);
+    bind(CommandForward.class);
+    bind(CountdownTask.class);
+  }
 
-    @Provides
-    @Singleton
-    public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
-        return new SocketSwitch(logger, injector);
-    }
+  @Provides
+  @Singleton
+  @DataDirectory
+  public Path provideDataDirectory() {
+    return fabric.getConfigDir().resolve("FMC");
+  }
+
+  @Provides
+  @Singleton
+  public ServerHomeDir provideServerHomeDir(FabricLoader fabric) {
+    return new FabricServerHomeDir(fabric);
+  }
+
+  @Provides
+  @Singleton
+  public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
+    return new SocketSwitch(logger, injector);
+  }
 }

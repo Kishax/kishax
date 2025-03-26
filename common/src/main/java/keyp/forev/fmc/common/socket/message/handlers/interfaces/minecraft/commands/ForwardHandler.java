@@ -3,5 +3,5 @@ package keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.comma
 import keyp.forev.fmc.common.socket.message.Message;
 
 public interface ForwardHandler {
-    void handle(Message.Minecraft.Command.Forward forward);
+  void handle(Message.Minecraft.Command.Forward forward);
 }

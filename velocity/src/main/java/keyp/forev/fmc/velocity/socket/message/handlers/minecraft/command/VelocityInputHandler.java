@@ -5,16 +5,15 @@ import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.comman
 import keyp.forev.fmc.velocity.server.events.EventListener;
 
 public class VelocityInputHandler implements InputHandler {
-    public VelocityInputHandler() {
-    }
+  public VelocityInputHandler() {
+  }
 
-    @Override
-    public void handle(Message.Minecraft.Command.Input input) {
-        if (input.mode) {
-            EventListener.playerInputers.add(input.who.name);
-        } else {
-            EventListener.playerInputers.remove(input.who.name);
-        }
+  @Override
+  public void handle(Message.Minecraft.Command.Input input) {
+    if (input.mode) {
+      EventListener.playerInputers.add(input.who.name);
+    } else {
+      EventListener.playerInputers.remove(input.who.name);
     }
+  }
 }
-

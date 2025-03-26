@@ -3,6 +3,6 @@ package keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.comma
 import keyp.forev.fmc.common.socket.message.Message;
 
 public interface ImageMapHandler {
-    void handle(Message.Minecraft.Command.ImageMap imagemap);
+  void handle(Message.Minecraft.Command.ImageMap imagemap);
 }
 

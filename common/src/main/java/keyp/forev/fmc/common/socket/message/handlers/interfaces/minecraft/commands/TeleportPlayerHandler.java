@@ -3,5 +3,5 @@ package keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.comma
 import keyp.forev.fmc.common.socket.message.Message;
 
 public interface TeleportPlayerHandler {
-    void handle(Message.Minecraft.Command.Teleport.Player player);
+  void handle(Message.Minecraft.Command.Teleport.Player player);
 }

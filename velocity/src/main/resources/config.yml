@@ -1,75 +1,75 @@
 # FMC Configuration File
 EventMessage:
-    Join: ""
+  Join: ""
 
 MySQL:
-    Host: ""
-    Database: ""
-    Port: 
-    User: ""
-    Password: ""
-  
+  Host: ""
+  Database: ""
+  Port: 
+  User: ""
+  Password: ""
+
 Socket:
-    Server_Port: 
+  Server_Port: 
 
 Discord:
-    Token: ""
-    GuildId: 
-    ChannelId: 
-    ChatChannelId: 
-    AdminChannelId: 
-    MineStatusChannelId: 
-    AdCraRoleId: 
-    ChatType: false
-    Webhook_URL: ""
-    InviteUrl: ""
-    FirstJoinEmojiName: ""
-    AddMemberEmojiName: ""
-    JoinEmojiName: ""
-    MoveEmojiName: ""
-    ExitEmojiName: ""
-    StartEmojiName: ""
-    StopEmojiName: ""
-    RequestEmojiName: ""
-    RequestOKName: ""
-    RequestCancelName: ""
-    RequestNoResName: ""
-    MenteOnEmojiName: ""
-    MenteOffEmojiName: ""
-    EndEmojiName: ""
-    BEDefaultEmojiName: ""
-    Presence:
-        Activity: ""
+  Token: ""
+  GuildId: 
+  ChannelId: 
+  ChatChannelId: 
+  AdminChannelId: 
+  MineStatusChannelId: 
+  AdCraRoleId: 
+  ChatType: false
+  Webhook_URL: ""
+  InviteUrl: ""
+  FirstJoinEmojiName: ""
+  AddMemberEmojiName: ""
+  JoinEmojiName: ""
+  MoveEmojiName: ""
+  ExitEmojiName: ""
+  StartEmojiName: ""
+  StopEmojiName: ""
+  RequestEmojiName: ""
+  RequestOKName: ""
+  RequestCancelName: ""
+  RequestNoResName: ""
+  MenteOnEmojiName: ""
+  MenteOffEmojiName: ""
+  EndEmojiName: ""
+  BEDefaultEmojiName: ""
+  Presence:
+    Activity: ""
     Status:
-        ChannelId: 
-        MessageId: 
+      ChannelId: 
+      MessageId: 
     Rule:
-        ChannelId: 
-        MessageId:
+      ChannelId: 
+      MessageId:
 
-Interval:
-    Login: 
+        Interval:
+          Login: 
     Session: 3
     Request: 
     Start_Server: 
 
 Debug:
-    Mode: false
-    ChannelId: 
-    ChatChannelId: 
-    AdminChannelId: 
-    Webhook_URL: ""
-    Test: 
+  Mode: false
+  ChannelId: 
+  ChatChannelId: 
+  AdminChannelId: 
+  Webhook_URL: ""
+  Test: 
 
 Permission:
-    Detail_Name:
-        - something.permission
-    Short_Name:
-        - someperm
+  Detail_Name:
+    - something.permission
+  Short_Name:
+    - someperm
 
 Conv:
-    Mode: false
-    Host: "localhost"
-    EXE_Path: ""
+  Mode: false
+  Host: "localhost"
+  EXE_Path: ""
 
 MaxMemory: 0

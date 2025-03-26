@@ -12,9 +12,9 @@ import keyp.forev.fmc.common.util.config.Config;
 
 @Singleton
 public class ForgeConfig extends Config {
-    @Inject
-    public ForgeConfig(Logger logger, @DataDirectory Path dataDirectory) {
-        super(logger, dataDirectory, "config.yml");
-        setConfig();
-    }
+  @Inject
+  public ForgeConfig(Logger logger, @DataDirectory Path dataDirectory) {
+    super(logger, dataDirectory, "config.yml");
+    setConfig();
+  }
 }

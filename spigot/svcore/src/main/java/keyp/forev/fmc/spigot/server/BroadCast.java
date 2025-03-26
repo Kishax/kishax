@@ -10,23 +10,24 @@ import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 
 public class BroadCast {
-	private final JavaPlugin plugin;
-	private final BukkitAudiences audiences;
-	@Inject
-	public BroadCast(JavaPlugin plugin, BukkitAudiences audiences) {
-		this.plugin = plugin;
-		this.audiences = audiences;
-	}
-	
-	public void broadCastMessage(String message) {
-		for (Player player : plugin.getServer().getOnlinePlayers()) {
-		    player.sendMessage(ChatColor.RED + message);
-		}
-	}
+  private final JavaPlugin plugin;
+  private final BukkitAudiences audiences;
 
-	public void broadCastMessage(Component component) {
-		for (Player player : plugin.getServer().getOnlinePlayers()) {
-		    audiences.player(player).sendMessage(component);
-		}
-	}
+  @Inject
+  public BroadCast(JavaPlugin plugin, BukkitAudiences audiences) {
+    this.plugin = plugin;
+    this.audiences = audiences;
+  }
+
+  public void broadCastMessage(String message) {
+    for (Player player : plugin.getServer().getOnlinePlayers()) {
+      player.sendMessage(ChatColor.RED + message);
+    }
+  }
+
+  public void broadCastMessage(Component component) {
+    for (Player player : plugin.getServer().getOnlinePlayers()) {
+      audiences.player(player).sendMessage(component);
+    }
+  }
 }

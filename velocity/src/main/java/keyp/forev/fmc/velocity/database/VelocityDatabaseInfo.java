@@ -6,47 +6,48 @@ import keyp.forev.fmc.common.database.interfaces.DatabaseInfo;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
 public class VelocityDatabaseInfo implements DatabaseInfo {
-    private final String host;
-    private final String user;
-    private final String password;
-    private final String defaultDatabase;
-    private final int port;
-    @Inject
-    public VelocityDatabaseInfo(VelocityConfig config) {
-        this.host = config.getString("MySQL.Host", "");
-        this.user = config.getString("MySQL.User", "");
-        this.password = config.getString("MySQL.Password", "");
-		this.defaultDatabase = config.getString("MySQL.Database", "");
-		this.port = config.getInt("MySQL.Port", 0);
-    }
+  private final String host;
+  private final String user;
+  private final String password;
+  private final String defaultDatabase;
+  private final int port;
 
-    @Override
-    public boolean check() {
-        return !host.isEmpty() && port != 0 && !defaultDatabase.isEmpty() && !user.isEmpty() && !password.isEmpty();
-    }
-    
-    @Override
-    public String getHost() {
-        return host;
-    }
+  @Inject
+  public VelocityDatabaseInfo(VelocityConfig config) {
+    this.host = config.getString("MySQL.Host", "");
+    this.user = config.getString("MySQL.User", "");
+    this.password = config.getString("MySQL.Password", "");
+    this.defaultDatabase = config.getString("MySQL.Database", "");
+    this.port = config.getInt("MySQL.Port", 0);
+  }
 
-    @Override
-    public String getUser() {
-        return user;
-    }
+  @Override
+  public boolean check() {
+    return !host.isEmpty() && port != 0 && !defaultDatabase.isEmpty() && !user.isEmpty() && !password.isEmpty();
+  }
 
-    @Override
-    public String getPassword() {
-        return password;
-    }
+  @Override
+  public String getHost() {
+    return host;
+  }
 
-    @Override
-    public String getDefaultDatabase() {
-        return defaultDatabase;
-    }
+  @Override
+  public String getUser() {
+    return user;
+  }
 
-    @Override
-    public int getPort() {
-        return port;
-    }
+  @Override
+  public String getPassword() {
+    return password;
+  }
+
+  @Override
+  public String getDefaultDatabase() {
+    return defaultDatabase;
+  }
+
+  @Override
+  public int getPort() {
+    return port;
+  }
 }

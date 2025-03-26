@@ -12,9 +12,9 @@ import keyp.forev.fmc.common.util.config.Config;
 
 @Singleton
 public class FabricConfig extends Config {
-    @Inject
-    public FabricConfig(Logger logger, @DataDirectory Path dataDirectory) {
-        super(logger, dataDirectory, "config.yml");
-        setConfig();
-    }
+  @Inject
+  public FabricConfig(Logger logger, @DataDirectory Path dataDirectory) {
+    super(logger, dataDirectory, "config.yml");
+    setConfig();
+  }
 }
