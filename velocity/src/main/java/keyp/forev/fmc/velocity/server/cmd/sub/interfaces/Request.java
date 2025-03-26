@@ -8,8 +8,8 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 
 public interface Request {
-    void execute(@NotNull CommandSource source, String[] args);
-    void execute2(Player player, String targetServerName);
-    String getExecPath(String serverName);
-    Map<String, String> paternFinderMapForReq(String buttonMessage);
+  void execute(@NotNull CommandSource source, String[] args);
+  void execute2(Player player, String targetServerName);
+  String getExecPath(String serverName);
+  Map<String, String> paternFinderMapForReq(String buttonMessage);
 }

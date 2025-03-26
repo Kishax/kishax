@@ -12,9 +12,9 @@ import keyp.forev.fmc.common.util.config.Config;
 
 @Singleton
 public final class PortalsConfig extends Config {
-    @Inject
-    public PortalsConfig(Logger logger, @DataDirectory Path dataDirectory) {
-        super(logger, dataDirectory, "portals.yml");
-        setConfig();
-    }
+  @Inject
+  public PortalsConfig(Logger logger, @DataDirectory Path dataDirectory) {
+    super(logger, dataDirectory, "portals.yml");
+    setConfig();
+  }
 }

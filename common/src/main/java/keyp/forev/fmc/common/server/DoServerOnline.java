@@ -16,51 +16,51 @@ import keyp.forev.fmc.common.socket.message.Message;
 import keyp.forev.fmc.common.socket.SocketSwitch;
 
 public class DoServerOnline {
-	private final Logger logger;
-	private final Provider<SocketSwitch> sswProvider;
-	private final ServerHomeDir shd;
-	private final Database db;
-	
-	@Inject
-	public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
-		this.logger = logger;
-		this.sswProvider = sswProvider;
-		this.shd = shd;
-		this.db = db;
-	}
-	
-	public void updateDatabase(int socketport) {
-		String serverName = shd.getServerName();
+  private final Logger logger;
+  private final Provider<SocketSwitch> sswProvider;
+  private final ServerHomeDir shd;
+  private final Database db;
 
-		Objects.requireNonNull(serverName);
-		try (Connection conn = db.getConnection()) {
-			db.updateLog( "UPDATE settings SET value=? WHERE name=?;", new Object[] {serverName, "now_online"});
-			SocketSwitch ssw = sswProvider.get();
+  @Inject
+  public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
+    this.logger = logger;
+    this.sswProvider = sswProvider;
+    this.shd = shd;
+    this.db = db;
+  }
 
-            Message msg = new Message();
-            msg.mc = new Message.Minecraft();
-            msg.mc.server = new Message.Minecraft.Server();
-            msg.mc.server.action = "START";
-            msg.mc.server.name = serverName;
-			ssw.sendVelocityServer(conn, msg);
-			ssw.sendSpigotServer(conn, msg);
+  public void updateDatabase(int socketport) {
+    String serverName = shd.getServerName();
 
-			// refreshManualOnlineServer()を呼び出しているので、MineStatusSyncは不要
-			String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
-			try (PreparedStatement ps = conn.prepareStatement(query)) {
-				ps.setBoolean(1,true);
-				ps.setInt(2, socketport);
-				ps.setString(3, serverName);
-				int rsAffected = ps.executeUpdate();
-				if (rsAffected > 0) {
-					logger.info("MySQL Server is connected!");
-				}
-			}
-		} catch (SQLException | ClassNotFoundException e) {
-			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
-			for (StackTraceElement element : e.getStackTrace()) {
-				logger.error(element.toString());
-			}
-		}
-	}
+    Objects.requireNonNull(serverName);
+    try (Connection conn = db.getConnection()) {
+      db.updateLog( "UPDATE settings SET value=? WHERE name=?;", new Object[] {serverName, "now_online"});
+      SocketSwitch ssw = sswProvider.get();
+
+      Message msg = new Message();
+      msg.mc = new Message.Minecraft();
+      msg.mc.server = new Message.Minecraft.Server();
+      msg.mc.server.action = "START";
+      msg.mc.server.name = serverName;
+      ssw.sendVelocityServer(conn, msg);
+      ssw.sendSpigotServer(conn, msg);
+
+      // refreshManualOnlineServer()を呼び出しているので、MineStatusSyncは不要
+      String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
+      try (PreparedStatement ps = conn.prepareStatement(query)) {
+        ps.setBoolean(1,true);
+        ps.setInt(2, socketport);
+        ps.setString(3, serverName);
+        int rsAffected = ps.executeUpdate();
+        if (rsAffected > 0) {
+          logger.info("MySQL Server is connected!");
+        }
+      }
+    } catch (SQLException | ClassNotFoundException e) {
+      logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+      for (StackTraceElement element : e.getStackTrace()) {
+        logger.error(element.toString());
+      }
+    }
+  }
 }

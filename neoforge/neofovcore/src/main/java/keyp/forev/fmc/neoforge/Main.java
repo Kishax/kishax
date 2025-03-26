@@ -15,20 +15,20 @@ import net.neoforged.fml.common.Mod;
 
 @Mod(Main.MODID)
 public class Main {
-	public static final String MODID = "fmc";
-	public static Injector injector = null;
-	public static final Logger logger = LoggerFactory.getLogger("fmc");
+  public static final String MODID = "fmc";
+  public static Injector injector = null;
+  public static final Logger logger = LoggerFactory.getLogger("fmc");
 
-	public Main(IEventBus modBus) {
-		logger.info("detected neoforge platform.");
-		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
-		NeoForge.EVENT_BUS.register(EventListener.class);
-	}
+  public Main(IEventBus modBus) {
+    logger.info("detected neoforge platform.");
+    TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
+    NeoForge.EVENT_BUS.register(EventListener.class);
+  }
 
-	public static synchronized Injector getInjector() {
-		if (Objects.isNull(injector)) {
-			throw new IllegalStateException("Injector has not been initialized yet.");
-		}
-		return injector;
-	}
+  public static synchronized Injector getInjector() {
+    if (Objects.isNull(injector)) {
+      throw new IllegalStateException("Injector has not been initialized yet.");
+    }
+    return injector;
+  }
 }

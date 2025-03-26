@@ -7,14 +7,14 @@ import keyp.forev.fmc.common.socket.message.handlers.interfaces.minecraft.comman
 import keyp.forev.fmc.velocity.server.cmd.sub.CommandForwarder;
 
 public class VelocityForwardHandler implements ForwardHandler {
-    private final CommandForwarder cf;
+  private final CommandForwarder cf;
 
-    @Inject
-    public VelocityForwardHandler(CommandForwarder cf) {
-        this.cf = cf;
-    }
+  @Inject
+  public VelocityForwardHandler(CommandForwarder cf) {
+    this.cf = cf;
+  }
 
-    public void handle(Message.Minecraft.Command.Forward forward) {
-        cf.forwardCommand(forward.who.name, forward.cmd, forward.target);
-    }
+  public void handle(Message.Minecraft.Command.Forward forward) {
+    cf.forwardCommand(forward.who.name, forward.cmd, forward.target);
+  }
 }

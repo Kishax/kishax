@@ -1,100 +1,99 @@
 plugins {
-	alias(libs.plugins.shadow)
-    alias(libs.plugins.neoforgemoddev)
+  alias(libs.plugins.shadow)
+  alias(libs.plugins.neoforgemoddev)
 }
 
 java {
-    modularity.inferModulePath.set(true)
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-    sourceCompatibility = 17
-    targetCompatibility = 21
+  modularity.inferModulePath.set(true)
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(21)
+  }
+  sourceCompatibility = 17
+  targetCompatibility = 21
 }
 
 configurations {
-	shadowImpl
-	compileOnly.extendsFrom shadowImpl
+  shadowImpl
+  compileOnly.extendsFrom shadowImpl
 }
 
 neoForge {
-    version = '21.1.93'
+  version = '21.1.93'
+  validateAccessTransformers = true
 
-    validateAccessTransformers = true
+  parchment {
+    mappingsVersion = '2024.11.13'
+    minecraftVersion = '1.21.1'
+  }
 
-    parchment {
-        mappingsVersion = '2024.11.13'
-        minecraftVersion = '1.21.1'
+  mods {
+    "fmc" {
+      sourceSet(sourceSets.main)
     }
-
-    mods {
-        "fmc" {
-            sourceSet(sourceSets.main)
-        }
-    }
+  }
 }
 
 dependencies {
-	compileOnly project(':neoforge:neofovcore')
-	shadowImpl project(':common')
-    shadowImpl('com.google.code.gson:gson:2.11.0') {
-        version { strictly '2.11.0' }
-    }
+  compileOnly project(':neoforge:neofovcore')
+  shadowImpl project(':common')
+  shadowImpl('com.google.code.gson:gson:2.11.0') {
+    version { strictly '2.11.0' }
+  }
 }
 
 build {
-    dependsOn shadowJar
-	dependsOn(':common:build')
-    dependsOn(':neoforge:neofovcore:build')
+  dependsOn shadowJar
+  dependsOn(':common:build')
+  dependsOn(':neoforge:neofovcore:build')
 }
 
 shadowJar {
-	configurations = [project.configurations.shadowImpl]
-	archiveBaseName.set('FMC-NeoForge')
-	archiveClassifier.set('')
-	archiveVersion.set('1.21.1')
-    from(project(':neoforge:neofovcore').sourceSets.main.output)
+  configurations = [project.configurations.shadowImpl]
+  archiveBaseName.set('FMC-NeoForge')
+  archiveClassifier.set('')
+  archiveVersion.set('1.21.1')
+  from(project(':neoforge:neofovcore').sourceSets.main.output)
 
-    exclude('/mappings/*')
-	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-    relocate('com.google', 'keyp.forev.fmc.lib.google')
-	relocate('kotlin', 'keyp.forev.fmc.lib.kotlin')
-	relocate('okhttp3', 'keyp.forev.fmc.lib.okhttp3')
-	relocate('okio', 'keyp.forev.fmc.lib.okio')
-	relocate('org.aopalliance', 'keyp.forev.fmc.lib.aopalliance')
-	relocate('org.apache', 'keyp.forev.fmc.lib.apache')
-	relocate('org.checkerframework', 'keyp.forev.fmc.lib.checkerframework')
-	relocate('org.intellij', 'keyp.forev.fmc.lib.intellij')
-	relocate('org.jetbrains', 'keyp.forev.fmc.lib.jetbrains')
-	relocate('org.json', 'keyp.forev.fmc.lib.json')
-    exclude('org/slf4j/**') // using slf4j pkg by other mods' export one
-    exclude('javax/annotation/**') // in the same way
-    exclude('javax/annotation') // in the same way
-	relocate('org.yaml', 'keyp.forev.fmc.lib.yaml')
-	relocate('redis', 'keyp.forev.fmc.lib.redis')
+  exclude('/mappings/*')
+  exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  relocate('com.google', 'keyp.forev.fmc.lib.google')
+  relocate('kotlin', 'keyp.forev.fmc.lib.kotlin')
+  relocate('okhttp3', 'keyp.forev.fmc.lib.okhttp3')
+  relocate('okio', 'keyp.forev.fmc.lib.okio')
+  relocate('org.aopalliance', 'keyp.forev.fmc.lib.aopalliance')
+  relocate('org.apache', 'keyp.forev.fmc.lib.apache')
+  relocate('org.checkerframework', 'keyp.forev.fmc.lib.checkerframework')
+  relocate('org.intellij', 'keyp.forev.fmc.lib.intellij')
+  relocate('org.jetbrains', 'keyp.forev.fmc.lib.jetbrains')
+  relocate('org.json', 'keyp.forev.fmc.lib.json')
+  exclude('org/slf4j/**') // using slf4j pkg by other mods' export one
+  exclude('javax/annotation/**') // in the same way
+  exclude('javax/annotation') // in the same way
+  relocate('org.yaml', 'keyp.forev.fmc.lib.yaml')
+  relocate('redis', 'keyp.forev.fmc.lib.redis')
 
-    destinationDirectory.set(file("$buildDir/libs"))
+  destinationDirectory.set(file("$buildDir/libs"))
 }
 
 processResources {
-    from("$rootDir/neoforge/src/main/resources") {
-        include '**/*'
-    }
-	filesMatching('META-INF/neoforge.mods.toml') {
-		expand(
-            project: project,
-            projectName: project.name,
-            projectVersion: project.version,
-            projectDescription: project.property('description'),
-            projectGroup: project.group,
-            groupId: project.group,
-            projectHP: project.property('hp'),
-            projectSource: project.property('source'),
-			projectIssueTracker: project.property('issue')
-        )
-	}
+  from("$rootDir/neoforge/src/main/resources") {
+    include '**/*'
+  }
+  filesMatching('META-INF/neoforge.mods.toml') {
+    expand(
+      project: project,
+      projectName: project.name,
+      projectVersion: project.version,
+      projectDescription: project.property('description'),
+      projectGroup: project.group,
+      groupId: project.group,
+      projectHP: project.property('hp'),
+      projectSource: project.property('source'),
+      projectIssueTracker: project.property('issue')
+    )
+  }
 }
 
 artifacts {
-	shadow shadowJar
+  shadow shadowJar
 }

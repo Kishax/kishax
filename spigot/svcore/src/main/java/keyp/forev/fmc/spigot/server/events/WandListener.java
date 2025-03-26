@@ -36,95 +36,95 @@ import keyp.forev.fmc.spigot.util.config.PortalsConfig;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class WandListener implements Listener {
-    public static boolean isMakePortal = false;
-    private final JavaPlugin plugin;
-    private final BukkitAudiences audiences;
-    private final Logger logger;
-    private final Map<Player, Location> firstCorner = new HashMap<>();
-    private final PortalsConfig psConfig;
+  public static boolean isMakePortal = false;
+  private final JavaPlugin plugin;
+  private final BukkitAudiences audiences;
+  private final Logger logger;
+  private final Map<Player, Location> firstCorner = new HashMap<>();
+  private final PortalsConfig psConfig;
 
-    @Inject
-    public WandListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, PortalsConfig psConfig) {
-        this.plugin = plugin;
-        this.audiences = audiences;
-        this.logger = logger;
-        this.psConfig = psConfig;
-    }
+  @Inject
+  public WandListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, PortalsConfig psConfig) {
+    this.plugin = plugin;
+    this.audiences = audiences;
+    this.logger = logger;
+    this.psConfig = psConfig;
+  }
 
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (plugin.getConfig().getBoolean("Portals.Wand", false)) {
-            Player player = event.getPlayer();
-            ItemStack item = event.getItem();
-            if (item != null && item.getType() == Material.STONE_AXE && event.getHand() == EquipmentSlot.HAND) {
-                ItemMeta meta = item.getItemMeta();
-                if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, PortalsWand.PERSISTANT_KEY), PersistentDataType.STRING)) {
-                    Block block = event.getClickedBlock();
-                    if (block == null) {
-                        logger.error("Block is null");
-                        return;
-                    }
-                    Location clickedBlock = block.getLocation();
+  @EventHandler
+  public void onPlayerInteract(PlayerInteractEvent event) {
+    if (plugin.getConfig().getBoolean("Portals.Wand", false)) {
+      Player player = event.getPlayer();
+      ItemStack item = event.getItem();
+      if (item != null && item.getType() == Material.STONE_AXE && event.getHand() == EquipmentSlot.HAND) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null && meta.getPersistentDataContainer().has(new NamespacedKey(plugin, PortalsWand.PERSISTANT_KEY), PersistentDataType.STRING)) {
+          Block block = event.getClickedBlock();
+          if (block == null) {
+            logger.error("Block is null");
+            return;
+          }
+          Location clickedBlock = block.getLocation();
 
-                    if (!firstCorner.containsKey(player)) {
-                        firstCorner.put(player, clickedBlock);
-                        player.sendMessage(ChatColor.GREEN + "1番目のコーナーを選択しました。\n"+ChatColor.AQUA+"("+clickedBlock.getX()+", "+clickedBlock.getY()+", "+clickedBlock.getZ()+")"+ChatColor.GREEN+"\n2番目のコーナーを右クリックで選択してください。");
-                    } else {
-                        Location corner1 = firstCorner.get(player);
-                        Location corner2 = clickedBlock;
-                        List<Map<?, ?>> portals = psConfig.getListMap("portals");
-                        if (portals == null) {
-                            portals = new ArrayList<>();
-                        }
-                        Map<String, Object> newPortal = new HashMap<>();
-                        String portalUUID = UUID.randomUUID().toString();
-                        newPortal.put("name", portalUUID);
-                        newPortal.put("uuid", portalUUID);
-                        newPortal.put("corner1", Arrays.asList(corner1.getX(), corner1.getY(), corner1.getZ()));
-                        newPortal.put("corner2", Arrays.asList(corner2.getX(), corner2.getY(), corner2.getZ()));
-                        portals.add(newPortal);
-                        try {
-                            psConfig.replaceValue("portals", portals);Component.text();
-                            isMakePortal = true;
-
-                            double x = clickedBlock.getX();
-                            double y = clickedBlock.getY();
-                            double z = clickedBlock.getZ();
-
-                            TextComponent messages = Component.text()
-                                .append(Component.text("2番目のコーナーを選択しました。").color(NamedTextColor.GREEN))
-                                .appendNewline()
-                                .append(Component.text("ポータルUUID: " + portalUUID))
-                                .appendNewline()
-                                .append(Component.text("(" + x + ", " + y + ", " + z + ")"))
-                                .append(Component.text("ポータルが保存されました。").color(NamedTextColor.GREEN))
-                                .appendNewline()
-                                .append(Component.text("もし、取り消す場合は、"))
-                                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルを削除"))).clickEvent(ClickEvent.runCommand("/fmc portal delete " + portalUUID)))
-                                .append(Component.text("をクリックしてね。"))
-                                .appendNewline()
-                                .append(Component.text("ポータルの名前を変えるには、"))
-                                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルの名前を変更"))).clickEvent(ClickEvent.suggestCommand("/fmc portal rename " + portalUUID + " ")))
-                                .append(Component.text("をクリックしてね。"))
-                                .appendNewline()
-                                .append(Component.text("ポータルにネザーゲートを付与するには"))
-                                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルにネザーゲートを付与"))).clickEvent(ClickEvent.runCommand("/fmc portal nether " + portalUUID)))
-                                .append(Component.text("をクリックしてね。"))
-                                .build();
-
-                            audiences.player(player).sendMessage(messages);
-                            firstCorner.remove(player);
-                        } catch (Exception e) {
-                            player.sendMessage(ChatColor.RED + "ポータルの保存に失敗しました。");
-                            logger.error("An error occurred while saving the portal: "+e.getMessage());
-                            for (StackTraceElement element : e.getStackTrace()) {
-                                logger.error(element.toString());
-                            }
-                        }
-                    }
-                    event.setCancelled(true);
-                }
+          if (!firstCorner.containsKey(player)) {
+            firstCorner.put(player, clickedBlock);
+            player.sendMessage(ChatColor.GREEN + "1番目のコーナーを選択しました。\n"+ChatColor.AQUA+"("+clickedBlock.getX()+", "+clickedBlock.getY()+", "+clickedBlock.getZ()+")"+ChatColor.GREEN+"\n2番目のコーナーを右クリックで選択してください。");
+          } else {
+            Location corner1 = firstCorner.get(player);
+            Location corner2 = clickedBlock;
+            List<Map<?, ?>> portals = psConfig.getListMap("portals");
+            if (portals == null) {
+              portals = new ArrayList<>();
             }
+            Map<String, Object> newPortal = new HashMap<>();
+            String portalUUID = UUID.randomUUID().toString();
+            newPortal.put("name", portalUUID);
+            newPortal.put("uuid", portalUUID);
+            newPortal.put("corner1", Arrays.asList(corner1.getX(), corner1.getY(), corner1.getZ()));
+            newPortal.put("corner2", Arrays.asList(corner2.getX(), corner2.getY(), corner2.getZ()));
+            portals.add(newPortal);
+            try {
+              psConfig.replaceValue("portals", portals);Component.text();
+              isMakePortal = true;
+
+              double x = clickedBlock.getX();
+              double y = clickedBlock.getY();
+              double z = clickedBlock.getZ();
+
+              TextComponent messages = Component.text()
+                .append(Component.text("2番目のコーナーを選択しました。").color(NamedTextColor.GREEN))
+                .appendNewline()
+                .append(Component.text("ポータルUUID: " + portalUUID))
+                .appendNewline()
+                .append(Component.text("(" + x + ", " + y + ", " + z + ")"))
+                .append(Component.text("ポータルが保存されました。").color(NamedTextColor.GREEN))
+                .appendNewline()
+                .append(Component.text("もし、取り消す場合は、"))
+                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルを削除"))).clickEvent(ClickEvent.runCommand("/fmc portal delete " + portalUUID)))
+                .append(Component.text("をクリックしてね。"))
+                .appendNewline()
+                .append(Component.text("ポータルの名前を変えるには、"))
+                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルの名前を変更"))).clickEvent(ClickEvent.suggestCommand("/fmc portal rename " + portalUUID + " ")))
+                .append(Component.text("をクリックしてね。"))
+                .appendNewline()
+                .append(Component.text("ポータルにネザーゲートを付与するには"))
+                .append(Component.text("ココ").color(NamedTextColor.GOLD).hoverEvent(HoverEvent.showText(Component.text("ポータルにネザーゲートを付与"))).clickEvent(ClickEvent.runCommand("/fmc portal nether " + portalUUID)))
+                .append(Component.text("をクリックしてね。"))
+                .build();
+
+              audiences.player(player).sendMessage(messages);
+              firstCorner.remove(player);
+            } catch (Exception e) {
+              player.sendMessage(ChatColor.RED + "ポータルの保存に失敗しました。");
+              logger.error("An error occurred while saving the portal: "+e.getMessage());
+              for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+              }
+            }
+          }
+          event.setCancelled(true);
         }
+      }
     }
+  }
 }

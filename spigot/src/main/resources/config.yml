@@ -1,22 +1,22 @@
 # FMC Configuration File
 Menu:
-    Server: false
-    ImageMap: false
+  Server: false
+  ImageMap: false
 
 Portals:
-    Move: false
-    Wand: false
+  Move: false
+  Wand: false
 
 MySQL:
-    Host: ""
-    Database: ""
-    Port: 
-    User: ""
-    Password: ""
+  Host: ""
+  Database: ""
+  Port: 
+  User: ""
+  Password: ""
 
 Socket:
-    Server_Port: 
+  Server_Port: 
 
 AutoStop:
-    Mode: false
-    Interval: 3
+  Mode: false
+  Interval: 3

@@ -11,8 +11,8 @@ logoFile="fmc.png"
 authors="Bella"
 description="${projectDescription}"
 [[dependencies.fmc]]
-    modId="luckperms"
-    mandatory=false
-    versionRange="[5.4,)"
-    ordering="NONE"
-    side="SERVER"
+modId="luckperms"
+mandatory=false
+versionRange="[5.4,)"
+ordering="NONE"
+side="SERVER"

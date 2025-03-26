@@ -26,73 +26,73 @@ import net.md_5.bungee.api.ChatColor;
 import org.slf4j.Logger;
 
 public class TeleportBack implements TabExecutor {
-    private final BukkitAudiences audiences;
-    private final Logger logger;
-    private final Database db;
-    private final Luckperms lp;
-    private final Provider<SocketSwitch> sswProvider;
-    @Inject
-    public TeleportBack(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
-        this.audiences = audiences;
-        this.logger = logger;
-        this.db = db;
-        this.lp = lp;
-        this.sswProvider = sswProvider;
-    }
+  private final BukkitAudiences audiences;
+  private final Logger logger;
+  private final Database db;
+  private final Luckperms lp;
+  private final Provider<SocketSwitch> sswProvider;
 
-    @Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
-        if (sender instanceof Player player) {
-            String playerName = player.getName();
-            int permLevel = lp.getPermLevel(playerName);
-            if (permLevel < 1) {
-                player.sendMessage(ChatColor.RED + "まだFMCのWEB認証が完了していません。");
-                player.teleport(FMCCoords.ROOM_POINT.getLocation());
-            } else {
-                if (EventListener.playerBeforeLocationMap.containsKey(player)) {
+  @Inject
+  public TeleportBack(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+    this.audiences = audiences;
+    this.logger = logger;
+    this.db = db;
+    this.lp = lp;
+    this.sswProvider = sswProvider;
+  }
 
-                    Message msg = new Message();
-                    msg.mc = new Message.Minecraft();
-                    msg.mc.cmd = new Message.Minecraft.Command();
-                    msg.mc.cmd.teleport = new Message.Minecraft.Command.Teleport();
-                    msg.mc.cmd.teleport.point = new Message.Minecraft.Command.Teleport.Point();
-                    msg.mc.cmd.teleport.point.who = new Message.Minecraft.Who();
-                    msg.mc.cmd.teleport.point.who.name = playerName;
-                    msg.mc.cmd.teleport.point.back = true;
+  @Override
+  public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
+    if (sender instanceof Player player) {
+      String playerName = player.getName();
+      int permLevel = lp.getPermLevel(playerName);
+      if (permLevel < 1) {
+        player.sendMessage(ChatColor.RED + "まだFMCのWEB認証が完了していません。");
+        player.teleport(FMCCoords.ROOM_POINT.getLocation());
+      } else {
+        if (EventListener.playerBeforeLocationMap.containsKey(player)) {
+          Message msg = new Message();
+          msg.mc = new Message.Minecraft();
+          msg.mc.cmd = new Message.Minecraft.Command();
+          msg.mc.cmd.teleport = new Message.Minecraft.Command.Teleport();
+          msg.mc.cmd.teleport.point = new Message.Minecraft.Command.Teleport.Point();
+          msg.mc.cmd.teleport.point.who = new Message.Minecraft.Who();
+          msg.mc.cmd.teleport.point.who.name = playerName;
+          msg.mc.cmd.teleport.point.back = true;
 
-                    SocketSwitch ssw = sswProvider.get();
-                    try (Connection conn = db.getConnection()) {
-                        ssw.sendVelocityServer(conn, msg);
-                    } catch (SQLException | ClassNotFoundException e) {
-                        logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
-                    }
+          SocketSwitch ssw = sswProvider.get();
+          try (Connection conn = db.getConnection()) {
+            ssw.sendVelocityServer(conn, msg);
+          } catch (SQLException | ClassNotFoundException e) {
+            logger.info("An error occurred at Menu#teleportPointMenu: {}", e);
+          }
 
-                    Component message = Component.text("テレポート前の座標に戻りました。")
-                        .color(NamedTextColor.GREEN)
-                        .decorate(TextDecoration.BOLD);
+          Component message = Component.text("テレポート前の座標に戻りました。")
+            .color(NamedTextColor.GREEN)
+            .decorate(TextDecoration.BOLD);
 
-                    audiences.player(player).sendMessage(message);
+          audiences.player(player).sendMessage(message);
 
-                    player.teleport(EventListener.playerBeforeLocationMap.get(player));
-                    EventListener.playerBeforeLocationMap.remove(player);
-                } else {
-                    Component message = Component.text("テレポート前の座標がありません。")
-                        .color(NamedTextColor.RED)
-                        .decorate(TextDecoration.BOLD);
-                    
-                    audiences.player(player).sendMessage(message);
-                }
-            }
+          player.teleport(EventListener.playerBeforeLocationMap.get(player));
+          EventListener.playerBeforeLocationMap.remove(player);
         } else {
-            if (sender != null) {
-                sender.sendMessage("プレイヤーからのみ実行可能です。");
-            }
-        }
-        return true;
-    }
+          Component message = Component.text("テレポート前の座標がありません。")
+            .color(NamedTextColor.RED)
+            .decorate(TextDecoration.BOLD);
 
-    @Override
-	public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
-        return Collections.emptyList();
+          audiences.player(player).sendMessage(message);
+        }
+      }
+    } else {
+      if (sender != null) {
+        sender.sendMessage("プレイヤーからのみ実行可能です。");
+      }
     }
+    return true;
+  }
+
+  @Override
+  public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
+    return Collections.emptyList();
+  }
 }

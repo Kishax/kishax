@@ -20,47 +20,48 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public class CommandForward {
-	private final Database db;
-	private final Logger logger;
-	private final Provider<SocketSwitch> sswProvider;
-	@Inject
-	public CommandForward(Database db, Logger logger, Provider<SocketSwitch> sswProvider) {
-		this.db = db;
-		this.logger = logger;
-		this.sswProvider = sswProvider;
-	}
-	
-	public void execute(CommandContext<ServerCommandSource> context) {
-		// fv <player> fmcp <command>
-		ServerCommandSource source = context.getSource();
-		String targetPlayerName = StringArgumentType.getString(context, "player");
-        String cmds = StringArgumentType.getString(context, "proxy_cmds");
-		Entity entity = source.getEntity();
+  private final Database db;
+  private final Logger logger;
+  private final Provider<SocketSwitch> sswProvider;
 
-        Message msg = new Message();
-        msg.mc = new Message.Minecraft();
-        msg.mc.cmd = new Message.Minecraft.Command();
-        msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
-        msg.mc.cmd.forward.cmd = cmds;
-        msg.mc.cmd.forward.target = targetPlayerName;
-        msg.mc.cmd.forward.who = new Message.Minecraft.Who();
+  @Inject
+  public CommandForward(Database db, Logger logger, Provider<SocketSwitch> sswProvider) {
+    this.db = db;
+    this.logger = logger;
+    this.sswProvider = sswProvider;
+  }
 
-		if (entity instanceof PlayerEntity player) {
-            msg.mc.cmd.forward.who.name = player.getName().getString();
-            msg.mc.cmd.forward.who.system = false;
-		} else {
-		    msg.mc.cmd.forward.who.system = true; // コンソールから打った場合
-		}
+  public void execute(CommandContext<ServerCommandSource> context) {
+    // fv <player> fmcp <command>
+    ServerCommandSource source = context.getSource();
+    String targetPlayerName = StringArgumentType.getString(context, "player");
+    String cmds = StringArgumentType.getString(context, "proxy_cmds");
+    Entity entity = source.getEntity();
 
-		SocketSwitch ssw = sswProvider.get();
-		try (Connection conn = db.getConnection()) {
-			ssw.sendVelocityServer(conn, msg);
-		} catch (SQLException | ClassNotFoundException e) {
-			source.sendError(Text.literal("データベースに接続できませんでした。").formatted(Formatting.RED));
-			logger.error("An error occurred while updating the database: " + e.getMessage(), e);
-			for (StackTraceElement element : e.getStackTrace()) {
-				logger.error(element.toString());
-			}
-		}
-	}
+    Message msg = new Message();
+    msg.mc = new Message.Minecraft();
+    msg.mc.cmd = new Message.Minecraft.Command();
+    msg.mc.cmd.forward = new Message.Minecraft.Command.Forward();
+    msg.mc.cmd.forward.cmd = cmds;
+    msg.mc.cmd.forward.target = targetPlayerName;
+    msg.mc.cmd.forward.who = new Message.Minecraft.Who();
+
+    if (entity instanceof PlayerEntity player) {
+      msg.mc.cmd.forward.who.name = player.getName().getString();
+      msg.mc.cmd.forward.who.system = false;
+    } else {
+      msg.mc.cmd.forward.who.system = true; // コンソールから打った場合
+    }
+
+    SocketSwitch ssw = sswProvider.get();
+    try (Connection conn = db.getConnection()) {
+      ssw.sendVelocityServer(conn, msg);
+    } catch (SQLException | ClassNotFoundException e) {
+      source.sendError(Text.literal("データベースに接続できませんでした。").formatted(Formatting.RED));
+      logger.error("An error occurred while updating the database: " + e.getMessage(), e);
+      for (StackTraceElement element : e.getStackTrace()) {
+        logger.error(element.toString());
+      }
+    }
+  }
 }

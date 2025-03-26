@@ -1,94 +1,94 @@
 plugins {
-	alias(libs.plugins.shadow)
-	alias(libs.plugins.forgegradle)
-	alias(libs.plugins.parchment)
+  alias(libs.plugins.shadow)
+  alias(libs.plugins.forgegradle)
+  alias(libs.plugins.parchment)
 }
 
 java {
     modularity.inferModulePath.set(true)
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+      languageVersion = JavaLanguageVersion.of(21)
     }
     sourceCompatibility = 21
     targetCompatibility = 21
 }
 
 configurations {
-	shadowImpl
-	compileOnly.extendsFrom shadowImpl
+  shadowImpl
+  compileOnly.extendsFrom shadowImpl
 }
 
 minecraft {
-	mappings channel: 'parchment', version: '2024.11.17-1.21.1'
+  mappings channel: 'parchment', version: '2024.11.17-1.21.1'
 }
 
 dependencies {
-	minecraft 'net.minecraftforge:forge:1.21.1-52.0.40'
-	implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
-	compileOnly project(':forge:fovcore')
-	shadowImpl project(':common')
+  minecraft 'net.minecraftforge:forge:1.21.1-52.0.40'
+  implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
+  compileOnly project(':forge:fovcore')
+  shadowImpl project(':common')
 }
 
 build {
-	dependsOn ':common:build', ':forge:fovcore:build'
+  dependsOn ':common:build', ':forge:fovcore:build'
 }
 
 shadowJar {
-	configurations = [project.configurations.shadowImpl]
-	archiveBaseName.set('FMC-Forge')
-	archiveClassifier.set('')
-	archiveVersion.set('1.21.1-reobfed')
-    from(project(':forge:fovcore').sourceSets.main.output)
-    exclude('/mappings/*')
-	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  configurations = [project.configurations.shadowImpl]
+  archiveBaseName.set('FMC-Forge')
+  archiveClassifier.set('')
+  archiveVersion.set('1.21.1-reobfed')
+  from(project(':forge:fovcore').sourceSets.main.output)
+  exclude('/mappings/*')
+  exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 
-	relocate('com.google', 'keyp.forev.fmc.lib.google')
-	relocate('kotlin', 'keyp.forev.fmc.lib.kotlin')
-	relocate('okhttp3', 'keyp.forev.fmc.lib.okhttp3')
-	relocate('okio', 'keyp.forev.fmc.lib.okio')
-	relocate('org.aopalliance', 'keyp.forev.fmc.lib.aopalliance')
-	relocate('org.apache', 'keyp.forev.fmc.lib.apache')
-	relocate('org.checkerframework', 'keyp.forev.fmc.lib.checkerframework')
-	relocate('org.intellij', 'keyp.forev.fmc.lib.intellij')
-	relocate('org.jetbrains', 'keyp.forev.fmc.lib.jetbrains')
-	relocate('org.json', 'keyp.forev.fmc.lib.json')
-    exclude('org/slf4j/**') // using slf4j pkg by other mods' export one
-    exclude('javax/annotation/**') // in the same way
-    exclude('javax/annotation') // in the same way
-	relocate('org.yaml', 'keyp.forev.fmc.lib.yaml')
-	relocate('redis', 'keyp.forev.fmc.lib.redis')
+  relocate('com.google', 'keyp.forev.fmc.lib.google')
+  relocate('kotlin', 'keyp.forev.fmc.lib.kotlin')
+  relocate('okhttp3', 'keyp.forev.fmc.lib.okhttp3')
+  relocate('okio', 'keyp.forev.fmc.lib.okio')
+  relocate('org.aopalliance', 'keyp.forev.fmc.lib.aopalliance')
+  relocate('org.apache', 'keyp.forev.fmc.lib.apache')
+  relocate('org.checkerframework', 'keyp.forev.fmc.lib.checkerframework')
+  relocate('org.intellij', 'keyp.forev.fmc.lib.intellij')
+  relocate('org.jetbrains', 'keyp.forev.fmc.lib.jetbrains')
+  relocate('org.json', 'keyp.forev.fmc.lib.json')
+  exclude('org/slf4j/**') // using slf4j pkg by other mods' export one
+  exclude('javax/annotation/**') // in the same way
+  exclude('javax/annotation') // in the same way
+  relocate('org.yaml', 'keyp.forev.fmc.lib.yaml')
+  relocate('redis', 'keyp.forev.fmc.lib.redis')
 }
 
 processResources {
-    from("$rootDir/forge/src/main/resources") {
-        include '**/*'
-    }
-	filesMatching('META-INF/mods.toml') {
-		expand(
-            project: project,
-            projectName: project.name,
-            projectVersion: project.version,
-            projectDescription: project.property('description'),
-            projectGroup: project.group,
-            groupId: project.group,
-            projectHP: project.property('hp'),
-            projectSource: project.property('source'),
-			projectIssueTracker: project.property('issue')
-        )
-	}
-	filesMatching('**/pack.mcmeta') {
-		expand(
-			projectPackMCMeta: 16
-		)
-	}
+  from("$rootDir/forge/src/main/resources") {
+    include '**/*'
+  }
+  filesMatching('META-INF/mods.toml') {
+    expand(
+      project: project,
+      projectName: project.name,
+      projectVersion: project.version,
+      projectDescription: project.property('description'),
+      projectGroup: project.group,
+      groupId: project.group,
+      projectHP: project.property('hp'),
+      projectSource: project.property('source'),
+      projectIssueTracker: project.property('issue')
+    )
+  }
+  filesMatching('**/pack.mcmeta') {
+    expand(
+      projectPackMCMeta: 16
+    )
+  }
 }
 
 reobf {
-    shadowJar {
-		dependsOn shadowJar
-    }
+  shadowJar {
+    dependsOn shadowJar
+  }
 }
 
 artifacts {
-	shadow shadowJar
+  shadow shadowJar
 }

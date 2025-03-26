@@ -1,65 +1,65 @@
 plugins {
-	alias(libs.plugins.shadow)
+  alias(libs.plugins.shadow)
 }
 
 configurations {
-	shadowImpl
-	compileOnly.extendsFrom shadowImpl
+  shadowImpl
+  compileOnly.extendsFrom shadowImpl
 }
 
 repositories {
-    maven { url 'https://repo.papermc.io/repository/maven-public/' }
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
-    maven { url 'https://repo.opencollab.dev/main/' }
-    maven { url 'https://repo.skyblocksquad.de/repo' }
+  maven { url 'https://repo.papermc.io/repository/maven-public/' }
+  maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+  maven { url 'https://repo.opencollab.dev/main/' }
+  maven { url 'https://repo.skyblocksquad.de/repo' }
 }
 
 dependencies {
-	compileOnly 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
-	annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
-	compileOnly 'org.geysermc.geyser:api:2.4.2-SNAPSHOT'
-	compileOnly 'org.geysermc.floodgate:api:2.2.3-SNAPSHOT'
-	compileOnly 'net.dv8tion:JDA:5.2.0'
-	compileOnly 'club.minnced:discord-webhooks:0.8.0'
-	shadowImpl 'de.timongcraft:VeloBoard:1.4.0-EXPERIMENTAL-CHANGES'
-	shadowImpl 'org.ow2.asm:asm:9.7.1'
-	//shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
-	shadowImpl project(':common')
+  compileOnly 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
+  annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
+  compileOnly 'org.geysermc.geyser:api:2.4.2-SNAPSHOT'
+  compileOnly 'org.geysermc.floodgate:api:2.2.3-SNAPSHOT'
+  compileOnly 'net.dv8tion:JDA:5.2.0'
+  compileOnly 'club.minnced:discord-webhooks:0.8.0'
+  shadowImpl 'de.timongcraft:VeloBoard:1.4.0-EXPERIMENTAL-CHANGES'
+  shadowImpl 'org.ow2.asm:asm:9.7.1'
+  //shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
+  shadowImpl project(':common')
 }
 
 build {
-	dependsOn(':common:build')
+  dependsOn(':common:build')
 }
 
 shadowJar {
-	configurations = [project.configurations.shadowImpl]
-	archiveBaseName.set('FMC-Velocity')
-	archiveClassifier.set('')
-	archiveVersion.set('3.4.0')
-	exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  configurations = [project.configurations.shadowImpl]
+  archiveBaseName.set('FMC-Velocity')
+  archiveClassifier.set('')
+  archiveVersion.set('3.4.0')
+  exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
 
-	sourceSets {
-        main {
-            java {
-                exclude '**/experience/**'
-            }
-        }
+  sourceSets {
+    main {
+      java {
+        exclude '**/experience/**'
+      }
     }
+  }
 }
 
 tasks.build {
-    dependsOn tasks.shadowJar
+  dependsOn tasks.shadowJar
 }
 
 processResources {
-	filesMatching('**/velocity-plugin.json') {
-	    expand(
-	        project: project,
-	        projectName: project.name,
-	        projectVersion: project.version,
-	        projectDescription: project.property('description'),
-	        projectGroup: project.group,
-	        groupId: project.group
-	    )
-	}
+  filesMatching('**/velocity-plugin.json') {
+    expand(
+      project: project,
+      projectName: project.name,
+      projectVersion: project.version,
+      projectDescription: project.property('description'),
+      projectGroup: project.group,
+      groupId: project.group
+    )
+  }
 }

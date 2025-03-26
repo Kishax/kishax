@@ -55,96 +55,96 @@ import keyp.forev.fmc.velocity.util.config.ConfigUtils;
 import keyp.forev.fmc.velocity.util.config.VelocityConfig;
 
 public class Module extends AbstractModule {
-	private final Main plugin;
-    private final ProxyServer server;
-    private final Logger logger;
-    private final Path dataDirectory;
-    public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory) {
-    	this.plugin = plugin;
-        this.server = server;
-        this.logger = logger;
-        this.dataDirectory = dataDirectory;
+  private final Main plugin;
+  private final ProxyServer server;
+  private final Logger logger;
+  private final Path dataDirectory;
+  public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory) {
+    this.plugin = plugin;
+    this.server = server;
+    this.logger = logger;
+    this.dataDirectory = dataDirectory;
+  }
+
+  @Override
+  protected void configure() {
+    bind(Main.class).toInstance(plugin);
+    bind(VelocityConfig.class);
+    bind(DatabaseInfo.class).to(VelocityDatabaseInfo.class).in(Singleton.class);
+    bind(Database.class);
+    bind(PlayerUtils.class);
+    bind(ProxyServer.class).toInstance(server);
+    bind(Logger.class).toInstance(logger);
+    bind(Path.class).annotatedWith(DataDirectory.class).toInstance(dataDirectory);
+    bind(ConsoleCommandSource.class).toInstance(server.getConsoleCommandSource());
+    bind(BroadCast.class);
+    bind(RomaToKanji.class);
+    bind(PlayerDisconnect.class);
+    bind(RomajiConversion.class);
+    //bind(Discord.class);
+    bind(DiscordEventListener.class);
+    bind(EmojiManager.class);
+    bind(MessageEditor.class);
+    bind(MineStatus.class);
+    bind(ConfigUtils.class);
+    //bind(Request.class).to(VelocityRequest.class);
+    bind(GeyserMC.class);
+    bind(Maintenance.class);
+    bind(FMCBoard.class);
+    bind(CommandForwarder.class);
+    bind(Luckperms.class);
+    bind(Webhooker.class);
+
+    bind(ForwardHandler.class).to(VelocityForwardHandler.class);
+    bind(ImageMapHandler.class).to(VelocityImageMapHandler.class);
+    bind(InputHandler.class).to(VelocityInputHandler.class);
+    bind(TeleportPlayerHandler.class).to(VelocityTeleportPlayerHandler.class);
+    bind(TeleportPointHandler.class).to(VelocityTeleportPointHandler.class);
+
+    bind(ServerActionHandler.class).to(VelocityServerActionHandler.class);
+
+    bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
+  }
+
+  @Provides
+  @Singleton
+  public Request provideRequest(
+    ProxyServer server, 
+    Logger logger, 
+    VelocityConfig config, 
+    Database db, 
+    BroadCast bc, 
+    Discord discord, 
+    MessageEditor discordME, 
+    EmojiManager emoji, 
+    Luckperms lp, 
+    PlayerUtils pu, 
+    DoServerOnline dso,
+    PlayerDisconnect pd
+  ) {
+    return new VelocityRequest(server, logger, config, db, bc, discord, discordME, emoji, lp, pu, dso, pd);
+  }
+
+  @Provides
+  @Singleton
+  public Discord provideDiscord(
+    Logger logger, 
+    VelocityConfig config, 
+    Database db, 
+    Provider<Request> reqProvider,
+    Provider<MessageEditor> discordMEProvider,
+    BroadCast bc
+  ) {
+    try {
+      return new Discord(logger, config, db, discordMEProvider, reqProvider, bc);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
+  }
 
-    @Override
-    protected void configure() {
-        bind(Main.class).toInstance(plugin);
-        bind(VelocityConfig.class);
-        bind(DatabaseInfo.class).to(VelocityDatabaseInfo.class).in(Singleton.class);
-        bind(Database.class);
-        bind(PlayerUtils.class);
-        bind(ProxyServer.class).toInstance(server);
-        bind(Logger.class).toInstance(logger);
-        bind(Path.class).annotatedWith(DataDirectory.class).toInstance(dataDirectory);
-        bind(ConsoleCommandSource.class).toInstance(server.getConsoleCommandSource());
-        bind(BroadCast.class);
-        bind(RomaToKanji.class);
-        bind(PlayerDisconnect.class);
-        bind(RomajiConversion.class);
-        //bind(Discord.class);
-        bind(DiscordEventListener.class);
-        bind(EmojiManager.class);
-        bind(MessageEditor.class);
-        bind(MineStatus.class);
-        bind(ConfigUtils.class);
-        //bind(Request.class).to(VelocityRequest.class);
-        bind(GeyserMC.class);
-        bind(Maintenance.class);
-        bind(FMCBoard.class);
-        bind(CommandForwarder.class);
-        bind(Luckperms.class);
-        bind(Webhooker.class);
-
-        bind(ForwardHandler.class).to(VelocityForwardHandler.class);
-        bind(ImageMapHandler.class).to(VelocityImageMapHandler.class);
-        bind(InputHandler.class).to(VelocityInputHandler.class);
-        bind(TeleportPlayerHandler.class).to(VelocityTeleportPlayerHandler.class);
-        bind(TeleportPointHandler.class).to(VelocityTeleportPointHandler.class);
-
-        bind(ServerActionHandler.class).to(VelocityServerActionHandler.class);
-
-        bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
-    }
-
-    @Provides
-    @Singleton
-    public Request provideRequest(
-        ProxyServer server, 
-        Logger logger, 
-        VelocityConfig config, 
-        Database db, 
-        BroadCast bc, 
-        Discord discord, 
-        MessageEditor discordME, 
-        EmojiManager emoji, 
-        Luckperms lp, 
-        PlayerUtils pu, 
-        DoServerOnline dso,
-        PlayerDisconnect pd
-    ) {
-        return new VelocityRequest(server, logger, config, db, bc, discord, discordME, emoji, lp, pu, dso, pd);
-    }
-
-    @Provides
-    @Singleton
-    public Discord provideDiscord(
-        Logger logger, 
-        VelocityConfig config, 
-        Database db, 
-        Provider<Request> reqProvider,
-        Provider<MessageEditor> discordMEProvider,
-        BroadCast bc
-    ) {
-        try {
-            return new Discord(logger, config, db, discordMEProvider, reqProvider, bc);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Provides
-    @Singleton
-    public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
-        return new SocketSwitch(logger, injector);
-    }
+  @Provides
+  @Singleton
+  public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
+    return new SocketSwitch(logger, injector);
+  }
 }

@@ -1,15 +1,15 @@
 # FMC-Forge-Mod Configuration File
 MySQL:
-    Host: "localhost"
-    Database: ""
-    Port: 3306
-    User: ""
-    Password: ""
+  Host: "localhost"
+  Database: ""
+  Port: 3306
+  User: ""
+  Password: ""
 
 Socket:
-    Client_Port: 8766
-    Server_Port: 
+  Client_Port: 8766
+  Server_Port: 
 
 AutoStop:
-    Mode: false
-    Interval: 3
+  Mode: false
+  Interval: 3
