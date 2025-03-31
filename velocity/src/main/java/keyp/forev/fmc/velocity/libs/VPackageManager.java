@@ -12,18 +12,16 @@ public class VPackageManager {
 
   public enum VPackage implements PackageManager {
     JDA(
-      "net.dv8tion:JDA:5.2.0",
-      "https://github.com/discord-jda/JDA/releases/download/v5.2.0/JDA-5.2.0-withDependencies.jar",
-      PackageType.MAIN, 
-      DISCORD
-    ),
+        "net.dv8tion:JDA:5.2.0",
+        "https://github.com/discord-jda/JDA/releases/download/v5.2.0/JDA-5.2.0-withDependencies.jar",
+        PackageType.MAIN,
+        DISCORD),
     CLUB_MINNCED_WEBHOOK(
-      "club.minnced:discord-webhooks:0.8.0", 
-      "https://github.com/bella2391/FMC/releases/download/libs/FMC-Dependency-1.0.0.jar",
-      PackageType.MAIN, 
-      WEBHOOK
-    ),
-    ;
+        "club.minnced:discord-webhooks:0.8.0",
+        "https://github.com/bella2391/fmc/releases/download/libs/FMC-Dependency-1.0.0.jar",
+        PackageType.MAIN,
+        WEBHOOK),
+        ;
 
     private final String url;
     private final String groupId;
@@ -69,10 +67,11 @@ public class VPackageManager {
 
     @Override
     public List<PackageManager> getDependencies() {
-      List<PackageManager> dependencies = new ArrayList<>();  
+      List<PackageManager> dependencies = new ArrayList<>();
       if (packageType.equals(PackageType.MAIN)) {
         List<PackageManager> lists = new ArrayList<>(List.of(values()));
-        lists.stream().filter(pkg -> pkg.getGroupKey().equals(groupKey) && !pkg.equals(this)).forEach(dependencies::add);
+        lists.stream().filter(pkg -> pkg.getGroupKey().equals(groupKey) && !pkg.equals(this))
+            .forEach(dependencies::add);
       }
       return dependencies;
     }
@@ -91,7 +90,8 @@ public class VPackageManager {
     }
 
     private URL getMavenUrl() throws MalformedURLException {
-      return new URL("https://repo1.maven.org/maven2/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version + ".jar");
+      return new URL("https://repo1.maven.org/maven2/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version
+          + "/" + artifactId + "-" + version + ".jar");
     }
   }
 }
