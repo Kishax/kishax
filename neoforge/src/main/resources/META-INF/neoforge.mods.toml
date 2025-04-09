@@ -8,7 +8,7 @@ version="${projectVersion}"
 displayName="${projectName}"
 displayURL="${projectHP}"
 logoFile="fmc.png"
-authors="Bella"
+authors="verazza"
 description="${projectDescription}"
 [[dependencies.fmc]]
 modId="luckperms"
