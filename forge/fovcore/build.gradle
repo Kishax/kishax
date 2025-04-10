@@ -19,7 +19,7 @@ minecraft {
 dependencies {
 	minecraft 'net.minecraftforge:forge:1.21-51.0.32'
 	implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
-	compileOnly project(':common')
+	implementation project(':common')
 }
 
 build {
