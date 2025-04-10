@@ -5,6 +5,7 @@ plugins {
 configurations {
   shadowImpl
   compileOnly.extendsFrom shadowImpl
+  implementation.extendsFrom shadowImpl2
 }
 
 repositories {
@@ -24,7 +25,7 @@ dependencies {
   shadowImpl 'de.timongcraft:VeloBoard:1.4.0-EXPERIMENTAL-CHANGES'
   shadowImpl 'org.ow2.asm:asm:9.7.1'
   //shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
-  shadowImpl project(':common')
+  shadowImpl2 project(':common')
 }
 
 build {

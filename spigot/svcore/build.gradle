@@ -22,7 +22,7 @@ dependencies {
   compileOnly 'net.kyori:adventure-api:4.17.0'
   compileOnly 'net.kyori:adventure-platform-bukkit:4.3.4'
   //shadowImpl 'net.kyori:text-api:3.0.4'
-  compileOnly project(':common')
+  implementation project(':common')
 }
 
 build {
