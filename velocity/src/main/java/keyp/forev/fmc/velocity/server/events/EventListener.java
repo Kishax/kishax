@@ -288,8 +288,6 @@ public class EventListener {
 
     // 先にmcidの変更がないかどうかチェック
     try {
-      logger.info("update checking...");
-      System.out.println("update checking...");
       if (!checkMCIDUpdate(player, true))
         return;
 
@@ -795,7 +793,6 @@ public class EventListener {
   private boolean checkMCIDUpdate(Player player, boolean isPre) throws SQLException, ClassNotFoundException {
     String playerName = player.getUsername();
     String playerUUID = player.getUniqueId().toString();
-    logger.info("playerName: " + playerName + ", playerUUID: " + playerUUID);
 
     AtomicBoolean isBedrock = checkBedrockPlayer(player);
 
@@ -807,8 +804,6 @@ public class EventListener {
         ps2.setString(1, playerUUID);
         try (ResultSet yuyu2 = ps2.executeQuery()) {
           if (yuyu2.next()) {
-            logger.info("db name: " + yuyu2.getString("name"));
-
             if (!playerName.equals(yuyu2.getString("name"))) {
               // 一番最初に登録した名前と一致しなかったら
               // MOJANG-APIからとってきた名前でレコードを更新させる
@@ -829,7 +824,6 @@ public class EventListener {
                 int rsAffected5 = ps5.executeUpdate();
                 if (rsAffected5 > 0) {
                   if (isPre) {
-                    logger.info("update successfully");
                     pd.playerDisconnect(
                         false,
                         player,
