@@ -286,152 +286,166 @@ public class EventListener {
     String playerName = player.getUsername();
     String playerUUID = player.getUniqueId().toString();
 
-    Set<String> allowOtherServers = new HashSet<>();
-    try (Connection connection = db.getConnection()) {
-      try (PreparedStatement ps = connection.prepareStatement(
-          "SELECT name FROM status WHERE allow_prestart=?;")) {
-        ps.setBoolean(1, true);
-        try (ResultSet rs = ps.executeQuery()) {
-          while (rs.next()) {
-            allowOtherServers.add(rs.getString("name"));
-          }
-        }
-      }
-    } catch (SQLException | ClassNotFoundException e) {
-      logger.error("An error occurred at EventListener#onServerPreConnectEvent: ", e);
-    }
+    // 先にmcidの変更がないかどうかチェック
+    try {
+      logger.info("update checking...");
+      System.out.println("update checking...");
+      if (!checkMCIDUpdate(player, true))
+        return;
 
-    String serverName = event.getOriginalServer().getServerInfo().getName();
-    if (!allowOtherServers.contains(serverName)) {
-      return;
-    }
-
-    if (startingServers.contains(serverName)) {
-      pd.playerDisconnect(
-          false,
-          player,
-          Component.text(serverName + "サーバーは現在起動中です！").color(NamedTextColor.GOLD));
-      return;
-    }
-
-    final AtomicBoolean canConnect = new AtomicBoolean(false);
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    CompletableFuture.runAsync(() -> {
-      try (Connection conn = db.getConnection()) {
-        try (PreparedStatement ps = conn.prepareStatement(
-            "SELECT * FROM members WHERE name=? AND uuid=?;");
-            PreparedStatement ps2 = conn.prepareStatement(
-                "SELECT * FROM status WHERE name=?;")) {
-          ps.setString(1, playerName);
-          ps.setString(2, playerUUID);
-          ps2.setString(1, serverName);
-          try (ResultSet rs = ps.executeQuery();
-              ResultSet rs2 = ps2.executeQuery()) {
-            if (rs2.next() && !rs2.getBoolean("online")) {
-              if (rs.next()) {
-                if (rs.getBoolean("ban")) {
-                  pd.playerDisconnect(
-                      false,
-                      player,
-                      Component.text("You are banned from this server.").color(NamedTextColor.RED));
-                  return;
-                }
-
-                int permLevel = lp.getPermLevel(playerName);
-                boolean isSecond = false;
-                for (Player otherServerConnectedPlayer : otherServerConnectTasks.keySet()) {
-                  if (otherServerConnectedPlayer.getUniqueId().equals(player.getUniqueId())) {
-                    isSecond = true;
-                    otherServerConnectTasks.remove(player);
-                    startingServers.add(serverName);
-                    scheduler.schedule(() -> {
-                      if (startingServers.contains(serverName)) {
-                        startingServers.remove(serverName);
-                      }
-                    }, 120, TimeUnit.SECONDS);
-
-                    if (permLevel > 1) {
-                      Main.getInjector().getInstance(StartServer.class).execute2(player, serverName);
-                    } else if (permLevel == 1) {
-                      Main.getInjector().getProvider(Request.class).get().execute2(player, serverName);
-                      ;
-                    }
-                    return;
-                  }
-                }
-
-                if (!isSecond) {
-                  Runnable task = () -> {
-                    if (otherServerConnectTasks.containsKey(player)) {
-                      otherServerConnectTasks.remove(player);
-                    }
-                  };
-                  otherServerConnectTasks.put(player, task);
-                  scheduler.schedule(() -> {
-                    if (otherServerConnectTasks.containsKey(player)) {
-                      Runnable removeTask = otherServerConnectTasks.get(player);
-                      removeTask.run();
-                    }
-                  }, 10, TimeUnit.SECONDS);
-
-                  Component message = Component.text("あなたは認証ユーザーです。").color(NamedTextColor.GREEN);
-                  Component message2;
-                  if (permLevel > 1) {
-                    message2 = Component.text(serverName + "サーバーを起動するには、10秒以内にもう一度接続してください。")
-                        .color(NamedTextColor.GOLD);
-                  } else if (permLevel == 1) {
-                    message2 = Component.text(serverName + "サーバーに起動リクエストを送信するには、10秒以内にもう一度接続してください。")
-                        .color(NamedTextColor.GOLD);
-                  } else {
-                    pd.playerDisconnect(
-                        false,
-                        player,
-                        Component.text("認証ユーザーではありません。").color(NamedTextColor.RED));
-                    throw new Error(playerName + "は認証ユーザーではありません。");
-                  }
-
-                  TextComponent messages = Component.text()
-                      .append(message)
-                      .appendNewline()
-                      .append(message2)
-                      .build();
-
-                  pd.playerDisconnect(
-                      false,
-                      player,
-                      messages);
-                  return;
-                }
-              } else {
-                pd.playerDisconnect(
-                    false,
-                    player,
-                    Component.text("認証ユーザーではありません。").color(NamedTextColor.RED));
-                return;
-              }
+      Set<String> allowOtherServers = new HashSet<>();
+      try (Connection connection = db.getConnection()) {
+        try (PreparedStatement ps = connection.prepareStatement(
+            "SELECT name FROM status WHERE allow_prestart=?;")) {
+          ps.setBoolean(1, true);
+          try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+              allowOtherServers.add(rs.getString("name"));
             }
           }
         }
       } catch (SQLException | ClassNotFoundException e) {
         logger.error("An error occurred at EventListener#onServerPreConnectEvent: ", e);
+      }
+
+      String serverName = event.getOriginalServer().getServerInfo().getName();
+      if (!allowOtherServers.contains(serverName)) {
+        return;
+      }
+
+      if (startingServers.contains(serverName)) {
         pd.playerDisconnect(
             false,
             player,
-            Component.text("データベース接続エラー: データベースに接続できませんでした。").color(NamedTextColor.RED));
-      } finally {
-        latch.countDown();
+            Component.text(serverName + "サーバーは現在起動中です！").color(NamedTextColor.GOLD));
+        return;
       }
-    });
 
-    try {
-      latch.await(5, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      logger.warn("Thread interrupted while waiting for async task", e);
-    }
+      final AtomicBoolean canConnect = new AtomicBoolean(false);
+      final CountDownLatch latch = new CountDownLatch(1);
 
-    if (canConnect.get()) {
-    } else {
+      CompletableFuture.runAsync(() -> {
+        try (Connection conn = db.getConnection()) {
+          try (PreparedStatement ps = conn.prepareStatement(
+              "SELECT * FROM members WHERE name=? AND uuid=?;");
+              PreparedStatement ps2 = conn.prepareStatement(
+                  "SELECT * FROM status WHERE name=?;")) {
+            ps.setString(1, playerName);
+            ps.setString(2, playerUUID);
+            ps2.setString(1, serverName);
+            try (ResultSet rs = ps.executeQuery();
+                ResultSet rs2 = ps2.executeQuery()) {
+              if (rs2.next() && !rs2.getBoolean("online")) {
+                if (rs.next()) {
+                  if (rs.getBoolean("ban")) {
+                    pd.playerDisconnect(
+                        false,
+                        player,
+                        Component.text("You are banned from this server.").color(NamedTextColor.RED));
+                    return;
+                  }
+
+                  int permLevel = lp.getPermLevel(playerName);
+                  boolean isSecond = false;
+                  for (Player otherServerConnectedPlayer : otherServerConnectTasks.keySet()) {
+                    if (otherServerConnectedPlayer.getUniqueId().equals(player.getUniqueId())) {
+                      isSecond = true;
+                      otherServerConnectTasks.remove(player);
+                      startingServers.add(serverName);
+                      scheduler.schedule(() -> {
+                        if (startingServers.contains(serverName)) {
+                          startingServers.remove(serverName);
+                        }
+                      }, 120, TimeUnit.SECONDS);
+
+                      if (permLevel > 1) {
+                        Main.getInjector().getInstance(StartServer.class).execute2(player, serverName);
+                      } else if (permLevel == 1) {
+                        Main.getInjector().getProvider(Request.class).get().execute2(player, serverName);
+                        ;
+                      }
+                      return;
+                    }
+                  }
+
+                  if (!isSecond) {
+                    Runnable task = () -> {
+                      if (otherServerConnectTasks.containsKey(player)) {
+                        otherServerConnectTasks.remove(player);
+                      }
+                    };
+                    otherServerConnectTasks.put(player, task);
+                    scheduler.schedule(() -> {
+                      if (otherServerConnectTasks.containsKey(player)) {
+                        Runnable removeTask = otherServerConnectTasks.get(player);
+                        removeTask.run();
+                      }
+                    }, 10, TimeUnit.SECONDS);
+
+                    Component message = Component.text("あなたは認証ユーザーです。").color(NamedTextColor.GREEN);
+                    Component message2;
+                    if (permLevel > 1) {
+                      message2 = Component.text(serverName + "サーバーを起動するには、10秒以内にもう一度接続してください。")
+                          .color(NamedTextColor.GOLD);
+                    } else if (permLevel == 1) {
+                      message2 = Component.text(serverName + "サーバーに起動リクエストを送信するには、10秒以内にもう一度接続してください。")
+                          .color(NamedTextColor.GOLD);
+                    } else {
+                      pd.playerDisconnect(
+                          false,
+                          player,
+                          Component.text("認証ユーザーではありません。").color(NamedTextColor.RED));
+                      throw new Error(playerName + "は認証ユーザーではありません。");
+                    }
+
+                    TextComponent messages = Component.text()
+                        .append(message)
+                        .appendNewline()
+                        .append(message2)
+                        .build();
+
+                    pd.playerDisconnect(
+                        false,
+                        player,
+                        messages);
+                    return;
+                  }
+                } else {
+                  pd.playerDisconnect(
+                      false,
+                      player,
+                      Component.text("認証ユーザーではありません。").color(NamedTextColor.RED));
+                  return;
+                }
+              }
+            }
+          }
+        } catch (SQLException | ClassNotFoundException e) {
+          logger.error("An error occurred at EventListener#onServerPreConnectEvent: ", e);
+          pd.playerDisconnect(
+              false,
+              player,
+              Component.text("データベース接続エラー: データベースに接続できませんでした。").color(NamedTextColor.RED));
+        } finally {
+          latch.countDown();
+        }
+      });
+
+      try {
+        latch.await(5, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        logger.warn("Thread interrupted while waiting for async task", e);
+      }
+
+      if (canConnect.get()) {
+      } else {
+      }
+    } catch (SQLException | ClassNotFoundException e) {
+      logger.error("An error occurred while checking player mcid update: " + e.getMessage());
+      for (StackTraceElement trace : e.getStackTrace()) {
+        logger.error(trace.toString());
+      }
+      return;
     }
   }
 
@@ -465,15 +479,8 @@ public class EventListener {
       logger.error("コネクションエラー: 接続サーバー名が不明です。");
       return;
     }
-    final AtomicBoolean isBedrock = new AtomicBoolean(false);
-    if (gm.isGeyserPlayer(player)) {
-      logger.info("GeyserMC player connected: " + playerName);
-      String playerXuid = gm.getGeyserPlayerXuid(player);
-      logger.info("Player XUID: " + playerXuid);
-      isBedrock.set(true);
-    } else {
-      logger.info("Java player connected: " + playerName);
-    }
+    final AtomicBoolean isBedrock = checkBedrockPlayer(player);
+
     server.getScheduler().buildTask(plugin, () -> {
       try (Connection conn = db.getConnection()) {
         if (db.isMaintenance(conn)) {
@@ -547,61 +554,10 @@ public class EventListener {
                       }
                       beforejoin_sa_minute = Math.max(beforejoin_sa / 60, 0); // マイナス値を防ぐためにMath.maxを使用
                     }
-                    String updatedName = null;
-                    if (!playerName.equals(yuyu.getString("name"))) {
-                      // 一番最初に登録した名前と一致しなかったら
-                      // MOJANG-APIからとってきた名前でレコードを更新させる
-                      updatedName = !isBedrock.get() ? pu.getPlayerNameFromUUID(player.getUniqueId()) : playerName;
-                      if (Objects.isNull(updatedName) || !(updatedName.equals(playerName))) {
-                        pd.playerDisconnect(
-                            true,
-                            player,
-                            Component.text("You are banned from this server.").color(NamedTextColor.RED));
-                        return;
-                      }
-                      String query5 = "UPDATE members SET name=?, old_name=? WHERE uuid=?;";
-                      try (PreparedStatement ps5 = conn.prepareStatement(query5)) {
-                        ps5.setString(1, updatedName);
-                        ps5.setString(2, yuyu.getString("name"));
-                        ps5.setString(3, playerUUID);
-                        int rsAffected5 = ps5.executeUpdate();
-                        if (rsAffected5 > 0) {
-                          player.sendMessage(
-                              Component.text("MCIDの変更が検出されたため、データベースを更新しました。").color(NamedTextColor.GREEN));
-                          // 過去の名前を解放するため、過去の名前のレコードがほかにもあったらそれをinvalid_loginへ移動
-                          String query6 = "SELECT COUNT(*) FROM members WHERE name=?;";
-                          try (PreparedStatement ps6 = conn.prepareStatement(query6)) {
-                            ps6.setString(1, yuyu.getString("name"));
-                            try (ResultSet rs6 = ps6.executeQuery()) {
-                              if (rs6.next()) {
-                                int count = rs6.getInt(1);
-                                if (count >= 1) {
-                                  String query7 = "INSERT INTO invalid_login SELECT * FROM members WHERE name=?;";
-                                  try (PreparedStatement ps7 = conn.prepareStatement(query7)) {
-                                    ps7.setString(1, yuyu.getString("name"));
-                                    int rsAffected7 = ps7.executeUpdate();
-                                    if (rsAffected7 > 0) {
-                                      String query8 = "DELETE from members WHERE name=?;";
-                                      try (PreparedStatement ps8 = conn.prepareStatement(query8)) {
-                                        ps8.setString(1, yuyu.getString("name"));
-                                        int rsAffected8 = ps8.executeUpdate();
-                                        if (rsAffected8 > 0) {
-                                          console.sendMessage(Component.text("過去の名前のレコードをinvalid_loginへ移動しました。")
-                                              .color(NamedTextColor.GREEN));
-                                        }
-                                      }
-                                    } else {
-                                      console.sendMessage(Component.text("過去の名前のレコードをinvalid_loginへ移動できませんでした。")
-                                          .color(NamedTextColor.RED));
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
+
+                    if (!checkMCIDUpdate(player, false))
+                      return;
+
                     // AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
                     if (EventListener.PlayerMessageIds.containsKey(playerUUID) && previousServerInfo.isPresent()) {
                       // どこからか移動してきたとき
@@ -834,5 +790,107 @@ public class EventListener {
       return true;
     }
     return false;
+  }
+
+  private boolean checkMCIDUpdate(Player player, boolean isPre) throws SQLException, ClassNotFoundException {
+    String playerName = player.getUsername();
+    String playerUUID = player.getUniqueId().toString();
+    logger.info("playerName: " + playerName + ", playerUUID: " + playerUUID);
+
+    AtomicBoolean isBedrock = checkBedrockPlayer(player);
+
+    String updatedName = null;
+
+    try (Connection connection = db.getConnection()) {
+      String query2 = "SELECT * FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;";
+      try (PreparedStatement ps2 = connection.prepareStatement(query2)) {
+        ps2.setString(1, playerUUID);
+        try (ResultSet yuyu2 = ps2.executeQuery()) {
+          if (yuyu2.next()) {
+            logger.info("db name: " + yuyu2.getString("name"));
+
+            if (!playerName.equals(yuyu2.getString("name"))) {
+              // 一番最初に登録した名前と一致しなかったら
+              // MOJANG-APIからとってきた名前でレコードを更新させる
+              updatedName = !isBedrock.get() ? pu.getPlayerNameFromUUID(player.getUniqueId()) : playerName;
+              if (Objects.isNull(updatedName) || !(updatedName.equals(playerName))) {
+                pd.playerDisconnect(
+                    true,
+                    player,
+                    Component.text("You are banned from this server.").color(NamedTextColor.RED));
+                return false;
+              }
+
+              String query5 = "UPDATE members SET name=?, old_name=? WHERE uuid=?;";
+              try (PreparedStatement ps5 = connection.prepareStatement(query5)) {
+                ps5.setString(1, updatedName);
+                ps5.setString(2, yuyu2.getString("name"));
+                ps5.setString(3, playerUUID);
+                int rsAffected5 = ps5.executeUpdate();
+                if (rsAffected5 > 0) {
+                  if (isPre) {
+                    logger.info("update successfully");
+                    pd.playerDisconnect(
+                        false,
+                        player,
+                        Component.text("MCIDの変更が検出されたため、データベースを更新しました。サーバーにアクセスするには、再度参加してください。")
+                            .color(NamedTextColor.GREEN));
+                  } else {
+                    player.sendMessage(Component.text("MCIDの変更が検出されたため、データベースを更新しました。").color(NamedTextColor.GREEN));
+                  }
+                  // 過去の名前を解放するため、過去の名前のレコードがほかにもあったらそれをinvalid_loginへ移動
+                  String query6 = "SELECT COUNT(*) FROM members WHERE name=?;";
+                  try (PreparedStatement ps6 = connection.prepareStatement(query6)) {
+                    ps6.setString(1, yuyu2.getString("name"));
+                    try (ResultSet rs6 = ps6.executeQuery()) {
+                      if (rs6.next()) {
+                        int count = rs6.getInt(1);
+                        if (count >= 1) {
+                          String query7 = "INSERT INTO invalid_login SELECT * FROM members WHERE name=?;";
+                          try (PreparedStatement ps7 = connection.prepareStatement(query7)) {
+                            ps7.setString(1, yuyu2.getString("name"));
+                            int rsAffected7 = ps7.executeUpdate();
+                            if (rsAffected7 > 0) {
+                              String query8 = "DELETE from members WHERE name=?;";
+                              try (PreparedStatement ps8 = connection.prepareStatement(query8)) {
+                                ps8.setString(1, yuyu2.getString("name"));
+                                int rsAffected8 = ps8.executeUpdate();
+                                if (rsAffected8 > 0) {
+                                  console.sendMessage(Component.text("過去の名前のレコードをinvalid_loginへ移動しました。")
+                                      .color(NamedTextColor.GREEN));
+                                }
+                              }
+                            } else {
+                              console.sendMessage(Component.text("過去の名前のレコードをinvalid_loginへ移動できませんでした。")
+                                  .color(NamedTextColor.RED));
+                              return false;
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  private AtomicBoolean checkBedrockPlayer(Player player) {
+    AtomicBoolean isBedrock = new AtomicBoolean(false);
+    if (gm.isGeyserPlayer(player)) {
+      logger.info("GeyserMC player connected: " + player.getUsername());
+      String playerXuid = gm.getGeyserPlayerXuid(player);
+      logger.info("Player XUID: " + playerXuid);
+      isBedrock.set(true);
+    } else {
+      logger.info("Java player connected: " + player.getUsername());
+      isBedrock.set(false);
+    }
+    return isBedrock;
   }
 }
