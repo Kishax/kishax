@@ -30,7 +30,7 @@ build {
 }
 
 shadowJar {
-  configurations = [project.configurations.shadowImpl]
+  configurations = [project.configurations.shadowImpl, project.configurations.shadowImpl2]
   archiveBaseName.set('Kishax-Forge')
   archiveClassifier.set('')
   archiveVersion.set('1.21-reobfed')
