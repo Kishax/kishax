@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "id": "fabricmod",
+  "id": "kishax",
   "version": "${projectVersion}",
-  "name": "FMC-Fabric-Mod",
+  "name": "Kishax-Fabric",
   "description": "${projectDescription}",
   "authors": [
     "verazza"

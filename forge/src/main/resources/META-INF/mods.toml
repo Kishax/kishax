@@ -3,14 +3,14 @@ loaderVersion="[41,)"
 license="MIT"
 issueTrackerURL="${projectIssueTracker}"
 [[mods]]
-modId="fmc"
+modId="kishax"
 version="${projectVersion}"
 displayName="${projectName}"
 displayURL="${projectHP}"
-logoFile="fmc.png"
+logoFile="logo.png"
 authors="verazza"
 description="${projectDescription}"
-[[dependencies.fmc]]
+[[dependencies.kishax]]
 modId="luckperms"
 mandatory=false
 versionRange="[5.4,)"

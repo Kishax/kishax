@@ -13,7 +13,7 @@ dependencies {
 
 shadowJar {
   configurations = [project.configurations.shadowImpl]
-  archiveBaseName.set('FMC-Dependency')
+  archiveBaseName.set('Kishax-Dependency')
   archiveClassifier.set('')
   archiveVersion.set(project.version)
   exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')

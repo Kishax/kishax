@@ -1,6 +1,6 @@
-# fmc
+# kishax
 
-[![Banner](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/web/banner/fmc.png "Banner")](https://keyp.f5.si/)  
+[![Banner](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/web/banner/kishax.png "Banner")](https://keyp.f5.si/)  
 
 ## Feature
 This is able to use in both Velocity and Spigot.  
@@ -10,99 +10,99 @@ Freely to Edit!
 
 ## Spigot Command list
 
-### `/fmc create <url> <title> <comment>`
+### `/kishax create <url> <title> <comment>`
 You can create image map from url like this:
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/spigot/imagemap/choose_map.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_map.png)  
 If you choose 0 or 1, you can 1×1 imageMap or QR-Code  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/spigot/imagemap/example_small_maps.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/example_small_maps.png)  
 If you choose 2, you can large size imageMap  
 You can specified that ratio and background-color like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/spigot/imagemap/choose_size.png)  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/spigot/imagemap/choose_color.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_size.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_color.png)  
 The image is generated accordingly, preserving the aspect ratio of the image  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/spigot/imagemap/result.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/result.png)  
 Here is complete large map:  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/spigot/imagemap/example_large_map.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/example_large_map.png)  
 When images are at your disposal, you can do things like this!  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/spigot/imagemap/arrow_move.gif)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/arrow_move.gif)  
 
-### `/fmc menu <server|get|image>`
-You can get this when you visit fmc server. For example, you can get imageMap created like above.  
+### `/kishax menu <server|get|image>`
+You can get this when you visit kishax server. For example, you can get imageMap created like above.  
 Not only that but, there are server menu that can start or stop server or read online status, players, and teleport requesting menu that you teleport player or invite player by choosing online-player-head.  
 
-### `/fmc fv <player> <proxy_cmd>`
+### `/kishax fv <player> <proxy_cmd>`
 Forwarding Velocity's command in Spigot
 
-### `/fmc reload`
+### `/kishax reload`
 Reloading config
 
 ## Linkage to Discord
 For Velocity Server, Velocity Server notifys Embed's message or plain-text-message under each events.  
 When server switching, joining, disconnecting like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/event_message.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/event_message.png)  
 When chatting like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/chat_message2.png)
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/chat_message2.png)
 
 ## Convert Romaji to Kanji
 This brings an automatic chat conversion Romaji to Kanji like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/chat_conv.png)
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/chat_conv.png)
 
 ## Velocity Command list
 
 ### `/hub`
 
-### `/fmcp hub`
+### `/kishaxp hub`
 Moving to hub server  
 
-### `/fmcp cend`
+### `/kishaxp cend`
 After executing, Velocity will be shutdown!  
 Before being shutdown, discord's embed editing like this.
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/proxy_shutdown.png)
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/proxy_shutdown.png)
 
-### `/fmcp maintenance <status | switch> discord <true | false>`
+### `/kishaxp maintenance <status | switch> discord <true | false>`
 This enable server to be maintenance mode, which is that for example, it is openable for only Admin who has permission:group.super-admin, others disconnecting.  
 If arg5 sets "true", server can notify to Discord whether maintenance mode is true or not.  
 
-### `/fmcp perm <add | remove | list> [Short:permission] [target:player]`
+### `/kishaxp perm <add | remove | list> [Short:permission] [target:player]`
 Adding or removing permission written in config.yml by adding or removing permission in mysql database for luckperm MySQL mode.
 
-### `/fmcp ss <server>`
-Getting server status and checking whether you have FMC account from MySQL.  
+### `/kishaxp ss <server>`
+Getting server status and checking whether you have Kishax account from MySQL.  
 
-### `/fmcp stp <server>`
+### `/kishaxp stp <server>`
 Moving to specific server as server command
 
-### `/fmcp req <server>`
+### `/kishaxp req <server>`
 Requesting to let server start-up to Admin through discord like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/req_button.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/req_button.png)  
 If someone presses `YES` button, here will be like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/reqsul_notification.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/reqsul_notification.png)  
 Here is minecraft's player chat area.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/req_minecraft_chat.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/req_minecraft_chat.png)  
 
-### `/fmcp start <server>`
+### `/kishaxp start <server>`
 Let server start by bat file of windows
 
-### `/fmcp cancel`
+### `/kishaxp cancel`
 Only sending "canceled event"
 
-### `/fmcp conv <add | remove | reload | switch> [<add | remove>:key] [<add>:value] [<add>:<true | false>]`
-Switching converting type of Romaji to Kanji, reloading romaji.csv from `plugins/fmc/romaji.csv`, or adding/removing a theirself word into the csv file that has a lot of maps of conversion romaji to kana.
+### `/kishaxp conv <add | remove | reload | switch> [<add | remove>:key] [<add>:value] [<add>:<true | false>]`
+Switching converting type of Romaji to Kanji, reloading romaji.csv from `plugins/kishax/romaji.csv`, or adding/removing a theirself word into the csv file that has a lot of maps of conversion romaji to kana.
 
-### `/fmcp chat <switch | status>`
+### `/kishaxp chat <switch | status>`
 Switching the way of sending chating message to Discord.  
 There are Embed editing type or Plane text message type.  
 
 * Embed editing type (Using Bot)  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/embed_editing_type.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/embed_editing_type.png)  
 
 * Plane text message type (Using Webhook)  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/fmc/velocity/plain_text_message_type.png)  
+![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/plain_text_message_type.png)  
 
-### `/fmcp debug`
+### `/kishaxp debug`
 Switching debug mode. In details, this is only replacing config value each other. For example, Discord.ChannelId and Debug.ChannelId.
 
-### `/fmcp reload`
+### `/kishaxp reload`
 Reloading configuration.
 
 ## Socket Server

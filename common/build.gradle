@@ -14,7 +14,7 @@ dependencies {
 }
 
 shadowJar {
-  archiveBaseName.set('FMC-Common')
+  archiveBaseName.set('Kishax-Common')
   archiveClassifier.set('')
   archiveVersion.set('')
   exclude('**/*.kotlin_*')

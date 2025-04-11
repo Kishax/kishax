@@ -22,7 +22,7 @@ neoForge {
   }
 
   mods {
-    "fmc" {
+    "kishax" {
       sourceSet(sourceSets.main)
     }
   }
