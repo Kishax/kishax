@@ -43,7 +43,7 @@ processResources {
 }
 
 shadowJar {
-  configurations = [project.configurations.shadowImpl]
+  configurations = [project.configurations.shadowImpl, project.configurations.shadowImpl2]
   archiveBaseName.set('Kishax-Fabric')
   archiveClassifier.set('')
   archiveVersion.set('1.20.1-shaded')
