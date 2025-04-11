@@ -36,7 +36,6 @@ processResources {
       projectVersion: project.version,
       projectDescription: project.property('description'),
       projectGroup: project.group,
-      groupId: project.group,
       projectHP: project.property('hp'),
       projectSource: project.property('source')
     )
