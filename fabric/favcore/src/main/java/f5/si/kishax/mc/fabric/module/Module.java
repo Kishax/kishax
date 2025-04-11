@@ -32,6 +32,7 @@ public class Module extends AbstractModule {
   private final FabricLoader fabric;
   private final Logger logger;
   private final MinecraftServer server;
+
   public Module(FabricLoader fabric, Logger logger, MinecraftServer server) {
     this.fabric = fabric;
     this.logger = logger;
@@ -60,7 +61,7 @@ public class Module extends AbstractModule {
   @Singleton
   @DataDirectory
   public Path provideDataDirectory() {
-    return fabric.getConfigDir().resolve("Kishax");
+    return fabric.getConfigDir().resolve("kishax");
   }
 
   @Provides
