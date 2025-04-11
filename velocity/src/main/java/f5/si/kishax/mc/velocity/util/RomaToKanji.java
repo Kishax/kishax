@@ -56,10 +56,6 @@ public class RomaToKanji {
 
     ROMA_TO_KANA_MAP.put("tye", "ちぇ");
 
-    ROMA_TO_KANA_MAP.put("be11a", "ベラ");
-    ROMA_TO_KANA_MAP.put("BELLA", "ベラ");
-    ROMA_TO_KANA_MAP.put("Bella", "ベラ");
-    ROMA_TO_KANA_MAP.put("bella", "ベラ");
     ROMA_TO_KANA_MAP.put("ggo", "っご");
     ROMA_TO_KANA_MAP.put("she", "しぇ");
     ROMA_TO_KANA_MAP.put("ttya", "っちゃ");
