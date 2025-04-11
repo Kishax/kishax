@@ -57,7 +57,6 @@ include (
   'fabric:fav1_20_1',
   'fabric:fav1_20_4',
   'forge:fovcore',
-  'forge:fov1_21',
   'forge:fov1_21_1',
   'neoforge:neofovcore',
   'neoforge:neofov1_21_1',
