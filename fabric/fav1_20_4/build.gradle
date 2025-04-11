@@ -8,6 +8,7 @@ plugins {
 configurations {
   shadowImpl
   compileOnly.extendsFrom shadowImpl
+  implementation.extendsFrom shadowImpl2
 }
 
 dependencies {
@@ -16,7 +17,7 @@ dependencies {
   modImplementation 'net.fabricmc:fabric-loader:0.15.11'
   modImplementation 'net.fabricmc.fabric-api:fabric-api:0.97.1+1.20.4'
   compileOnly project(':fabric:favcore')
-  shadowImpl project(':common')
+  shadowImpl2 project(':common')
 }
 
 build {
@@ -45,7 +46,7 @@ processResources {
 shadowJar {
   dependsOn processResources
   configurations = [project.configurations.shadowImpl]
-  archiveBaseName.set('FMC-Fabric')
+  archiveBaseName.set('Kishax-Fabric')
   archiveClassifier.set('')
   archiveVersion.set('1.20.4-shaded')
   from(project(':fabric:favcore').sourceSets.main.output)
@@ -62,7 +63,7 @@ task remappedShadowJar(type: RemapJarTask) {
   dependsOn tasks.shadowJar
   input.set(tasks.shadowJar.archiveFile.get().asFile)
   inputFile.set(tasks.shadowJar.archiveFile.get().asFile)
-  archiveFileName.set('FMC-Fabric-1.20.4-remapped.jar')
+  archiveFileName.set('Kishax-Fabric-1.20.4-remapped.jar')
 }
 
 tasks.assemble.dependsOn tasks.remappedShadowJar

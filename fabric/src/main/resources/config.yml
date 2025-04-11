@@ -1,4 +1,4 @@
-# FMC-Fabric-Mod Configuration File
+# Configuration File
 MySQL:
   Host: "localhost"
   Database: ""

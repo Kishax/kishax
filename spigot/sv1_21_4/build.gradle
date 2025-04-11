@@ -8,6 +8,7 @@ targetCompatibility = 21
 configurations {
   shadowImpl
   compileOnly.extendsFrom shadowImpl
+  implementation.extendsFrom shadowImpl2
 }
 
 dependencies {
@@ -19,7 +20,7 @@ dependencies {
   shadowImpl 'net.kyori:adventure-api:4.17.0'
   shadowImpl 'net.kyori:adventure-platform-bukkit:4.3.4'
   compileOnly project(':spigot:svcore')
-  shadowImpl project(':common')
+  shadowImpl2 project(':common')
 }
 
 build {
@@ -29,7 +30,7 @@ build {
 
 shadowJar {
   configurations = [project.configurations.shadowImpl]
-  archiveBaseName.set('FMC-Spigot')
+  archiveBaseName.set('Kishax-Spigot')
   archiveClassifier.set('')
   archiveVersion.set('1.21.4')
   from(project(':spigot:svcore').sourceSets.main.output)

@@ -34,7 +34,7 @@ build {
 
 shadowJar {
   configurations = [project.configurations.shadowImpl]
-  archiveBaseName.set('FMC-Velocity')
+  archiveBaseName.set('Kishax-Velocity')
   archiveClassifier.set('')
   archiveVersion.set('3.4.0')
   exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')

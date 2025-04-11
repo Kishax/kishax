@@ -1,4 +1,4 @@
-# FMC-NeoForge-Mod Configuration File
+# Configuration File
 MySQL:
   Host: "localhost"
   Database: ""

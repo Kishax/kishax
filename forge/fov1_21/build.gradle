@@ -10,6 +10,7 @@ targetCompatibility = 21
 configurations {
   shadowImpl
   compileOnly.extendsFrom shadowImpl
+  implementation.extendsFrom shadowImpl2
 }
 
 minecraft {
@@ -20,7 +21,7 @@ dependencies {
   minecraft 'net.minecraftforge:forge:1.21-51.0.32'
   implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
   compileOnly project(':forge:fovcore')
-  shadowImpl project(':common')
+  shadowImpl2 project(':common')
 }
 
 build {
@@ -30,7 +31,7 @@ build {
 
 shadowJar {
   configurations = [project.configurations.shadowImpl]
-  archiveBaseName.set('FMC-Forge')
+  archiveBaseName.set('Kishax-Forge')
   archiveClassifier.set('')
   archiveVersion.set('1.21-reobfed')
   from(project(':forge:fovcore').sourceSets.main.output)

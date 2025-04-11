@@ -1,6 +1,6 @@
 {
   "pack": {
-    "description": "FMC resources",
+    "description": "Kishax resources",
     "pack_format": ${projectPackMCMeta}
   }
 }
