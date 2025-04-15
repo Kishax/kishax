@@ -13,14 +13,13 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
 
 import f5.si.kishax.mc.common.database.Database;
 import f5.si.kishax.mc.spigot.server.cmd.sub.Book;
-
-import org.bukkit.plugin.java.JavaPlugin;
 
 public class ItemFrames {
   private final JavaPlugin plugin;
@@ -30,9 +29,10 @@ public class ItemFrames {
   private final ImageMap im;
   private static final String OLD_KEY_SUFFIX = "custom_image";
   private static final String OLD_LARGE_KEY_SUFFIX = "custom_large_image";
-  public static final String NEW_KEY_SUFFIX = ImageMap.PERSISTANT_KEY; // "custom_image"
-  public static final String NEW_LARGE_KEY_SUFFIX = ImageMap.LARGE_PERSISTANT_KEY; // "custom_large_image"
-  private static final String OLD_PLUGIN_ID = "fmc-plugin"; // 古いプラグインの ID
+  public static final String NEW_KEY_SUFFIX = ImageMap.PERSISTANT_KEY;
+  public static final String NEW_LARGE_KEY_SUFFIX = ImageMap.LARGE_PERSISTANT_KEY;
+  private static final String OLD_PLUGIN_ID = "fmc-plugin"; // old plugin id
+  private static final String MIGRATED_KEY_NAME = "migrated";
 
   @Inject
   public ItemFrames(JavaPlugin plugin, Logger logger, Database db, Book book, ImageMap im) {
@@ -72,41 +72,64 @@ public class ItemFrames {
       MapView mapView = mapMeta.getMapView();
       if (mapView != null) {
         PersistentDataContainer container = mapMeta.getPersistentDataContainer();
-        // 古いプラグインの NamespacedKey を作成 (プラグインインスタンスではなく、文字列で指定)
         NamespacedKey oldKey = new NamespacedKey(OLD_PLUGIN_ID, OLD_KEY_SUFFIX);
-        NamespacedKey oldLargeKey = new NamespacedKey(OLD_PLUGIN_ID, OLD_LARGE_KEY_SUFFIX);
+        NamespacedKey oldLargeKey = new NamespacedKey(OLD_PLUGIN_ID,
+            OLD_LARGE_KEY_SUFFIX);
         NamespacedKey newKey = new NamespacedKey(plugin, NEW_KEY_SUFFIX);
         NamespacedKey newLargeKey = new NamespacedKey(plugin, NEW_LARGE_KEY_SUFFIX);
+        NamespacedKey migratedKey = new NamespacedKey(plugin, MIGRATED_KEY_NAME);
 
-        logger.info("Checking for old key: {}", oldKey.toString()); // ログ出力も修正
+        // if you would like to detect migrated map, use under
+        // if (container.has(migratedKey, PersistentDataType.BOOLEAN)
+        // && container.get(migratedKey, PersistentDataType.BOOLEAN)) {
+        // // logger.info(" Map ID {}: Already migrated.", mapView.getId());
+        // return;
+        // }
 
-        // 古いキーが存在する場合は、新しいキーにデータを移行
-        if (container.has(oldKey, PersistentDataType.STRING) && !container.has(newKey, PersistentDataType.STRING)) {
-          logger.info("Old key found for map ID: {}", mapView.getId());
+        if (container.has(oldKey, PersistentDataType.STRING) &&
+            !container.has(newKey, PersistentDataType.STRING)) {
+          logger.info(" Map ID {}: Old small key found.", mapView.getId());
           String imageData = container.get(oldKey, PersistentDataType.STRING);
-          logger.info("Retrieved old data: {}", imageData);
+          logger.info(" Map ID {}: Migrating small data...", mapView.getId());
           container.set(newKey, PersistentDataType.STRING, imageData);
-          logger.info("Set new key with data.");
           container.remove(oldKey);
-          logger.info("Removed old key.");
-          itemFrame.setItem(item);
-          logger.info("Updated item in frame.");
+          container.set(migratedKey, PersistentDataType.BOOLEAN, true);
+          item.setItemMeta(mapMeta);
           im.loadAndSetImage(conn, mapView.getId(), item, mapMeta, mapView);
-          logger.info("Loaded image with new key.");
-          return; // 移行処理が終わったら、以降の処理は不要
-        } else {
-          logger.info("Old key not found for map ID: {}", mapView.getId());
+          itemFrame.setItem(item);
+
+          logger.info(" Map ID {}: Small data migrated.", mapView.getId());
+          logger.info(" Container Keys: {}", container.getKeys());
+          return;
         }
 
-        // 新しいキーが存在する場合は、通常通りロード
+        if (container.has(oldLargeKey, PersistentDataType.STRING)
+            && !container.has(newLargeKey, PersistentDataType.STRING)) {
+          logger.info(" Map ID {}: Old large key found.", mapView.getId());
+          String imageData = container.get(oldLargeKey, PersistentDataType.STRING);
+          logger.info(" Map ID {}: Migrating large data...", mapView.getId());
+          container.set(newLargeKey, PersistentDataType.STRING, imageData);
+          container.remove(oldLargeKey);
+          container.set(migratedKey, PersistentDataType.BOOLEAN, true);
+          item.setItemMeta(mapMeta); // 以下、loadAndSetImageTileメソッドで実行されるのでここでは不必要
+          im.loadAndSetImageTile(conn, mapView.getId(), item, mapMeta, mapView);
+          itemFrame.setItem(item);
+
+          logger.info(" Map ID {}: Large data migrated.", mapView.getId());
+          logger.info(" Container Keys: {}", container.getKeys());
+          return;
+        }
+
         if (container.has(newKey, PersistentDataType.STRING)) {
           im.loadAndSetImage(conn, mapView.getId(), item, mapMeta, mapView);
         } else if (container.has(newLargeKey, PersistentDataType.STRING)) {
           im.loadAndSetImageTile(conn, mapView.getId(), item, mapMeta, mapView);
         }
       }
-    } else if (item.getType() == org.bukkit.Material.WRITTEN_BOOK && item.getItemMeta() instanceof BookMeta meta) {
-      if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Book.PERSISTANT_KEY),
+    } else if (item.getType() == org.bukkit.Material.WRITTEN_BOOK &&
+        item.getItemMeta() instanceof BookMeta meta) {
+      if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin,
+          Book.PERSISTANT_KEY),
           PersistentDataType.STRING)) {
         item.setItemMeta(book.setBookItemMeta((BookMeta) meta));
         logger.info("Updated book item frame: {}", itemFrame.getLocation());
