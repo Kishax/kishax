@@ -45,6 +45,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
 
@@ -53,9 +54,9 @@ import com.google.inject.Inject;
 import f5.si.kishax.mc.common.database.Database;
 import f5.si.kishax.mc.common.server.Luckperms;
 import f5.si.kishax.mc.common.server.ServerStatusCache;
-import f5.si.kishax.mc.spigot.server.ItemFrames;
 import f5.si.kishax.mc.spigot.server.InvSaver;
 import f5.si.kishax.mc.spigot.server.InventoryCheck;
+import f5.si.kishax.mc.spigot.server.ItemFrames;
 import f5.si.kishax.mc.spigot.server.cmd.sub.Confirm;
 import f5.si.kishax.mc.spigot.server.menu.Menu;
 import f5.si.kishax.mc.spigot.server.menu.Type;
@@ -63,9 +64,6 @@ import f5.si.kishax.mc.spigot.settings.Coords;
 import f5.si.kishax.mc.spigot.util.RunnableTaskUtil;
 import f5.si.kishax.mc.spigot.util.config.PortalsConfig;
 import f5.si.kishax.mc.spigot.util.interfaces.MessageRunnable;
-
-import org.bukkit.plugin.java.JavaPlugin;
-
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -91,7 +89,8 @@ public final class EventListener implements Listener {
   private final Set<Player> playersInPortal = new HashSet<>();
 
   @Inject
-  public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, PortalsConfig psConfig, Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, ItemFrames fif) {
+  public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, PortalsConfig psConfig,
+      Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, ItemFrames fif) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -110,11 +109,12 @@ public final class EventListener implements Listener {
       Player player = (Player) event.getEntity();
       Arrow arrowTile = (Arrow) event.getProjectile();
       if (arrowTile != null) {
-        if (arrowTile.getPersistentDataContainer().has(new NamespacedKey(plugin, Type.TELEPORT_REQUEST.getPersistantKey()), PersistentDataType.STRING)) {
+        if (arrowTile.getPersistentDataContainer()
+            .has(new NamespacedKey(plugin, Type.TELEPORT_REQUEST.getPersistantKey()), PersistentDataType.STRING)) {
           event.setCancelled(true);
           Component message = Component.text("ショートカットメニュー属性の矢を放つことはできません！")
-            .color(NamedTextColor.RED)
-            .decorate(TextDecoration.BOLD);
+              .color(NamedTextColor.RED)
+              .decorate(TextDecoration.BOLD);
 
           audiences.player(player).sendMessage(message);
           return;
@@ -152,11 +152,12 @@ public final class EventListener implements Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
               menu.getShortCutMap().forEach((key, value) -> {
-                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
+                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()),
+                    PersistentDataType.STRING)) {
                   player.closeInventory();
                   Component message = Component.text("ショートカットメニュー属性のアイテムをクラフトエリアにセットすることはできません！")
-                    .color(NamedTextColor.RED)
-                    .decorate(TextDecoration.BOLD);
+                      .color(NamedTextColor.RED)
+                      .decorate(TextDecoration.BOLD);
                   audiences.player(player).sendMessage(message);
                   return;
                 }
@@ -182,7 +183,8 @@ public final class EventListener implements Listener {
           Set<Material> materials = Type.getMaterials();
           if (materials.contains(material)) {
             menu.getShortCutMap().forEach((key, value) -> {
-              if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
+              if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()),
+                  PersistentDataType.STRING)) {
                 event.setCancelled(true);
                 player.closeInventory();
                 value.run(player);
@@ -215,11 +217,12 @@ public final class EventListener implements Listener {
             Set<Material> materials = Type.getMaterials();
             if (materials.contains(material)) {
               menu.getShortCutMap().forEach((key, value) -> {
-                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
+                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()),
+                    PersistentDataType.STRING)) {
                   player.closeInventory();
                   Component message = Component.text("ショートカットメニュー属性のアイテムをクラフトエリアにセットすることはできません！")
-                    .color(NamedTextColor.RED)
-                    .decorate(TextDecoration.BOLD);
+                      .color(NamedTextColor.RED)
+                      .decorate(TextDecoration.BOLD);
 
                   audiences.player(player).sendMessage(message);
                   return;
@@ -231,7 +234,8 @@ public final class EventListener implements Listener {
             Set<Material> materials = Type.getMaterials();
             if (materials.contains(material)) {
               menu.getShortCutMap().forEach((key, value) -> {
-                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()), PersistentDataType.STRING)) {
+                if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, key.getPersistantKey()),
+                    PersistentDataType.STRING)) {
                   event.setCancelled(true);
                   player.closeInventory();
                   value.run(player);
@@ -255,14 +259,14 @@ public final class EventListener implements Listener {
         Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
         String serverName = title.split(" ")[0];
         boolean iskey = serverStatusMap.entrySet().stream()
-          .anyMatch(e -> e.getValue().entrySet().stream()
-            .anyMatch(e2 -> {
-              if (e2.getKey() instanceof String) {
-                String statusServerName = (String) e2.getKey();
-                return statusServerName.equals(serverName);
-              }
-              return false;
-            }));
+            .anyMatch(e -> e.getValue().entrySet().stream()
+                .anyMatch(e2 -> {
+                  if (e2.getKey() instanceof String) {
+                    String statusServerName = (String) e2.getKey();
+                    return statusServerName.equals(serverName);
+                  }
+                  return false;
+                }));
         if (iskey) {
           menu.runMenuEventAction(player, Type.SERVER, slot, event);
         }
@@ -304,14 +308,17 @@ public final class EventListener implements Listener {
             InvSaver.getDiffItems(player).forEach(item -> {
               player.getInventory().addItem(item);
               TextComponent message = Component.text()
-                .append(Component.text("アイテムセット中にインベントリから離れました。").color(NamedTextColor.RED).decorate(TextDecoration.BOLD))
-                .appendNewline()
-                .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
-                .appendNewline()
-                .append(Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
-                .appendNewline()
-                .append(Component.text("※アイテムを返却しました。").color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
-                .build();
+                  .append(
+                      Component.text("アイテムセット中にインベントリから離れました。").color(NamedTextColor.RED).decorate(TextDecoration.BOLD))
+                  .appendNewline()
+                  .append(Component.text("アイテム名: " + item.getType()).color(NamedTextColor.GRAY)
+                      .decorate(TextDecoration.ITALIC))
+                  .appendNewline()
+                  .append(
+                      Component.text("かしこみかしこみ、謹んでお返し申す。").color(NamedTextColor.GREEN).decorate(TextDecoration.BOLD))
+                  .appendNewline()
+                  .append(Component.text("※アイテムを返却しました。").color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC))
+                  .build();
 
               audiences.player(player).sendMessage(message);
             });
@@ -375,7 +382,6 @@ public final class EventListener implements Listener {
     }
   }
 
-
   @Deprecated
   @EventHandler
   public void onChat(org.bukkit.event.player.AsyncPlayerChatEvent event) {
@@ -388,7 +394,7 @@ public final class EventListener implements Listener {
         RunnableTaskUtil.Key key = action.getKey();
 
         List<RunnableTaskUtil.Key> keys = Arrays.stream(RunnableTaskUtil.Key.values())
-          .collect(Collectors.toList());
+            .collect(Collectors.toList());
 
         if (keys.contains(key)) {
           MessageRunnable runnable = action.getValue();
@@ -417,20 +423,20 @@ public final class EventListener implements Listener {
             List<?> corner2List = (List<?>) portal.get("corner2");
             if (corner1List != null && corner2List != null) {
               Location corner1 = new Location(player.getWorld(),
-                ((Number) corner1List.get(0)).doubleValue(),
-                ((Number) corner1List.get(1)).doubleValue(),
-                ((Number) corner1List.get(2)).doubleValue());
+                  ((Number) corner1List.get(0)).doubleValue(),
+                  ((Number) corner1List.get(1)).doubleValue(),
+                  ((Number) corner1List.get(2)).doubleValue());
               Location corner2 = new Location(player.getWorld(),
-                ((Number) corner2List.get(0)).doubleValue(),
-                ((Number) corner2List.get(1)).doubleValue(),
-                ((Number) corner2List.get(2)).doubleValue());
+                  ((Number) corner2List.get(0)).doubleValue(),
+                  ((Number) corner2List.get(1)).doubleValue(),
+                  ((Number) corner2List.get(2)).doubleValue());
               if (isWithinBounds(loc, corner1, corner2)) {
                 isInAnyPortal = true;
                 if (!playersInPortal.contains(player)) {
                   playersInPortal.add(player);
-                  logger.info("Player {} entered the gate: {}!", new Object[]{player.getName(), name});
+                  logger.info("Player {} entered the gate: {}!", new Object[] { player.getName(), name });
                   switch (name) {
-                    case "survival","minigame","mod","others","online","dev" -> {
+                    case "survival", "minigame", "mod", "others", "online", "dev" -> {
                       event.setCancelled(true);
                       player.performCommand("kishax menu server " + name);
                     }
@@ -475,8 +481,8 @@ public final class EventListener implements Listener {
     double z1 = Math.min(corner1.getZ(), corner2.getZ());
     double z2 = Math.max(corner1.getZ(), corner2.getZ());
 
-    return loc.getX() >= x1 && loc.getX() < x2+1 &&
-      loc.getY() >= y1 && loc.getY() < y2+1 &&
-      loc.getZ() >= z1 && loc.getZ() < z2+1;
+    return loc.getX() >= x1 && loc.getX() < x2 + 1 &&
+        loc.getY() >= y1 && loc.getY() < y2 + 1 &&
+        loc.getZ() >= z1 && loc.getZ() < z2 + 1;
   }
 }
