@@ -1,6 +1,6 @@
 # kishax
 
-[![Visit Website](https://img.shields.io/badge/Visit_Website-007BFF?style=for-the-badge)](https://kishax.f5.si/)  
+[![Visit Website](https://img.shields.io/badge/Visit_Website-007BFF?style=for-the-badge)](https://kishax.net/)  
 
 ## Feature
 This is able to use in both Velocity and Spigot.  
