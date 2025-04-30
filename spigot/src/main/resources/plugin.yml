@@ -12,48 +12,48 @@ commands:
   kishax:
     usage: /<command>
     description: You can use Kishax Spigot server command!
-    executor: f5.si.kishax.mc.spigot.cmd.main.Command
+    executor: net.kishax.mc.spigot.cmd.main.Command
   q:
     usage: /<command>
     description: You can confirm image map code generated at discord
-    executor: f5.si.kishax.mc.spigot.cmd.sub.Q
+    executor: net.kishax.mc.spigot.cmd.sub.Q
   tpr:
     usage: /<command>
     description: You can teleport to other player
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.TeleportRequest
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.TeleportRequest
   tprm:
     usage: /<command>
     description: You can teleport to other player
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.TeleportRequest
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.TeleportRequest
   tpra:
     usage: /<command>
     description: You can accept teleport request
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.TeleportAccept
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.TeleportAccept
   tprma:
     usage: /<command>
     description: You can accept teleport request
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.TeleportAccept
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.TeleportAccept
   tprd:
     usage: /<command>
     description: You can accept teleport request
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.TeleportAccept
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.TeleportAccept
   tprmd:
     usage: /<command>
     description: You can accept teleport request
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.TeleportAccept
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.TeleportAccept
   back:
     usage: /<command>
     description: You can teleport to back
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.TeleportBack
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.TeleportBack
   registerpoint:
     usage: /<command>
     description: You can register point
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.RegisterTeleportPoint
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.RegisterTeleportPoint
   registerimagemap:
     usage: /<command>
     description: You can register image map
-    executor: f5.si.kishax.mc.spigot.cmd.sub.imagemap.RegisterImageMap
+    executor: net.kishax.mc.spigot.cmd.sub.imagemap.RegisterImageMap
   nv:
     usage: /<command>
     description: You can open navi menu
-    executor: f5.si.kishax.mc.spigot.cmd.sub.teleport.Navi
+    executor: net.kishax.mc.spigot.cmd.sub.teleport.Navi
