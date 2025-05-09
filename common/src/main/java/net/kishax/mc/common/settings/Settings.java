@@ -15,7 +15,7 @@ public enum Settings {
   IMAGE_FOLDER("image_folder"),
   RULEBOOK_CONTENT("rulebook"),
   CONFIRM_URL("confirm_url"),
-  NOW_ONLINE("now_online"),
+  HOME_SERVER_NAME("home_server_name"),
   INPUT_PERIOD("input_period"),
   HUB_TELEPORT_TIME("hubteleporttime"),
   ;

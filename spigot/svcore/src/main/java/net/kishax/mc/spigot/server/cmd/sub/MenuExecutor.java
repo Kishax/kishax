@@ -24,17 +24,18 @@ import net.md_5.bungee.api.ChatColor;
 
 public class MenuExecutor {
   public static final List<String> args1 = new ArrayList<>(Arrays.asList("server", "image", "get", "tp"));
-  public static final List<String> args2 = new ArrayList<>(Arrays.asList("online","survival","minigame","dev","mod","distributed","others","before"));
-  public static final List<String> args2tp = new ArrayList<>(Arrays.asList("point","player", "navi"));
-  public static final List<String> args2image = new ArrayList<>(Arrays.asList("list","register"));
-  public static final List<String> args3tpsp = new ArrayList<>(Arrays.asList("private","public"));
+  public static final List<String> args2 = new ArrayList<>(
+      Arrays.asList("online", "survival", "minigame", "dev", "mod", "distributed", "others", "before"));
+  public static final List<String> args2tp = new ArrayList<>(Arrays.asList("point", "player", "navi"));
+  public static final List<String> args2image = new ArrayList<>(Arrays.asList("list", "register"));
+  public static final List<String> args3tpsp = new ArrayList<>(Arrays.asList("private", "public"));
 
   private final JavaPlugin plugin;
   private final Luckperms lp;
   private final Menu menu;
 
   @Inject
-  public MenuExecutor(JavaPlugin plugin, Logger logger, Luckperms lp, Menu menu) {  
+  public MenuExecutor(JavaPlugin plugin, Logger logger, Luckperms lp, Menu menu) {
     this.plugin = plugin;
     this.lp = lp;
     this.menu = menu;
@@ -56,12 +57,14 @@ public class MenuExecutor {
                 switch (item.getType()) {
                   case ENCHANTED_BOOK -> {
                     if (meta != null) {
-                      if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Type.GENERAL.getPersistantKey()), PersistentDataType.STRING)) {
+                      if (meta.getPersistentDataContainer()
+                          .has(new NamespacedKey(plugin, Type.GENERAL.getPersistantKey()), PersistentDataType.STRING)) {
                         hasMenuBook = true;
                       }
                     }
                   }
-                  default -> {}
+                  default -> {
+                  }
                 }
               }
             }
@@ -70,7 +73,8 @@ public class MenuExecutor {
               ItemStack menuBook = new ItemStack(Material.ENCHANTED_BOOK);
               ItemMeta menuMeta = menuBook.getItemMeta();
               if (menuMeta != null) {
-                menuMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, Type.GENERAL.getPersistantKey()), PersistentDataType.STRING, "true");
+                menuMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, Type.GENERAL.getPersistantKey()),
+                    PersistentDataType.STRING, "true");
                 menuMeta.setDisplayName(ChatColor.GOLD + "Kishax Menu Book");
                 menuMeta.setLore(Arrays.asList(ChatColor.GRAY + "右クリックでメニューを開くことができます。"));
                 menuBook.setItemMeta(menuMeta);
@@ -92,9 +96,11 @@ public class MenuExecutor {
                 String serverType = args[2].toLowerCase();
                 switch (serverType) {
                   case "online" -> menu.onlineServerMenu(player);
-                  case "survival", "minigame", "mod", "distributed", "others", "dev" -> menu.serverEachTypeMenu(player, serverType);
-                  case "before" -> menu.serverMenu(player, Settings.NOW_ONLINE.getValue());
-                  default -> sender.sendMessage("Usage: /kishax menu server <survival|minigame|dev|mod|distributed|others>");
+                  case "survival", "minigame", "mod", "distributed", "others", "dev" ->
+                    menu.serverEachTypeMenu(player, serverType);
+                  case "before" -> menu.serverMenu(player, Settings.HOME_SERVER_NAME.getValue());
+                  default ->
+                    sender.sendMessage("Usage: /kishax menu server <survival|minigame|dev|mod|distributed|others>");
                 }
               } else {
                 menu.serverTypeMenu(player);
@@ -157,4 +163,3 @@ public class MenuExecutor {
     }
   }
 }
-
