@@ -45,6 +45,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.settings.PermSettings;
+import net.kishax.mc.common.settings.Settings;
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.Main;
 import net.kishax.mc.velocity.discord.DiscordEventListener;
@@ -616,6 +617,15 @@ public class EventListener {
                 }
               }
             } else {
+              // もし、homeでない場合、キックし、「初参加プレイヤーはIP: mc.kishax.netで参加してください。」
+              if (!currentServerName.equals(Settings.HOME_SERVER_NAME.getValue())) {
+                pd.playerDisconnect(
+                    false,
+                    player,
+                    Component.text("初参加プレイヤーはIP: " + Settings.HOME_SERVER_IP + " で参加してください。")
+                        .color(NamedTextColor.RED));
+                return;
+              }
               // DBにデータがなかったら (初参加)
               // MojangAPIによるUUID-MCIDチェックも行う
               // データベースに同一の名前がないか確認

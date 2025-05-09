@@ -16,6 +16,7 @@ public enum Settings {
   RULEBOOK_CONTENT("rulebook"),
   CONFIRM_URL("confirm_url"),
   HOME_SERVER_NAME("home_server_name"),
+  HOME_SERVER_IP("home_server_ip"),
   INPUT_PERIOD("input_period"),
   HUB_TELEPORT_TIME("hubteleporttime"),
   ;
@@ -54,7 +55,8 @@ public enum Settings {
       if (rs.next()) {
         dbValue = rs.getString("value");
       }
-    } catch (SQLException | ClassNotFoundException e) {}
+    } catch (SQLException | ClassNotFoundException e) {
+    }
     return dbValue;
   }
 }
