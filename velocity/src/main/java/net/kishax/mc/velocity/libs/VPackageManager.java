@@ -19,7 +19,7 @@ public class VPackageManager {
         DISCORD),
     CLUB_MINNCED_WEBHOOK(
         "club.minnced:discord-webhooks:0.8.0",
-        "https://github.com/verazza/kishax/releases/download/libs/Kishax-Dependency-1.0.0.jar",
+        "https://github.com/takayamaekawa/kishax/releases/download/libs/Kishax-Dependency-1.0.0.jar",
         PackageType.MAIN,
         WEBHOOK),
         ;

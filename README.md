@@ -12,19 +12,19 @@ Freely to Edit!
 
 ### `/kishax create <url> <title> <comment>`
 You can create image map from url like this:
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_map.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_map.png)  
 If you choose 0 or 1, you can 1×1 imageMap or QR-Code  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/example_small_maps.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/spigot/imagemap/example_small_maps.png)  
 If you choose 2, you can large size imageMap  
 You can specified that ratio and background-color like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_size.png)  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_color.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_size.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/spigot/imagemap/choose_color.png)  
 The image is generated accordingly, preserving the aspect ratio of the image  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/result.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/spigot/imagemap/result.png)  
 Here is complete large map:  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/example_large_map.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/spigot/imagemap/example_large_map.png)  
 When images are at your disposal, you can do things like this!  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/spigot/imagemap/arrow_move.gif)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/spigot/imagemap/arrow_move.gif)  
 
 ### `/kishax menu <server|get|image>`
 You can get this when you visit kishax server. For example, you can get imageMap created like above.  
@@ -39,13 +39,13 @@ Reloading config
 ## Linkage to Discord
 For Velocity Server, Velocity Server notifys Embed's message or plain-text-message under each events.  
 When server switching, joining, disconnecting like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/event_message.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/event_message.png)  
 When chatting like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/chat_message2.png)
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/chat_message2.png)
 
 ## Convert Romaji to Kanji
 This brings an automatic chat conversion Romaji to Kanji like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/chat_conv.png)
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/chat_conv.png)
 
 ## Velocity Command list
 
@@ -57,7 +57,7 @@ Moving to hub server
 ### `/kishaxp cend`
 After executing, Velocity will be shutdown!  
 Before being shutdown, discord's embed editing like this.
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/proxy_shutdown.png)
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/proxy_shutdown.png)
 
 ### `/kishaxp maintenance <status | switch> discord <true | false>`
 This enable server to be maintenance mode, which is that for example, it is openable for only Admin who has permission:group.super-admin, others disconnecting.  
@@ -74,11 +74,11 @@ Moving to specific server as server command
 
 ### `/kishaxp req <server>`
 Requesting to let server start-up to Admin through discord like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/req_button.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/req_button.png)  
 If someone presses `YES` button, here will be like this.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/reqsul_notification.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/reqsul_notification.png)  
 Here is minecraft's player chat area.  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/req_minecraft_chat.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/req_minecraft_chat.png)  
 
 ### `/kishaxp start <server>`
 Let server start by bat file of windows
@@ -94,10 +94,10 @@ Switching the way of sending chating message to Discord.
 There are Embed editing type or Plane text message type.  
 
 * Embed editing type (Using Bot)  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/embed_editing_type.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/embed_editing_type.png)  
 
 * Plane text message type (Using Webhook)  
-![alt text](https://raw.githubusercontent.com/verazza/branding/refs/heads/master/repo/kishax/velocity/plain_text_message_type.png)  
+![alt text](https://raw.githubusercontent.com/takayamaekawa/branding/refs/heads/master/repo/kishax/velocity/plain_text_message_type.png)  
 
 ### `/kishaxp debug`
 Switching debug mode. In details, this is only replacing config value each other. For example, Discord.ChannelId and Debug.ChannelId.
