@@ -2,7 +2,7 @@ name: Kishax
 version: ${projectName}
 description: ${projectDescription}
 main: ${projectGroup}.spigot.Main
-author: verazza
+author: Takaya Maekawa
 website: ${projectHP}
 api-version: ${projectAPIVersion}
 description: ${projectDescription}

@@ -8,7 +8,7 @@ version="${projectVersion}"
 displayName="${projectName}"
 displayURL="${projectHP}"
 logoFile="logo.png"
-authors="verazza"
+authors="Takaya Maekawa"
 description="${projectDescription}"
 [[dependencies.kishax]]
 modId="luckperms"

@@ -332,10 +332,15 @@ public class EventListener {
             ps.setString(1, playerName);
             ps.setString(2, playerUUID);
             ps2.setString(1, serverName);
+
+            logger.info("playerName: " + playerName);
+            logger.info("playerUUID: " + playerUUID);
+            logger.info("serverName: " + serverName);
             try (ResultSet rs = ps.executeQuery();
                 ResultSet rs2 = ps2.executeQuery()) {
               if (rs2.next() && !rs2.getBoolean("online")) {
                 if (rs.next()) {
+                  // 2回目以降の参加者
                   if (rs.getBoolean("ban")) {
                     pd.playerDisconnect(
                         false,
@@ -361,7 +366,6 @@ public class EventListener {
                         Main.getInjector().getInstance(StartServer.class).execute2(player, serverName);
                       } else if (permLevel == 1) {
                         Main.getInjector().getProvider(Request.class).get().execute2(player, serverName);
-                        ;
                       }
                       return;
                     }
@@ -393,7 +397,7 @@ public class EventListener {
                       pd.playerDisconnect(
                           false,
                           player,
-                          Component.text("認証ユーザーではありません。").color(NamedTextColor.RED));
+                          Component.text("認証ユーザーではありません。(code: 203)").color(NamedTextColor.RED));
                       throw new Error(playerName + "は認証ユーザーではありません。");
                     }
 
@@ -413,7 +417,7 @@ public class EventListener {
                   pd.playerDisconnect(
                       false,
                       player,
-                      Component.text("認証ユーザーではありません。").color(NamedTextColor.RED));
+                      Component.text("認証ユーザーではありません。(code: 204").color(NamedTextColor.RED));
                   return;
                 }
               }
