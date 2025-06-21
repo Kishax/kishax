@@ -54,6 +54,7 @@ include (
   'spigot:sv1_21_3',
   'spigot:sv1_21_4',
   'spigot:sv1_21_5',
+  'spigot:sv1_21_6',
   'fabric:favcore',
   'fabric:fav1_20_1',
   'fabric:fav1_20_4',
