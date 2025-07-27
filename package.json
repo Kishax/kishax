@@ -1,0 +1,24 @@
+{
+	"name": "gather-slack-bot",
+	"version": "1.0.0",
+	"description": "Connected Your Gather With Slack",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js",
+		"dev": "node index.js",
+		"pm2:start": "pm2 start ecosystem.config.js",
+		"pm2:stop": "pm2 stop gather-bot",
+		"pm2:restart": "pm2 restart gather-bot",
+		"pm2:logs": "pm2 logs gather-bot",
+		"pm2:monit": "pm2 monit",
+		"pm2:delete": "pm2 delete gather-bot"
+	},
+	"dependencies": {
+		"@gathertown/gather-game-client": "^43.0.1",
+		"axios": "^1.6.0",
+		"dotenv": "^16.3.0"
+	},
+	"devDependencies": {
+		"pm2": "^6.0.8"
+	}
+}

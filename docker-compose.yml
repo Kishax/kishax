@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  gather-bot:
+    build: .
+    container_name: gather-slack-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - gather-bot-network
+    # ポートマッピング（必要に応じて）
+    # ports:
+    #   - "3000:3000"
+
+networks:
+  gather-bot-network:
+    driver: bridge
+
+# 永続化ボリューム（必要に応じて）
+volumes:
+  logs-data:
