@@ -2,9 +2,6 @@ require("dotenv").config();
 const { Game } = require("@gathertown/gather-game-client");
 const axios = require("axios");
 
-// Node.js環境でWebSocketを使用可能にする
-global.WebSocket = require('ws');
-
 class GatherSlackBot {
 	constructor() {
 		this.game = null;
