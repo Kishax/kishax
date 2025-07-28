@@ -5,9 +5,7 @@
 cp .env.example .env
 ```
 
-## Local
-
-### Install & Run
+## Quick Start
 ```bash
 # 1. 依存関係インストール
 npm install
@@ -35,21 +33,33 @@ pm2 stop gather-bot
 
 # 8. 削除
 pm2 delete gather-bot
-```
-
-### Update
-```bash
-# 1. コード更新
-git pull origin main
-
-# 2. 依存関係更新
-npm install
 
 # 3. 無停止再起動
 pm2 reload gather-bot
 
 # または通常再起動
 pm2 restart gather-bot
+```
+
+## EC2
+```bash
+# 1. SSH接続
+ssh -i ~/.ssh/gather-bot-key.pem ec2-user@xx.xxx.xxx.xxx
+
+# 2. リポジトリクローン
+git clone https://github.com/Kishax/gather-slack-bot.git
+cd gather-slack-bot
+
+# 3. 環境変数設定
+cp .env.example .env
+nano .env  # 実際の値を設定
+
+# 4. Docker起動
+docker-compose up -d
+
+# 5. ログ確認
+docker-compose logs -f
+```
 
 
 ## Docker
@@ -111,14 +121,8 @@ docker exec gather-bot pm2 monit
 
 # コンテナ内ログ
 docker exec gather-bot pm2 logs gather-bot
-```
 
-### Update
-```bash
-# 1. コード更新
-git pull origin main
-
-# 2. イメージ再ビルド・再起動
+# イメージ再ビルド・再起動
 docker-compose up -d --build
 
 # または手動
@@ -126,46 +130,14 @@ docker stop gather-bot
 docker rm gather-bot
 docker build -t gather-slack-bot .
 docker run -d --name gather-bot --env-file .env gather-slack-bot
-```
-
-## pm2
-```bash
-# プロセス一覧
-pm2 list
-
-# 詳細情報
-pm2 show gather-bot
-
-# メモリ・CPU使用率
-pm2 monit
-
-# ログローテーション（pm2-logrotateインストール後）
-pm2 install pm2-logrotate
-
-# 1. コード更新
-git pull origin main
-
-# 2. 依存関係更新
-npm install
-
-# 3. 無停止再起動
-pm2 reload gather-bot
-
-# または通常再起動
-pm2 restart gather-bot
-```
-
-## Emergency
-```bash
-# PM2完全リセット
-pm2 kill
-pm2 start ecosystem.config.js
 
 # Docker完全リセット
 docker-compose down
 docker system prune -f
 docker-compose up -d --build
 ```
+
+Other useful commands: [CMD.md](CMD.md)
 
 ## License
 [MIT](LICENSE)
