@@ -19,7 +19,7 @@ RUN apk update && apk add --no-cache \
 COPY package*.json ./
 
 # 依存関係をインストール（本番環境用）
-RUN npm ci --only=production && \
+RUN npm install && \
     npm cache clean --force
 
 # アプリケーションファイルをコピー
