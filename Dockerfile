@@ -22,21 +22,12 @@ COPY package*.json ./
 RUN npm ci --only=production && \
     npm cache clean --force
 
-# PM2をグローバルインストール
-RUN npm install -g pm2
-
 # アプリケーションファイルをコピー
 COPY . .
-
-# ログディレクトリを作成
-RUN mkdir -p logs
 
 # 非rootユーザーを作成
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S gather-bot -u 1001
-
-# ログディレクトリの権限を設定
-RUN chown -R gather-bot:nodejs /app/logs
 
 # 非rootユーザーに切り替え
 USER gather-bot
@@ -48,8 +39,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD node -e "console.log('Health check passed')" || exit 1
 
-# PM2でアプリケーションを起動
-CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]
-
-# 代替起動方法（PM2なしの場合）
-# CMD ["node", "index.js"]
+# アプリケーションを起動
+CMD ["node", "index.js"]

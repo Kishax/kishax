@@ -5,40 +5,19 @@
 cp .env.example .env
 ```
 
-## Quick Start
+## Local Development
 ```bash
 # 1. 依存関係インストール
 npm install
 
-# 2. PM2起動
-npm run pm2:start
+# 2. 直接起動
+npm start
 
-# または直接
-pm2 start ecosystem.config.js
+# または
+node index.js
 
-# 3. ステータス確認
-pm2 list
-
-# 4. ログ監視
-pm2 logs gather-bot
-
-# 5. リアルタイム監視
-pm2 monit
-
-# 6. 再起動
-pm2 restart gather-bot
-
-# 7. 停止
-pm2 stop gather-bot
-
-# 8. 削除
-pm2 delete gather-bot
-
-# 3. 無停止再起動
-pm2 reload gather-bot
-
-# または通常再起動
-pm2 restart gather-bot
+# 3. 開発モード
+npm run dev
 ```
 
 ## EC2
@@ -111,16 +90,13 @@ docker-compose down
 docker-compose up -d --build
 ```
 
-### Monitor with pm2
+### Monitor
 ```bash
 # コンテナ状況
 docker stats gather-bot
 
-# リソース使用量
-docker exec gather-bot pm2 monit
-
-# コンテナ内ログ
-docker exec gather-bot pm2 logs gather-bot
+# コンテナログ
+docker logs -f gather-bot
 
 # イメージ再ビルド・再起動
 docker-compose up -d --build
@@ -136,8 +112,6 @@ docker-compose down
 docker system prune -f
 docker-compose up -d --build
 ```
-
-Other useful commands: [CMD.md](CMD.md)
 
 ## License
 [MIT](LICENSE)

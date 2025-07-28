@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   gather-bot:
     build: .
@@ -9,8 +7,6 @@ services:
       - NODE_ENV=production
     env_file:
       - .env
-    volumes:
-      - ./logs:/app/logs
     networks:
       - gather-bot-network
     # ポートマッピング（必要に応じて）
@@ -20,7 +16,3 @@ services:
 networks:
   gather-bot-network:
     driver: bridge
-
-# 永続化ボリューム（必要に応じて）
-volumes:
-  logs-data:
