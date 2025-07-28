@@ -2,6 +2,9 @@ require("dotenv").config();
 const { Game } = require("@gathertown/gather-game-client");
 const axios = require("axios");
 
+// Node.js環境でWebSocketを使用可能にする
+global.WebSocket = require('ws');
+
 class GatherSlackBot {
 	constructor() {
 		this.game = null;
@@ -730,9 +733,7 @@ async function main() {
 		);
 
 		console.log("🚀 Gather Slack Bot が正常に起動しました！");
-		console.log("💡 停止するには: pm2 stop gather-bot または Ctrl+C");
-		console.log("📊 監視: pm2 monit");
-		console.log("📝 ログ: pm2 logs gather-bot");
+		console.log("💡 停止するには: Ctrl+C");
 	} catch (error) {
 		console.error("❌ Bot起動エラー:", error);
 		await bot.sendSlackNotification(
