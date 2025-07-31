@@ -14,6 +14,9 @@ class GatherSlackBot {
 		this.pendingEvents = []; // 初期ロード中に受信したイベントを保存
 		this.processedJoinEvents = new Set(); // 処理済み参加イベントを追跡（重複回避）
 		this.connectionCheckInterval = null; // 定期接続チェック用
+		this.isConnecting = false; // 接続試行中フラグ
+		this.hasNotifiedStartup = false; // 起動通知済みフラグ
+		this.reconnectTimeout = null; // 再接続タイマー
 		this.slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
 		this.gatherApiKey = process.env.GATHER_API_KEY;
 		this.gatherSpaceId = process.env.GATHER_SPACE_ID;
@@ -497,9 +500,32 @@ class GatherSlackBot {
 		}
 	}
 
+	// 再接続をスケジュール
+	scheduleReconnect() {
+		if (this.reconnectTimeout) {
+			clearTimeout(this.reconnectTimeout);
+		}
+		
+		if (this.isConnecting) {
+			console.log("! 既に接続試行中のため再接続をスキップ");
+			return;
+		}
+		
+		console.log("🔄 5秒後に再接続を試行します...");
+		this.reconnectTimeout = setTimeout(() => {
+			this.connect();
+		}, 5000);
+	}
+
 	// Gatherに接続
 	async connect() {
+		if (this.isConnecting) {
+			console.log("! 既に接続試行中です");
+			return;
+		}
+		
 		try {
+			this.isConnecting = true;
 			console.log("🔄 Gatherに接続中...");
 
 			this.game = new Game(this.gatherSpaceId, () =>
@@ -510,21 +536,29 @@ class GatherSlackBot {
 			this.game.subscribeToConnection((connected) => {
 				if (connected) {
 					console.log("✅ Gatherに接続しました");
-					this.sendSlackNotification(
-						"🤖 Gather Bot が起動しました！監視を開始します",
-						"#0099ff",
-					);
+					this.isConnecting = false;
+					
+					// 起動通知は初回のみ送信
+					if (!this.hasNotifiedStartup) {
+						this.sendSlackNotification(
+							"🤖 Gather Bot が起動しました！監視を開始します",
+							"#0099ff",
+						);
+						this.hasNotifiedStartup = true;
+					} else {
+						console.log("🔄 再接続完了（起動通知スキップ）");
+					}
 
 					// 初期メンバーリストを取得・通知
 					this.loadInitialUsers();
 				} else {
 					console.log("❌ Gatherから切断されました");
 					this.initialUsersLoaded = false; // 再接続時に初期化をやり直し
-					// 再接続を試行
-					setTimeout(() => {
-						console.log("🔄 再接続を試行します...");
-						this.connect();
-					}, 5000);
+					
+					// 再接続中でなければ再接続を試行
+					if (!this.isConnecting) {
+						this.scheduleReconnect();
+					}
 				}
 			});
 
@@ -617,8 +651,9 @@ class GatherSlackBot {
 			// エラーハンドリング
 			this.game.subscribeToEvent("error", (error) => {
 				console.error("❌ Gatherエラー:", error);
+				const errorMessage = error?.message || error?.toString() || "不明なエラー";
 				this.sendSlackNotification(
-					`! Gather Bot でエラーが発生: ${error.message}`,
+					`! Gather Bot でエラーが発生: ${errorMessage}`,
 					"#ff0000",
 				);
 			});
@@ -628,11 +663,9 @@ class GatherSlackBot {
 			console.log("🚀 Gather接続プロセス開始");
 		} catch (error) {
 			console.error("❌ 接続エラー:", error);
-			// 5秒後に再試行
-			setTimeout(() => {
-				console.log("🔄 5秒後に再接続を試行します...");
-				this.connect();
-			}, 5000);
+			this.isConnecting = false;
+			// 再接続を試行
+			this.scheduleReconnect();
 		}
 	}
 
@@ -672,6 +705,12 @@ class GatherSlackBot {
 			if (this.connectionCheckInterval) {
 				clearInterval(this.connectionCheckInterval);
 				console.log("🛑 定期接続チェックを停止しました");
+			}
+
+			// 再接続タイマーを停止
+			if (this.reconnectTimeout) {
+				clearTimeout(this.reconnectTimeout);
+				console.log("🛑 再接続タイマーを停止しました");
 			}
 
 			if (this.game) {
