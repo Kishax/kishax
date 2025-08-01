@@ -2,6 +2,7 @@ require("dotenv").config();
 const SlackNotifier = require("./SlackNotifier");
 const UserManager = require("./UserManager");
 const ConnectionManager = require("./ConnectionManager");
+const ConfigManager = require("./ConfigManager");
 
 // Node.js環境でWebSocketを使用可能にする
 global.WebSocket = require("ws");
@@ -11,9 +12,11 @@ class GatherSlackBot {
     this.slackNotifier = null;
     this.userManager = null;
     this.connectionManager = null;
+    this.configManager = null;
     this.initialUsersLoaded = false;
     this.pendingEvents = [];
     this.hasNotifiedStartup = false;
+    this.lastEmptySpaceNotification = 0;
 
     // 環境変数の取得と検証
     this.slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -27,6 +30,7 @@ class GatherSlackBot {
     }
 
     // 各マネージャーを初期化
+    this.configManager = new ConfigManager();
     this.slackNotifier = new SlackNotifier(this.slackWebhookUrl);
     this.userManager = new UserManager();
     this.connectionManager = new ConnectionManager(
@@ -49,7 +53,7 @@ class GatherSlackBot {
       );
 
       // 現在のメンバーリストをSlackに通知
-      await this.slackNotifier.notifyMemberList(currentMembers);
+      await this.slackNotifier.notifyMemberList(currentMembers, this.configManager);
       console.log(`✅ 初期メンバーリスト通知完了: ${currentMembers.length}人`);
 
       this.initialUsersLoaded = true;
@@ -203,9 +207,13 @@ class GatherSlackBot {
       // 接続成功時のイベント
       this.connectionManager.subscribeToConnection(async (connected) => {
         if (connected) {
-          // 起動通知は初回のみ送信
+          // 起動通知は初回のみ送信（設定に応じて）
           if (!this.hasNotifiedStartup) {
-            await this.slackNotifier.notifyStartup();
+            if (this.configManager.isStartupNotificationEnabled()) {
+              await this.slackNotifier.notifyStartup();
+            } else {
+              console.log("⏸️ 起動通知はスキップされました（設定により）");
+            }
             this.hasNotifiedStartup = true;
           } else {
             console.log("🔄 再接続完了（起動通知スキップ）");
@@ -341,14 +349,32 @@ class GatherSlackBot {
     return this.userManager.getUserCount();
   }
 
-  startStatusReporting(intervalMinutes = 60) {
+  startStatusReporting(intervalMinutes = null) {
+    const reportInterval = intervalMinutes ?? this.configManager.getStatusReportInterval();
+    const emptySpaceInterval = this.configManager.getEmptySpaceNotificationInterval();
+    
     setInterval(
       async () => {
         const userCount = this.getCurrentUserCount();
-        await this.slackNotifier.notifyStatusReport(userCount);
-        console.log(`📊 定期報告: 参加者数 ${userCount}人`);
+        const now = Date.now();
+        
+        if (userCount === 0) {
+          const timeSinceLastEmpty = now - this.lastEmptySpaceNotification;
+          const emptyIntervalMs = emptySpaceInterval * 60 * 1000;
+          
+          if (timeSinceLastEmpty >= emptyIntervalMs) {
+            await this.slackNotifier.notifyStatusReport(userCount, this.configManager);
+            this.lastEmptySpaceNotification = now;
+            console.log(`📊 定期報告（空室）: 参加者数 ${userCount}人`);
+          } else {
+            console.log(`⏸️ 空室通知スキップ（前回から${Math.round(timeSinceLastEmpty / 60000)}分経過）`);
+          }
+        } else {
+          await this.slackNotifier.notifyStatusReport(userCount, this.configManager);
+          console.log(`📊 定期報告: 参加者数 ${userCount}人`);
+        }
       },
-      intervalMinutes * 60 * 1000,
+      reportInterval * 60 * 1000,
     );
   }
 
