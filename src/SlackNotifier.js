@@ -63,12 +63,16 @@ class SlackNotifier {
     }
   }
 
-  async notifyMemberList(members) {
+  async notifyMemberList(members, config = null) {
     if (members.length > 0) {
       const memberList = members.join(", ");
       const message = `📋 **現在のGatherメンバー** (${members.length}人)\n${memberList}`;
       return await this.sendNotification(message, "#36a64f");
     } else {
+      if (config && config.isSilentNotificationNobody()) {
+        console.log("⏸️ 誰もいない時の通知はスキップされました（設定により）");
+        return true;
+      }
       return await this.sendNotification(
         "📋 現在Gatherスペースには誰もいません",
         "#808080",
@@ -112,7 +116,11 @@ class SlackNotifier {
     );
   }
 
-  async notifyStatusReport(userCount) {
+  async notifyStatusReport(userCount, config = null) {
+    if (userCount === 0 && config && config.isSilentNotificationNobody()) {
+      console.log("⏸️ 誰もいない時の定期報告はスキップされました（設定により）");
+      return true;
+    }
     const message = `📊 現在のGatherスペース参加者数: ${userCount}人`;
     return await this.sendNotification(message, "#808080");
   }

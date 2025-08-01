@@ -1,0 +1,16 @@
+{
+  // 通知設定
+  "notifications": {
+    // 誰もいない時にSlack通知を送信するかどうか
+    "silentNotificationNobody": false,
+    
+    // 起動時の通知を送信するかどうか
+    "enableStartupNotification": true,
+    
+    // 定期的な状況報告の間隔（分）
+    "statusReportIntervalMinutes": 60,
+    
+    // 誰もいない時の通知間隔（分）
+    "emptySpaceNotificationIntervalMinutes": 60
+  }
+}

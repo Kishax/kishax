@@ -33,8 +33,8 @@ async function main() {
     // Bot接続開始
     await bot.connect();
 
-    // 1時間ごとにステータス報告（オプション）
-    bot.startStatusReporting(60);
+    // 設定に基づいてステータス報告を開始
+    bot.startStatusReporting();
 
     // 30分ごとにヘルスチェック
     setInterval(
