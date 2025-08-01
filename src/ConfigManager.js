@@ -13,6 +13,11 @@ class ConfigManager {
       notifications: {
         silentNotificationNobody: false,
         enableStartupNotification: true,
+        enableInitialMemberListNotification: true,
+        enableStatusReportNotification: true,
+        enableShutdownNotification: true,
+        enableJoinNotification: true,
+        enableLeaveNotification: true,
         statusReportIntervalMinutes: 60,
         emptySpaceNotificationIntervalMinutes: 60,
       },
@@ -71,12 +76,32 @@ class ConfigManager {
     return this.get("notifications.enableStartupNotification") ?? true;
   }
 
+  isInitialMemberListNotificationEnabled() {
+    return this.get("notifications.enableInitialMemberListNotification") ?? true;
+  }
+
   getStatusReportInterval() {
     return this.get("notifications.statusReportIntervalMinutes") ?? 60;
   }
 
   getEmptySpaceNotificationInterval() {
     return this.get("notifications.emptySpaceNotificationIntervalMinutes") ?? 60;
+  }
+
+  isStatusReportNotificationEnabled() {
+    return this.get("notifications.enableStatusReportNotification") ?? true;
+  }
+
+  isShutdownNotificationEnabled() {
+    return this.get("notifications.enableShutdownNotification") ?? true;
+  }
+
+  isJoinNotificationEnabled() {
+    return this.get("notifications.enableJoinNotification") ?? true;
+  }
+
+  isLeaveNotificationEnabled() {
+    return this.get("notifications.enableLeaveNotification") ?? true;
   }
 }
 

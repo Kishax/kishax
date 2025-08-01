@@ -53,8 +53,12 @@ class GatherSlackBot {
       );
 
       // 現在のメンバーリストをSlackに通知
-      await this.slackNotifier.notifyMemberList(currentMembers, this.configManager);
-      console.log(`✅ 初期メンバーリスト通知完了: ${currentMembers.length}人`);
+      if (this.configManager.isInitialMemberListNotificationEnabled()) {
+        await this.slackNotifier.notifyMemberList(currentMembers, this.configManager);
+        console.log(`✅ 初期メンバーリスト通知完了: ${currentMembers.length}人`);
+      } else {
+        console.log("⏸️ 初期メンバーリストの通知はスキップされました（設定により）");
+      }
 
       this.initialUsersLoaded = true;
 
@@ -138,7 +142,11 @@ class GatherSlackBot {
       );
 
       // Slack通知を送信
-      await this.slackNotifier.notifyUserJoined(result.name);
+      if (this.configManager.isJoinNotificationEnabled()) {
+        await this.slackNotifier.notifyUserJoined(result.name);
+      } else {
+        console.log(`⏸️ 参加通知はスキップされました（設定により）: ${result.name}`);
+      }
     } else {
       console.log(`! 既に接続済みのユーザーのため通知スキップ: ${playerId}`);
       console.log(
@@ -184,8 +192,12 @@ class GatherSlackBot {
       );
 
       console.log(`🔄 Slack退出通知を送信中: ${result.name}`);
-      await this.slackNotifier.notifyUserLeft(result.name);
-      console.log(`✅ Slack退出通知送信完了: ${result.name}`);
+      if (this.configManager.isLeaveNotificationEnabled()) {
+        await this.slackNotifier.notifyUserLeft(result.name);
+        console.log(`✅ Slack退出通知送信完了: ${result.name}`);
+      } else {
+        console.log(`⏸️ 退出通知はスキップされました（設定により）: ${result.name}`);
+      }
     } else {
       console.log(`! 未接続のユーザーの退出イベント: ${playerId}`);
       console.log(
@@ -350,6 +362,11 @@ class GatherSlackBot {
   }
 
   startStatusReporting(intervalMinutes = null) {
+    if (!this.configManager.isStatusReportNotificationEnabled()) {
+      console.log("⏸️ 定期的な状況報告は無効になっています（設定により）");
+      return;
+    }
+
     const reportInterval = intervalMinutes ?? this.configManager.getStatusReportInterval();
     const emptySpaceInterval = this.configManager.getEmptySpaceNotificationInterval();
     
@@ -390,7 +407,11 @@ class GatherSlackBot {
 
   async disconnect() {
     try {
-      await this.slackNotifier.notifyShutdown();
+      if (this.configManager.isShutdownNotificationEnabled()) {
+        await this.slackNotifier.notifyShutdown();
+      } else {
+        console.log("⏸️ 停止通知はスキップされました（設定により）");
+      }
       await this.connectionManager.disconnect();
     } catch (error) {
       console.error("❌ 切断エラー:", error);
