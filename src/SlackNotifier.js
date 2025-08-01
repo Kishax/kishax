@@ -66,7 +66,8 @@ class SlackNotifier {
   async notifyMemberList(members, config = null) {
     if (members.length > 0) {
       const memberList = members.join(", ");
-      const message = `📋 **現在のGatherメンバー** (${members.length}人)\n${memberList}`;
+      const message = `📋 *現在のGatherメンバー* (${members.length}人)
+${memberList}`;
       return await this.sendNotification(message, "#36a64f");
     } else {
       if (config && config.isSilentNotificationNobody()) {
