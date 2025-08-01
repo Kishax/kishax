@@ -3,6 +3,7 @@
 ## Env
 ```bash
 cp .env.example .env
+cp config.jsonc.example config.jsonc
 ```
 
 ## Local Development
@@ -29,9 +30,11 @@ ssh -i ~/.ssh/gather-bot-key.pem ec2-user@xx.xxx.xxx.xxx
 git clone https://github.com/Kishax/gather-slack-bot.git
 cd gather-slack-bot
 
-# 3. 環境変数設定
+# 3. 環境変数・設定ファイル設定
 cp .env.example .env
+cp config.jsonc.example config.jsonc
 nano .env  # 実際の値を設定
+nano config.jsonc  # 通知設定を調整
 
 # 4. Docker起動
 docker-compose up -d
