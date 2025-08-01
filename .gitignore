@@ -7,6 +7,9 @@ npm-debug.log*
 .env.local
 .env.production
 
+# Configuration files
+config.jsonc
+
 # Logs
 logs/
 *.log
