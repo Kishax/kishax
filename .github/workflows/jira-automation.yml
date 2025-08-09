@@ -13,7 +13,7 @@ env:
 
 jobs:
   jira-automation-on-pr:
-    # 【修正】PRの作成者がBotではない場合にのみジョブを実行
+    # PRの作成者がBotではない場合にのみジョブを実行
     if: github.event.sender.type != 'Bot'
     name: Jira Automation on Pull Request
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
       pull-requests: write
     steps:
       # -----------------------------------------------------------------
-      # 【修正】最初にJiraへのログイン処理を追加
+      # 1. Jiraへのログイン
       # -----------------------------------------------------------------
       - name: Login to Jira
         uses: atlassian/gajira-login@v3
@@ -33,7 +33,7 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
       # -----------------------------------------------------------------
-      # 1. ブランチ名からJira課題キーを抽出 (エラーでも続行)
+      # 2. ブランチ名からJira課題キーを抽出 (エラーでも続行)
       # -----------------------------------------------------------------
       - name: Find Jira issue key from branch name
         id: find_issue
@@ -43,7 +43,7 @@ jobs:
           string: ${{ github.head_ref }}
 
       # =================================================================
-      # 2. 課題キーが見つからなかった場合に新規作成
+      # 3. 課題キーが見つからなかった場合に新規作成
       # =================================================================
       - name: Create Jira issue if not found
         if: ${{ !steps.find_issue.outputs.issue }}
@@ -80,7 +80,7 @@ jobs:
             });
 
       # =================================================================
-      # 3. 【ここから共通処理】担当者割り当てとステータス移行
+      # 4. 【ここから共通処理】担当者割り当てとステータス移行
       # =================================================================
       - name: Get Jira Account ID from mapping
         if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
@@ -102,7 +102,8 @@ jobs:
           result-encoding: string
 
       - name: Assign Jira issue using REST API
-        if: steps.get_jira_account_id.outputs.result
+        # 【修正】PRがオープンまたは再オープンされた時だけ担当者を割り当てる
+        if: (github.event.action == 'opened' || github.event.action == 'reopened') && steps.get_jira_account_id.outputs.result
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
