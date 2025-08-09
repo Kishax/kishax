@@ -3,7 +3,8 @@ name: Jira Automation
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, closed]
+    # 【修正】レビュー依頼時にもワークフローが起動するようにトリガーを追加
+    types: [opened, reopened, synchronize, closed, review_requested]
 
 # --- 設定項目 ---
 # 新規課題を作成するJiraプロジェクトの情報を設定してください
@@ -46,7 +47,8 @@ jobs:
       # 3. 課題キーが見つからなかった場合に新規作成
       # =================================================================
       - name: Create Jira issue if not found
-        if: ${{ !steps.find_issue.outputs.issue }}
+        # 【修正】PRがオープンされた時だけ、新しいタスクを作成するように条件を限定
+        if: github.event.action == 'opened' && !steps.find_issue.outputs.issue
         id: create_issue
         uses: atlassian/gajira-create@v3
         with:
@@ -102,7 +104,7 @@ jobs:
           result-encoding: string
 
       - name: Assign Jira issue using REST API
-        # 【修正】PRがオープンまたは再オープンされた時だけ担当者を割り当てる
+        # PRがオープンまたは再オープンされた時だけ担当者を割り当てる
         if: (github.event.action == 'opened' || github.event.action == 'reopened') && steps.get_jira_account_id.outputs.result
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
@@ -112,7 +114,7 @@ jobs:
           ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           ACCOUNT_ID=${{ steps.get_jira_account_id.outputs.result }}
 
-          curl --request PUT \
+          curl --fail --request PUT \
             --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}/assignee" \
             --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
             --header "Accept: application/json" \
@@ -129,7 +131,7 @@ jobs:
         run: |
           ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
 
-          STATUS=$(curl --silent --request GET \
+          STATUS=$(curl --fail --silent --request GET \
             --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}?fields=status" \
             --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
             --header "Accept: application/json" | jq -r '.fields.status.name')
@@ -137,12 +139,24 @@ jobs:
           echo "status=$STATUS" >> $GITHUB_OUTPUT
 
       # -----------------------------------------------------------------
-      # 5. ステータス移行 (このアクションは安定しているので継続利用)
+      # 5. ステータス移行
       # -----------------------------------------------------------------
+      # 【新規追加】PRオープン時に「進行中」へ移行
+      - name: Transition issue to 'In Progress'
+        if: >
+          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          (github.event.action == 'opened' || github.event.action == 'reopened') &&
+          contains(steps.get_status.outputs.status, 'タスク')
+        uses: atlassian/gajira-transition@v3
+        with:
+          issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          transition: "進行中"
+
+      # 【修正】レビュー依頼時に「レビュー待ち」へ移行
       - name: Transition issue to 'In Review'
         if: >
           (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
-          (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
+          github.event.action == 'review_requested' &&
           contains(steps.get_status.outputs.status, '進行中')
         uses: atlassian/gajira-transition@v3
         with:
