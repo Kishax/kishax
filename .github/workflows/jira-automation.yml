@@ -56,23 +56,25 @@ jobs:
           result-encoding: string
 
       # -----------------------------------------------------------------
-      # 4. 【修正】Jira課題の担当者を自動アサイン (gajira-cliを使用)
+      # 4. Jira課題の担当者を自動アサイン (gajira-cliを使用)
       #    (JiraアカウントIDが見つかった場合のみ実行)
       # -----------------------------------------------------------------
       - name: Assign Jira issue
         if: steps.get_jira_account_id.outputs.result
+        # [修正] 'gajira-assign'の代わりに'gajira-cli'を使用します
         uses: atlassian/gajira-cli@v3
         with:
           args: >
             issue assign ${{ steps.find_issue.outputs.issue }} ${{ steps.get_jira_account_id.outputs.result }}
 
       # -----------------------------------------------------------------
-      # 5. 【修正】現在のJira課題のステータスを取得 (gajira-cliを使用)
+      # 5. 現在のJira課題のステータスを取得 (gajira-cliを使用)
       #    (課題キーが見つかった場合のみ実行)
       # -----------------------------------------------------------------
       - name: Get current issue status
         id: get_status
         if: steps.find_issue.outputs.issue
+        # [修正] 'gajira-get-issue'の代わりに'gajira-cli'を使用します
         uses: atlassian/gajira-cli@v3
         with:
           # jira issue viewで課題詳細をJSONで取得し、jqでステータス名を抽出
