@@ -13,6 +13,8 @@ env:
 
 jobs:
   jira-automation-on-pr:
+    # 【修正】PRの作成者がBotではない場合にのみジョブを実行
+    if: github.event.sender.type != 'Bot'
     name: Jira Automation on Pull Request
     runs-on: ubuntu-latest
     permissions:
