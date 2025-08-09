@@ -21,13 +21,10 @@ jobs:
       pull-requests: write
     steps:
       # -----------------------------------------------------------------
-      # 【新規追加】Jira CLIをインストールする
+      # 【修正】専用アクションでJira CLIをセットアップする
       # -----------------------------------------------------------------
-      - name: Install Jira CLI
-        run: |
-          curl -L https://github.com/ankitpokhrel/jira-cli/releases/latest/download/jira_linux_amd64.tar.gz | tar -xz
-          sudo mv jira /usr/local/bin/
-          echo "Jira CLI installed at: $(which jira)"
+      - name: Setup Jira CLI
+        uses: ankitpokhrel/jira-cli-action@v1.2.1
 
       # -----------------------------------------------------------------
       # 1. Jiraへのログイン (インストールしたCLIを設定する)
