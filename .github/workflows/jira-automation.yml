@@ -8,8 +8,8 @@ on:
 # --- 設定項目 ---
 # 新規課題を作成するJiraプロジェクトの情報を設定してください
 env:
-  JIRA_PROJECT_KEY: SCRUM   # 例: 'PROJ'
-  JIRA_ISSUE_TYPE: Task  # 例: 'Task', 'Story'
+  JIRA_PROJECT_KEY: SCRUM # 例: 'PROJ'
+  JIRA_ISSUE_TYPE: Task # 例: 'Task', 'Story'
 
 jobs:
   jira-automation-on-pr:
@@ -57,7 +57,7 @@ jobs:
             PR Title: ${{ github.event.pull_request.title }}
             PR Body:
             ${{ github.event.pull_request.body }}
-            
+
             PR URL: ${{ github.event.pull_request.html_url }}
 
       - name: Comment created issue key on PR
@@ -69,7 +69,7 @@ jobs:
             const jiraBaseUrl = "${{ secrets.JIRA_BASE_URL }}";
             const issueUrl = `${jiraBaseUrl}/browse/${issueKey}`;
             const body = `✅ Jira issue [${issueKey}](${issueUrl}) has been automatically created for this pull request.`;
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -108,7 +108,7 @@ jobs:
         run: |
           ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           ACCOUNT_ID=${{ steps.get_jira_account_id.outputs.result }}
-          
+
           curl --request PUT \
             --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}/assignee" \
             --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
@@ -125,7 +125,7 @@ jobs:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
         run: |
           ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
-          
+
           STATUS=$(curl --silent --request GET \
             --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}?fields=status" \
             --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
