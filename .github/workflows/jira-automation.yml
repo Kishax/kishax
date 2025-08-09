@@ -81,7 +81,6 @@ jobs:
       # 4. 【ここから共通処理】担当者割り当てとステータス移行
       # =================================================================
       - name: Get Jira Account ID from mapping
-        # 【修正】課題が見つかった場合、または、新規作成された場合に実行
         if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
         id: get_jira_account_id
         uses: actions/github-script@v7
@@ -101,27 +100,22 @@ jobs:
           result-encoding: string
 
       - name: Assign Jira issue
-        # 【修正】アカウントIDが取得できた場合に実行
         if: steps.get_jira_account_id.outputs.result
-        uses: atlassian/gajira-cli@v3
-        with:
-          args: >
-            issue assign ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }} ${{ steps.get_jira_account_id.outputs.result }}
+        run: |
+          jira issue assign ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }} ${{ steps.get_jira_account_id.outputs.result }}
 
       - name: Get current issue status
-        # 【修正】課題が見つかった場合、または、新規作成された場合に実行
         if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
         id: get_status
-        uses: atlassian/gajira-cli@v3
-        with:
-          args: >
-            issue view ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }} --json | jq -r '.fields.status.name'
+        run: |
+          STATUS=$(jira issue view ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }} --json | jq -r '.fields.status.name')
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
 
       - name: Transition issue to 'In Review'
         if: >
           (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
           (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
-          contains(steps.get_status.outputs.stdout, '進行中')
+          contains(steps.get_status.outputs.status, '進行中')
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
@@ -132,7 +126,7 @@ jobs:
           (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
           github.event.action == 'closed' &&
           github.event.pull_request.merged == true &&
-          (contains(steps.get_status.outputs.stdout, '進行中') || contains(steps.get_status.outputs.stdout, 'レビュー待ち'))
+          (contains(steps.get_status.outputs.status, '進行中') || contains(steps.get_status.outputs.status, 'レビュー待ち'))
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
