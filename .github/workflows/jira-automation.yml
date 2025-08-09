@@ -1,11 +1,15 @@
 # .github/workflows/jira-automation.yml
 name: Jira Automation
 
-# ワークフローのトリガーを定義
 on:
   pull_request:
-    # PRの作成、再開、更新（プッシュ）、クローズ時に実行
     types: [opened, reopened, synchronize, closed]
+
+# --- 設定項目 ---
+# 新規課題を作成するJiraプロジェクトの情報を設定してください
+env:
+  JIRA_PROJECT_KEY: SCRUM   # 例: 'PROJ'
+  JIRA_ISSUE_TYPE: Task  # 例: 'Task', 'Story'
 
 jobs:
   jira-automation-on-pr:
@@ -29,13 +33,49 @@ jobs:
         id: find_issue
         uses: atlassian/gajira-find-issue-key@v3
         with:
-          # プルリクエストのソースブランチ名から課題キーを探す
           string: ${{ github.head_ref }}
 
-      # -----------------------------------------------------------------
-      # 3. GitHubアカウントとJiraアカウントをマッピングしてJiraアカウントIDを取得
-      #    (課題キーが見つかった場合のみ実行)
-      # -----------------------------------------------------------------
+      # =================================================================
+      # 【新規追加】課題キーが見つからなかった場合の処理
+      # =================================================================
+      - name: Create Jira issue if not found
+        if: ${{ !steps.find_issue.outputs.issue }}
+        id: create_issue
+        uses: atlassian/gajira-create@v3
+        with:
+          project: ${{ env.JIRA_PROJECT_KEY }}
+          issuetype: ${{ env.JIRA_ISSUE_TYPE }}
+          summary: ${{ github.event.pull_request.title }}
+          description: |
+            PRを作成したため、Jira課題を自動作成しました。
+
+            PR Title: ${{ github.event.pull_request.title }}
+            PR Body:
+            ${{ github.event.pull_request.body }}
+            
+            PR URL: ${{ github.event.pull_request.html_url }}
+
+      # 【新規追加】作成した課題キーをPRにコメントする
+      - name: Comment created issue key on PR
+        if: ${{ steps.create_issue.outputs.issue }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueKey = "${{ steps.create_issue.outputs.issue }}";
+            const jiraBaseUrl = "${{ secrets.JIRA_BASE_URL }}";
+            const issueUrl = `${jiraBaseUrl}/browse/${issueKey}`;
+            const body = `✅ Jira issue [${issueKey}](${issueUrl}) has been automatically created for this pull request.`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      # =================================================================
+      # 課題キーが見つかった場合の既存の処理
+      # =================================================================
       - name: Get Jira Account ID from mapping
         id: get_jira_account_id
         if: steps.find_issue.outputs.issue
@@ -55,37 +95,24 @@ jobs:
             return jiraAccountId;
           result-encoding: string
 
-      # -----------------------------------------------------------------
-      # 4. Jira課題の担当者を自動アサイン (gajira-cliを使用)
-      #    (JiraアカウントIDが見つかった場合のみ実行)
-      # -----------------------------------------------------------------
       - name: Assign Jira issue
-        if: steps.get_jira_account_id.outputs.result
-        # [修正] 'gajira-assign'の代わりに'gajira-cli'を使用します
+        if: steps.find_issue.outputs.issue && steps.get_jira_account_id.outputs.result
         uses: atlassian/gajira-cli@v3
         with:
           args: >
             issue assign ${{ steps.find_issue.outputs.issue }} ${{ steps.get_jira_account_id.outputs.result }}
 
-      # -----------------------------------------------------------------
-      # 5. 現在のJira課題のステータスを取得 (gajira-cliを使用)
-      #    (課題キーが見つかった場合のみ実行)
-      # -----------------------------------------------------------------
       - name: Get current issue status
         id: get_status
         if: steps.find_issue.outputs.issue
-        # [修正] 'gajira-get-issue'の代わりに'gajira-cli'を使用します
         uses: atlassian/gajira-cli@v3
         with:
-          # jira issue viewで課題詳細をJSONで取得し、jqでステータス名を抽出
           args: >
             issue view ${{ steps.find_issue.outputs.issue }} --json | jq -r '.fields.status.name'
 
-      # -----------------------------------------------------------------
-      # 6. PR作成/更新時：「進行中」->「レビュー待ち」へ移行
-      # -----------------------------------------------------------------
       - name: Transition issue to 'In Review'
         if: >
+          steps.find_issue.outputs.issue &&
           (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
           trim(steps.get_status.outputs.stdout) == '進行中'
         uses: atlassian/gajira-transition@v3
@@ -93,11 +120,9 @@ jobs:
           issue: ${{ steps.find_issue.outputs.issue }}
           transition: "レビュー待ち"
 
-      # -----------------------------------------------------------------
-      # 7. PRマージ時：「進行中」または「レビュー待ち」->「完了」へ移行
-      # -----------------------------------------------------------------
       - name: Transition issue to 'Done'
         if: >
+          steps.find_issue.outputs.issue &&
           github.event.action == 'closed' &&
           github.event.pull_request.merged == true &&
           (trim(steps.get_status.outputs.stdout) == '進行中' || trim(steps.get_status.outputs.stdout) == 'レビュー待ち')
