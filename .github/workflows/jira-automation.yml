@@ -21,6 +21,16 @@ jobs:
       pull-requests: write
     steps:
       # -----------------------------------------------------------------
+      # 【修正】最初にJiraへのログイン処理を追加
+      # -----------------------------------------------------------------
+      - name: Login to Jira
+        uses: atlassian/gajira-login@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      # -----------------------------------------------------------------
       # 1. ブランチ名からJira課題キーを抽出 (エラーでも続行)
       # -----------------------------------------------------------------
       - name: Find Jira issue key from branch name
@@ -37,10 +47,6 @@ jobs:
         if: ${{ !steps.find_issue.outputs.issue }}
         id: create_issue
         uses: atlassian/gajira-create@v3
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           project: ${{ env.JIRA_PROJECT_KEY }}
           issuetype: ${{ env.JIRA_ISSUE_TYPE }}
@@ -93,7 +99,6 @@ jobs:
             return jiraAccountId;
           result-encoding: string
 
-      # 【修正】Jira REST APIを直接呼び出して担当者を割り当てる
       - name: Assign Jira issue using REST API
         if: steps.get_jira_account_id.outputs.result
         env:
@@ -111,7 +116,6 @@ jobs:
             --header "Content-Type: application/json" \
             --data "{\"accountId\": \"${ACCOUNT_ID}\"}"
 
-      # 【修正】Jira REST APIを直接呼び出して現在のステータスを取得する
       - name: Get current issue status using REST API
         if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
         id: get_status
@@ -138,10 +142,6 @@ jobs:
           (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
           contains(steps.get_status.outputs.status, '進行中')
         uses: atlassian/gajira-transition@v3
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           transition: "レビュー待ち"
@@ -153,10 +153,6 @@ jobs:
           github.event.pull_request.merged == true &&
           (contains(steps.get_status.outputs.status, '進行中') || contains(steps.get_status.outputs.status, 'レビュー待ち'))
         uses: atlassian/gajira-transition@v3
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           transition: "完了"
