@@ -39,16 +39,16 @@ jobs:
       - name: Get Jira Account ID from mapping
         id: get_jira_account_id
         if: steps.find_issue.outputs.issue
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           JIRA_USER_MAPPING_JSON: ${{ secrets.JIRA_USER_MAPPING_JSON }}
         with:
           script: |
-            const mapping = JSON.parse(process.env.JIRA_USER_MAPPING_JSON);
+            const mapping = JSON.parse(process.env.JIRA_USER_MAPPING_JSON || '{}');
             const githubUser = context.actor;
             const jiraAccountId = mapping[githubUser];
             if (!jiraAccountId) {
-              console.log(`No Jira account mapping found for GitHub user: ${githubUser}`);
+              core.warning(`No Jira account mapping found for GitHub user: ${githubUser}`);
               return null;
             }
             console.log(`Found Jira Account ID: ${jiraAccountId} for GitHub user: ${githubUser}`);
@@ -56,26 +56,28 @@ jobs:
           result-encoding: string
 
       # -----------------------------------------------------------------
-      # 4. Jira課題の担当者を自動アサイン
+      # 4. 【修正】Jira課題の担当者を自動アサイン (gajira-cliを使用)
       #    (JiraアカウントIDが見つかった場合のみ実行)
       # -----------------------------------------------------------------
       - name: Assign Jira issue
         if: steps.get_jira_account_id.outputs.result
-        uses: atlassian/gajira-assign@v3
+        uses: atlassian/gajira-cli@v3
         with:
-          issue: ${{ steps.find_issue.outputs.issue }}
-          assignee: ${{ steps.get_jira_account_id.outputs.result }}
+          args: >
+            issue assign ${{ steps.find_issue.outputs.issue }} ${{ steps.get_jira_account_id.outputs.result }}
 
       # -----------------------------------------------------------------
-      # 5. 現在のJira課題のステータスを取得
+      # 5. 【修正】現在のJira課題のステータスを取得 (gajira-cliを使用)
       #    (課題キーが見つかった場合のみ実行)
       # -----------------------------------------------------------------
       - name: Get current issue status
-        id: get_issue
+        id: get_status
         if: steps.find_issue.outputs.issue
-        uses: atlassian/gajira-get-issue@v3
+        uses: atlassian/gajira-cli@v3
         with:
-          issue: ${{ steps.find_issue.outputs.issue }}
+          # jira issue viewで課題詳細をJSONで取得し、jqでステータス名を抽出
+          args: >
+            issue view ${{ steps.find_issue.outputs.issue }} --json | jq -r '.fields.status.name'
 
       # -----------------------------------------------------------------
       # 6. PR作成/更新時：「進行中」->「レビュー待ち」へ移行
@@ -83,7 +85,7 @@ jobs:
       - name: Transition issue to 'In Review'
         if: >
           (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
-          steps.get_issue.outputs.status == '進行中'
+          trim(steps.get_status.outputs.stdout) == '進行中'
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.find_issue.outputs.issue }}
@@ -96,7 +98,7 @@ jobs:
         if: >
           github.event.action == 'closed' &&
           github.event.pull_request.merged == true &&
-          (steps.get_issue.outputs.status == '進行中' || steps.get_issue.outputs.status == 'レビュー待ち')
+          (trim(steps.get_status.outputs.stdout) == '進行中' || trim(steps.get_status.outputs.stdout) == 'レビュー待ち')
         uses: atlassian/gajira-transition@v3
         with:
           issue: ${{ steps.find_issue.outputs.issue }}
