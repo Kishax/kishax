@@ -21,23 +21,7 @@ jobs:
       pull-requests: write
     steps:
       # -----------------------------------------------------------------
-      # 【修正】専用アクションでJira CLIをセットアップする (バージョン更新)
-      # -----------------------------------------------------------------
-      - name: Setup Jira CLI
-        uses: ankitpokhrel/jira-cli-action@v2
-
-      # -----------------------------------------------------------------
-      # 1. Jiraへのログイン (インストールしたCLIを設定する)
-      # -----------------------------------------------------------------
-      - name: Login to Jira
-        uses: atlassian/gajira-login@v3
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-
-      # -----------------------------------------------------------------
-      # 2. ブランチ名からJira課題キーを抽出
+      # 1. ブランチ名からJira課題キーを抽出 (エラーでも続行)
       # -----------------------------------------------------------------
       - name: Find Jira issue key from branch name
         id: find_issue
@@ -47,12 +31,16 @@ jobs:
           string: ${{ github.head_ref }}
 
       # =================================================================
-      # 3. 課題キーが見つからなかった場合に新規作成
+      # 2. 課題キーが見つからなかった場合に新規作成
       # =================================================================
       - name: Create Jira issue if not found
         if: ${{ !steps.find_issue.outputs.issue }}
         id: create_issue
         uses: atlassian/gajira-create@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           project: ${{ env.JIRA_PROJECT_KEY }}
           issuetype: ${{ env.JIRA_ISSUE_TYPE }}
@@ -84,7 +72,7 @@ jobs:
             });
 
       # =================================================================
-      # 4. 【ここから共通処理】担当者割り当てとステータス移行
+      # 3. 【ここから共通処理】担当者割り当てとステータス移行
       # =================================================================
       - name: Get Jira Account ID from mapping
         if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
@@ -105,16 +93,38 @@ jobs:
             return jiraAccountId;
           result-encoding: string
 
-      - name: Assign Jira issue
+      - name: Assign Jira issue using REST API
         if: steps.get_jira_account_id.outputs.result
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
         run: |
-          jira issue assign ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }} ${{ steps.get_jira_account_id.outputs.result }}
+          ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          ACCOUNT_ID=${{ steps.get_jira_account_id.outputs.result }}
+          
+          curl --request PUT \
+            --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}/assignee" \
+            --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data "{\"accountId\": \"${ACCOUNT_ID}\"}"
 
-      - name: Get current issue status
+      - name: Get current issue status using REST API
         if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
         id: get_status
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
         run: |
-          STATUS=$(jira issue view ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }} --json | jq -r '.fields.status.name')
+          ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          
+          STATUS=$(curl --request GET \
+            --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}?fields=status" \
+            --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            --header "Accept: application/json" | jq -r '.fields.status.name')
+            
           echo "status=$STATUS" >> $GITHUB_OUTPUT
 
       - name: Transition issue to 'In Review'
@@ -123,6 +133,10 @@ jobs:
           (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
           contains(steps.get_status.outputs.status, '進行中')
         uses: atlassian/gajira-transition@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           transition: "レビュー待ち"
@@ -134,6 +148,10 @@ jobs:
           github.event.pull_request.merged == true &&
           (contains(steps.get_status.outputs.status, '進行中') || contains(steps.get_status.outputs.status, 'レビュー待ち'))
         uses: atlassian/gajira-transition@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           transition: "完了"
