@@ -1,0 +1,103 @@
+# .github/workflows/jira-automation.yml
+name: Jira Automation
+
+# ワークフローのトリガーを定義
+on:
+  pull_request:
+    # PRの作成、再開、更新（プッシュ）、クローズ時に実行
+    types: [opened, reopened, synchronize, closed]
+
+jobs:
+  jira-automation-on-pr:
+    name: Jira Automation on Pull Request
+    runs-on: ubuntu-latest
+    steps:
+      # -----------------------------------------------------------------
+      # 1. Jiraへのログイン
+      # -----------------------------------------------------------------
+      - name: Login to Jira
+        uses: atlassian/gajira-login@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      # -----------------------------------------------------------------
+      # 2. ブランチ名からJira課題キーを抽出
+      # -----------------------------------------------------------------
+      - name: Find Jira issue key from branch name
+        id: find_issue
+        uses: atlassian/gajira-find-issue-key@v3
+        with:
+          # プルリクエストのソースブランチ名から課題キーを探す
+          string: ${{ github.head_ref }}
+
+      # -----------------------------------------------------------------
+      # 3. GitHubアカウントとJiraアカウントをマッピングしてJiraアカウントIDを取得
+      #    (課題キーが見つかった場合のみ実行)
+      # -----------------------------------------------------------------
+      - name: Get Jira Account ID from mapping
+        id: get_jira_account_id
+        if: steps.find_issue.outputs.issue
+        uses: actions/github-script@v6
+        env:
+          JIRA_USER_MAPPING_JSON: ${{ secrets.JIRA_USER_MAPPING_JSON }}
+        with:
+          script: |
+            const mapping = JSON.parse(process.env.JIRA_USER_MAPPING_JSON);
+            const githubUser = context.actor;
+            const jiraAccountId = mapping[githubUser];
+            if (!jiraAccountId) {
+              console.log(`No Jira account mapping found for GitHub user: ${githubUser}`);
+              return null;
+            }
+            console.log(`Found Jira Account ID: ${jiraAccountId} for GitHub user: ${githubUser}`);
+            return jiraAccountId;
+          result-encoding: string
+
+      # -----------------------------------------------------------------
+      # 4. Jira課題の担当者を自動アサイン
+      #    (JiraアカウントIDが見つかった場合のみ実行)
+      # -----------------------------------------------------------------
+      - name: Assign Jira issue
+        if: steps.get_jira_account_id.outputs.result
+        uses: atlassian/gajira-assign@v3
+        with:
+          issue: ${{ steps.find_issue.outputs.issue }}
+          assignee: ${{ steps.get_jira_account_id.outputs.result }}
+
+      # -----------------------------------------------------------------
+      # 5. 現在のJira課題のステータスを取得
+      #    (課題キーが見つかった場合のみ実行)
+      # -----------------------------------------------------------------
+      - name: Get current issue status
+        id: get_issue
+        if: steps.find_issue.outputs.issue
+        uses: atlassian/gajira-get-issue@v3
+        with:
+          issue: ${{ steps.find_issue.outputs.issue }}
+
+      # -----------------------------------------------------------------
+      # 6. PR作成/更新時：「進行中」->「レビュー待ち」へ移行
+      # -----------------------------------------------------------------
+      - name: Transition issue to 'In Review'
+        if: >
+          (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize') &&
+          steps.get_issue.outputs.status == '進行中'
+        uses: atlassian/gajira-transition@v3
+        with:
+          issue: ${{ steps.find_issue.outputs.issue }}
+          transition: "レビュー待ち"
+
+      # -----------------------------------------------------------------
+      # 7. PRマージ時：「進行中」または「レビュー待ち」->「完了」へ移行
+      # -----------------------------------------------------------------
+      - name: Transition issue to 'Done'
+        if: >
+          github.event.action == 'closed' &&
+          github.event.pull_request.merged == true &&
+          (steps.get_issue.outputs.status == '進行中' || steps.get_issue.outputs.status == 'レビュー待ち')
+        uses: atlassian/gajira-transition@v3
+        with:
+          issue: ${{ steps.find_issue.outputs.issue }}
+          transition: "完了"
