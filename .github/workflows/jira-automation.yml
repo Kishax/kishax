@@ -3,7 +3,7 @@ name: Jira Automation
 
 on:
   pull_request:
-    # 【修正】レビュー依頼時にもワークフローが起動するようにトリガーを追加
+    # レビュー依頼時にもワークフローが起動するようにトリガーを追加
     types: [opened, reopened, synchronize, closed, review_requested]
 
 # --- 設定項目 ---
@@ -47,7 +47,7 @@ jobs:
       # 3. 課題キーが見つからなかった場合に新規作成
       # =================================================================
       - name: Create Jira issue if not found
-        # 【修正】PRがオープンされた時だけ、新しいタスクを作成するように条件を限定
+        # PRがオープンされた時だけ、新しいタスクを作成するように条件を限定
         if: github.event.action == 'opened' && !steps.find_issue.outputs.issue
         id: create_issue
         uses: atlassian/gajira-create@v3
@@ -141,24 +141,32 @@ jobs:
       # -----------------------------------------------------------------
       # 5. ステータス移行
       # -----------------------------------------------------------------
-      # 【新規追加】PRオープン時に「進行中」へ移行
       - name: Transition issue to 'In Progress'
         if: >
           (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
           (github.event.action == 'opened' || github.event.action == 'reopened') &&
           contains(steps.get_status.outputs.status, 'タスク')
         uses: atlassian/gajira-transition@v3
+        # 【修正】認証情報を渡すためにenvブロックを追加
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           transition: "進行中"
 
-      # 【修正】レビュー依頼時に「レビュー待ち」へ移行
       - name: Transition issue to 'In Review'
         if: >
           (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
           github.event.action == 'review_requested' &&
           contains(steps.get_status.outputs.status, '進行中')
         uses: atlassian/gajira-transition@v3
+        # 【修正】認証情報を渡すためにenvブロックを追加
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           transition: "レビュー待ち"
@@ -170,6 +178,11 @@ jobs:
           github.event.pull_request.merged == true &&
           (contains(steps.get_status.outputs.status, '進行中') || contains(steps.get_status.outputs.status, 'レビュー待ち'))
         uses: atlassian/gajira-transition@v3
+        # 【修正】認証情報を渡すためにenvブロックを追加
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
           issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
           transition: "完了"
