@@ -21,7 +21,16 @@ jobs:
       pull-requests: write
     steps:
       # -----------------------------------------------------------------
-      # 1. Jiraへのログイン
+      # 【新規追加】Jira CLIをインストールする
+      # -----------------------------------------------------------------
+      - name: Install Jira CLI
+        run: |
+          curl -L https://github.com/ankitpokhrel/jira-cli/releases/latest/download/jira_linux_amd64.tar.gz | tar -xz
+          sudo mv jira /usr/local/bin/
+          echo "Jira CLI installed at: $(which jira)"
+
+      # -----------------------------------------------------------------
+      # 1. Jiraへのログイン (インストールしたCLIを設定する)
       # -----------------------------------------------------------------
       - name: Login to Jira
         uses: atlassian/gajira-login@v3
