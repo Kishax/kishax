@@ -36,6 +36,8 @@ jobs:
       - name: Find Jira issue key from branch name
         id: find_issue
         uses: atlassian/gajira-find-issue-key@v3
+        # 【修正】課題キーが見つからずエラーになってもワークフローを続行する
+        continue-on-error: true
         with:
           string: ${{ github.head_ref }}
 
