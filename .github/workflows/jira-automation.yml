@@ -34,14 +34,17 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
       # -----------------------------------------------------------------
-      # 2. ブランチ名からJira課題キーを抽出 (エラーでも続行)
+      # 2. 【修正】ブランチ名、PRタイトル、本文からJira課題キーを抽出
       # -----------------------------------------------------------------
-      - name: Find Jira issue key from branch name
+      - name: Find Jira issue key from PR context
         id: find_issue
         uses: atlassian/gajira-find-issue-key@v3
         continue-on-error: true
         with:
-          string: ${{ github.head_ref }}
+          string: |
+            ${{ github.head_ref }}
+            ${{ github.event.pull_request.title }}
+            ${{ github.event.pull_request.body }}
 
       # =================================================================
       # 3. 課題キーが見つからなかった場合に新規作成
@@ -147,7 +150,6 @@ jobs:
           (github.event.action == 'opened' || github.event.action == 'reopened') &&
           contains(steps.get_status.outputs.status, 'タスク')
         uses: atlassian/gajira-transition@v3
-        # 【修正】認証情報を渡すためにenvブロックを追加
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
@@ -162,7 +164,6 @@ jobs:
           github.event.action == 'review_requested' &&
           contains(steps.get_status.outputs.status, '進行中')
         uses: atlassian/gajira-transition@v3
-        # 【修正】認証情報を渡すためにenvブロックを追加
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
@@ -178,7 +179,6 @@ jobs:
           github.event.pull_request.merged == true &&
           (contains(steps.get_status.outputs.status, '進行中') || contains(steps.get_status.outputs.status, 'レビュー待ち'))
         uses: atlassian/gajira-transition@v3
-        # 【修正】認証情報を渡すためにenvブロックを追加
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
