@@ -1,0 +1,34 @@
+# .github/workflows/transition-issue-on-push.yml
+name: Transition Issue on Push
+
+on: push
+
+jobs:
+  transition-issue:
+    name: Transition Issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Jira
+        uses: atlassian/gajira-login@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      # 【修正】プッシュされた全コミットメッセージから課題キーを抽出する
+      - name: Find issue key in commit messages
+        id: find
+        # バージョンをv3に更新し、安定性を向上
+        uses: atlassian/gajira-find-issue-key@v3
+        # 'with'ブロックを削除することで、デフォルトの動作である
+        # コミットメッセージの検索が有効になります。
+
+      # 課題キーが特定できればJiraに対してトランジションを発行
+      - name: Transition issue to 'In Progress'
+        # 課題キーが含まれていなければスルー
+        if: ${{ steps.find.outputs.issue }}
+        uses: atlassian/gajira-transition@v3
+        with:
+          # 前のステップのアウトプットを参照
+          issue: ${{ steps.find.outputs.issue }}
+          transition: "進行中"
