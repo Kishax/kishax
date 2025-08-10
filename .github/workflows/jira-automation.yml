@@ -1,0 +1,188 @@
+# .github/workflows/jira-automation.yml
+name: Jira Automation
+
+on:
+  pull_request:
+    # レビュー依頼時にもワークフローが起動するようにトリガーを追加
+    types: [opened, reopened, synchronize, closed, review_requested]
+
+# --- 設定項目 ---
+# 新規課題を作成するJiraプロジェクトの情報を設定してください
+env:
+  JIRA_PROJECT_KEY: SCRUM # 例: 'PROJ'
+  JIRA_ISSUE_TYPE: Task # 例: 'Task', 'Story'
+
+jobs:
+  jira-automation-on-pr:
+    # PRの作成者がBotではない場合にのみジョブを実行
+    if: github.event.sender.type != 'Bot'
+    name: Jira Automation on Pull Request
+    runs-on: ubuntu-latest
+    permissions:
+      # PRへのコメント投稿とコンテンツの読み取り権限が必要
+      contents: read
+      pull-requests: write
+    steps:
+      # -----------------------------------------------------------------
+      # 1. Jiraへのログイン
+      # -----------------------------------------------------------------
+      - name: Login to Jira
+        uses: atlassian/gajira-login@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      # -----------------------------------------------------------------
+      # 2. 【修正】ブランチ名、PRタイトル、本文からJira課題キーを抽出
+      # -----------------------------------------------------------------
+      - name: Find Jira issue key from PR context
+        id: find_issue
+        uses: atlassian/gajira-find-issue-key@v3
+        continue-on-error: true
+        with:
+          string: |
+            ${{ github.head_ref }}
+            ${{ github.event.pull_request.title }}
+            ${{ github.event.pull_request.body }}
+
+      # =================================================================
+      # 3. 課題キーが見つからなかった場合に新規作成
+      # =================================================================
+      - name: Create Jira issue if not found
+        # PRがオープンされた時だけ、新しいタスクを作成するように条件を限定
+        if: github.event.action == 'opened' && !steps.find_issue.outputs.issue
+        id: create_issue
+        uses: atlassian/gajira-create@v3
+        with:
+          project: ${{ env.JIRA_PROJECT_KEY }}
+          issuetype: ${{ env.JIRA_ISSUE_TYPE }}
+          summary: ${{ github.event.pull_request.title }}
+          description: |
+            PRを作成したため、Jira課題を自動作成しました。
+
+            PR Title: ${{ github.event.pull_request.title }}
+            PR Body:
+            ${{ github.event.pull_request.body }}
+
+            PR URL: ${{ github.event.pull_request.html_url }}
+
+      - name: Comment created issue key on PR
+        if: ${{ steps.create_issue.outputs.issue }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueKey = "${{ steps.create_issue.outputs.issue }}";
+            const jiraBaseUrl = "${{ secrets.JIRA_BASE_URL }}";
+            const issueUrl = `${jiraBaseUrl}/browse/${issueKey}`;
+            const body = `✅ Jira issue [${issueKey}](${issueUrl}) has been automatically created for this pull request.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      # =================================================================
+      # 4. 【ここから共通処理】担当者割り当てとステータス移行
+      # =================================================================
+      - name: Get Jira Account ID from mapping
+        if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
+        id: get_jira_account_id
+        uses: actions/github-script@v7
+        env:
+          JIRA_USER_MAPPING_JSON: ${{ secrets.JIRA_USER_MAPPING_JSON }}
+        with:
+          script: |
+            const mapping = JSON.parse(process.env.JIRA_USER_MAPPING_JSON || '{}');
+            const githubUser = context.actor;
+            const jiraAccountId = mapping[githubUser];
+            if (!jiraAccountId) {
+              core.warning(`No Jira account mapping found for GitHub user: ${githubUser}`);
+              return null;
+            }
+            console.log(`Found Jira Account ID: ${jiraAccountId} for GitHub user: ${githubUser}`);
+            return jiraAccountId;
+          result-encoding: string
+
+      - name: Assign Jira issue using REST API
+        # PRがオープンまたは再オープンされた時だけ担当者を割り当てる
+        if: (github.event.action == 'opened' || github.event.action == 'reopened') && steps.get_jira_account_id.outputs.result
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+        run: |
+          ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          ACCOUNT_ID=${{ steps.get_jira_account_id.outputs.result }}
+
+          curl --fail --request PUT \
+            --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}/assignee" \
+            --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data "{\"accountId\": \"${ACCOUNT_ID}\"}"
+
+      - name: Get current issue status using REST API
+        if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
+        id: get_status
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+        run: |
+          ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+
+          STATUS=$(curl --fail --silent --request GET \
+            --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}?fields=status" \
+            --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            --header "Accept: application/json" | jq -r '.fields.status.name')
+            
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+      # -----------------------------------------------------------------
+      # 5. ステータス移行
+      # -----------------------------------------------------------------
+      - name: Transition issue to 'In Progress'
+        if: >
+          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          (github.event.action == 'opened' || github.event.action == 'reopened') &&
+          contains(steps.get_status.outputs.status, 'タスク')
+        uses: atlassian/gajira-transition@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        with:
+          issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          transition: "進行中"
+
+      - name: Transition issue to 'In Review'
+        if: >
+          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          github.event.action == 'review_requested' &&
+          contains(steps.get_status.outputs.status, '進行中')
+        uses: atlassian/gajira-transition@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        with:
+          issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          transition: "レビュー待ち"
+
+      - name: Transition issue to 'Done'
+        if: >
+          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          github.event.action == 'closed' &&
+          github.event.pull_request.merged == true &&
+          (contains(steps.get_status.outputs.status, '進行中') || contains(steps.get_status.outputs.status, 'レビュー待ち'))
+        uses: atlassian/gajira-transition@v3
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        with:
+          issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          transition: "完了"
