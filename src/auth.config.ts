@@ -8,4 +8,5 @@ export const authConfig = {
     // プロバイダーの定義はメインのauth.tsに置くため、ここは空の配列のままにします。
     // middlewareはプロバイダー設定を必要としないため、これで問題ありません。
   ],
+  trustHost: true,
 } satisfies NextAuthConfig;
