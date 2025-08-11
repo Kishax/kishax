@@ -58,9 +58,6 @@ export async function GET(req: NextRequest) {
     
     const { userId } = validation.data
 
-    // Determine which user's avatar to get
-    let targetUserId = userId || session?.user?.id
-
     // If authenticated and no specific userId requested, use session user
     if (session?.user && !userId) {
       const user = await prisma.user.findUnique({

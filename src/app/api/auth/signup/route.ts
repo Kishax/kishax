@@ -6,23 +6,23 @@ const prisma = new PrismaClient()
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password } = await req.json()
+    const { email, password } = await req.json()
 
-    if (!username || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: "Username and password are required" },
+        { error: "メールアドレスとパスワードは必須です" },
         { status: 400 }
       )
     }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { name: username }
+      where: { email: email }
     })
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "このユーザー名はすでに使われています。" },
+        { error: "このメールアドレスはすでに登録されています。" },
         { status: 400 }
       )
     }
@@ -30,22 +30,27 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create user
+    // Create user (without name, will be set after email verification)
     const user = await prisma.user.create({
       data: {
-        name: username,
+        email: email,
         password: hashedPassword,
+        emailVerified: null, // Email not verified yet
       }
     })
 
     return NextResponse.json(
-      { message: "User created successfully", userId: user.id },
+      { 
+        message: "アカウントが作成されました。メール認証を完了してください。", 
+        userId: user.id,
+        email: user.email
+      },
       { status: 201 }
     )
   } catch (error) {
     console.error("Sign up error:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "サーバーエラーが発生しました" },
       { status: 500 }
     )
   }

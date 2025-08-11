@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   // App Runner用の設定
   output: 'standalone',
   
+  // Server External Packages設定
+  serverExternalPackages: ['@auth/core', 'bcrypt'],
+  
   // 画像最適化設定（App Runner用）
   images: {
     domains: ['cdn.discordapp.com', 'localhost'],

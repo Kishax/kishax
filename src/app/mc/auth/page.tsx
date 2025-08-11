@@ -1,24 +1,25 @@
 import { auth } from "@/lib/auth"
 import { PrismaClient } from "@prisma/client"
-import { redirect } from "next/navigation"
 import McAuthForm from "@/components/McAuthForm"
 import { McAuthPageData } from "@/lib/schemas"
 import jwt from "jsonwebtoken"
+import Link from "next/link"
 
 const prisma = new PrismaClient()
 
 interface PageProps {
-  searchParams: { n?: string }
+  searchParams: Promise<{ n?: string }>
 }
 
 export default async function McAuthPage({ searchParams }: PageProps) {
   const session = await auth()
-  const memberId = searchParams.n ? parseInt(searchParams.n) : undefined
+  const resolvedSearchParams = await searchParams
+  const memberId = resolvedSearchParams.n ? parseInt(resolvedSearchParams.n) : undefined
 
   // Initialize page data
   let pageData: McAuthPageData = {
     isAuth: !!session,
-    username: session?.user?.name,
+    username: session?.user?.username || "[ユーザーID未設定]",
     mcAuth: false,
     successMessage: undefined,
     errorMessage: undefined,
@@ -33,7 +34,7 @@ export default async function McAuthPage({ searchParams }: PageProps) {
 
   // Get user from database
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id }
+    where: { id: session?.user?.id || '' }
   })
 
   if (!user) {
@@ -41,7 +42,7 @@ export default async function McAuthPage({ searchParams }: PageProps) {
     return <McAuthPageComponent pageData={pageData} />
   }
 
-  pageData.username = user.name || undefined
+  pageData.username = user.username || "[ユーザーID未設定]"
 
   // If no member ID provided, show initial message
   if (!memberId) {
@@ -94,7 +95,7 @@ export default async function McAuthPage({ searchParams }: PageProps) {
   // Generate JWT token for authentication
   try {
     const payload = {
-      username: user.name,
+      username: user.username || "[ユーザーID未設定]",
       mcid: mcuser.name,
       uuid: mcuser.uuid
     }
@@ -109,7 +110,7 @@ export default async function McAuthPage({ searchParams }: PageProps) {
       token,
       successMessage: ["プレイヤー情報が自動入力されました。"]
     }
-  } catch (error) {
+  } catch {
     pageData.errorMessage = ["トークンの生成に失敗しました。"]
     return <McAuthPageComponent pageData={pageData} />
   }
@@ -125,9 +126,9 @@ function McAuthPageComponent({ pageData }: { pageData: McAuthPageData }) {
           <div className="flex justify-between items-center py-6">
             <h1 className="text-3xl font-bold text-gray-900">Minecraft Authentication</h1>
             <nav className="flex space-x-4">
-              <a href="/" className="text-blue-600 hover:text-blue-800">
+              <Link href="/" className="text-blue-600 hover:text-blue-800">
                 Home
-              </a>
+              </Link>
             </nav>
           </div>
         </div>
@@ -139,16 +140,16 @@ function McAuthPageComponent({ pageData }: { pageData: McAuthPageData }) {
             <div className="mb-6">
               {pageData.isAuth ? (
                 <p className="text-sm text-gray-600">
-                  {pageData.username || "ななし"}さん、ようこそ
+                  {pageData.username}さん、ようこそ
                 </p>
               ) : (
                 <div className="flex items-center space-x-2">
                   <p className="text-sm text-gray-600">
-                    {pageData.username || "ななし"}さん、ようこそ >>
+                    {pageData.username}さん、ようこそ &gt;&gt;
                   </p>
-                  <a href="/signup" className="text-blue-600 hover:text-blue-800 text-sm underline">
+                  <Link href="/signup" className="text-blue-600 hover:text-blue-800 text-sm underline">
                     サインアップはこちら
-                  </a>
+                  </Link>
                 </div>
               )}
             </div>
