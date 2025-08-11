@@ -22,32 +22,16 @@ run:
       value: "ap-northeast-1"
   secrets:
     - name: NEXTAUTH_URL
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
+      value-from: arn:aws:secretsmanager:ap-northeast-1:126112056177:secret:kishax-apprunner-secrets-S9SCIf:NEXTAUTH_URL::
     - name: NEXTAUTH_SECRET
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
+      value-from: arn:aws:secretsmanager:ap-northeast-1:126112056177:secret:kishax-apprunner-secrets-S9SCIf:NEXTAUTH_SECRET::
     - name: DATABASE_URL
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
+      value-from: arn:aws:secretsmanager:ap-northeast-1:126112056177:secret:kishax-apprunner-secrets-S9SCIf:DATABASE_URL::
     - name: GOOGLE_CLIENT_ID
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
+      value-from: arn:aws:secretsmanager:ap-northeast-1:126112056177:secret:kishax-apprunner-secrets-S9SCIf:GOOGLE_CLIENT_ID::
     - name: GOOGLE_CLIENT_SECRET
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
+      value-from: arn:aws:secretsmanager:ap-northeast-1:126112056177:secret:kishax-apprunner-secrets-S9SCIf:GOOGLE_CLIENT_SECRET::
     - name: DISCORD_CLIENT_ID
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
+      value-from: arn:aws:secretsmanager:ap-northeast-1:126112056177:secret:kishax-apprunner-secrets-S9SCIf:DISCORD_CLIENT_ID::
     - name: DISCORD_CLIENT_SECRET
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
-    - name: TWITTER_CLIENT_ID
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
-    - name: TWITTER_CLIENT_SECRET
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
-    - name: MC_SOCKET_HOST
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
-    - name: MC_SOCKET_PORT
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
-    - name: EMAIL_HOST
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
-    - name: EMAIL_PORT
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
-    - name: EMAIL_USER
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
-    - name: EMAIL_PASS
-      value-from: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:kishax-apprunner-secrets-AbCdEf
+      value-from: arn:aws:secretsmanager:ap-northeast-1:126112056177:secret:kishax-apprunner-secrets-S9SCIf:DISCORD_CLIENT_SECRET::
