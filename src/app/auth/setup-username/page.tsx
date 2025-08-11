@@ -45,15 +45,18 @@ function SetupUsernameContent() {
   const watchedUsername = watch('username')
 
   useEffect(() => {
-    // If user is not authenticated, redirect to signin
-    if (status === 'unauthenticated') {
-      router.push('/signin')
-      return
-    }
-    
     // Skip if still loading
     if (status === 'loading') {
       return
+    }
+
+    // If user is not authenticated, redirect to signin after a delay
+    if (status === 'unauthenticated') {
+      const timer = setTimeout(() => {
+        router.push('/signin')
+      }, 2000) // Wait 2 seconds for session to load
+      
+      return () => clearTimeout(timer)
     }
 
     // If authenticated user already has username, redirect to home
@@ -72,14 +75,16 @@ function SetupUsernameContent() {
     }
 
     const emailParam = searchParams.get('email')
-    if (!emailParam && status === 'authenticated') {
-      // If authenticated but no email param, use session email
-      setEmail(session?.user?.email || '')
-    } else if (!emailParam && status !== 'loading') {
-      router.push('/signup')
-      return
-    } else if (emailParam) {
+    if (emailParam) {
       setEmail(emailParam)
+    } else if (status === 'authenticated') {
+      if (session?.user?.email) {
+        setEmail(session.user.email)
+      } else {
+        // Authenticated but no email in session, and no email in param
+        router.push('/signup')
+        return
+      }
     }
   }, [searchParams, router, session, status])
 

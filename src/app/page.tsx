@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import Link from "next/link"
 import { Suspense } from "react"
 import WelcomeMessage from "@/components/WelcomeMessage"
+import { OAuthRedirectHandler } from "@/components/OAuthRedirectHandler"
 
 export default async function HomePage() {
   const session = await auth()
@@ -15,7 +16,7 @@ export default async function HomePage() {
             <nav className="flex space-x-4">
               {session ? (
                 <>
-                  <span className="text-gray-700">Welcome, {session.user?.name}</span>
+                  <span className="text-gray-700">Welcome, {session.user?.username || "[ユーザーID未設定]"}</span>
                   <Link href="/mc/auth" className="text-green-600 hover:text-green-800">
                     MC Auth
                   </Link>
@@ -39,6 +40,7 @@ export default async function HomePage() {
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <OAuthRedirectHandler />
         <div className="px-4 py-6 sm:px-0">
           <Suspense fallback={<div>Loading...</div>}>
             <WelcomeMessage />
