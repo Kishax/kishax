@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 
 function VerifyEmailContent() {
@@ -11,8 +12,19 @@ function VerifyEmailContent() {
   const [userEmail, setUserEmail] = useState('')
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { data: session, status: sessionStatus } = useSession()
 
   useEffect(() => {
+    // If user is already authenticated, redirect appropriately
+    if (sessionStatus === 'authenticated') {
+      if (session?.user?.name) {
+        // User is fully set up, redirect to home
+        router.push('/')
+        return
+      }
+      // User needs username setup, continue with current flow but skip verification
+    }
+
     const verifyEmail = async () => {
       const token = searchParams.get('token')
       const email = searchParams.get('email')
@@ -56,8 +68,10 @@ function VerifyEmailContent() {
       }
     }
 
-    verifyEmail()
-  }, [searchParams, router])
+    if (sessionStatus !== 'loading') {
+      verifyEmail()
+    }
+  }, [searchParams, router, session, sessionStatus])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

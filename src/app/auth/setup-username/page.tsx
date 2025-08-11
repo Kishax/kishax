@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 
 const usernameSchema = z.object({
   username: z.string()
@@ -30,6 +30,7 @@ function SetupUsernameContent() {
   
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { data: session, status } = useSession()
 
   const {
     register,
@@ -44,13 +45,29 @@ function SetupUsernameContent() {
   const watchedUsername = watch('username')
 
   useEffect(() => {
-    const emailParam = searchParams.get('email')
-    if (!emailParam) {
-      router.push('/signup')
+    // If user is already authenticated and has a username, redirect to home
+    if (status === 'authenticated' && session?.user?.name) {
+      router.push('/')
       return
     }
-    setEmail(emailParam)
-  }, [searchParams, router])
+    
+    // If user is not authenticated, redirect to signin
+    if (status === 'unauthenticated') {
+      router.push('/signin')
+      return
+    }
+
+    const emailParam = searchParams.get('email')
+    if (!emailParam && status === 'authenticated') {
+      // If authenticated but no email param, use session email
+      setEmail(session?.user?.email || '')
+    } else if (!emailParam) {
+      router.push('/signup')
+      return
+    } else {
+      setEmail(emailParam)
+    }
+  }, [searchParams, router, session, status])
 
   // Debounced username availability check
   const checkUsernameAvailability = useCallback(async (username: string) => {
