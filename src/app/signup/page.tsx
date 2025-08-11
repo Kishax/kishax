@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 export default function SignUpPage() {
@@ -15,7 +14,6 @@ export default function SignUpPage() {
   const [step, setStep] = useState<'signup' | 'verify'>('signup')
   const [verificationMethod, setVerificationMethod] = useState<'otp' | 'link'>('otp')
   const [showMethodSelection, setShowMethodSelection] = useState(false)
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +46,7 @@ export default function SignUpPage() {
       } else {
         setError(data.error || "サインアップ中にエラーが発生しました")
       }
-    } catch (error) {
+    } catch {
       setError("サインアップ中にエラーが発生しました")
     } finally {
       setLoading(false)
@@ -83,7 +81,7 @@ export default function SignUpPage() {
       } else {
         setError(data.error || '認証メール送信に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('認証メール送信に失敗しました')
     } finally {
       setLoading(false)

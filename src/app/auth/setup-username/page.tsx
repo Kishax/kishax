@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -21,7 +21,7 @@ interface UsernameCheckResult {
   message: string
 }
 
-export default function SetupUsernamePage() {
+function SetupUsernameContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingUsername, setCheckingUsername] = useState(false)
@@ -72,7 +72,7 @@ export default function SetupUsernamePage() {
 
       const data = await response.json()
       setUsernameCheck(data)
-    } catch (error) {
+    } catch {
       setUsernameCheck({
         available: false,
         message: 'ユーザー名の確認中にエラーが発生しました'
@@ -134,14 +134,14 @@ export default function SetupUsernamePage() {
             // Auto-login success, redirect to home
             router.push('/?message=account_complete')
           }
-        } catch (loginError) {
+        } catch {
           // Fallback: redirect to signin
           router.push('/signin?message=username_set_login_required')
         }
       } else {
         setError(result.error || 'ユーザー名の設定に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('ネットワークエラーが発生しました')
     } finally {
       setLoading(false)
@@ -261,5 +261,13 @@ export default function SetupUsernamePage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function SetupUsernamePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">読み込み中...</div>}>
+      <SetupUsernameContent />
+    </Suspense>
   )
 }

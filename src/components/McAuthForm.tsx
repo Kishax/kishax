@@ -52,7 +52,7 @@ export default function McAuthForm({ pageData }: McAuthFormProps) {
       } else {
         setError(result.message || "認証に失敗しました。")
       }
-    } catch (error) {
+    } catch {
       setError("認証中にエラーが発生しました。")
     } finally {
       setLoading(false)

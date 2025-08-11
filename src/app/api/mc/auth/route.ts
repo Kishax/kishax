@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import { auth } from "@/lib/auth"
 import { McAuthRequestSchema, McAuthResponseSchema } from "@/lib/schemas"
 import { validateRequest, requireAuth, createErrorResponse } from "@/lib/api-middleware"
 import jwt from "jsonwebtoken"
@@ -79,7 +78,10 @@ export async function POST(req: NextRequest) {
       return authResult.error
     }
     
-    const session = authResult.session
+    const session = authResult.session as unknown as { user: { id: string; name?: string; email?: string } }
+    if (!session?.user?.id) {
+      return createErrorResponse("Authentication required", "User not found", 401)
+    }
 
     // Validate request
     const validation = await validateRequest(McAuthRequestSchema)(req)
@@ -90,15 +92,17 @@ export async function POST(req: NextRequest) {
     const { token, mcid, uuid, pass } = validation.data
 
     // Verify JWT token
-    let payload: any
+    let payload: jwt.JwtPayload
     try {
-      payload = jwt.verify(token, process.env.NEXTAUTH_SECRET!)
-    } catch (error) {
+      const verifiedPayload = jwt.verify(token, process.env.NEXTAUTH_SECRET!)
+      payload = verifiedPayload as jwt.JwtPayload
+    } catch {
       return createErrorResponse("Invalid token", "Token verification failed", 400)
     }
 
     // Verify token payload matches request
-    if (payload.mcid !== mcid || payload.uuid !== uuid) {
+    const tokenData = payload as { mcid: string; uuid: string }
+    if (tokenData.mcid !== mcid || tokenData.uuid !== uuid) {
       return createErrorResponse("Invalid access", "Token data mismatch", 400)
     }
 

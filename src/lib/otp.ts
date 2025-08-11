@@ -11,8 +11,7 @@ export interface OTPRecord {
 // In-memory storage for OTP codes (production should use Redis or database)
 const otpStorage = new Map<string, OTPRecord>()
 
-// OTP configuration
-const OTP_LENGTH = 6
+// OTP configuration  
 const OTP_EXPIRY_MINUTES = 10
 const MAX_ATTEMPTS = 3
 

@@ -16,7 +16,7 @@ export default function DocsPage() {
           containerRef.current.innerHTML = ""
           
           // Initialize Scalar API Reference
-          const apiReference = new ApiReference(containerRef.current, {
+          new ApiReference(containerRef.current, {
             spec: {
               url: "/api/docs"
             },

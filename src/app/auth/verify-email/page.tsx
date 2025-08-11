@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
   const [message, setMessage] = useState('')
   const [needsUsername, setNeedsUsername] = useState(false)
@@ -50,7 +50,7 @@ export default function VerifyEmailPage() {
           setStatus('error')
           setMessage(data.error || 'メール認証に失敗しました。')
         }
-      } catch (error) {
+      } catch {
         setStatus('error')
         setMessage('ネットワークエラーが発生しました。')
       }
@@ -150,5 +150,13 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">読み込み中...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }

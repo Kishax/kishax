@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { verifyOTP } from '@/lib/otp'
-import { signIn } from '@/lib/auth'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: error.issues[0].message },
         { status: 400 }
       )
     }

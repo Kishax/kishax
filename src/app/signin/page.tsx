@@ -1,6 +1,6 @@
 "use client"
 
-import { signIn, getSession } from "next-auth/react"
+import { signIn } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -31,7 +31,7 @@ export default function SignInPage() {
       } else {
         router.push("/")
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred during sign in")
     } finally {
       setLoading(false)
