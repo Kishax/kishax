@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { ZodSchema, ZodError } from "zod"
 import { auth } from "@/lib/auth"
 
+type Session = {
+  user: {
+    id: string
+    name?: string
+    email?: string
+  }
+}
+
 // Validation middleware
 export function validateRequest<T>(schema: ZodSchema<T>) {
   return async (req: NextRequest): Promise<{ data: T; error: null } | { data: null; error: NextResponse }> => {
@@ -26,7 +34,7 @@ export function validateRequest<T>(schema: ZodSchema<T>) {
           error: NextResponse.json(
             {
               error: "Validation failed",
-              message: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+              message: error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
               statusCode: 400
             },
             { status: 400 }
@@ -49,8 +57,8 @@ export function validateRequest<T>(schema: ZodSchema<T>) {
   }
 }
 
-// Authentication middleware
-export async function requireAuth(): Promise<{ session: any; error: null } | { session: null; error: NextResponse }> {
+// Authentication middleware  
+export async function requireAuth(): Promise<{ session: Session; error: null } | { session: null; error: NextResponse }> {
   try {
     const session = await auth()
     
@@ -68,8 +76,8 @@ export async function requireAuth(): Promise<{ session: any; error: null } | { s
       }
     }
 
-    return { session, error: null }
-  } catch (error) {
+    return { session: session as Session, error: null }
+  } catch {
     return {
       session: null,
       error: NextResponse.json(
@@ -98,11 +106,9 @@ export function createErrorResponse(error: string, message?: string, statusCode:
 
 // Success response helper
 export function createSuccessResponse(data: unknown, message?: string, statusCode: number = 200): NextResponse {
-  return NextResponse.json(
-    {
-      ...(message && { message }),
-      ...(data && { data })
-    },
-    { status: statusCode }
-  )
+  const response: Record<string, unknown> = {}
+  if (message) response.message = message
+  if (data) response.data = data
+  
+  return NextResponse.json(response, { status: statusCode })
 }

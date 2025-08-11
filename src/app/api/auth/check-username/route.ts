@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({
         available: false,
-        message: error.errors[0].message
+        message: error.issues[0].message
       })
     }
 
