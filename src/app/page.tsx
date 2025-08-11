@@ -16,9 +16,6 @@ export default async function HomePage() {
               {session ? (
                 <>
                   <span className="text-gray-700">Welcome, {session.user?.name}</span>
-                  <Link href="/app/chart" className="text-blue-600 hover:text-blue-800">
-                    Chart
-                  </Link>
                   <Link href="/mc/auth" className="text-green-600 hover:text-green-800">
                     MC Auth
                   </Link>
@@ -68,25 +65,6 @@ export default async function HomePage() {
             
             {session && (
               <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Link
-                  href="/app/chart"
-                  className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg shadow hover:shadow-md"
-                >
-                  <div>
-                    <span className="rounded-lg inline-flex p-3 bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
-                      📊
-                    </span>
-                  </div>
-                  <div className="mt-8">
-                    <h3 className="text-lg font-medium">
-                      Chart Analytics
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-500">
-                      View statistics and analytics data
-                    </p>
-                  </div>
-                </Link>
-
                 <Link
                   href="/mc/auth"
                   className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg shadow hover:shadow-md"
