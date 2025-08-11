@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if username is already set
-    if (user.name) {
+    if (user.username) {
       return NextResponse.json(
         { error: 'ユーザー名は既に設定されています。' },
         { status: 400 }
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Check if username already exists
     const existingUser = await prisma.user.findUnique({
-      where: { name: username }
+      where: { username: username }
     })
 
     if (existingUser) {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     // Update user with username
     const updatedUser = await prisma.user.update({
       where: { email },
-      data: { name: username }
+      data: { username: username }
     })
 
     return NextResponse.json({
@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: updatedUser.id,
         name: updatedUser.name,
+        username: updatedUser.username,
         email: updatedUser.email,
         emailVerified: !!updatedUser.emailVerified
       }

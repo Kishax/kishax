@@ -1,5 +1,6 @@
 "use client"
 
+import { signIn } from "next-auth/react"
 import { useState } from "react"
 import Link from "next/link"
 
@@ -86,6 +87,10 @@ export default function SignUpPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleOAuthSignUp = (provider: string) => {
+    signIn(provider, { callbackUrl: "/" })
   }
 
   if (step === 'verify' && showMethodSelection) {
@@ -249,11 +254,45 @@ export default function SignUpPage() {
             </button>
           </div>
 
-          <div className="text-center">
-            <Link href="/signin" className="text-indigo-600 hover:text-indigo-500">
-              すでにアカウントをお持ちですか？ サインイン
-            </Link>
-          </div>
+          <>
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-gray-50 text-gray-500">または他のサービスで続ける</span>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-3 gap-3">
+                <button
+                  onClick={() => handleOAuthSignUp("google")}
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  Google
+                </button>
+                <button
+                  onClick={() => handleOAuthSignUp("discord")}
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  Discord
+                </button>
+                <button
+                  onClick={() => handleOAuthSignUp("twitter")}
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  Twitter
+                </button>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <Link href="/signin" className="text-indigo-600 hover:text-indigo-500">
+                すでにアカウントをお持ちですか？ サインイン
+              </Link>
+            </div>
+          </>
         </form>
       </div>
     </div>
