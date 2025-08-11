@@ -26,12 +26,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if email is verified
+    // For OAuth users, ensure email is verified (update if needed)
     if (!user.emailVerified) {
-      return NextResponse.json(
-        { error: 'メールアドレスが認証されていません。' },
-        { status: 400 }
+      // Check if user has OAuth accounts (meaning they came through OAuth)
+      const accounts = await prisma.account.findMany({
+        where: { userId: user.id }
+      })
+      
+      const hasOAuthAccount = accounts.some(account => 
+        account.provider !== 'credentials'
       )
+      
+      if (hasOAuthAccount) {
+        // OAuth user should have verified email automatically
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { emailVerified: new Date() }
+        })
+      } else {
+        // Credentials user without verified email
+        return NextResponse.json(
+          { error: 'メールアドレスが認証されていません。' },
+          { status: 400 }
+        )
+      }
     }
 
     // Check if username is already set
