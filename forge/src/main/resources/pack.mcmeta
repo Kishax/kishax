@@ -1,6 +1,0 @@
-{
-  "pack": {
-    "description": "Kishax resources",
-    "pack_format": ${projectPackMCMeta}
-  }
-}
