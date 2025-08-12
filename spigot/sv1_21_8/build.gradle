@@ -15,10 +15,10 @@ dependencies {
   compileOnly 'org.spigotmc:spigot-api:1.21.8-R0.1-SNAPSHOT'
   //compileOnly 'io.papermc.paper:paper-api:1.21.5-R0.1-SNAPSHOT'
   shadowImpl 'net.coobird:thumbnailator:0.4.20'
-  shadowImpl 'com.google.zxing:core:3.4.1'
-  shadowImpl 'com.google.zxing:javase:3.4.1'
-  shadowImpl 'net.kyori:adventure-api:4.17.0'
-  shadowImpl 'net.kyori:adventure-platform-bukkit:4.3.4'
+  shadowImpl 'com.google.zxing:core:3.5.3'
+  shadowImpl 'com.google.zxing:javase:3.5.3'
+  shadowImpl 'net.kyori:adventure-api:4.24.0'
+  shadowImpl 'net.kyori:adventure-platform-bukkit:4.4.1'
   compileOnly project(':spigot:svcore')
   shadowImpl2 project(':common')
 }
