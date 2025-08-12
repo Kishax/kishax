@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
+import { sign } from 'jsonwebtoken'
 
 const prisma = new PrismaClient()
 
@@ -104,8 +105,31 @@ export async function POST(request: NextRequest) {
       data: { username: username }
     })
 
+    // Clean up verification token now that username setup is complete
+    try {
+      await prisma.verificationToken.deleteMany({
+        where: { identifier: email }
+      })
+    } catch (error) {
+      // Token might already be deleted or not exist, continue
+      console.log('Note: Verification token cleanup failed or no tokens found:', error)
+    }
+
+    // Create a session token for auto-login
+    const sessionToken = sign(
+      { 
+        id: updatedUser.id,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        purpose: 'auto-login'
+      },
+      process.env.NEXTAUTH_SECRET!,
+      { expiresIn: '5m' } // Short-lived token for auto-login
+    )
+
     return NextResponse.json({
       message: 'ユーザー名が設定されました。',
+      sessionToken,
       user: {
         id: updatedUser.id,
         name: updatedUser.name,

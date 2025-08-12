@@ -67,15 +67,15 @@ export async function POST(request: NextRequest) {
       data: { emailVerified: new Date() }
     })
 
-    // Clean up verification token
-    await prisma.verificationToken.delete({
-      where: {
-        identifier_token: {
-          identifier: email,
-          token: token
-        }
-      }
-    })
+    // Don't delete verification token yet - will be deleted after username setup
+    // await prisma.verificationToken.delete({
+    //   where: {
+    //     identifier_token: {
+    //       identifier: email,
+    //       token: token
+    //     }
+    //   }
+    // })
 
     return NextResponse.json({
       message: 'メールアドレスの認証が完了しました。',
@@ -156,20 +156,20 @@ export async function GET(request: NextRequest) {
       data: { emailVerified: new Date() }
     })
 
-    // Clean up verification token
-    await prisma.verificationToken.delete({
-      where: {
-        identifier_token: {
-          identifier: email,
-          token: token
-        }
-      }
-    })
+    // Don't delete verification token yet - will be deleted after username setup
+    // await prisma.verificationToken.delete({
+    //   where: {
+    //     identifier_token: {
+    //       identifier: email,
+    //       token: token
+    //     }
+    //   }
+    // })
 
     // Redirect to username setup if needed, otherwise to signin
     const redirectUrl = user.name 
       ? `/signin?message=email_verified`
-      : `/auth/setup-username?email=${encodeURIComponent(email)}`
+      : `/auth/setup-username?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`
     
     return NextResponse.redirect(new URL(redirectUrl, request.url))
 

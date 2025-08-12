@@ -7,6 +7,7 @@ import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcrypt"
+import { verify } from "jsonwebtoken"
 
 const prisma = new PrismaClient()
 
@@ -35,10 +36,61 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       name: "credentials",
       credentials: {
         username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        autoLogin: { label: "Auto Login", type: "text" },
+        sessionToken: { label: "Session Token", type: "text" }
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
+        if (!credentials?.username) {
+          return null
+        }
+
+        // Special case for auto-login with session token
+        if (credentials.autoLogin === "true" && credentials.sessionToken) {
+          try {
+            // Verify the session token
+            const decodedToken = verify(credentials.sessionToken as string, process.env.NEXTAUTH_SECRET!) as {
+              id: string
+              email: string
+              username: string
+              purpose: string
+            }
+
+            // Check token purpose
+            if (decodedToken.purpose !== 'auto-login') {
+              return null
+            }
+
+            // Get user from database
+            const user = await prisma.user.findUnique({
+              where: { id: decodedToken.id },
+              select: {
+                id: true,
+                email: true,
+                username: true,
+                name: true,
+                emailVerified: true,
+                image: true,
+              },
+            })
+
+            if (!user || !user.username || !user.emailVerified) {
+              return null
+            }
+
+            return {
+              id: user.id.toString(),
+              name: user.name || user.username,
+              email: user.email,
+              image: user.image,
+            }
+          } catch (error) {
+            return null
+          }
+        }
+
+        // For other cases, password is required
+        if (!credentials?.password) {
           return null
         }
 
@@ -61,7 +113,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         }
 
-        // Special case for auto-login after username setup
+        // Special case for auto-login after username setup (legacy)
         if (credentials.password === "auto-login-after-setup") {
           const user = await prisma.user.findUnique({
             where: {
