@@ -1,3 +1,5 @@
+// OTP（ワンタイムパスワード）送信機能
+// 現在は使用していないが、将来的な機能として保持
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { sendOneTimePassword } from '@/lib/email'
