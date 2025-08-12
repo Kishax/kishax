@@ -27,6 +27,8 @@ function SetupUsernameContent() {
   const [checkingUsername, setCheckingUsername] = useState(false)
   const [usernameCheck, setUsernameCheck] = useState<UsernameCheckResult | null>(null)
   const [email, setEmail] = useState('')
+  const [isVerifying, setIsVerifying] = useState(true)
+  const [verificationPassed, setVerificationPassed] = useState(false)
   
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -45,48 +47,84 @@ function SetupUsernameContent() {
   const watchedUsername = watch('username')
 
   useEffect(() => {
-    // Skip if still loading
-    if (status === 'loading') {
-      return
-    }
+    const verifyUserAccess = async () => {
+      const emailParam = searchParams.get('email')
+      const tokenParam = searchParams.get('token')
 
-    // If user is not authenticated, redirect to signin after a delay
-    if (status === 'unauthenticated') {
-      const timer = setTimeout(() => {
-        router.push('/signin')
-      }, 2000) // Wait 2 seconds for session to load
-      
-      return () => clearTimeout(timer)
-    }
 
-    // If authenticated user already has username, redirect to home
-    if (status === 'authenticated' && session?.user?.email) {
-      // Check if user already has username set by fetching user data
-      fetch('/api/auth/user-status')
-        .then(res => res.json())
-        .then(data => {
-          if (data.hasUsername) {
-            router.push('/')
+      // If both email and token are provided, verify them
+      if (emailParam && tokenParam) {
+        try {
+          const response = await fetch('/api/auth/verify-user-state', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: emailParam, token: tokenParam }),
+          })
+
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.canSetUsername) {
+              setEmail(emailParam)
+              setVerificationPassed(true)
+              setIsVerifying(false)
+              return
+            }
+          } else {
+            const errorData = await response.json().catch(() => ({}))
           }
-        })
-        .catch(() => {
-          // If API fails, continue with setup flow
-        })
-    }
+        } catch (error) {
+          // Verification failed, continue with normal flow
+        }
+      }
 
-    const emailParam = searchParams.get('email')
-    if (emailParam) {
-      setEmail(emailParam)
-    } else if (status === 'authenticated') {
-      if (session?.user?.email) {
-        setEmail(session.user.email)
-      } else {
-        // Authenticated but no email in session, and no email in param
-        router.push('/signup')
+      setIsVerifying(false)
+
+      // Skip if still loading
+      if (status === 'loading') {
         return
       }
+
+      // If user is not authenticated and no valid verification, redirect to signin after a delay
+      if (status === 'unauthenticated' && !verificationPassed) {
+        const timer = setTimeout(() => {
+          router.push('/signin')
+        }, 2000) // Wait 2 seconds for session to load
+        
+        return () => clearTimeout(timer)
+      }
+
+      // If authenticated user already has username, redirect to home
+      if (status === 'authenticated' && session?.user?.email) {
+        // Check if user already has username set by fetching user data
+        fetch('/api/auth/user-status')
+          .then(res => res.json())
+          .then(data => {
+            if (data.hasUsername) {
+              router.push('/')
+            }
+          })
+          .catch(() => {
+            // If API fails, continue with setup flow
+          })
+      }
+
+      // Set email from session if authenticated
+      if (status === 'authenticated') {
+        if (session?.user?.email) {
+          setEmail(session.user.email)
+        } else {
+          // Authenticated but no email in session
+          router.push('/signup')
+          return
+        }
+      }
     }
-  }, [searchParams, router, session, status])
+
+    verifyUserAccess()
+  }, [searchParams, router, session, status, verificationPassed])
 
   // Debounced username availability check
   const checkUsernameAvailability = useCallback(async (username: string) => {
@@ -155,23 +193,42 @@ function SetupUsernameContent() {
       const result = await response.json()
 
       if (response.ok) {
-        // Auto-login after username setup
-        try {
-          const signInResult = await signIn("credentials", {
-            username: email, // Use email for login
-            password: "auto-login-after-setup", // Special flag for auto-login
-            redirect: false,
-          })
+        // Auto-login after username setup using session token
+        if (result.sessionToken) {
+          try {
+            const autoLoginResponse = await fetch('/api/auth/auto-login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ sessionToken: result.sessionToken }),
+            })
 
-          if (signInResult?.error) {
-            // If auto-login fails, redirect to signin with success message
+            if (autoLoginResponse.ok) {
+              const autoLoginData = await autoLoginResponse.json()
+              
+              // Use NextAuth signIn with the credentials provider for the validated user
+              const signInResult = await signIn("credentials", {
+                username: autoLoginData.user.email,
+                autoLogin: "true",
+                sessionToken: result.sessionToken,
+                redirect: false,
+              })
+
+              if (signInResult?.error) {
+                router.push('/signin?message=username_set_login_required')
+              } else {
+                // Auto-login success, redirect to home
+                router.push('/?message=account_complete')
+              }
+            } else {
+              router.push('/signin?message=username_set_login_required')
+            }
+          } catch {
             router.push('/signin?message=username_set_login_required')
-          } else {
-            // Auto-login success, redirect to home
-            router.push('/?message=account_complete')
           }
-        } catch {
-          // Fallback: redirect to signin
+        } else {
+          // No session token, redirect to signin
           router.push('/signin?message=username_set_login_required')
         }
       } else {
@@ -182,6 +239,22 @@ function SetupUsernameContent() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            アクセス権限を確認中...
+          </h2>
+          <p className="text-gray-600">
+            しばらくお待ちください
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
