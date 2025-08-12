@@ -59,8 +59,6 @@ public class DiscordEventListener {
   private final Discord discord;
   private final Provider<SocketSwitch> sswProvider;
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-  private ScheduledFuture<?> teraScheduledTask, teraStopperTask;
-  private int teraPlayers;
 
   @Inject
   public DiscordEventListener(Logger logger, VelocityConfig config, Database db, BroadCast bc, MessageEditor discordME, Request req, Discord discord, Provider<SocketSwitch> sswProvider) throws ClassNotFoundException {
@@ -256,69 +254,6 @@ public class DiscordEventListener {
             logger.error("An SQLException | ClassNotFoundException error occurred: " + e1.getMessage());
             for (StackTraceElement element : e1.getStackTrace()) {
               logger.error(element.toString());
-            }
-          }
-        }
-        case "terraria" -> {
-          String execPath = config.getString("Terraria.ExecPath", "");
-          Long teraChannnelId = config.getLong("Terraria.ChannelId", 0);
-
-          Method getTextChannelById = Discord.jdaInstance.getClass().getMethod("getTextChannelById", String.class);
-          Object teraChannel = getTextChannelById.invoke(Discord.jdaInstance, String.valueOf(teraChannnelId));
-
-          boolean isOnline = tshockAPI(TShockAPI.CHECK);
-
-          Method getRoleByIdMethod = guild.getClass().getMethod("getRoleById", long.class);
-          Object teraRole = getRoleByIdMethod.invoke(guild, config.getLong("Terraria.RoleId"));
-          if (!roles.contains(teraRole)) {
-            replyMessage(event, userMention + " あなたはこの操作を行う権限がありません。", true);
-            return;
-          }
-
-          Method getOptionMethod = event.getClass().getMethod("getOption", String.class);
-          Object actionObj = getOptionMethod.invoke(event, "action");
-          String action = actionObj != null ? (String) actionObj.getClass().getMethod("getAsString").invoke(actionObj) : null;
-
-          switch (action.toLowerCase()) {
-            case "start" -> {
-              if (isOnline) {
-                replyMessage(event, userMention + " Terrariaサーバーはすでにオンラインです。", true);
-              } else {
-                try {
-                  ProcessBuilder process = new ProcessBuilder(execPath);
-                  process.start();
-                  terrariaScheduler(true);
-                  replyMessage(event, "Done.", true);
-                  sendMessage(teraChannel, userMention + " Terrariaサーバーを起動しました。\nまもなく起動します。");
-                } catch (IOException e) {
-                  replyMessage(event, "内部エラーが発生しました。\nサーバーを起動できません。", true);
-                  logger.error("An error occurred while starting terraria server: ", e);
-                }
-              }
-            }
-            case "stop" -> {
-              if (isOnline) {
-                try {
-                  if (tshockAPI(TShockAPI.STOP)) {
-                    replyMessage(event, "Done.", true);
-                    sendMessage(teraChannel, userMention + " Terrariaサーバーを停止しました。");
-                  } else {
-                    replyMessage(event, "内部エラーが発生しました。\nサーバーを停止できません。", true);
-                  }
-                } catch (Exception e) {
-                  replyMessage(event, "内部エラーが発生しました。\nサーバーを停止できません。", true);
-                  logger.error("An error occurred while stopping terraria server: ", e);
-                }
-              } else {
-                replyMessage(event, "Terrariaサーバーはすでにオフラインです。", true);
-              }
-            }
-            case "status" -> {
-              if (isOnline) {
-                replyMessage(event, "Terrariaサーバーは現在オンラインです。", true);
-              } else {
-                replyMessage(event, "Terrariaサーバーは現在オフラインです。", true);
-              }
             }
           }
         }
@@ -567,98 +502,6 @@ public class DiscordEventListener {
     return false;
   }
 
-  public enum TShockAPI {
-    CHECK, STOP, PLAYER,
-  }
-
-  public void terrariaScheduler(boolean bool) {
-    if (bool) {
-      teraScheduledTask = scheduler.scheduleAtFixedRate(this::checkPlayers, 10, 30, TimeUnit.SECONDS);
-    } else {
-      if (teraScheduledTask != null) {
-        teraScheduledTask.cancel(true);
-      }
-    }
-  }
-
-  private void checkPlayers() {
-    CompletableFuture.runAsync(() -> {
-      if (tshockAPI(TShockAPI.CHECK)) {
-        if (!tshockAPI(TShockAPI.PLAYER)) {
-          if (teraStopperTask == null || teraStopperTask.isCancelled()) {
-            teraStopperTask = scheduler.schedule(() -> tshockAPI(TShockAPI.STOP), 3, TimeUnit.MINUTES);
-          }
-        } else {
-          if (teraStopperTask != null && !teraStopperTask.isCancelled()) {
-            teraStopperTask.cancel(true);
-          }
-        }
-      } else {
-        if (teraStopperTask != null && !teraStopperTask.isCancelled()) {
-          teraStopperTask.cancel(true);
-        }
-      }
-    });
-  }
-
-  private boolean tshockAPI(TShockAPI action) {
-    String restAPIUrl = config.getString("Terraria.RestAPIUrl", ""),
-           tShockToken = config.getString("Terraria.TShockToken", "");
-
-    try {
-      final String urlString;
-      switch (action) {
-        case CHECK -> {
-          urlString = restAPIUrl + "/status?token=" + tShockToken;
-        }
-        case STOP -> {
-          urlString = restAPIUrl + "/v2/server/off?token=" + tShockToken + "&confirm=true&nosave=false";
-        }
-        case PLAYER -> {
-          urlString = restAPIUrl + "/lists/players?token=" + tShockToken;
-        }
-        default -> { throw new Error("Invalid action"); }
-      }
-
-      URI uri = new URI(urlString);
-      URL url = uri.toURL();
-      HttpURLConnection con = (HttpURLConnection) url.openConnection();
-      con.setRequestMethod("GET");
-      con.setRequestProperty("Content-Type", "application/json; utf-8");
-      int code = con.getResponseCode();
-
-      if (code == 200 && action == TShockAPI.PLAYER) {
-        String responseBody = new String(con.getInputStream().readAllBytes());
-        try {
-          JSONObject jsonResponse = new JSONObject(responseBody);
-          if (jsonResponse.has("players") && !jsonResponse.isNull("players")) {
-            if (jsonResponse.get("players") instanceof JSONArray) {
-              JSONArray players = jsonResponse.getJSONArray("players");
-              int playerNumber = players.length();
-              return playerNumber > 0;
-            } else if (jsonResponse.get("players") instanceof String) {
-              String playerName = jsonResponse.getString("players");
-              int playerNumber = playerName.isEmpty() ? 0 : 1;
-              this.teraPlayers = playerNumber;
-              return playerNumber > 0;
-            } else {
-              this.teraPlayers = 0;
-              return false;
-            }
-          } else {
-            this.teraPlayers = 0;
-            return false;
-          }
-        } catch (JSONException e) {
-          return false;
-        }
-      }
-
-      return code == 200;
-    } catch (IOException | URISyntaxException e) {
-      return false;
-    }
-  }
 
   private void replyMessage(Object event, String message, boolean isEphemeral) throws Exception {
     Method replyMethod = event.getClass().getMethod("reply", String.class);
