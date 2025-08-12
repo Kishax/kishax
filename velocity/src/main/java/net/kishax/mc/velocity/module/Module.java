@@ -32,7 +32,6 @@ import net.kishax.mc.velocity.discord.DiscordEventListener;
 import net.kishax.mc.velocity.discord.EmojiManager;
 import net.kishax.mc.velocity.discord.MessageEditor;
 import net.kishax.mc.velocity.discord.Webhooker;
-import net.kishax.mc.velocity.server.Board;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.GeyserMC;
@@ -90,7 +89,6 @@ public class Module extends AbstractModule {
     //bind(Request.class).to(VelocityRequest.class);
     bind(GeyserMC.class);
     bind(Maintenance.class);
-    bind(Board.class);
     bind(CommandForwarder.class);
     bind(Luckperms.class);
     bind(Webhooker.class);

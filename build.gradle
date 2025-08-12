@@ -4,7 +4,7 @@ plugins {
 
 java {
   toolchain {
-    languageVersion = JavaLanguageVersion.of(17)
+    languageVersion = JavaLanguageVersion.of(21)
   }
 }
 
@@ -16,8 +16,8 @@ subprojects {
   group = 'net.kishax.mc'
   version = '1.0.0'
 
-  sourceCompatibility = 17
-  targetCompatibility = 17
+  sourceCompatibility = 21
+  targetCompatibility = 21
 
   tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -28,14 +28,14 @@ subprojects {
   }
 
   dependencies {
-    compileOnly 'net.luckperms:api:5.4'
-    compileOnly 'redis.clients:jedis:5.2.0'
-    compileOnly 'org.slf4j:slf4j-api:2.0.9'
-    compileOnly 'org.slf4j:slf4j-simple:2.0.9'
-    compileOnly 'org.yaml:snakeyaml:2.0'
-    compileOnly 'com.google.inject:guice:5.1.0'
-    compileOnly 'mysql:mysql-connector-java:8.0.33'
-    compileOnly 'org.json:json:20180813'
-    compileOnly 'com.squareup.okhttp3:okhttp:4.9.3'
+    compileOnly 'net.luckperms:api:5.4' // 一応、5.5はもうリリース済み。
+    compileOnly 'redis.clients:jedis:6.1.0'
+    compileOnly 'org.slf4j:slf4j-api:2.0.17'
+    compileOnly 'org.slf4j:slf4j-simple:2.0.17'
+    compileOnly 'org.yaml:snakeyaml:2.4'
+    compileOnly 'com.google.inject:guice:7.0.0'
+    compileOnly 'com.mysql:mysql-connector-j:9.4.0'
+    compileOnly 'org.json:json:20250517'
+    compileOnly 'com.squareup.okhttp3:okhttp:5.1.0'
   }
 }

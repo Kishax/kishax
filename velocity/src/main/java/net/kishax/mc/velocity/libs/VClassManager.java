@@ -28,6 +28,8 @@ public class VClassManager {
     REST_ACTION("net.dv8tion.jda.api.requests.RestAction"),
     ITEM_COMPONENT("net.dv8tion.jda.api.interactions.components.ItemComponent"),
     ROLE("net.dv8tion.jda.api.entities.Role"),
+    WEBHOOK_CLIENT("net.dv8tion.jda.api.entities.Webhook"),
+    WEBHOOK_MESSAGE_CREATE_ACTION("net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction"),
     ;
 
     private String clazzName;
@@ -42,27 +44,6 @@ public class VClassManager {
 
     public ClassManager get() throws ClassNotFoundException {
       //Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
-      Class<?> clazz = urlClassLoader.loadClass(clazzName);
-      return new ClassManager(clazz);
-    }
-  }
-  public enum CLUB_MINNCED_WEBHOOK {
-    WEBHOOK_CLIENT("club.minnced.discord.webhook.WebhookClient"),
-    WEBHOOK_MESSAGE("club.minnced.discord.webhook.send.WebhookMessage"),
-    WEBHOOK_MESSAGE_BUILDER("club.minnced.discord.webhook.send.WebhookMessageBuilder"),
-    ;
-
-    private String clazzName;
-    private URLClassLoader urlClassLoader;
-
-    CLUB_MINNCED_WEBHOOK(String clazzName) {
-      this.clazzName = clazzName;
-      if (ClassManager.urlClassLoaderMap != null) {
-        this.urlClassLoader = ClassManager.urlClassLoaderMap.get(VPackageManager.VPackage.CLUB_MINNCED_WEBHOOK);
-      }
-    }
-
-    public ClassManager get() throws ClassNotFoundException {
       Class<?> clazz = urlClassLoader.loadClass(clazzName);
       return new ClassManager(clazz);
     }
