@@ -42,8 +42,8 @@ export default function SignUpPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setStep('verify')
-        setShowMethodSelection(true)
+        // 直接招待リンクを送信（デフォルト）
+        await handleVerificationMethod('link')
       } else {
         setError(data.error || "サインアップ中にエラーが発生しました")
       }
@@ -60,9 +60,10 @@ export default function SignUpPage() {
     setError("")
 
     try {
+      // 現在は招待リンクのみ使用、OTPロジックは将来のために保持
       const endpoint = method === 'otp' 
-        ? '/api/auth/otp/send' 
-        : '/api/auth/verification/send'
+        ? '/api/auth/otp/send'  // OTP機能（現在は使用しない）
+        : '/api/auth/verification/send'  // 招待リンク（デフォルト）
       
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -79,6 +80,12 @@ export default function SignUpPage() {
         if (method === 'link') {
           setStep('verify')
         }
+        /* OTP処理（現在は使用しない）
+        if (method === 'otp') {
+          // OTP認証画面への遷移処理
+          setStep('verify-otp')
+        }
+        */
       } else {
         setError(data.error || '認証メール送信に失敗しました')
       }
@@ -93,6 +100,8 @@ export default function SignUpPage() {
     signIn(provider, { callbackUrl: "/" })
   }
 
+  /* 
+  // メール認証方法選択画面（現在は使用しない - 招待リンクがデフォルト）
   if (step === 'verify' && showMethodSelection) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -149,6 +158,7 @@ export default function SignUpPage() {
       </div>
     )
   }
+  */
 
   if (step === 'verify' && verificationMethod === 'link') {
     return (

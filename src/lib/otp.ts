@@ -1,3 +1,5 @@
+// OTP（ワンタイムパスワード）ユーティリティ関数
+// 現在は招待リンク認証を使用しているが、将来的なOTP機能のために保持
 import crypto from 'crypto'
 
 export interface OTPRecord {
