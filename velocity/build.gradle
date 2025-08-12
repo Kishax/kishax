@@ -21,7 +21,6 @@ dependencies {
   compileOnly 'org.geysermc.geyser:api:2.8.3-SNAPSHOT'
   compileOnly 'org.geysermc.floodgate:api:2.2.4-SNAPSHOT'
   compileOnly 'net.dv8tion:JDA:5.6.1'
-  compileOnly 'club.minnced:discord-webhooks:0.8.0'
   shadowImpl 'org.ow2.asm:asm:9.8'
   //shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
   shadowImpl2 project(':common')

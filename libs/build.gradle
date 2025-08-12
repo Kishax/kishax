@@ -7,10 +7,6 @@ configurations {
   compileOnly.extendsFrom shadowImpl
 }
 
-dependencies {
-  shadowImpl 'club.minnced:discord-webhooks:0.8.0'
-}
-
 shadowJar {
   configurations = [project.configurations.shadowImpl]
   archiveBaseName.set('Kishax-Dependency')
