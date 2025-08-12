@@ -50,7 +50,6 @@ import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.Main;
 import net.kishax.mc.velocity.discord.DiscordEventListener;
 import net.kishax.mc.velocity.discord.MessageEditor;
-import net.kishax.mc.velocity.server.Board;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.GeyserMC;
 import net.kishax.mc.velocity.server.MineStatus;
@@ -92,7 +91,6 @@ public class EventListener {
   private final MineStatus ms;
   private final GeyserMC gm;
   private final Maintenance mt;
-  private final Board fb;
   private final Luckperms lp;
   private ServerInfo serverInfo = null;
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -100,7 +98,7 @@ public class EventListener {
   @Inject
   public EventListener(Main plugin, Logger logger, ProxyServer server, VelocityConfig config, Database db, BroadCast bc,
       ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc,
-      MessageEditor discordME, MineStatus ms, GeyserMC gm, Maintenance mt, Board fb, Luckperms lp) {
+      MessageEditor discordME, MineStatus ms, GeyserMC gm, Maintenance mt, Luckperms lp) {
     this.plugin = plugin;
     this.logger = logger;
     this.server = server;
@@ -116,7 +114,6 @@ public class EventListener {
     this.ms = ms;
     this.gm = gm;
     this.mt = mt;
-    this.fb = fb;
     this.lp = lp;
   }
 
@@ -278,7 +275,6 @@ public class EventListener {
   @Subscribe
   public void onPostLogin(PostLoginEvent event) {
     Player player = event.getPlayer();
-    fb.addBoard(player);
   }
 
   @Subscribe
@@ -455,7 +451,6 @@ public class EventListener {
   @Subscribe
   public void onServerPostConnect(ServerPostConnectEvent event) {
     Player player = event.getPlayer();
-    fb.resendBoard(player.getUniqueId());
   }
 
   @Subscribe
@@ -739,7 +734,6 @@ public class EventListener {
     if (playerInputers.contains(playerName)) {
       playerInputers.remove(playerName);
     }
-    fb.removeBoard(player.getUniqueId());
     if (gm.isGeyserPlayer(player)) {
       logger.info("GeyserMC player disconnected: " + playerName);
     } else {
