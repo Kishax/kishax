@@ -21,7 +21,6 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import de.timongcraft.veloboard.VeloBoardRegistry;
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.libs.ClassManager;
 import net.kishax.mc.common.libs.Downloader;
@@ -35,7 +34,6 @@ import net.kishax.mc.velocity.discord.EmojiManager;
 import net.kishax.mc.velocity.discord.MineStatusReflect;
 import net.kishax.mc.velocity.libs.VPackageManager;
 import net.kishax.mc.velocity.module.Module;
-import net.kishax.mc.velocity.server.Board;
 import net.kishax.mc.velocity.server.DoServerOffline;
 import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.cmd.main.Command;
@@ -67,7 +65,6 @@ public class Main {
   public void onProxyInitialization(ProxyInitializeEvent e) {
     logger.info("detected velocity platform.");
     TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
-    VeloBoardRegistry.register();
     Downloader downloader = new Downloader();
     List<PackageManager> packages = Arrays.asList(VPackageManager.VPackage.values());
     CompletableFuture<List<Boolean>> downloadFuture = downloader.downloadPackages(packages, dataDirectory);
@@ -124,7 +121,6 @@ public class Main {
 
   private void startApplication() {
     injector = Guice.createInjector(new Module(this, server, logger, dataDirectory));
-    getInjector().getInstance(Board.class).updateScheduler();
     getInjector().getInstance(Discord.class)
         .loginDiscordBotAsync().thenAccept(jda -> {
           if (jda != null) {
