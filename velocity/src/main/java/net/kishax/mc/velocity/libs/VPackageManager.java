@@ -9,7 +9,7 @@ import net.kishax.mc.common.libs.PackageType;
 import net.kishax.mc.common.libs.interfaces.PackageManager;
 
 public class VPackageManager {
-  private static String DISCORD = "discord-jda", WEBHOOK = "discord-webhook";
+  private static String DISCORD = "discord-jda";
 
   public enum VPackage implements PackageManager {
     JDA(
@@ -17,11 +17,6 @@ public class VPackageManager {
         "https://github.com/discord-jda/JDA/releases/download/v5.2.0/JDA-5.2.0-withDependencies.jar",
         PackageType.MAIN,
         DISCORD),
-    CLUB_MINNCED_WEBHOOK(
-        "club.minnced:discord-webhooks:0.8.0",
-        "https://github.com/takayamaekawa/kishax/releases/download/libs/Kishax-Dependency-1.0.0.jar",
-        PackageType.MAIN,
-        WEBHOOK),
         ;
 
     private final String url;
