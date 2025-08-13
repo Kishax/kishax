@@ -24,7 +24,7 @@ FROM openjdk:21-jdk-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
-    mysql-client \
+    mariadb-client \
     wget \
     curl \
     openssl \
