@@ -23,6 +23,20 @@
         "url": "https://download.luckperms.net/1595/velocity/LuckPerms-Velocity-5.5.10.jar",
         "filename": "LuckPerms-Velocity-5.5.10.jar"
       }
+    },
+    "geyser": {
+      "velocity": {
+        "version": "latest",
+        "url": "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/velocity",
+        "filename": "geyser-velocity.jar"
+      }
+    },
+    "floodgate": {
+      "velocity": {
+        "version": "latest",
+        "url": "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/velocity",
+        "filename": "floodgate-velocity.jar"
+      }
     }
   }
 }
