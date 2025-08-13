@@ -73,13 +73,13 @@ COPY --from=builder /app/spigot/build/libs/*.jar spigot/plugins/
 COPY --from=builder /app/velocity/build/libs/*.jar velocity/plugins/
 
 # Copy config files
-COPY docker/spigot/config/ spigot/config/
-COPY docker/spigot/server.properties spigot/server.properties
-COPY docker/velocity/ velocity/config/
+COPY docker/mc/spigot/config/ spigot/config/
+COPY docker/mc/spigot/server.properties spigot/server.properties
+COPY docker/mc/velocity/ velocity/config/
 
 # Copy LuckPerms plugin configs
-COPY docker/spigot/plugins/LuckPerms/config.yml spigot/plugins/LuckPerms/config.yml
-COPY docker/velocity/plugins/luckperms/config.yml velocity/plugins/luckperms/config.yml
+COPY docker/mc/spigot/plugins/LuckPerms/config.yml spigot/plugins/LuckPerms/config.yml
+COPY docker/mc/velocity/plugins/luckperms/config.yml velocity/plugins/luckperms/config.yml
 
 # Copy Kishax plugin configs
 COPY spigot/src/main/resources/config.yml spigot/plugins/Kishax/config.yml
