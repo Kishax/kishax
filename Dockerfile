@@ -51,6 +51,10 @@ RUN PAPER_URL=$(jq -r '.minecraft_servers.paper.url' /mc/config/urls.json) && \
     LUCKPERMS_BUKKIT_FILENAME=$(jq -r '.plugins.luckperms.bukkit.filename' /mc/config/urls.json) && \
     LUCKPERMS_VELOCITY_URL=$(jq -r '.plugins.luckperms.velocity.url' /mc/config/urls.json) && \
     LUCKPERMS_VELOCITY_FILENAME=$(jq -r '.plugins.luckperms.velocity.filename' /mc/config/urls.json) && \
+    GEYSER_VELOCITY_URL=$(jq -r '.plugins.geyser.velocity.url' /mc/config/urls.json) && \
+    GEYSER_VELOCITY_FILENAME=$(jq -r '.plugins.geyser.velocity.filename' /mc/config/urls.json) && \
+    FLOODGATE_VELOCITY_URL=$(jq -r '.plugins.floodgate.velocity.url' /mc/config/urls.json) && \
+    FLOODGATE_VELOCITY_FILENAME=$(jq -r '.plugins.floodgate.velocity.filename' /mc/config/urls.json) && \
     echo "Downloading Paper server..." && \
     wget -O "spigot/$PAPER_FILENAME" "$PAPER_URL" && \
     echo "Downloading Velocity server..." && \
@@ -58,7 +62,11 @@ RUN PAPER_URL=$(jq -r '.minecraft_servers.paper.url' /mc/config/urls.json) && \
     echo "Downloading LuckPerms Bukkit..." && \
     wget -O "spigot/plugins/$LUCKPERMS_BUKKIT_FILENAME" "$LUCKPERMS_BUKKIT_URL" && \
     echo "Downloading LuckPerms Velocity..." && \
-    wget -O "velocity/plugins/$LUCKPERMS_VELOCITY_FILENAME" "$LUCKPERMS_VELOCITY_URL"
+    wget -O "velocity/plugins/$LUCKPERMS_VELOCITY_FILENAME" "$LUCKPERMS_VELOCITY_URL" && \
+    echo "Downloading Geyser Velocity..." && \
+    wget -O "velocity/plugins/$GEYSER_VELOCITY_FILENAME" "$GEYSER_VELOCITY_URL" && \
+    echo "Downloading Floodgate Velocity..." && \
+    wget -O "velocity/plugins/$FLOODGATE_VELOCITY_FILENAME" "$FLOODGATE_VELOCITY_URL"
 
 # Copy built Kishax plugins from builder stage
 COPY --from=builder /app/spigot/build/libs/*.jar spigot/plugins/
@@ -66,6 +74,7 @@ COPY --from=builder /app/velocity/build/libs/*.jar velocity/plugins/
 
 # Copy config files
 COPY docker/spigot/config/ spigot/config/
+COPY docker/spigot/server.properties spigot/server.properties
 COPY docker/velocity/ velocity/config/
 
 # Copy LuckPerms plugin configs
