@@ -26,15 +26,15 @@
     },
     "geyser": {
       "velocity": {
-        "version": "latest",
-        "url": "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/velocity",
+        "version": "2.8.3",
+        "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.8.3/builds/908/downloads/velocity",
         "filename": "geyser-velocity.jar"
       }
     },
     "floodgate": {
       "velocity": {
-        "version": "latest",
-        "url": "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/velocity",
+        "version": "2.2.4",
+        "url": "https://download.geysermc.org/v2/projects/floodgate/versions/2.2.4/builds/118/downloads/velocity",
         "filename": "floodgate-velocity.jar"
       }
     }

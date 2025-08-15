@@ -40,115 +40,23 @@ done
 
 # Ensure plugins directories exist
 mkdir -p /mc/spigot/plugins/Kishax
-mkdir -p /mc/velocity/plugins/Kishax
+mkdir -p /mc/velocity/plugins/kishax
 mkdir -p /mc/spigot/plugins/LuckPerms
 mkdir -p /mc/velocity/plugins/luckperms
 
 # Update Kishax plugin configs with MySQL credentials
-echo "Configuring Kishax Spigot plugin..."
-cat > /mc/spigot/plugins/Kishax/config.yml << SPIGOT_CONFIG
-# Configuration File
-Menu:
-  Server: false
-  ImageMap: false
-
-Portals:
-  Move: false
-  Wand: false
-
-MySQL:
-  Host: "${MYSQL_HOST:-mysql}"
-  Database: "${MYSQL_DATABASE:-mc}"
-  Port: ${MYSQL_PORT:-3306}
-  User: "${MYSQL_USER:-root}"
-  Password: "${MYSQL_PASSWORD:-password}"
-
-Socket:
-  Server_Port: 8888
-
-AutoStop:
-  Mode: false
-  Interval: 3
-SPIGOT_CONFIG
-
-echo "Configuring Kishax Velocity plugin..."
-cat > /mc/velocity/plugins/Kishax/config.yml << VELOCITY_CONFIG
-# Configuration File
-EventMessage:
-  Join: ""
-
-MySQL:
-  Host: "${MYSQL_HOST:-mysql}"
-  Database: "${MYSQL_DATABASE:-mc}"
-  Port: ${MYSQL_PORT:-3306}
-  User: "${MYSQL_USER:-root}"
-  Password: "${MYSQL_PASSWORD:-password}"
-
-Socket:
-  Server_Port: 8889
-
-Discord:
-  Token: ""
-  GuildId: 
-  ChannelId: 
-  ChatChannelId: 
-  AdminChannelId: 
-  MineStatusChannelId: 
-  AdCraRoleId: 
-  ChatType: false
-  Webhook_URL: ""
-  InviteUrl: ""
-  FirstJoinEmojiName: ""
-  AddMemberEmojiName: ""
-  JoinEmojiName: ""
-  MoveEmojiName: ""
-  ExitEmojiName: ""
-  StartEmojiName: ""
-  StopEmojiName: ""
-  RequestEmojiName: ""
-  RequestOKName: ""
-  RequestCancelName: ""
-  RequestNoResName: ""
-  MenteOnEmojiName: ""
-  MenteOffEmojiName: ""
-  EndEmojiName: ""
-  BEDefaultEmojiName: ""
-  Presence:
-    Activity: ""
-    Status:
-      ChannelId: 
-      MessageId: 
-    Rule:
-      ChannelId: 
-      MessageId:
-
-        Interval:
-          Login: 
-    Session: 3
-    Request: 
-    Start_Server: 
-
-Debug:
-  Mode: false
-  ChannelId: 
-  ChatChannelId: 
-  AdminChannelId: 
-  Webhook_URL: ""
-  Test: 
-
-Permission:
-  Detail_Name:
-    - something.permission
-  Short_Name:
-    - someperm
-
-Conv:
-  Mode: false
-  Host: "localhost"
-  EXE_Path: ""
-
-MaxMemory: 0
-VELOCITY_CONFIG
+echo "Updating Kishax plugin configurations with MySQL credentials..."
+find /mc/spigot/plugins/Kishax /mc/velocity/plugins/kishax -name "config.yml" 2>/dev/null | while read file; do
+    if [ -f "$file" ]; then
+        sed -i.bak "s|\${MYSQL_HOST}|${MYSQL_HOST:-mysql}|g" "$file"
+        sed -i.bak "s|\${MYSQL_DATABASE}|${MYSQL_DATABASE:-mc}|g" "$file"
+        sed -i.bak "s|\${MYSQL_PORT}|${MYSQL_PORT:-3306}|g" "$file"
+        sed -i.bak "s|\${MYSQL_USER}|${MYSQL_USER:-root}|g" "$file"
+        sed -i.bak "s|\${MYSQL_PASSWORD}|${MYSQL_PASSWORD:-password}|g" "$file"
+        rm -f "$file.bak"
+        echo "Updated MySQL credentials in $file"
+    fi
+done
 
 echo "Configuration completed!"
 echo "Starting servers..."
