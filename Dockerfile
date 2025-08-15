@@ -1,5 +1,5 @@
 # Multi-stage build for Kishax Minecraft Server Environment
-FROM openjdk:21-jdk-slim as builder
+FROM openjdk:21-jdk-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
