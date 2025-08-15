@@ -11,6 +11,7 @@ MySQL:
 
 Socket:
   Server_Port: 
+  Server_Port: 6000
 
 Discord:
   Token: ""

@@ -95,6 +95,7 @@ RUN cp /tmp/velocity-build/Kishax-Velocity-3.4.0.jar velocity/plugins/ && rm -rf
 COPY docker/mc/spigot/config/ spigot/config/
 COPY docker/mc/spigot/server.properties spigot/server.properties
 COPY docker/mc/velocity/ velocity/config/
+COPY docker/mc/velocity/velocity.toml velocity/velocity.toml
 
 # Copy LuckPerms plugin configs
 COPY docker/mc/spigot/plugins/LuckPerms/config.yml spigot/plugins/LuckPerms/config.yml

@@ -26,6 +26,10 @@ done
 FORWARDING_SECRET=$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9' | head -c 12)
 echo "Generated forwarding secret: $FORWARDING_SECRET"
 
+# Create forwarding.secret file for Velocity
+echo "$FORWARDING_SECRET" > /mc/velocity/forwarding.secret
+echo "Created forwarding.secret file for Velocity"
+
 # Replace placeholders in config files
 echo "Configuring server files..."
 find /mc -type f -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret" | while read file; do
