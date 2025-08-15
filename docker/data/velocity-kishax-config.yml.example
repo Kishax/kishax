@@ -72,3 +72,25 @@ Conv:
   EXE_Path: ""
 
 MaxMemory: 0
+
+Servers:
+  proxy:
+    entry: false
+    platform: velocity
+    memory: 1
+  spigot:
+    entry: true
+    hub: true
+    platform: spigot
+    type: null
+    modded:
+      mode: false
+      listUrl: ''
+      loaderType: ''
+      loaderUrl: ''
+    distributed:
+      mode: false
+      url: ''
+    memory: 1
+    exec: /mc/server/home/u1.sh
+    allow_prestart: true
