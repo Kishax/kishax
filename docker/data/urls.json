@@ -1,0 +1,42 @@
+{
+  "minecraft_servers": {
+    "paper": {
+      "version": "1.21.8-30",
+      "url": "https://fill-data.papermc.io/v1/objects/d310c61899acc608b683515c5c7ef929774bfd1b90262dac965e76c7e9ea8d22/paper-1.21.8-30.jar",
+      "filename": "paper-1.21.8-30.jar"
+    },
+    "velocity": {
+      "version": "3.4.0-SNAPSHOT-525",
+      "url": "https://fill-data.papermc.io/v1/objects/52053591e7a6a572c117c5b61cb42e26389537a36d92f99da40381b18f9aac8d/velocity-3.4.0-SNAPSHOT-525.jar",
+      "filename": "velocity-3.4.0-SNAPSHOT-525.jar"
+    }
+  },
+  "plugins": {
+    "luckperms": {
+      "bukkit": {
+        "version": "5.5.10",
+        "url": "https://download.luckperms.net/1595/bukkit/loader/LuckPerms-Bukkit-5.5.10.jar",
+        "filename": "LuckPerms-Bukkit-5.5.10.jar"
+      },
+      "velocity": {
+        "version": "5.5.10",
+        "url": "https://download.luckperms.net/1595/velocity/LuckPerms-Velocity-5.5.10.jar",
+        "filename": "LuckPerms-Velocity-5.5.10.jar"
+      }
+    },
+    "geyser": {
+      "velocity": {
+        "version": "2.8.3",
+        "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.8.3/builds/908/downloads/velocity",
+        "filename": "geyser-velocity.jar"
+      }
+    },
+    "floodgate": {
+      "velocity": {
+        "version": "2.2.4",
+        "url": "https://download.geysermc.org/v2/projects/floodgate/versions/2.2.4/builds/118/downloads/velocity",
+        "filename": "floodgate-velocity.jar"
+      }
+    }
+  }
+}
