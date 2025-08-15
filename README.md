@@ -3,10 +3,7 @@
 [![Visit Website](https://img.shields.io/badge/Visit_Website-007BFF?style=for-the-badge)](https://kishax.net/)  
 
 ## Feature
-This is able to use in both Velocity and Spigot.  
-But this is created for myself for my server.  
-So this plugin is maybe good for plugin developers.  
-Freely to Edit!
+This is able to use in both Velocity and Spigot. But this is created for myself for my server. So this plugin is maybe good for plugin developers. Freely to Edit! For developers, please refer to [README-DEV.md](README-DEV.md).
 
 ## Spigot Command list
 
