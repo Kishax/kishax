@@ -11,3 +11,9 @@ cp docker/data/spigot-kishax-config.yml.example docker/data/spigot-kishax-config
 ```bash
 docker-compose up -d
 ```
+```bash
+# reflect build plugin into the container
+make deploy-plugin
+# reflect config into the container
+make deploy-config
+```
