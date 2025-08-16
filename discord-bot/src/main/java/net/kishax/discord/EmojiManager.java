@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.utils.FileUpload;
+import net.dv8tion.jda.api.entities.Icon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,7 +190,7 @@ public class EmojiManager {
         ImageIO.write(bufferedImage, "png", baos);
         byte[] imageBytes = baos.toByteArray();
 
-        return guild.createEmoji(emojiName, FileUpload.fromData(imageBytes, emojiName + ".png"))
+        return guild.createEmoji(emojiName, Icon.from(imageBytes))
             .submit()
             .thenApply(emoji -> {
               logger.info("絵文字を作成しました: {}", emojiName);
