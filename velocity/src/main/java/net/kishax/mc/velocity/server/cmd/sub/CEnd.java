@@ -29,11 +29,11 @@ public class CEnd implements SimpleCommand {
   private final String[] subcommands = { "cend" };
 
   @Inject
-  public CEnd(Main plugin, ProxyServer server, Logger logger, MessageEditor discordME, Luckperms lp) {
+  public CEnd(Main plugin, ProxyServer server, Logger logger, AwsDiscordService awsDiscordService, Luckperms lp) {
     this.plugin = plugin;
     this.server = server;
     this.logger = logger;
-    this.discordME = discordME;
+    this.awsDiscordService = awsDiscordService;
     this.lp = lp;
   }
 
@@ -53,7 +53,7 @@ public class CEnd implements SimpleCommand {
     // discordME.AddEmbedSomeMessage("End");
     CompletableFuture<Void> addEmbedFuture = CompletableFuture.runAsync(() -> {
       try {
-        discordME.AddEmbedSomeMessage("End");
+        awsDiscordService.sendBotMessage("プロキシサーバーが停止しました。", 0xFF0000);
       } catch (Exception e) {
         logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
         for (StackTraceElement ste : e.getStackTrace()) {

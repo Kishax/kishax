@@ -38,14 +38,14 @@ public class StartServer {
   private final ConsoleCommandSource console;
   private final BroadCast bc;
   private final DoServerOnline dso;
-  private final MessageEditor discordME;
+  private final AwsDiscordService awsDiscordService;
   private final Luckperms lp;
   private final PlayerDisconnect pd;
   private String currentServerName = null;
 
   @Inject
   public StartServer(ProxyServer server, Logger logger, VelocityConfig config, Database db,
-      ConsoleCommandSource console, MessageEditor discordME, BroadCast bc, DoServerOnline dso, Luckperms lp,
+      ConsoleCommandSource console, AwsDiscordService awsDiscordService, BroadCast bc, DoServerOnline dso, Luckperms lp,
       PlayerDisconnect pd) {
     this.server = server;
     this.logger = logger;
@@ -53,7 +53,7 @@ public class StartServer {
     this.db = db;
     this.console = console;
     this.bc = bc;
-    this.discordME = discordME;
+    this.awsDiscordService = awsDiscordService;
     this.dso = dso;
     this.lp = lp;
     this.pd = pd;
@@ -168,7 +168,7 @@ public class StartServer {
                                 }
                               }
                               try {
-                                discordME.AddEmbedSomeMessage("Start", player, targetServerName);
+                                awsDiscordService.sendBotMessage(player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00);
                               } catch (Exception e) {
                                 logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                                     e.getMessage());
@@ -318,7 +318,7 @@ public class StartServer {
                                 }
                               }
                               try {
-                                discordME.AddEmbedSomeMessage("Start", player, targetServerName);
+                                awsDiscordService.sendBotMessage(player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00);
                               } catch (Exception e) {
                                 logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                                     e.getMessage());
