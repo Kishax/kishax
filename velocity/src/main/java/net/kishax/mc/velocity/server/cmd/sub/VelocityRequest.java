@@ -171,7 +171,8 @@ public class VelocityRequest implements Request {
 
                       bc.sendExceptPlayerMessage(notifyComponent, playerName);
                       try {
-                        awsDiscordService.sendBotMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。", 0x00FF00);
+                        awsDiscordService.sendBotMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。",
+                            0x00FF00);
                       } catch (Exception e) {
                         logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                             e.getMessage());
@@ -298,7 +299,8 @@ public class VelocityRequest implements Request {
                               .build());
 
                       try {
-                        awsDiscordService.sendBotMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。", 0x00FF00);
+                        awsDiscordService.sendBotMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。",
+                            0x00FF00);
                       } catch (Exception e) {
                         logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                             e.getMessage());

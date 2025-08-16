@@ -168,7 +168,8 @@ public class StartServer {
                                 }
                               }
                               try {
-                                awsDiscordService.sendBotMessage(player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00);
+                                awsDiscordService.sendBotMessage(
+                                    player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00);
                               } catch (Exception e) {
                                 logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                                     e.getMessage());
@@ -318,7 +319,8 @@ public class StartServer {
                                 }
                               }
                               try {
-                                awsDiscordService.sendBotMessage(player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00);
+                                awsDiscordService.sendBotMessage(
+                                    player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00);
                               } catch (Exception e) {
                                 logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                                     e.getMessage());
