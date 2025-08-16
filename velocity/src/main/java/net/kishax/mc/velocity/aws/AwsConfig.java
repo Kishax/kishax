@@ -52,7 +52,7 @@ public class AwsConfig {
    * API Gateway URL を取得
    */
   public String getApiGatewayUrl() {
-    String url = config.getString("AWS.ApiGateway.URL", "");
+    String url = config.getString("AWS.ApiGateway.Endpoint", "");
     if (url.isEmpty()) {
       logger.warn("API Gateway URL が設定されていません");
     }
@@ -66,26 +66,7 @@ public class AwsConfig {
     return config.getString("AWS.ApiGateway.ServiceName", "execute-api");
   }
 
-  /**
-   * Discord チャンネルID を取得（移行用）
-   */
-  public String getDiscordChannelId() {
-    return config.getString("Discord.ChannelId", "");
-  }
-
-  /**
-   * Discord チャットチャンネルID を取得（移行用）
-   */
-  public String getDiscordChatChannelId() {
-    return config.getString("Discord.ChatChannelId", "");
-  }
-
-  /**
-   * Discord 管理チャンネルID を取得（移行用）
-   */
-  public String getDiscordAdminChannelId() {
-    return config.getString("Discord.AdminChannelId", "");
-  }
+  // Discord設定は AWS Discord Bot に移行済み
 
   /**
    * AWS設定が有効かチェック
@@ -96,12 +77,7 @@ public class AwsConfig {
         !getApiGatewayUrl().isEmpty();
   }
 
-  /**
-   * Discord設定が有効かチェック
-   */
-  public boolean isDiscordConfigValid() {
-    return !getDiscordChannelId().isEmpty();
-  }
+  // Discord設定チェックは不要（AWS移行済み）
 
   /**
    * 設定の検証を行い、ログ出力
@@ -120,15 +96,9 @@ public class AwsConfig {
       if (getAwsSecretKey().isEmpty())
         logger.error("  - AWS.SecretKey が未設定");
       if (getApiGatewayUrl().isEmpty())
-        logger.error("  - AWS.ApiGateway.URL が未設定");
+        logger.error("  - AWS.ApiGateway.Endpoint が未設定");
     }
 
-    if (isDiscordConfigValid()) {
-      logger.info("✅ Discord設定が正常です");
-    } else {
-      logger.warn("⚠️ Discord設定が不完全です");
-      if (getDiscordChannelId().isEmpty())
-        logger.warn("  - Discord.ChannelId が未設定");
-    }
+    // Discord設定チェックは不要（AWS Discord Bot に移行済み）
   }
 }
