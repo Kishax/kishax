@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Message;
+// SQS Message import - JDA Message conflicts are handled with full class names
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
@@ -88,13 +88,13 @@ public class SqsMessageProcessor {
           .build();
 
       ReceiveMessageResponse response = sqsClient.receiveMessage(request);
-      List<Message> messages = response.messages();
+      List<software.amazon.awssdk.services.sqs.model.Message> messages = response.messages();
 
       if (!messages.isEmpty()) {
         logger.debug("SQSメッセージを受信しました: {} 件", messages.size());
       }
 
-      for (Message message : messages) {
+      for (software.amazon.awssdk.services.sqs.model.Message message : messages) {
         try {
           processMessage(message);
           deleteMessage(message);
@@ -108,7 +108,7 @@ public class SqsMessageProcessor {
     }
   }
 
-  private void processMessage(Message message) throws Exception {
+  private void processMessage(software.amazon.awssdk.services.sqs.model.Message message) throws Exception {
     String body = message.body();
     logger.debug("メッセージ処理開始: {}", message.messageId());
 
@@ -348,7 +348,7 @@ public class SqsMessageProcessor {
     }
   }
 
-  private void deleteMessage(Message message) {
+  private void deleteMessage(software.amazon.awssdk.services.sqs.model.Message message) {
     try {
       DeleteMessageRequest deleteRequest = DeleteMessageRequest.builder()
           .queueUrl(config.getSqsQueueUrl())
