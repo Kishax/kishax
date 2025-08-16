@@ -35,7 +35,7 @@ import net.kishax.mc.velocity.server.MineStatus;
 import net.kishax.mc.velocity.server.PlayerDisconnect;
 import net.kishax.mc.velocity.server.cmd.sub.CommandForwarder;
 import net.kishax.mc.velocity.server.cmd.sub.Maintenance;
-// import net.kishax.mc.velocity.server.cmd.sub.VelocityRequest;
+import net.kishax.mc.velocity.server.cmd.sub.VelocityRequest;
 import net.kishax.mc.velocity.server.cmd.sub.interfaces.Request;
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.VelocityForwardHandler;
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.VelocityImageMapHandler;
@@ -88,7 +88,7 @@ public class Module extends AbstractModule {
     // bind(Webhooker.class);
     bind(MineStatus.class);
     bind(ConfigUtils.class);
-    // bind(Request.class).to(VelocityRequest.class);
+    bind(Request.class).to(VelocityRequest.class);
     bind(GeyserMC.class);
     bind(Maintenance.class);
     bind(CommandForwarder.class);
