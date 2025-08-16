@@ -113,7 +113,7 @@ public class AwsDiscordService {
       return CompletableFuture.completedFuture(null);
     }
 
-    return apiClient.sendEmbedMessage(content, color, awsConfig.getDiscordChannelId(), null, false)
+    return apiClient.sendEmbedMessage(content, color, "", null, false)
         .exceptionally(ex -> {
           logger.error("Discord Embed メッセージ送信に失敗しました: {}", content, ex);
           return null;
@@ -131,7 +131,7 @@ public class AwsDiscordService {
 
     // Note: AWS版では実際のメッセージIDは取得できないため、疑似IDを返す
     // 必要に応じてSQSレスポンス機能を実装可能
-    return apiClient.sendEmbedMessage(content, color, awsConfig.getDiscordChannelId(), null, false)
+    return apiClient.sendEmbedMessage(content, color, "", null, false)
         .thenApply(v -> {
           String pseudoId = "aws-" + System.currentTimeMillis();
           logger.debug("AWS Discord メッセージ送信完了、疑似ID: {}", pseudoId);
@@ -159,7 +159,7 @@ public class AwsDiscordService {
       return CompletableFuture.completedFuture(null);
     }
 
-    String channelId = isChat ? awsConfig.getDiscordChatChannelId() : awsConfig.getDiscordChannelId();
+    String channelId = ""; // AWS Discord Botが適切なチャンネルを決定
 
     return apiClient.sendEmbedMessage(additionalDescription, 0x00FF00, channelId, messageId, true)
         .exceptionally(ex -> {
