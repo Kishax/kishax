@@ -165,7 +165,7 @@ public class EventListener {
           String firstTwoChars = originalMessage.substring(0, 2);
           if ("@n".equalsIgnoreCase(firstTwoChars)) {
             // 新しいEmbedをDiscordに送る(通知を鳴らす)
-            DiscordEventListener.playerChatMessageId = null;
+            // DiscordEventListener.playerChatMessageId = null;
             originalMessage = originalMessage.substring(2);
           }
         }
