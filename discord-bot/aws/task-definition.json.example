@@ -35,6 +35,10 @@
         {
           "name": "DISCORD_PRESENCE_ACTIVITY",
           "value": "Kishaxサーバー"
+        },
+        {
+          "name": "DISCORD_EMOJI_DEFAULT_NAME",
+          "value": "steve"
         }
       ],
       "secrets": [
@@ -65,6 +69,18 @@
         {
           "name": "SQS_QUEUE_URL",
           "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/sqs/queue-url"
+        },
+        {
+          "name": "DISCORD_GUILD_ID",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/guild-id"
+        },
+        {
+          "name": "DISCORD_EMOJI_DEFAULT_NAME",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/emoji-default-name"
+        },
+        {
+          "name": "DISCORD_PRESENCE_ACTIVITY",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/presence-activity"
         }
       ]
     }

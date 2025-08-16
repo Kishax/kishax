@@ -72,9 +72,20 @@ cp ../velocity/src/main/resources/config.yml.example ../velocity/src/main/resour
 2. `.env` ファイルにToken等を設定:
 
 ```bash
+# Discord設定
 DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE
 DISCORD_CHANNEL_ID=YOUR_DISCORD_CHANNEL_ID
-# ... 他の設定も同様に
+DISCORD_CHAT_CHANNEL_ID=YOUR_DISCORD_CHAT_CHANNEL_ID
+DISCORD_ADMIN_CHANNEL_ID=YOUR_DISCORD_ADMIN_CHANNEL_ID  
+DISCORD_RULE_CHANNEL_ID=YOUR_DISCORD_RULE_CHANNEL_ID
+DISCORD_RULE_MESSAGE_ID=YOUR_DISCORD_RULE_MESSAGE_ID
+DISCORD_GUILD_ID=YOUR_DISCORD_GUILD_ID
+DISCORD_EMOJI_DEFAULT_NAME=steve
+DISCORD_PRESENCE_ACTIVITY=Kishaxサーバー
+
+# AWS設定
+AWS_REGION=ap-northeast-1
+SQS_QUEUE_URL=https://sqs.ap-northeast-1.amazonaws.com/ACCOUNT_ID/kishax-discord-queue
 ```
 
 ### 2. ローカル実行
@@ -105,10 +116,7 @@ docker run -e DISCORD_TOKEN="..." -e SQS_QUEUE_URL="..." kishax-discord-bot
 aws cloudformation create-stack \
   --stack-name kishax-discord-bot \
   --template-body file://aws/cloudformation-template.yaml \
-  --parameters ParameterKey=DiscordToken,ParameterValue=your-token \
-               ParameterKey=DiscordChannelId,ParameterValue=your-channel-id \
-               ParameterKey=VpcId,ParameterValue=vpc-xxxxx \
-               ParameterKey=SubnetIds,ParameterValue=subnet-xxxxx,subnet-yyyyy \
+  --parameters file://aws/cloudformation-parameters.json \
   --capabilities CAPABILITY_IAM
 ```
 

@@ -24,6 +24,17 @@ Parameters:
   DiscordRuleMessageId:
     Type: String
     Description: Discord Rule Message ID
+  DiscordGuildId:
+    Type: String
+    Description: Discord Guild (Server) ID
+  DiscordEmojiDefaultName:
+    Type: String
+    Description: Default Discord Emoji Name
+    Default: steve
+  DiscordPresenceActivity:
+    Type: String
+    Description: Discord Bot Presence Activity
+    Default: Kishaxサーバー
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC ID for ECS tasks
@@ -169,6 +180,42 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/ecs/kishax-discord-bot:*'
+        - PolicyName: SsmParameterAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource: 
+                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/kishax/discord/*'
+                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/kishax/sqs/*'
+
+  # SSM Parameters for Discord Configuration
+  DiscordGuildIdParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /kishax/discord/guild-id
+      Value: !Ref DiscordGuildId
+      Type: String
+      Description: Discord Guild (Server) ID
+
+  DiscordEmojiDefaultNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /kishax/discord/emoji-default-name
+      Value: !Ref DiscordEmojiDefaultName
+      Type: String
+      Description: Default Discord Emoji Name
+
+  DiscordPresenceActivityParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /kishax/discord/presence-activity
+      Value: !Ref DiscordPresenceActivity
+      Type: String
+      Description: Discord Bot Presence Activity
 
   # CloudWatch Log Group
   DiscordBotLogGroup:
