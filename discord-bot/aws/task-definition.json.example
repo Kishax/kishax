@@ -31,14 +31,6 @@
         {
           "name": "SQS_WAIT_TIME_SECONDS",
           "value": "20"
-        },
-        {
-          "name": "DISCORD_PRESENCE_ACTIVITY",
-          "value": "Kishaxサーバー"
-        },
-        {
-          "name": "DISCORD_EMOJI_DEFAULT_NAME",
-          "value": "steve"
         }
       ],
       "secrets": [
