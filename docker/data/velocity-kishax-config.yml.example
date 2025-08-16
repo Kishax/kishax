@@ -1,4 +1,4 @@
-# Configuration File
+# Configuration File for Velocity Plugin (AWS Discord Bot Integration)
 EventMessage:
   Join: ""
 
@@ -10,55 +10,19 @@ MySQL:
   Password: "${MYSQL_PASSWORD}"
 
 Socket:
-  Server_Port:
+  Server_Port: 6000
 
-Discord:
-  Token: ""
-  GuildId:
-  ChannelId:
-  ChatChannelId:
-  AdminChannelId:
-  MineStatusChannelId:
-  AdCraRoleId:
-  ChatType: false
-  Webhook_URL: ""
-  InviteUrl: ""
-  FirstJoinEmojiName: ""
-  AddMemberEmojiName: ""
-  JoinEmojiName: ""
-  MoveEmojiName: ""
-  ExitEmojiName: ""
-  StartEmojiName: ""
-  StopEmojiName: ""
-  RequestEmojiName: ""
-  RequestOKName: ""
-  RequestCancelName: ""
-  RequestNoResName: ""
-  MenteOnEmojiName: ""
-  MenteOffEmojiName: ""
-  EndEmojiName: ""
-  BEDefaultEmojiName: ""
-  Presence:
-    Activity: ""
-    Status:
-      ChannelId:
-      MessageId:
-    Rule:
-      ChannelId:
-      MessageId:
-        Interval:
-          Login:
-    Session: 3
-    Request:
-    Start_Server:
+# AWS Discord Service Configuration
+AWS:
+  Region: "${AWS_REGION:-ap-northeast-1}"
+  ApiGateway:
+    Endpoint: "${AWS_API_GATEWAY_ENDPOINT}"
+    AccessKey: "${AWS_ACCESS_KEY}"
+    SecretKey: "${AWS_SECRET_KEY}"
 
 Debug:
   Mode: false
-  ChannelId:
-  ChatChannelId:
-  AdminChannelId:
-  Webhook_URL: ""
-  Test:
+  Test: false
 
 Permission:
   Detail_Name:
