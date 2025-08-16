@@ -25,9 +25,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.util.PlayerUtils;
-import net.kishax.mc.velocity.discord.Discord;
-import net.kishax.mc.velocity.discord.EmojiManager;
-import net.kishax.mc.velocity.discord.MessageEditor;
+import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.PlayerDisconnect;
@@ -44,9 +42,7 @@ public class VelocityRequest implements Request {
   private final Logger logger;
   private final Database db;
   private final BroadCast bc;
-  private final Discord discord;
-  private final MessageEditor discordME;
-  private final EmojiManager emoji;
+  private final AwsDiscordService awsDiscordService;
   private final Luckperms lp;
   private final PlayerUtils pu;
   private final DoServerOnline dso;
@@ -55,16 +51,14 @@ public class VelocityRequest implements Request {
 
   @Inject
   public VelocityRequest(ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc,
-      Discord discord, MessageEditor discordME, EmojiManager emoji, Luckperms lp, PlayerUtils pu, DoServerOnline dso,
+      AwsDiscordService awsDiscordService, Luckperms lp, PlayerUtils pu, DoServerOnline dso,
       PlayerDisconnect pd) {
     this.server = server;
     this.logger = logger;
     this.config = config;
     this.db = db;
     this.bc = bc;
-    this.discord = discord;
-    this.discordME = discordME;
-    this.emoji = emoji;
+    this.awsDiscordService = awsDiscordService;
     this.lp = lp;
     this.pu = pu;
     this.dso = dso;
@@ -187,7 +181,7 @@ public class VelocityRequest implements Request {
 
                           bc.sendExceptPlayerMessage(notifyComponent, playerName);
                           try {
-                            discordME.AddEmbedSomeMessage("Request", player, targetServerName);
+                            awsDiscordService.sendBotMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。", 0x00FF00);
                           } catch (Exception e) {
                             logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                                 e.getMessage());
@@ -338,7 +332,7 @@ public class VelocityRequest implements Request {
                                   .build());
 
                           try {
-                            discordME.AddEmbedSomeMessage("Request", player, targetServerName);
+                            awsDiscordService.sendBotMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。", 0x00FF00);
                           } catch (Exception e) {
                             logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                                 e.getMessage());

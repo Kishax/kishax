@@ -19,7 +19,7 @@ import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.Message;
-import net.kishax.mc.velocity.discord.MessageEditor;
+import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kyori.adventure.text.Component;
@@ -39,7 +39,8 @@ public class StopServer {
   private String currentServerName = null;
 
   @Inject
-  public StopServer (ProxyServer server, Logger logger, Database db, ConsoleCommandSource console, MessageEditor discordME, BroadCast bc, DoServerOnline dso, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+  public StopServer(ProxyServer server, Logger logger, Database db, ConsoleCommandSource console,
+      MessageEditor discordME, BroadCast bc, DoServerOnline dso, Luckperms lp, Provider<SocketSwitch> sswProvider) {
     this.server = server;
     this.logger = logger;
     this.db = db;
@@ -65,7 +66,7 @@ public class StopServer {
 
     Player player = (Player) source;
     String playerName = player.getUsername(),
-      playerUUID = player.getUniqueId().toString();
+        playerUUID = player.getUniqueId().toString();
 
     if (args.length == 1 || targetServerName == null || targetServerName.isEmpty()) {
       player.sendMessage(Component.text("サーバー名を入力してください。").color(NamedTextColor.RED));
@@ -77,7 +78,7 @@ public class StopServer {
       currentServerName = registeredServer.getServerInfo().getName();
     });
     boolean containsServer = server.getAllServers().stream()
-      .anyMatch(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName));
+        .anyMatch(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName));
     if (!containsServer) {
       player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
       return;
@@ -92,65 +93,67 @@ public class StopServer {
     try (Connection conn = db.getConnection()) {
       Map<String, Map<String, Object>> statusMap = dso.loadStatusTable(conn);
       statusMap.entrySet().stream()
-        .filter(entry -> entry.getKey() instanceof String && entry.getKey().equals(targetServerName))
-        .forEach(entry -> {
-          Map<String, Object> serverInfo = entry.getValue();
-          if (serverInfo.get("online") instanceof Boolean online && !online) {
-            player.sendMessage(Component.text(targetServerName+"サーバーは停止しています。").color(NamedTextColor.RED));
-            logger.info(targetServerName+"サーバーは停止しています。");
-            return;
-          }
+          .filter(entry -> entry.getKey() instanceof String && entry.getKey().equals(targetServerName))
+          .forEach(entry -> {
+            Map<String, Object> serverInfo = entry.getValue();
+            if (serverInfo.get("online") instanceof Boolean online && !online) {
+              player.sendMessage(Component.text(targetServerName + "サーバーは停止しています。").color(NamedTextColor.RED));
+              logger.info(targetServerName + "サーバーは停止しています。");
+              return;
+            }
 
-          Message msg = new Message();
-          msg.mc = new Message.Minecraft();
-          msg.mc.server = new Message.Minecraft.Server();
-          msg.mc.server.action = "ADMIN_STOP";
-          msg.mc.server.name = targetServerName;
+            Message msg = new Message();
+            msg.mc = new Message.Minecraft();
+            msg.mc.server = new Message.Minecraft.Server();
+            msg.mc.server.action = "ADMIN_STOP";
+            msg.mc.server.name = targetServerName;
 
-          SocketSwitch ssw = sswProvider.get();
-          try (Connection connection = db.getConnection()) {
-            if (ssw.sendSpecificServer(connection, msg)) {
-              db.insertLog(connection, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, currentServerName, true, "stop"});
-              try {
-                discordME.AddEmbedSomeMessage("Stop", player, targetServerName);
-              } catch (Exception e) {
-                logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
-                for (StackTraceElement ste : e.getStackTrace()) {
-                  logger.error(ste.toString());
+            SocketSwitch ssw = sswProvider.get();
+            try (Connection connection = db.getConnection()) {
+              if (ssw.sendSpecificServer(connection, msg)) {
+                db.insertLog(connection, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);",
+                    new Object[] { playerName, playerUUID, currentServerName, true, "stop" });
+                try {
+                  discordME.AddEmbedSomeMessage("Stop", player, targetServerName);
+                } catch (Exception e) {
+                  logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
+                      e.getMessage());
+                  for (StackTraceElement ste : e.getStackTrace()) {
+                    logger.error(ste.toString());
+                  }
                 }
-              }
 
-              TextComponent component = Component.text()
-                .append(Component.text("WEB認証...PASS")
-                .appendNewline()
-                .append(Component.text("アドミン認証...PASS"))
-                .appendNewline()
-                .appendNewline()
-                .append(Component.text("ALL CORRECT"))
-                .appendNewline()
-                .color(NamedTextColor.GREEN))
-                .append(Component.text(targetServerName+"サーバーがまもなく停止します。").color(NamedTextColor.RED))
-                .build();
-              player.sendMessage(component);
-              TextComponent notifyComponent = Component.text()
-                .append(Component.text(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。")
-                .appendNewline()
-                .append(Component.text("まもなく" + targetServerName + "サーバーが停止します。"))
-                .color(NamedTextColor.RED))
-                .build();
-              bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
-              console.sendMessage(Component.text(targetServerName+"サーバーがまもなく停止します。").color(NamedTextColor.RED));
-            } else {
-              player.sendMessage(Component.text(targetServerName + "サーバーとの通信に失敗しました。").color(NamedTextColor.RED));
-              logger.error(targetServerName + "サーバーとの通信に失敗しました。");
+                TextComponent component = Component.text()
+                    .append(Component.text("WEB認証...PASS")
+                        .appendNewline()
+                        .append(Component.text("アドミン認証...PASS"))
+                        .appendNewline()
+                        .appendNewline()
+                        .append(Component.text("ALL CORRECT"))
+                        .appendNewline()
+                        .color(NamedTextColor.GREEN))
+                    .append(Component.text(targetServerName + "サーバーがまもなく停止します。").color(NamedTextColor.RED))
+                    .build();
+                player.sendMessage(component);
+                TextComponent notifyComponent = Component.text()
+                    .append(Component.text(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。")
+                        .appendNewline()
+                        .append(Component.text("まもなく" + targetServerName + "サーバーが停止します。"))
+                        .color(NamedTextColor.RED))
+                    .build();
+                bc.sendExceptPlayerMessage(notifyComponent, player.getUsername());
+                console.sendMessage(Component.text(targetServerName + "サーバーがまもなく停止します。").color(NamedTextColor.RED));
+              } else {
+                player.sendMessage(Component.text(targetServerName + "サーバーとの通信に失敗しました。").color(NamedTextColor.RED));
+                logger.error(targetServerName + "サーバーとの通信に失敗しました。");
+              }
+            } catch (SQLException | ClassNotFoundException e) {
+              logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+              for (StackTraceElement element : e.getStackTrace()) {
+                logger.error(element.toString());
+              }
             }
-          } catch (SQLException | ClassNotFoundException e) {
-            logger.error("A SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
-            for (StackTraceElement element : e.getStackTrace()) {
-              logger.error(element.toString());
-            }
-          }
-        });
+          });
     } catch (SQLException | ClassNotFoundException e) {
       logger.error("An SQLException | ClassNotFoundException error occurred: " + e.getMessage());
       for (StackTraceElement element : e.getStackTrace()) {
