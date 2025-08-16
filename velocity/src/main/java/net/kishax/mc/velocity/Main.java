@@ -3,10 +3,7 @@ package net.kishax.mc.velocity;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.TimeZone;
-import java.util.concurrent.CompletableFuture;
 
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.slf4j.Logger;
@@ -22,16 +19,13 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import net.kishax.mc.common.database.Database;
-import net.kishax.mc.common.libs.ClassManager;
-import net.kishax.mc.common.libs.Downloader;
-import net.kishax.mc.common.libs.JarLoader;
-import net.kishax.mc.common.libs.interfaces.PackageManager;
+// リフレクション・動的ライブラリローディングは AWS移行により不要
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.aws.AwsConfig;
-import net.kishax.mc.velocity.libs.VPackageManager;
+// VPackageManager削除済み
 import net.kishax.mc.velocity.module.Module;
 import net.kishax.mc.velocity.server.DoServerOffline;
 import net.kishax.mc.velocity.server.DoServerOnline;
@@ -64,58 +58,18 @@ public class Main {
   public void onProxyInitialization(ProxyInitializeEvent e) {
     logger.info("detected velocity platform.");
     TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
-    Downloader downloader = new Downloader();
-    List<PackageManager> packages = Arrays.asList(VPackageManager.VPackage.values());
-    CompletableFuture<List<Boolean>> downloadFuture = downloader.downloadPackages(packages, dataDirectory);
-    downloadFuture.thenCompose(results -> {
-      for (int i = 0; i < results.size(); i++) {
-        if (!results.get(i)) {
-          logger.error("Failed to download: " + packages.get(i).getUrl());
-        }
-      }
-      if (results.contains(false)) {
-        logger.error("Failed to download external package.");
-        return CompletableFuture.completedFuture(null);
-      } else {
-        logger.info("All packages downloaded successfully.");
-        ClassLoader parentLoader = this.getClass().getClassLoader();
-        return JarLoader.makeURLClassLoaderFromJars(parentLoader, packages, dataDirectory);
-      }
-    }).thenAccept(urlClassLoader -> {
-      try {
-        if (urlClassLoader.isEmpty()) {
-          logger.error("Failed to make ClassLoader from JAR.");
-          logger.error("Cannot start plugin.");
-          return;
-        }
-        // URLClassLoaderを別のクラスで保存する
-        for (PackageManager pkg : packages) {
-          if (pkg != null) {
-            // logger.info("URLClassLoader saved successfully: {}", pkg.getCoordinates());
-          } else {
-            logger.error("Failed to make ClassLoader from JAR");
-            logger.error("Cannot start plugin.");
-            return;
-          }
-        }
-        ClassManager.urlClassLoaderMap.putAll(urlClassLoader);
-        startApplication();
-        isEnable = true;
-      } catch (Exception e1) {
-        logger.error("Failed to make ClassLoader from JAR: {}", e1.getMessage());
-        for (StackTraceElement ste : e1.getStackTrace()) {
-          logger.error(ste.toString());
-        }
-        logger.error("Cannot start plugin.");
-      }
-    }).exceptionally(e1 -> {
-      logger.error("An error occurred while loading packages: {}", e1.getMessage());
+    
+    try {
+      startApplication();
+      isEnable = true;
+      logger.info("plugin has been enabled.");
+    } catch (Exception e1) {
+      logger.error("Failed to start plugin: {}", e1.getMessage());
       for (StackTraceElement ste : e1.getStackTrace()) {
         logger.error(ste.toString());
       }
       logger.error("Cannot start plugin.");
-      return null;
-    });
+    }
   }
 
   private void startApplication() {
@@ -165,7 +119,6 @@ public class Main {
     }
     logger.info(FloodgateApi.getInstance().toString());
     logger.info("linking with Floodgate...");
-    logger.info("plugin has been enabled.");
   }
 
   public static Injector getInjector() {
