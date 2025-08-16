@@ -26,5 +26,13 @@
   {
     "ParameterKey": "DiscordGuildId",
     "ParameterValue": "YOUR_DISCORD_GUILD_ID"
+  },
+  {
+    "ParameterKey": "DiscordEmojiDefaultName",
+    "ParameterValue": "steve"
+  },
+  {
+    "ParameterKey": "DiscordPresenceActivity",
+    "ParameterValue": "Kishaxサーバー"
   }
 ]
