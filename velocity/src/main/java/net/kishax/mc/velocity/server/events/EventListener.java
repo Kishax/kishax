@@ -48,8 +48,7 @@ import net.kishax.mc.common.settings.PermSettings;
 import net.kishax.mc.common.settings.Settings;
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.Main;
-import net.kishax.mc.velocity.discord.DiscordEventListener;
-import net.kishax.mc.velocity.discord.MessageEditor;
+import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.GeyserMC;
 import net.kishax.mc.velocity.server.MineStatus;
@@ -69,7 +68,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 
 public class EventListener {
   public static Set<String> playerInputers = new HashSet<>();
-  public static Map<String, String> PlayerMessageIds = new HashMap<>();
+  // Deprecated: PlayerMessageIds moved to AWS MessageIdManager
   public static final Map<Player, Runnable> disconnectTasks = new HashMap<>();
   public static final Map<Player, Runnable> otherServerConnectTasks = new HashMap<>();
   public static final Map<Player, Integer> playerJoinHubIds = new HashMap<>();
@@ -87,7 +86,7 @@ public class EventListener {
   private final PlayerUtils pu;
   private final PlayerDisconnect pd;
   private final RomajiConversion rc;
-  private final MessageEditor discordME;
+  private final AwsDiscordService awsDiscordService;
   private final MineStatus ms;
   private final GeyserMC gm;
   private final Maintenance mt;
@@ -98,7 +97,7 @@ public class EventListener {
   @Inject
   public EventListener(Main plugin, Logger logger, ProxyServer server, VelocityConfig config, Database db, BroadCast bc,
       ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc,
-      MessageEditor discordME, MineStatus ms, GeyserMC gm, Maintenance mt, Luckperms lp) {
+      AwsDiscordService awsDiscordService, MineStatus ms, GeyserMC gm, Maintenance mt, Luckperms lp) {
     this.plugin = plugin;
     this.logger = logger;
     this.server = server;
@@ -110,7 +109,7 @@ public class EventListener {
     this.pu = pu;
     this.pd = pd;
     this.rc = rc;
-    this.discordME = discordME;
+    this.awsDiscordService = awsDiscordService;
     this.ms = ms;
     this.gm = gm;
     this.mt = mt;
@@ -183,21 +182,21 @@ public class EventListener {
           String katakanaPattern = "[\\u30A0-\\u30FF]+";
           if (detectMatches(originalMessage, kanjiPattern) || detectMatches(originalMessage, hiraganaPattern)
               || detectMatches(originalMessage, katakanaPattern) || isEnglish) {
-            discordME.AddEmbedSomeMessage("Chat", player, serverInfo, originalMessage);
+            awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), originalMessage);
             return;
           }
           if (config.getBoolean("Conv.Mode")) {
             // Map方式
             String kanaMessage = conv.ConvRomaToKana(originalMessage);
             String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-            discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
+            awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), kanjiMessage);
             component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
             bc.sendSpecificServerMessage(component, chatServerName);
           } else {
             // pde方式
             String kanaMessage = rc.Romaji(originalMessage);
             String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-            discordME.AddEmbedSomeMessage("Chat", player, serverInfo, kanjiMessage);
+            awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), kanjiMessage);
             component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
             bc.sendSpecificServerMessage(component, chatServerName);
           }
@@ -255,7 +254,7 @@ public class EventListener {
           bc.sendSpecificServerMessage(component, chatServerName);
         }
 
-        discordME.AddEmbedSomeMessage("Chat", player, serverInfo, mixtext)
+        awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), mixtext)
             .exceptionally(ex -> {
               logger.error("An Exception error occurred: " + ex.getMessage());
               for (StackTraceElement element : ex.getStackTrace()) {
@@ -557,7 +556,7 @@ public class EventListener {
                       return;
 
                     // AmabassadorプラグインによるReconnectの場合 Or リログして〇秒以内の場合
-                    if (EventListener.PlayerMessageIds.containsKey(playerUUID) && previousServerInfo.isPresent()) {
+                    if (previousServerInfo.isPresent()) {
                       // どこからか移動してきたとき
                       RegisteredServer previousServer = previousServerInfo.get();
                       ServerInfo beforeServerInfo = previousServer.getServerInfo();
@@ -566,7 +565,7 @@ public class EventListener {
                           new Object[] { playerName, playerUUID, currentServerName, true });
                       ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
                       try {
-                        discordME.AddEmbedSomeMessage("Move", player, serverInfo);
+                        awsDiscordService.sendPlayerMoveEvent(playerName, playerUUID, currentServerName);
                       } catch (Exception ex) {
                         logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                             ex.getMessage());
@@ -585,7 +584,7 @@ public class EventListener {
                           String beforeServerName = beforeServerInfo.getName();
                           ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
                           try {
-                            discordME.AddEmbedSomeMessage("Move", player, currentServerName);
+                            awsDiscordService.sendPlayerMoveEvent(playerName, playerUUID, currentServerName);
                           } catch (Exception ex) {
                             logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                                 ex.getMessage());
@@ -601,7 +600,7 @@ public class EventListener {
                           putJoinLogIdToMap(insertedId, player);
                           ms.updateJoinPlayers(playerName, currentServerName);
                           try {
-                            discordME.AddEmbedSomeMessage("Join", player, serverInfo);
+                            awsDiscordService.sendPlayerJoinEvent(playerName, playerUUID, currentServerName);
                           } catch (Exception ex) {
                             logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                                 ex.getMessage());
@@ -690,7 +689,7 @@ public class EventListener {
                   }
                   ms.updateJoinPlayers(playerName, currentServerName);
                   try {
-                    discordME.AddEmbedSomeMessage("FirstJoin", player, serverInfo);
+                    awsDiscordService.sendPlayerJoinEvent(playerName, playerUUID, currentServerName);
                   } catch (Exception ex) {
                     logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                         ex.getMessage());
@@ -755,7 +754,7 @@ public class EventListener {
               .sendMessage(Component.text("Player " + playerName + " disconnected from server: " + serverInfo.getName())
                   .color(NamedTextColor.GREEN));
           try {
-            discordME.AddEmbedSomeMessage("Exit", player, serverInfo);
+            awsDiscordService.sendPlayerLeaveEvent(playerName, player.getUniqueId().toString(), serverInfo.getName());
           } catch (Exception ex) {
             logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", ex.getMessage());
             for (StackTraceElement ste : ex.getStackTrace()) {
