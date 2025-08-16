@@ -30,10 +30,11 @@ public class AwsConfig {
    * AWS Access Key を取得
    */
   public String getAwsAccessKey() {
-    String accessKey = config.getString("AWS.AccessKey", "");
+    String accessKey = config.getString("AWS.ApiGateway.AccessKey", "");
     if (accessKey.isEmpty()) {
       logger.warn("AWS Access Key が設定されていません");
     }
+    logger.debug("AWS Access Key loaded: {}", accessKey.isEmpty() ? "EMPTY" : "LOADED");
     return accessKey;
   }
 
@@ -41,10 +42,11 @@ public class AwsConfig {
    * AWS Secret Key を取得
    */
   public String getAwsSecretKey() {
-    String secretKey = config.getString("AWS.SecretKey", "");
+    String secretKey = config.getString("AWS.ApiGateway.SecretKey", "");
     if (secretKey.isEmpty()) {
       logger.warn("AWS Secret Key が設定されていません");
     }
+    logger.debug("AWS Secret Key loaded: {}", secretKey.isEmpty() ? "EMPTY" : "LOADED");
     return secretKey;
   }
 
@@ -92,9 +94,9 @@ public class AwsConfig {
     } else {
       logger.error("❌ AWS設定が不完全です");
       if (getAwsAccessKey().isEmpty())
-        logger.error("  - AWS.AccessKey が未設定");
+        logger.error("  - AWS.ApiGateway.AccessKey が未設定");
       if (getAwsSecretKey().isEmpty())
-        logger.error("  - AWS.SecretKey が未設定");
+        logger.error("  - AWS.ApiGateway.SecretKey が未設定");
       if (getApiGatewayUrl().isEmpty())
         logger.error("  - AWS.ApiGateway.Endpoint が未設定");
     }
