@@ -1,8 +1,8 @@
 package net.kishax.mc.common.util;
 
 public enum ColorUtil {
-  RED(255, 0, 0), 
-  BLUE(0, 0, 255), 
+  RED(255, 0, 0),
+  BLUE(0, 0, 255),
   GREEN(0, 255, 0),
   LIGHTGREEN(144, 238, 144),
   BLACK(0, 0, 0),
@@ -10,10 +10,10 @@ public enum ColorUtil {
   YELLOW(255, 255, 0),
   ORANGE(255, 165, 0),
   PINK(255, 0, 127),
-  AQUA(0, 255, 255)
-  ;
+  AQUA(0, 255, 255);
 
   private final int rgb;
+
   ColorUtil(int r, int g, int b) {
     // 各成分が0から255の範囲であることを確認
     if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {

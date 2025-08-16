@@ -7,7 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
 public class JavaUtils {
-  private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
+  private static final Pattern UUID_PATTERN = Pattern
+      .compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
   public static boolean isUUID(String str) {
     return UUID_PATTERN.matcher(str).matches();
@@ -18,7 +19,9 @@ public class JavaUtils {
       YYYY_MM_DD_HH_MM_SS("yyyy-MM-dd HH:mm:ss"),
       YYYY_MM_DD("yyyy/MM/dd"),
       ;
+
       private final SimpleDateFormat sdf;
+
       Format(String format) {
         this.sdf = new SimpleDateFormat(format);
       }

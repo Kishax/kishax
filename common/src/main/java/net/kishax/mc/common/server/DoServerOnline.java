@@ -22,7 +22,7 @@ public class DoServerOnline {
   private final Database db;
 
   @Inject
-  public DoServerOnline (Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
+  public DoServerOnline(Logger logger, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, Database db) {
     this.logger = logger;
     this.sswProvider = sswProvider;
     this.shd = shd;
@@ -34,7 +34,7 @@ public class DoServerOnline {
 
     Objects.requireNonNull(serverName);
     try (Connection conn = db.getConnection()) {
-      db.updateLog( "UPDATE settings SET value=? WHERE name=?;", new Object[] {serverName, "now_online"});
+      db.updateLog("UPDATE settings SET value=? WHERE name=?;", new Object[] { serverName, "now_online" });
       SocketSwitch ssw = sswProvider.get();
 
       Message msg = new Message();
@@ -48,7 +48,7 @@ public class DoServerOnline {
       // refreshManualOnlineServer()を呼び出しているので、MineStatusSyncは不要
       String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
       try (PreparedStatement ps = conn.prepareStatement(query)) {
-        ps.setBoolean(1,true);
+        ps.setBoolean(1, true);
         ps.setInt(2, socketport);
         ps.setString(3, serverName);
         int rsAffected = ps.executeUpdate();

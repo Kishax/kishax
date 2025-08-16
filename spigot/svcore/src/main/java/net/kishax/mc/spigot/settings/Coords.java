@@ -79,5 +79,5 @@ public enum Coords {
 
   public String getServer() {
     return maps.get("server") instanceof String ? (String) maps.get("server") : "";
-  } 
+  }
 }

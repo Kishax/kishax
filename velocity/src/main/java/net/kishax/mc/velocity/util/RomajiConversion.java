@@ -70,10 +70,10 @@ public class RomajiConversion {
         logger.error("romaji.csv not found in resources. Romaji conversion will be disabled.");
         return;
       }
-      
+
       // ディレクトリが存在しない場合は作成
       Files.createDirectories(targetPath.getParent());
-      
+
       // リソースファイルをコピー
       Files.copy(resourceStream, targetPath);
       logger.info("Successfully copied romaji.csv from resources to: " + targetPath);

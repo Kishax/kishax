@@ -118,13 +118,16 @@ public class Config {
 
   @SuppressWarnings("unchecked")
   public Object getNestedValue(String path) {
-    if (Objects.isNull(config))	return null;
+    if (Objects.isNull(config))
+      return null;
     String[] keys = path.split("\\.");
     Map<String, Object> currentMap = config;
     for (int i = 0; i < keys.length; i++) {
       Object value = currentMap.get(keys[i]);
-      if (Objects.isNull(value))	return null;
-      if (i == keys.length - 1)	return value;
+      if (Objects.isNull(value))
+        return null;
+      if (i == keys.length - 1)
+        return value;
       if (value instanceof Map) {
         currentMap = (Map<String, Object>) value;
       } else {

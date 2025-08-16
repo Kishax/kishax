@@ -10,9 +10,10 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 public class Cancel {
   @Inject
-  public Cancel() {}
+  public Cancel() {
+  }
 
-  public void execute(@NotNull CommandSource source,String[] args) {
+  public void execute(@NotNull CommandSource source, String[] args) {
     source.sendMessage(Component.text("キャンセルしました。").color(NamedTextColor.WHITE));
   }
 }

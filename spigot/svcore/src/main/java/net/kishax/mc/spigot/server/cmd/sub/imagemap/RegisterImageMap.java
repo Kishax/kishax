@@ -49,7 +49,8 @@ public class RegisterImageMap implements TabExecutor {
   private final ImageMap im;
 
   @Inject
-  public RegisterImageMap(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ImageMap im) {
+  public RegisterImageMap(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt,
+      ImageMap im) {
     this.audiences = audiences;
     this.logger = logger;
     this.db = db;
@@ -59,7 +60,8 @@ public class RegisterImageMap implements TabExecutor {
   }
 
   @Override
-  public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+  public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+      @NotNull String[] args) {
     if (sender instanceof Player) {
       Player player = (Player) sender;
       String playerName = player.getName();
@@ -74,42 +76,42 @@ public class RegisterImageMap implements TabExecutor {
       }
 
       Component imageUrl = Component.text("画像URL")
-        .color(NamedTextColor.GOLD)
-        .decorate(
-          TextDecoration.BOLD, 
-          TextDecoration.UNDERLINED, 
-          TextDecoration.ITALIC);
+          .color(NamedTextColor.GOLD)
+          .decorate(
+              TextDecoration.BOLD,
+              TextDecoration.UNDERLINED,
+              TextDecoration.ITALIC);
 
       Component discord = Component.text("discord")
-        .color(NamedTextColor.BLUE)
-        .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED);
+          .color(NamedTextColor.BLUE)
+          .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED);
 
       TextComponent cmdNote = Component.text()
-        .append(Component.text("URLの長さが255文字を越える場合は、").color(NamedTextColor.GRAY))
-        .append(discord)
-        .append(Component.text("でも登録できます！").color(NamedTextColor.GRAY))
-        .appendNewline()
-        .append(Component.text("コマンド名:").color(NamedTextColor.GRAY))
-        .appendSpace()
-        .append(Component.text("/kishax image_add_q").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
-        .decorate(TextDecoration.ITALIC)
-        .build();
+          .append(Component.text("URLの長さが255文字を越える場合は、").color(NamedTextColor.GRAY))
+          .append(discord)
+          .append(Component.text("でも登録できます！").color(NamedTextColor.GRAY))
+          .appendNewline()
+          .append(Component.text("コマンド名:").color(NamedTextColor.GRAY))
+          .appendSpace()
+          .append(Component.text("/kishax image_add_q").color(NamedTextColor.GRAY).decorate(TextDecoration.UNDERLINED))
+          .decorate(TextDecoration.ITALIC)
+          .build();
 
       TextComponent messages = Component.text()
-        .append(Component.text("画像マップを登録しますか？"))
-        .appendNewline()
-        .append(Component.text("登録する場合は"))
-        .append(imageUrl)
-        .append(Component.text("を入力してください。"))
-        .appendNewline()
-        .append(cmdNote)
-        .appendNewline()
-        .append(Component.text("処理を中断する場合は"))
-        .append(TCUtils.ZERO.get())
-        .append(Component.text("と入力してください。"))
-        .appendNewline()
-        .append(TCUtils.INPUT_MODE.get())
-        .build();
+          .append(Component.text("画像マップを登録しますか？"))
+          .appendNewline()
+          .append(Component.text("登録する場合は"))
+          .append(imageUrl)
+          .append(Component.text("を入力してください。"))
+          .appendNewline()
+          .append(cmdNote)
+          .appendNewline()
+          .append(Component.text("処理を中断する場合は"))
+          .append(TCUtils.ZERO.get())
+          .append(Component.text("と入力してください。"))
+          .appendNewline()
+          .append(TCUtils.INPUT_MODE.get())
+          .build();
 
       audiences.player(player).sendMessage(messages);
 
@@ -122,24 +124,24 @@ public class RegisterImageMap implements TabExecutor {
           case "0" -> {
             rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
             Component message = Component.text("処理を中断しました。")
-              .color(NamedTextColor.RED)
-              .decorate(TextDecoration.BOLD);
+                .color(NamedTextColor.RED)
+                .decorate(TextDecoration.BOLD);
 
             audiences.player(player).sendMessage(message);
           }
           default -> {
             if (!PatternUtil.URL.check(input)) {
               Component errorMessage = Component.text("URLパターンに一致しません！")
-                .color(NamedTextColor.RED)
-                .decorate(TextDecoration.BOLD);
+                  .color(NamedTextColor.RED)
+                  .decorate(TextDecoration.BOLD);
 
               TextComponent errorMessages = Component.text()
-                .append(errorMessage)
-                .appendNewline()
-                .append(Component.text("適切な"))
-                .append(imageUrl)
-                .append(Component.text("を再入力してください。"))
-                .build();
+                  .append(errorMessage)
+                  .appendNewline()
+                  .append(Component.text("適切な"))
+                  .append(imageUrl)
+                  .append(Component.text("を再入力してください。"))
+                  .build();
 
               audiences.player(player).sendMessage(errorMessages);
               rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
@@ -150,16 +152,16 @@ public class RegisterImageMap implements TabExecutor {
               URL getUrl = new URI(input).toURL();
               if (ExtUtil.getExtension(getUrl) == null) {
                 Component errorMessage = Component.text("指定のURLは規定の拡張子を持ちません。")
-                  .color(NamedTextColor.RED)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.RED)
+                    .decorate(TextDecoration.BOLD);
 
                 TextComponent errorMessages = Component.text()
-                  .append(errorMessage)
-                  .appendNewline()
-                  .append(Component.text("適切な"))
-                  .append(imageUrl)
-                  .append(Component.text("を再入力してください。"))
-                  .build();
+                    .append(errorMessage)
+                    .appendNewline()
+                    .append(Component.text("適切な"))
+                    .append(imageUrl)
+                    .append(Component.text("を再入力してください。"))
+                    .build();
 
                 audiences.player(player).sendMessage(errorMessages);
                 rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
@@ -167,16 +169,16 @@ public class RegisterImageMap implements TabExecutor {
               }
             } catch (IOException | URISyntaxException e) {
               Component errorMessage = Component.text("指定の画像URLより通信ができませんでした。")
-                .color(NamedTextColor.RED)
-                .decorate(TextDecoration.BOLD);
+                  .color(NamedTextColor.RED)
+                  .decorate(TextDecoration.BOLD);
 
               TextComponent errorMessages = Component.text()
-                .append(errorMessage)
-                .appendNewline()
-                .append(Component.text("適切な"))
-                .append(imageUrl)
-                .append(Component.text("を再入力してください。"))
-                .build();
+                  .append(errorMessage)
+                  .appendNewline()
+                  .append(Component.text("適切な"))
+                  .append(imageUrl)
+                  .append(Component.text("を再入力してください。"))
+                  .build();
 
               audiences.player(player).sendMessage(errorMessages);
               rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
@@ -190,43 +192,43 @@ public class RegisterImageMap implements TabExecutor {
               rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
 
               Component titleOrComment = Component.text("タイトル:コメント")
-                .color(NamedTextColor.GOLD)
-                .decorate(
-                  TextDecoration.BOLD,
-                  TextDecoration.ITALIC,
-                  TextDecoration.UNDERLINED)
-                .hoverEvent(HoverEvent.showText(Component.text("クリックして入力")))
-                .clickEvent(ClickEvent.suggestCommand("タイトル:コメント"));
+                  .color(NamedTextColor.GOLD)
+                  .decorate(
+                      TextDecoration.BOLD,
+                      TextDecoration.ITALIC,
+                      TextDecoration.UNDERLINED)
+                  .hoverEvent(HoverEvent.showText(Component.text("クリックして入力")))
+                  .clickEvent(ClickEvent.suggestCommand("タイトル:コメント"));
 
               Component example = Component.text("(例)")
-                .appendSpace()
-                .append(Component.text("がぞう:いいかんじのがぞう。"))
-                .color(NamedTextColor.GRAY);
+                  .appendSpace()
+                  .append(Component.text("がぞう:いいかんじのがぞう。"))
+                  .color(NamedTextColor.GRAY);
 
               Component note = Component.text("※タイトルとコメントは「:」で区切ってください。")
-                .color(NamedTextColor.GRAY);
+                  .color(NamedTextColor.GRAY);
 
               Component note2 = Component.text("※タイトルのみの場合、「:」は必要ありません。")
-                .color(NamedTextColor.GRAY);
+                  .color(NamedTextColor.GRAY);
 
               TextComponent nextMessages = Component.text()
-                .append(Component.text("次に、"))
-                .append(titleOrComment)
-                .append(Component.text("を入力してください。"))
-                .appendNewline()
-                .append(note)
-                .appendNewline()
-                .append(note2)
-                .appendNewline()
-                .append(example)
-                .appendNewline()
-                .appendNewline()
-                .append(Component.text("処理を中断する場合は"))
-                .append(TCUtils.ZERO.get())
-                .append(Component.text("と入力してください。"))
-                .appendNewline()
-                .append(TCUtils.INPUT_MODE.get())
-                .build();
+                  .append(Component.text("次に、"))
+                  .append(titleOrComment)
+                  .append(Component.text("を入力してください。"))
+                  .appendNewline()
+                  .append(note)
+                  .appendNewline()
+                  .append(note2)
+                  .appendNewline()
+                  .append(example)
+                  .appendNewline()
+                  .appendNewline()
+                  .append(Component.text("処理を中断する場合は"))
+                  .append(TCUtils.ZERO.get())
+                  .append(Component.text("と入力してください。"))
+                  .appendNewline()
+                  .append(TCUtils.INPUT_MODE.get())
+                  .build();
 
               audiences.player(player).sendMessage(nextMessages);
 
@@ -241,9 +243,9 @@ public class RegisterImageMap implements TabExecutor {
                   // 「:」もしくは全角の「：」が複数ある場合は処理を中断
                   if (input2.split("[:：]").length > 2) {
                     Component errorMessage = Component.text("コメントの開始位置が決定できません。")
-                      .appendNewline()
-                      .append(Component.text("「:」もしくは全角の「：」は1つだけ入力してください。"))
-                      .color(NamedTextColor.RED);
+                        .appendNewline()
+                        .append(Component.text("「:」もしくは全角の「：」は1つだけ入力してください。"))
+                        .color(NamedTextColor.RED);
 
                     audiences.player(player).sendMessage(errorMessage);
 
@@ -261,7 +263,7 @@ public class RegisterImageMap implements TabExecutor {
 
                 rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
 
-                String[] passArgs = new String[] {url, title, comment};
+                String[] passArgs = new String[] { url, title, comment };
                 try (Connection conn = db.getConnection()) {
                   im.leadAction(conn, player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_IMAGE_MAP_FROM_MENU, passArgs, null);
                 } catch (ClassNotFoundException | SQLException e) {
@@ -276,18 +278,18 @@ public class RegisterImageMap implements TabExecutor {
           }
         }
       });
-    rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
-  } else {
-    Component errorMessage = Component.text("プレイヤーのみが実行できます。")
-      .color(NamedTextColor.RED);
-    audiences.console().sendMessage(errorMessage);
+      rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.IMAGEMAP_REGISTER_MAP);
+    } else {
+      Component errorMessage = Component.text("プレイヤーのみが実行できます。")
+          .color(NamedTextColor.RED);
+      audiences.console().sendMessage(errorMessage);
+    }
+    return true;
   }
-  return true;
-}
 
-@Override
-public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+  @Override
+  public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+      @NotNull String label, @NotNull String[] args) {
     return Collections.emptyList();
   }
 }
-

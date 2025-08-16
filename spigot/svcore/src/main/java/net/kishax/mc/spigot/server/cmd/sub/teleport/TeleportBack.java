@@ -33,7 +33,8 @@ public class TeleportBack implements TabExecutor {
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
-  public TeleportBack(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+  public TeleportBack(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp,
+      Provider<SocketSwitch> sswProvider) {
     this.audiences = audiences;
     this.logger = logger;
     this.db = db;
@@ -68,8 +69,8 @@ public class TeleportBack implements TabExecutor {
           }
 
           Component message = Component.text("テレポート前の座標に戻りました。")
-            .color(NamedTextColor.GREEN)
-            .decorate(TextDecoration.BOLD);
+              .color(NamedTextColor.GREEN)
+              .decorate(TextDecoration.BOLD);
 
           audiences.player(player).sendMessage(message);
 
@@ -77,8 +78,8 @@ public class TeleportBack implements TabExecutor {
           EventListener.playerBeforeLocationMap.remove(player);
         } else {
           Component message = Component.text("テレポート前の座標がありません。")
-            .color(NamedTextColor.RED)
-            .decorate(TextDecoration.BOLD);
+              .color(NamedTextColor.RED)
+              .decorate(TextDecoration.BOLD);
 
           audiences.player(player).sendMessage(message);
         }

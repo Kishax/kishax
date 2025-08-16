@@ -33,7 +33,7 @@ public class SetPoint {
   public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
     if (sender instanceof Player player) {
       String playerName = player.getName();
-      if (lp.getPermLevel(playerName) < 2)  {
+      if (lp.getPermLevel(playerName) < 2) {
         player.sendMessage(ChatColor.RED + "権限がありません。");
         return;
       }
@@ -60,17 +60,19 @@ public class SetPoint {
             worldName = playerWorld.getName();
           }
           player.sendMessage("""
-            座標を取得しました。
-            X: %s
-            Y: %s
-            Z: %s
-            Yaw: %s
-            Pitch: %s
-            World: %s
-          """.formatted(x, y, z, yaw, pitch, worldName));
+                座標を取得しました。
+                X: %s
+                Y: %s
+                Z: %s
+                Yaw: %s
+                Pitch: %s
+                World: %s
+              """.formatted(x, y, z, yaw, pitch, worldName));
 
           try (Connection conn = db.getConnection()) {
-            db.updateLog(conn, "UPDATE coords SET x = ?, y = ?, z = ?, yaw = ?, pitch = ?, world = ?, server = ? WHERE name = ?", new Object[] {x, y, z, yaw, pitch, worldName, thisServerName, type});
+            db.updateLog(conn,
+                "UPDATE coords SET x = ?, y = ?, z = ?, yaw = ?, pitch = ?, world = ?, server = ? WHERE name = ?",
+                new Object[] { x, y, z, yaw, pitch, worldName, thisServerName, type });
           } catch (SQLException | ClassNotFoundException e) {
             player.sendMessage(ChatColor.RED + "座標の保存に失敗しました。");
             logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());

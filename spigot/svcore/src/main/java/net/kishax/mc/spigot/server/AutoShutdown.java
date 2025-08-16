@@ -28,7 +28,8 @@ public class AutoShutdown {
   private BukkitRunnable task = null;
 
   @Inject
-  public AutoShutdown (JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider, ServerHomeDir shd, BroadCast bc) {
+  public AutoShutdown(JavaPlugin plugin, Logger logger, Database db, Provider<SocketSwitch> sswProvider,
+      ServerHomeDir shd, BroadCast bc) {
     this.plugin = plugin;
     this.logger = logger;
     this.db = db;
@@ -38,14 +39,14 @@ public class AutoShutdown {
   }
 
   public void startCheckForPlayers() {
-    if (!plugin.getConfig().getBoolean("AutoStop.Mode", false)) {	
+    if (!plugin.getConfig().getBoolean("AutoStop.Mode", false)) {
       logger.info("auto-stop is disabled.");
       return;
     }
 
-    plugin.getServer().getConsoleSender().sendMessage(ChatColor.GREEN+"Auto-Stopが有効になりました。");
+    plugin.getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "Auto-Stopが有効になりました。");
 
-    long NO_PLAYER_THRESHOLD = plugin.getConfig().getInt("AutoStop.Interval",3) * 60 * 20;
+    long NO_PLAYER_THRESHOLD = plugin.getConfig().getInt("AutoStop.Interval", 3) * 60 * 20;
 
     task = new BukkitRunnable() {
       @Override
@@ -66,7 +67,7 @@ public class AutoShutdown {
               logger.error(element.toString());
             }
           }
-          bc.broadCastMessage(ChatColor.RED+"プレイヤー不在のため、"+thisServerName+"サーバーを5秒後に停止します。");
+          bc.broadCastMessage(ChatColor.RED + "プレイヤー不在のため、" + thisServerName + "サーバーを5秒後に停止します。");
           countdownAndShutdown(5);
         }
       }

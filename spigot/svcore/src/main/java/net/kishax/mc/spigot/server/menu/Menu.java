@@ -73,14 +73,13 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class Menu {
   public static final Map<Player, Map<Type, Map<Integer, MenuEventRunnable>>> menuEventActions = new ConcurrentHashMap<>();
   public static final Map<Player, Map<Type, AtomicBoolean>> menuEventFlags = new ConcurrentHashMap<>();
-  public static final int[] SLOT_POSITIONS = {11, 13, 15, 29, 31, 33};
-  public static final int[] FACE_POSITIONS = {46, 47, 48, 49, 50, 51, 52};
+  public static final int[] SLOT_POSITIONS = { 11, 13, 15, 29, 31, 33 };
+  public static final int[] FACE_POSITIONS = { 46, 47, 48, 49, 50, 51, 52 };
   private final List<Material> ORE_BLOCKS = Arrays.asList(
-      Material.NETHERITE_BLOCK, Material.GOLD_BLOCK, Material.REDSTONE_BLOCK, 
+      Material.NETHERITE_BLOCK, Material.GOLD_BLOCK, Material.REDSTONE_BLOCK,
       Material.EMERALD_BLOCK, Material.DIAMOND_BLOCK, Material.IRON_BLOCK,
       Material.COAL_BLOCK, Material.LAPIS_BLOCK, Material.QUARTZ_BLOCK,
-      Material.COPPER_BLOCK
-      );
+      Material.COPPER_BLOCK);
   private final JavaPlugin plugin;
   private final BukkitAudiences audiences;
   private final Logger logger;
@@ -95,7 +94,8 @@ public class Menu {
   private int currentOreIndex = 0;
 
   @Inject
-  public Menu(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, ServerStatusCache ssc, Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf, Provider<SocketSwitch> sswProvider) {  
+  public Menu(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, ServerStatusCache ssc,
+      Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf, Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -121,8 +121,7 @@ public class Menu {
       new SimpleEntry<>(Type.TELEPORT_POINT_PRIVATE, this::teleportPointPrivateHandler),
       new SimpleEntry<>(Type.TELEPORT_POINT_PUBLIC, this::teleportPointPublicHandler),
       new SimpleEntry<>(Type.TELEPORT_POINT_TYPE, this::teleportPointTypeMenu),
-      new SimpleEntry<>(Type.TELEPORT_NV_PLAYER, this::faceIconNaviMenu)
-      );
+      new SimpleEntry<>(Type.TELEPORT_NV_PLAYER, this::faceIconNaviMenu));
 
   public void shortCutMenu(Player player) {
     shortCutMenu(player, 1);
@@ -143,8 +142,8 @@ public class Menu {
     int itemsPerPage = inventorySize - usingSlots; // 各ページに表示するアイテムの数
 
     Map<Type, PlayerRunnable> thisShortCutMap = shortCutMap.entrySet().stream()
-      .filter(entry -> !entry.getKey().equals(Type.GENERAL))
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        .filter(entry -> !entry.getKey().equals(Type.GENERAL))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
     int totalItems = thisShortCutMap.size();
     int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
@@ -195,7 +194,8 @@ public class Menu {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
           meta.setDisplayName(type.get());
-          meta.getPersistentDataContainer().set(new NamespacedKey(plugin, typePersistantKey), PersistentDataType.STRING, "true");
+          meta.getPersistentDataContainer().set(new NamespacedKey(plugin, typePersistantKey), PersistentDataType.STRING,
+              "true");
           item.setItemMeta(meta);
         }
         inv.addItem(item);
@@ -205,8 +205,8 @@ public class Menu {
           HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(item);
 
           Component message = Component.text("ショートカットアイテム(to: " + typeName + ")を渡しました。")
-            .color(NamedTextColor.GRAY)
-            .decorate(TextDecoration.ITALIC);
+              .color(NamedTextColor.GRAY)
+              .decorate(TextDecoration.ITALIC);
 
           audiences.player(player).sendMessage(message);
 
@@ -218,8 +218,8 @@ public class Menu {
             if (block.getType() != Material.AIR) {
               Bukkit.getScheduler().runTask(plugin, () -> {
                 Component message2 = Component.text("インベントリに入り切らないマップは、ドロップしました。")
-                  .color(NamedTextColor.GREEN)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.GREEN)
+                    .decorate(TextDecoration.BOLD);
 
                 audiences.player(player).sendMessage(message2);
 
@@ -229,8 +229,8 @@ public class Menu {
               });
             } else {
               Component message2 = Component.text("空中で実行しないでください！")
-                .color(NamedTextColor.RED)
-                .decorate(TextDecoration.BOLD);
+                  .color(NamedTextColor.RED)
+                  .decorate(TextDecoration.BOLD);
 
               audiences.player(player).sendMessage(message2);
             }
@@ -258,11 +258,11 @@ public class Menu {
       // コレクションをコピーしてから反復処理を行う
       Map<Type, Map<Integer, MenuEventRunnable>> copiedMenuActions = new HashMap<>(playerMenuActions);
       copiedMenuActions.entrySet().stream()
-        .filter(entry -> entry.getKey().equals(menuType))
-        .map(Map.Entry::getValue)
-        .filter(actions -> actions.containsKey(slot))
-        .map(actions -> actions.get(slot))
-        .forEach(action -> action.run(event));
+          .filter(entry -> entry.getKey().equals(menuType))
+          .map(Map.Entry::getValue)
+          .filter(actions -> actions.containsKey(slot))
+          .map(actions -> actions.get(slot))
+          .forEach(action -> action.run(event));
     }
   }
 
@@ -411,8 +411,7 @@ public class Menu {
     if (privatePointMeta != null) {
       privatePointMeta.setDisplayName(ChatColor.GREEN + "プライベートポイント");
       privatePointMeta.setLore(new ArrayList<>(
-            Arrays.asList(ChatColor.GRAY + "自分だけのポイントを確認できるよ。"))
-          );
+          Arrays.asList(ChatColor.GRAY + "自分だけのポイントを確認できるよ。")));
       privatePointItem.setItemMeta(privatePointMeta);
     }
     inv.setItem(11, privatePointItem);
@@ -422,8 +421,7 @@ public class Menu {
     if (newPointMeta != null) {
       newPointMeta.setDisplayName(ChatColor.GREEN + "ポイントセット");
       newPointMeta.setLore(new ArrayList<>(
-            Arrays.asList(ChatColor.GRAY + "現在地を新規ポイントとして登録できるよ。"))
-          );
+          Arrays.asList(ChatColor.GRAY + "現在地を新規ポイントとして登録できるよ。")));
       newPointItem.setItemMeta(newPointMeta);
     }
     inv.setItem(13, newPointItem);
@@ -433,12 +431,12 @@ public class Menu {
     if (publicPointMeta != null) {
       publicPointMeta.setDisplayName(ChatColor.GREEN + "パブリックポイント");
       publicPointMeta.setLore(new ArrayList<>(
-        Arrays.asList(ChatColor.GRAY + "共有のポイントを確認できるよ。"))
-      );
+          Arrays.asList(ChatColor.GRAY + "共有のポイントを確認できるよ。")));
       publicPointItem.setItemMeta(publicPointMeta);
     }
     inv.setItem(15, publicPointItem);
-    Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_POINT_TYPE, playerMenuActions);
+    Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_POINT_TYPE,
+        playerMenuActions);
     player.openInventory(inv);
   }
 
@@ -467,8 +465,8 @@ public class Menu {
 
     Collection<? extends Player> onlinePlayersCollection = Bukkit.getOnlinePlayers();
     List<Player> onlinePlayers = onlinePlayersCollection.stream()
-      .filter(entry -> entry != player)
-      .collect(Collectors.toList());
+        .filter(entry -> entry != player)
+        .collect(Collectors.toList());
 
     if (onlinePlayers.size() == 0) {
       ItemStack noPlayerItem = new ItemStack(Material.BARRIER);
@@ -478,7 +476,8 @@ public class Menu {
         noPlayerItem.setItemMeta(noPlayerMeta);
       }
       inv.setItem(13, noPlayerItem);
-      Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_NV_PLAYER, playerMenuActions);
+      Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_NV_PLAYER,
+          playerMenuActions);
       player.openInventory(inv);
       return;
     }
@@ -529,7 +528,8 @@ public class Menu {
       });
     }
 
-    Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_NV_PLAYER, playerMenuActions);
+    Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_NV_PLAYER,
+        playerMenuActions);
     player.openInventory(inv);
   }
 
@@ -556,8 +556,7 @@ public class Menu {
     if (teleportPointMeta != null) {
       teleportPointMeta.setDisplayName(ChatColor.GREEN + "ポイントテレポート");
       teleportPointMeta.setLore(new ArrayList<>(Arrays.asList(
-        "設定されたポイントに飛べる！"
-      )));
+          "設定されたポイントに飛べる！")));
       teleportPointItem.setItemMeta(teleportPointMeta);
     }
     inv.setItem(11, teleportPointItem);
@@ -567,8 +566,7 @@ public class Menu {
     if (playerTeleportMeta != null) {
       playerTeleportMeta.setDisplayName(ChatColor.GREEN + "プレイヤーテレポート");
       playerTeleportMeta.setLore(new ArrayList<>(Arrays.asList(
-        "プレイヤーにテレポートできる！"
-      )));
+          "プレイヤーにテレポートできる！")));
       playerTeleportItem.setItemMeta(playerTeleportMeta);
     }
     inv.setItem(13, playerTeleportItem);
@@ -601,9 +599,9 @@ public class Menu {
     Inventory inv = Bukkit.createInventory(null, inventorySize, Type.TELEPORT_RESPONSE_HEAD.get());
     // valueにplayerが含まれていたら、keyplayerをコレクト
     Set<Player> requestedPlayers = TeleportRequest.teleportMap.entrySet().stream()
-      .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
-      .map(Map.Entry::getKey)
-      .collect(Collectors.toSet());
+        .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toSet());
     if (!requestedPlayers.isEmpty()) {
       int totalItems = requestedPlayers.size();
       int totalPages = (int) Math.ceil((double) totalItems / itemsPerPage);
@@ -658,7 +656,8 @@ public class Menu {
     }
     inv.setItem(0, backItem);
     playerMenuActions.put(0, (event) -> playerTeleportMenu(player));
-    Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_RESPONSE_HEAD, playerMenuActions);
+    Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.TELEPORT_RESPONSE_HEAD,
+        playerMenuActions);
     player.openInventory(inv);
   }
 
@@ -672,7 +671,8 @@ public class Menu {
 
   @Deprecated
   public void changeMaterial(Player player, int id) {
-    Menu.menuEventFlags.computeIfAbsent(player, (key) -> new HashMap<>()).put(Type.CHANGE_MATERIAL, new AtomicBoolean(false));
+    Menu.menuEventFlags.computeIfAbsent(player, (key) -> new HashMap<>()).put(Type.CHANGE_MATERIAL,
+        new AtomicBoolean(false));
 
     Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
 
@@ -691,7 +691,7 @@ public class Menu {
           Optional<Type> optionalType = Type.searchPersistantKeys(typePersistantKey);
           if (optionalType.isPresent()) {
             Type type = optionalType.get();
-            for (int i = 1; i <= invSize -1; i++) {
+            for (int i = 1; i <= invSize - 1; i++) {
               if (i == setSlot) {
                 // 何も置かない。プレイヤーがアイテムを置くのを待つ
                 playerMenuActions.put(i, (event) -> {
@@ -707,31 +707,32 @@ public class Menu {
                   String newMaterialName = material.name();
 
                   try (Connection connection = db.getConnection()) {
-                    db.updateLog(connection, "UPDATE tp_points SET `material`=?, `enchanted`=? WHERE `id`=?", new Object[] {newMaterialName, isEnchanted, id});
+                    db.updateLog(connection, "UPDATE tp_points SET `material`=?, `enchanted`=? WHERE `id`=?",
+                        new Object[] { newMaterialName, isEnchanted, id });
 
                     event.setCancelled(true);
 
                     Component success = Component.text("アイテムタイプを変更しました。")
-                      .color(NamedTextColor.GREEN)
-                      .decorate(TextDecoration.BOLD);
+                        .color(NamedTextColor.GREEN)
+                        .decorate(TextDecoration.BOLD);
 
                     Component changeContent = Component.text(defaultMaterialName + " -> " + newMaterialName)
-                      .color(NamedTextColor.GRAY)
-                      .decorate(TextDecoration.ITALIC);
+                        .color(NamedTextColor.GRAY)
+                        .decorate(TextDecoration.ITALIC);
 
                     Component back = Component.text("※もとのメニューに戻ります。")
-                      .color(NamedTextColor.GRAY)
-                      .decorate(TextDecoration.ITALIC);
+                        .color(NamedTextColor.GRAY)
+                        .decorate(TextDecoration.ITALIC);
 
                     TextComponent messages = Component.text()
-                      .append(changeContent)
-                      .appendNewline()
-                      .append(success)
-                      .appendNewline()
-                      .append(TCUtils.LATER_OPEN_INV_3.get())
-                      .appendNewline()
-                      .append(back)
-                      .build();
+                        .append(changeContent)
+                        .appendNewline()
+                        .append(success)
+                        .appendNewline()
+                        .append(TCUtils.LATER_OPEN_INV_3.get())
+                        .appendNewline()
+                        .append(back)
+                        .build();
 
                     new BukkitRunnable() {
                       @Override
@@ -759,13 +760,11 @@ public class Menu {
               if (glassMeta != null) {
                 glassMeta.setDisplayName(ChatColor.GREEN + "アイテムタイプの変更");
                 glassMeta.setLore(new ArrayList<>(
-                      Arrays.asList(
+                    Arrays.asList(
                         "真ん中の空いているスロットに",
                         "アイテムをセットしよう。",
                         "最後にそれをクリック。",
-                        "※アイテムは返却されます。"
-                        )
-                      ));
+                        "※アイテムは返却されます。")));
                 glassItem.setItemMeta(glassMeta);
               }
               inv.setItem(i, glassItem);
@@ -773,7 +772,7 @@ public class Menu {
             }
           }
         }
-          }
+      }
     } catch (SQLException | ClassNotFoundException e) {
       player.closeInventory();
       player.sendMessage(ChatColor.RED + "データベースとの通信にエラーが発生しました。");
@@ -876,8 +875,7 @@ public class Menu {
     if (registerImageMeta != null) {
       registerImageMeta.setDisplayName(ChatColor.GREEN + "イメージマップの登録");
       registerImageMeta.setLore(new ArrayList<>(
-            Arrays.asList("画像URLよりイメージマップを登録できるよ。"))
-          );
+          Arrays.asList("画像URLよりイメージマップを登録できるよ。")));
       registerImageItem.setItemMeta(registerImageMeta);
     }
     inv.setItem(11, registerImageItem);
@@ -887,8 +885,7 @@ public class Menu {
     if (imageMapListMeta != null) {
       imageMapListMeta.setDisplayName(ChatColor.GREEN + "イメージマップリスト");
       imageMapListMeta.setLore(new ArrayList<>(
-            Arrays.asList("今までに登録されたイメージマップが見れる！"))
-          );
+          Arrays.asList("今までに登録されたイメージマップが見れる！")));
       imageMapListItem.setItemMeta(imageMapListMeta);
     }
     inv.setItem(15, imageMapListItem);
@@ -953,30 +950,32 @@ public class Menu {
         Map<String, Object> imageInfo = imageMap.get(i);
         if (imageInfo != null) {
           int id = (int) imageInfo.get("id");
-          String server = imageInfo.get("server") instanceof String authorServer ? authorServer : null, 
-                 thisServer = shd.getServerName(),
-                 title = (String) imageInfo.get("title"),
-                 authorName = (String) imageInfo.get("name"),
-                 comment = (String) imageInfo.get("comment"),
-                 imageUUID = (String) imageInfo.get("imuuid"),
-                 ext = (String) imageInfo.get("ext"),
-                 date = ((Date) imageInfo.get("date")).toString(),
-                 url = (String) imageInfo.get("url");
+          String server = imageInfo.get("server") instanceof String authorServer ? authorServer : null,
+              thisServer = shd.getServerName(),
+              title = (String) imageInfo.get("title"),
+              authorName = (String) imageInfo.get("name"),
+              comment = (String) imageInfo.get("comment"),
+              imageUUID = (String) imageInfo.get("imuuid"),
+              ext = (String) imageInfo.get("ext"),
+              date = ((Date) imageInfo.get("date")).toString(),
+              url = (String) imageInfo.get("url");
           boolean fromDiscord = Optional.ofNullable(imageInfo.get("d"))
-            .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
-            .orElse(false),
-            isQr = Optional.ofNullable(imageInfo.get("isqr"))
               .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
               .orElse(false),
-            locked = (boolean) imageInfo.get("locked"),
-            lockedAction = (boolean) imageInfo.get("locked_action"),
-            large = (boolean) imageInfo.get("large");
-          //isQr = imageInfo.get("isqr") != null && (imageInfo.get("isqr") instanceof Boolean ? (Boolean) imageInfo.get("isqr") : (Integer) imageInfo.get("isqr") != 0);
+              isQr = Optional.ofNullable(imageInfo.get("isqr"))
+                  .map(value -> value instanceof Boolean ? (Boolean) value : (Integer) value != 0)
+                  .orElse(false),
+              locked = (boolean) imageInfo.get("locked"),
+              lockedAction = (boolean) imageInfo.get("locked_action"),
+              large = (boolean) imageInfo.get("large");
+          // isQr = imageInfo.get("isqr") != null && (imageInfo.get("isqr") instanceof
+          // Boolean ? (Boolean) imageInfo.get("isqr") : (Integer) imageInfo.get("isqr")
+          // != 0);
           List<String> lores = new ArrayList<>();
           lores.add(large ? "<ラージマップ>" : isQr ? "<QRコード>" : "<イメージマップ>");
           List<String> commentLines = Arrays.stream(comment.split("\n"))
-            .map(String::trim)
-            .collect(Collectors.toList());
+              .map(String::trim)
+              .collect(Collectors.toList());
           lores.addAll(commentLines);
           lores.add("created by " + authorName);
           lores.add("created at " + date.replace("-", "/"));
@@ -998,15 +997,16 @@ public class Menu {
           if (meta != null) {
             meta.setDisplayName(ChatColor.GREEN + title);
             meta.setLore(lores);
-            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, String.valueOf(index)), PersistentDataType.STRING, "true");
+            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, String.valueOf(index)),
+                PersistentDataType.STRING, "true");
             item.setItemMeta(meta);
           }
           inv.addItem(item);
-          //inv.setItem(slot, item);
+          // inv.setItem(slot, item);
           if (locked) {
             // discord未認証(/qコマンドでロック解除されていない)の場合
             playerMenuActions.put(inv.first(item), (event) -> {
-              //logger.info("through into lockedMap");
+              // logger.info("through into lockedMap");
               player.closeInventory();
               player.sendMessage(ChatColor.RED + "この画像はロックされています。\n"
                   + ChatColor.GRAY + "この画像を取得するには、/qコマンドにて、OTPを入力してください。");
@@ -1017,10 +1017,10 @@ public class Menu {
               // 作成者の場合
               // OTPがまだデータベースに残っているのが確定している
               playerMenuActions.put(inv.first(item), (event) -> {
-                //logger.info("through into executeQFromMenu");
+                // logger.info("through into executeQFromMenu");
                 player.closeInventory();
                 if (imageInfo.get("otp") instanceof String otp) {
-                  im.executeQFromMenu(player, new Object[] {otp, title, comment, url, date});
+                  im.executeQFromMenu(player, new Object[] { otp, title, comment, url, date });
                 }
               });
             } else {
@@ -1029,12 +1029,12 @@ public class Menu {
                 player.closeInventory();
 
                 Component alert = Component.text("ロック解除済みです。")
-                  .color(NamedTextColor.RED);
+                    .color(NamedTextColor.RED);
 
                 TextComponent messages = Component.text()
-                  .append(alert)
-                  .append(Component.text("作成者のみロック後のアクションを選択できます。"))
-                  .build();
+                    .append(alert)
+                    .append(Component.text("作成者のみロック後のアクションを選択できます。"))
+                    .build();
 
                 audiences.player(player).sendMessage(messages);
               });
@@ -1043,38 +1043,40 @@ public class Menu {
             playerMenuActions.put(inv.first(item), (event) -> {
               player.closeInventory();
               Component serverComponent = Component.text(server + "サーバー")
-                .color(NamedTextColor.GOLD)
-                .decorate(
-                    TextDecoration.BOLD,
-                    TextDecoration.UNDERLINED)
-                .color(NamedTextColor.GOLD);
+                  .color(NamedTextColor.GOLD)
+                  .decorate(
+                      TextDecoration.BOLD,
+                      TextDecoration.UNDERLINED)
+                  .color(NamedTextColor.GOLD);
 
               Component alert = Component.text("ラージマップは取得できません。")
-                .color(NamedTextColor.RED);
+                  .color(NamedTextColor.RED);
 
               TextComponent messages = Component.text()
-                .append(Component.text("この画像は"))
-                .append(serverComponent)
-                .append(Component.text("で作られたラージマップです。"))
-                .appendNewline()
-                .append(alert)
-                .build();
+                  .append(Component.text("この画像は"))
+                  .append(serverComponent)
+                  .append(Component.text("で作られたラージマップです。"))
+                  .appendNewline()
+                  .append(alert)
+                  .build();
 
               audiences.player(player).sendMessage(messages);
             });
-          } else if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId) && server != null && server.equals(thisServer)) {
+          } else if (imageInfo.get("mapid") instanceof Integer mapId && thisServerImageInfo.containsKey(mapId)
+              && server != null && server.equals(thisServer)) {
             // そのサーバーで、データベースに保存されているmapIdをもつマップがあるとは限らない
-            //Map<String, Object> thisServerImage = thisServerImageInfo.get(mapId);
+            // Map<String, Object> thisServerImage = thisServerImageInfo.get(mapId);
             playerMenuActions.put(inv.first(item), (event) -> {
-              //logger.info("through into giveMap");
+              // logger.info("through into giveMap");
               player.closeInventory();
               im.giveMapToPlayer(player, mapId);
-            }); 
+            });
           } else {
             playerMenuActions.put(inv.first(item), (event) -> {
-              //logger.info("through into executeImageMapFromMenu");
+              // logger.info("through into executeImageMapFromMenu");
               player.closeInventory();
-              im.executeImageMapFromMenu(player, new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date});
+              im.executeImageMapFromMenu(player,
+                  new Object[] { id, isQr, authorName, imageUUID, title, comment, ext, date });
             });
           }
           index++;
@@ -1112,10 +1114,11 @@ public class Menu {
     Map<String, Map<String, Map<String, Object>>> serverStatusMap = ssc.getStatusMap();
     // オンラインサーバーのみを抽出
     Map<String, Map<String, Object>> serverStatusOnlineMap = serverStatusMap.values().stream()
-      .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
-      .filter(serverEntry -> serverEntry.getValue().get("online") instanceof Boolean online && online)
-      .filter(serverEntry -> serverEntry.getValue().get("name") instanceof String name && !name.equals("proxy") && !name.equals("maintenance"))
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+        .filter(serverEntry -> serverEntry.getValue().get("online") instanceof Boolean online && online)
+        .filter(serverEntry -> serverEntry.getValue().get("name") instanceof String name && !name.equals("proxy")
+            && !name.equals("maintenance"))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     int totalItems = serverStatusOnlineMap.size(),
         totalPages = (totalItems + SLOT_POSITIONS.length - 1) / SLOT_POSITIONS.length,
         startIndex = (page - 1) * SLOT_POSITIONS.length,
@@ -1160,7 +1163,7 @@ public class Menu {
       playerMenuActions.put(53, (event) -> onlineServerMenu(player, page + 1));
     }
     Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.ONLINE_SERVER, playerMenuActions);
-    //logger.info("menuActions: {}", menuActions);
+    // logger.info("menuActions: {}", menuActions);
     player.openInventory(inv);
   }
 
@@ -1346,10 +1349,10 @@ public class Menu {
           String authorUUID = (String) tpPoint.get("uuid");
           boolean isAuthor = authorUUID.equals(playerUUID);
           String title = (String) tpPoint.get("title");
-          String comment  = (String) tpPoint.get("comment");
+          String comment = (String) tpPoint.get("comment");
           double x = (Double) tpPoint.get("x");
           double y = (Double) tpPoint.get("y");
-          double z =  (Double) tpPoint.get("z");
+          double z = (Double) tpPoint.get("z");
           float yaw = (Float) tpPoint.get("yaw");
           float pitch = (Float) tpPoint.get("pitch");
           String worldName = (String) tpPoint.get("world");
@@ -1367,8 +1370,8 @@ public class Menu {
 
           if (!comment.isBlank()) {
             List<String> commentLines = Arrays.stream(comment.split("\n"))
-              .map(String::trim)
-              .collect(Collectors.toList());
+                .map(String::trim)
+                .collect(Collectors.toList());
             lores.addAll(commentLines);
           }
 
@@ -1386,15 +1389,16 @@ public class Menu {
           if (meta != null) {
             meta.setDisplayName(ChatColor.GREEN + title);
             meta.setLore(lores);
-            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, String.valueOf(index)), PersistentDataType.STRING, "true");
+            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, String.valueOf(index)),
+                PersistentDataType.STRING, "true");
             if (isEnchanted) {
               meta.addEnchant(Enchantment.LURE, 1, true);
-              meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS); 
+              meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
             }
             item.setItemMeta(meta);
           }
           inv.addItem(item);
-          //inv.setItem(slot, item);
+          // inv.setItem(slot, item);
           playerMenuActions.put(inv.first(item), (event) -> {
             ClickType clickType = event.getClick();
 
@@ -1416,8 +1420,8 @@ public class Menu {
             final Location beforeLoc = player.getLocation();
 
             Component message = Component.text("3秒後にテレポートします。")
-              .color(NamedTextColor.GOLD)
-              .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED);
+                .color(NamedTextColor.GOLD)
+                .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED);
 
             audiences.player(player).sendMessage(message);
 
@@ -1433,18 +1437,18 @@ public class Menu {
                 player.teleport(loc);
 
                 Component message = Component.text("テレポートしました。")
-                  .color(NamedTextColor.GREEN)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.GREEN)
+                    .decorate(TextDecoration.BOLD);
 
                 Component backMessage = Component.text("※/backコマンドで戻れます。")
-                  .color(NamedTextColor.GRAY)
-                  .decorate(TextDecoration.ITALIC);
+                    .color(NamedTextColor.GRAY)
+                    .decorate(TextDecoration.ITALIC);
 
                 TextComponent messages = Component.text()
-                  .append(message)
-                  .appendNewline()
-                  .append(backMessage)
-                  .build();
+                    .append(message)
+                    .appendNewline()
+                    .append(backMessage)
+                    .build();
 
                 audiences.player(player).sendMessage(messages);
 
@@ -1620,14 +1624,14 @@ public class Menu {
 
   public int getTotalPlayers(String serverName) {
     return ssc.getStatusMap().values().stream()
-      .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
-      .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
-      .map(serverDataEntry -> serverDataEntry.getValue().get("player_list"))
-      .filter(playerList -> playerList instanceof String)
-      .map(playerList -> (String) playerList)
-      .mapToInt(playerList -> playerList.split(",\\s*").length)
-      .findFirst()
-      .orElse(0);
+        .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+        .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
+        .map(serverDataEntry -> serverDataEntry.getValue().get("player_list"))
+        .filter(playerList -> playerList instanceof String)
+        .map(playerList -> (String) playerList)
+        .mapToInt(playerList -> playerList.split(",\\s*").length)
+        .findFirst()
+        .orElse(0);
   }
 
   public int getTotalServers(String serverType) {
@@ -1639,7 +1643,7 @@ public class Menu {
   @Deprecated
   private void settingMenu(Player player, int page) {
     Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
-    Inventory inv = Bukkit.createInventory(null, 27,Type.SETTING.get());
+    Inventory inv = Bukkit.createInventory(null, 27, Type.SETTING.get());
     try (Connection conn = db.getConnection()) {
       Map<String, Object> memberMap = db.getMemberMap(conn, player.getUniqueId().toString());
       switch (page) {
@@ -1648,7 +1652,8 @@ public class Menu {
             playerMenuActions.put(11, (event) -> {
               try (Connection connection = db.getConnection()) {
                 db.updateMemberToggle(connection, "hubinv", !hubinv, player.getUniqueId().toString());
-                player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (hubinv ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
+                player
+                    .sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (hubinv ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
               } catch (SQLException | ClassNotFoundException e) {
                 player.closeInventory();
                 player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
@@ -1683,7 +1688,8 @@ public class Menu {
             playerMenuActions.put(13, (event) -> {
               try (Connection connection = db.getConnection()) {
                 db.updateMemberToggle(connection, "tptype", !tptype, player.getUniqueId().toString());
-                player.sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (tptype ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
+                player
+                    .sendMessage(ChatColor.GRAY + "サーバー起動時のアクションを" + (tptype ? "チャット" : "オープンインベントリ") + "タイプに設定しました。");
               } catch (SQLException | ClassNotFoundException e) {
                 player.closeInventory();
                 player.sendMessage(ChatColor.RED + "データベースとの通信に失敗しました。");
@@ -1830,7 +1836,8 @@ public class Menu {
       }
       for (int i = startIndex; i < endIndex; i++) {
         Player targetPlayer = (Player) Bukkit.getOnlinePlayers().toArray()[i];
-        if (targetPlayer.equals(player)) continue;
+        if (targetPlayer.equals(player))
+          continue;
         ItemStack playerItem = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta playerMeta = (SkullMeta) playerItem.getItemMeta();
         if (playerMeta != null) {
@@ -1888,7 +1895,7 @@ public class Menu {
             for (Map.Entry<String, Object> dataEntry : serverData.entrySet()) {
               String key = dataEntry.getKey();
               Object value = dataEntry.getValue();
-              if (key.equals("online")) { 
+              if (key.equals("online")) {
                 if (value instanceof Boolean online && online) {
                   ItemStack onlineItem = new ItemStack(Material.GREEN_WOOL);
                   ItemMeta onlineMeta = onlineItem.getItemMeta();
@@ -1903,11 +1910,12 @@ public class Menu {
                     if (leverMeta != null) {
                       if (permLevel == 1) {
                         leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーが起動中です！");
-                        //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY + "でリクエストを送信する"));
+                        // leverMeta.setLore(Arrays.asList(ChatColor.BLUE + "Discord" + ChatColor.GRAY +
+                        // "でリクエストを送信する"));
                       } else if (permLevel >= 2) {
                         leverMeta.setDisplayName(ChatColor.GREEN + serverName + "サーバーを停止する");
                         playerMenuActions.put(22, (event) -> serverSwitch(player, serverName));
-                        //leverMeta.setLore(Arrays.asList(ChatColor.BLUE + ""));
+                        // leverMeta.setLore(Arrays.asList(ChatColor.BLUE + ""));
                       }
                       leverItem.setItemMeta(leverMeta);
                     }
@@ -2090,10 +2098,9 @@ public class Menu {
     if (changeMaterialMeta != null) {
       changeMaterialMeta.setDisplayName(ChatColor.GREEN + "表示アイテム変更");
       changeMaterialMeta.setLore(new ArrayList<>(Arrays.asList(
-        "メニュー内でのポイントの",
-        "アイテムを変更できる！",
-        "デフォルト: エンダーパール"
-      )));
+          "メニュー内でのポイントの",
+          "アイテムを変更できる！",
+          "デフォルト: エンダーパール")));
       changeMaterialItem.setItemMeta(changeMaterialMeta);
     }
     inv.setItem(11, changeMaterialItem);
@@ -2103,8 +2110,7 @@ public class Menu {
     if (deleteMeta != null) {
       deleteMeta.setDisplayName(ChatColor.RED + "削除画面");
       deleteMeta.setLore(new ArrayList<>(Arrays.asList(
-        "次の画面でポイントを削除するかどうか選べる！"
-      )));
+          "次の画面でポイントを削除するかどうか選べる！")));
       deleteItem.setItemMeta(deleteMeta);
     }
     inv.setItem(15, deleteItem);
@@ -2147,28 +2153,28 @@ public class Menu {
                       player.closeInventory();
 
                       Component success = Component.text("削除しました。(id: " + id + ")")
-                        .color(NamedTextColor.RED)
-                        .decorate(TextDecoration.BOLD);
+                          .color(NamedTextColor.RED)
+                          .decorate(TextDecoration.BOLD);
 
                       Component deleteContent = Component.text("タイトル: " + title)
-                        .appendNewline()
-                        .append(Component.text("コメント: " + (comment.isBlank() ? "なし" : comment)))
-                        .color(NamedTextColor.GRAY)
-                        .decorate(TextDecoration.ITALIC);
+                          .appendNewline()
+                          .append(Component.text("コメント: " + (comment.isBlank() ? "なし" : comment)))
+                          .color(NamedTextColor.GRAY)
+                          .decorate(TextDecoration.ITALIC);
 
                       Component back = Component.text("※もとのメニューに戻ります。")
-                        .color(NamedTextColor.GRAY)
-                        .decorate(TextDecoration.ITALIC);
+                          .color(NamedTextColor.GRAY)
+                          .decorate(TextDecoration.ITALIC);
 
                       TextComponent messages = Component.text()
-                        .append(deleteContent)
-                        .appendNewline()
-                        .append(success)
-                        .appendNewline()
-                        .append(TCUtils.LATER_OPEN_INV_3.get())
-                        .appendNewline()
-                        .append(back)
-                        .build();
+                          .append(deleteContent)
+                          .appendNewline()
+                          .append(success)
+                          .appendNewline()
+                          .append(TCUtils.LATER_OPEN_INV_3.get())
+                          .appendNewline()
+                          .append(back)
+                          .build();
 
                       new BukkitRunnable() {
                         @Override
@@ -2227,12 +2233,12 @@ public class Menu {
 
   private boolean checkServerOnline(String serverName) {
     return ssc.getStatusMap().values().stream()
-      .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
-      .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
-      .map(serverDataEntry -> serverDataEntry.getValue().get("online"))
-      .filter(online -> online instanceof Boolean)
-      .map(online -> (Boolean) online)
-      .findFirst()
-      .orElse(false);
+        .flatMap(serverStatusList -> serverStatusList.entrySet().stream())
+        .filter(serverDataEntry -> serverDataEntry.getKey().equals(serverName))
+        .map(serverDataEntry -> serverDataEntry.getValue().get("online"))
+        .filter(online -> online instanceof Boolean)
+        .map(online -> (Boolean) online)
+        .findFirst()
+        .orElse(false);
   }
 }

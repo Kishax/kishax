@@ -15,7 +15,7 @@ public class CommandForwarder {
   private final ConsoleCommandSource console;
 
   @Inject
-  public CommandForwarder (ProxyServer server, ConsoleCommandSource console) {
+  public CommandForwarder(ProxyServer server, ConsoleCommandSource console) {
     this.server = server;
     this.console = console;
   }
@@ -25,10 +25,10 @@ public class CommandForwarder {
     Player player = server.getPlayer(targetPlayer).orElse(null);
     if (Objects.nonNull(player)) {
       // プレイヤーが存在すればコマンドを実行
-      //logger.info("Forwarding command to " + targetPlayer + ": " + command);
+      // logger.info("Forwarding command to " + targetPlayer + ": " + command);
       server.getCommandManager().executeAsync(player, command);
     } else {
-      Component errorMessage = Component.text("プレイヤー " + targetPlayer + " は見つかりませんでした。").color(NamedTextColor.RED); 
+      Component errorMessage = Component.text("プレイヤー " + targetPlayer + " は見つかりませんでした。").color(NamedTextColor.RED);
       // /kishax fv を打ったプレイヤー名を取得して、そいつにsendメッセージしないといけない
       if (execPlayer.equals("?")) {
         // コンソールからコマンドを実行した場合
@@ -44,4 +44,3 @@ public class CommandForwarder {
     }
   }
 }
-

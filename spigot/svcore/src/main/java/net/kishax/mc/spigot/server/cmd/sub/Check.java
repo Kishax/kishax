@@ -39,6 +39,7 @@ public class Check {
           player.sendMessage(ChatColor.GREEN + (hubTpTime + "秒後にハブに移動します。"));
           new BukkitRunnable() {
             int countdown = hubTpTime;
+
             @Override
             public void run() {
               if (countdown <= 0) {

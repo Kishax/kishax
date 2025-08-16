@@ -60,7 +60,8 @@ public class Book {
         }
         pages.set(i, String.join("\n", lines));
       }
-      meta.getPersistentDataContainer().set(new NamespacedKey(plugin, PERSISTANT_KEY), PersistentDataType.STRING, "true");
+      meta.getPersistentDataContainer().set(new NamespacedKey(plugin, PERSISTANT_KEY), PersistentDataType.STRING,
+          "true");
       meta.setPages(pages);
       meta.setTitle(title);
       meta.setAuthor(author);

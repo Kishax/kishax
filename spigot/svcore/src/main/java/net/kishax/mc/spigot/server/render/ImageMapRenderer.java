@@ -17,7 +17,8 @@ public class ImageMapRenderer extends MapRenderer {
 
   @Override
   public void render(MapView mapView, MapCanvas mapCanvas, Player player) {
-    if (rendered) return;
+    if (rendered)
+      return;
     mapCanvas.drawImage(0, 0, image);
     rendered = true;
   }

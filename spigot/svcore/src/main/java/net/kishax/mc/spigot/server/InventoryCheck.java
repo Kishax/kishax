@@ -43,7 +43,7 @@ public class InventoryCheck {
     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
       Bukkit.getScheduler().runTask(plugin, () -> {
         String playerName = player.getName();
-        //logger.info("Updating player's inventory: {}", player.getName());
+        // logger.info("Updating player's inventory: {}", player.getName());
         boolean hasMenuBook = false;
         try (Connection conn = db.getConnection()) {
           for (ItemStack item : player.getInventory().getContents()) {
@@ -60,11 +60,13 @@ public class InventoryCheck {
                   }
                   case ENCHANTED_BOOK -> {
                     if (meta != null) {
-                      if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, "kishaxmenu"), PersistentDataType.STRING)) {
+                      if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, "kishaxmenu"),
+                          PersistentDataType.STRING)) {
                         logger.info("Removed old-Menu-Book from {}\'s inventory ", playerName);
                         player.getInventory().remove(item);
                       }
-                      if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, Type.GENERAL.getPersistantKey()), PersistentDataType.STRING)) {
+                      if (meta.getPersistentDataContainer()
+                          .has(new NamespacedKey(plugin, Type.GENERAL.getPersistantKey()), PersistentDataType.STRING)) {
                         hasMenuBook = true;
                       }
                     }
@@ -76,9 +78,11 @@ public class InventoryCheck {
                       if (mapView != null) {
                         int mapId = mapView.getId();
                         if (!ImageMap.thisServerMapIds.contains(mapId)) {
-                          if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
+                          if (mapMeta.getPersistentDataContainer()
+                              .has(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING)) {
                             im.loadAndSetImage(conn, mapId, item, mapMeta, mapView);
-                          } else if (mapMeta.getPersistentDataContainer().has(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
+                          } else if (mapMeta.getPersistentDataContainer().has(
+                              new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING)) {
                             im.loadAndSetImageTile(conn, mapId, item, mapMeta, mapView);
                           }
                         }

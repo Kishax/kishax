@@ -37,7 +37,8 @@ public class SwitchRomajiConvType {
 
   private void sendDefaultMessage(@NotNull CommandSource source) {
     if (source.hasPermission("kishax.proxy.conv.*")) {
-      Component usage = Component.text("usage: /kishaxp conv <add|remove|switch|reload> [<add|remove>:key] [<add>:value]")
+      Component usage = Component
+          .text("usage: /kishaxp conv <add|remove|switch|reload> [<add|remove>:key] [<add>:value]")
           .appendNewline()
           .append(Component.text("(例) /kishaxp conv add bakumoriraisu 爆盛りライス"))
           .appendNewline()
