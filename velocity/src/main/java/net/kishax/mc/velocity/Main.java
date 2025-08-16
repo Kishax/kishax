@@ -29,9 +29,8 @@ import net.kishax.mc.common.libs.interfaces.PackageManager;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.util.PlayerUtils;
-import net.kishax.mc.velocity.discord.Discord;
-import net.kishax.mc.velocity.discord.EmojiManager;
-import net.kishax.mc.velocity.discord.MineStatusReflect;
+import net.kishax.mc.velocity.aws.AwsDiscordService;
+import net.kishax.mc.velocity.aws.AwsConfig;
 import net.kishax.mc.velocity.libs.VPackageManager;
 import net.kishax.mc.velocity.module.Module;
 import net.kishax.mc.velocity.server.DoServerOffline;
@@ -121,21 +120,22 @@ public class Main {
 
   private void startApplication() {
     injector = Guice.createInjector(new Module(this, server, logger, dataDirectory));
-    getInjector().getInstance(Discord.class)
-        .loginDiscordBotAsync().thenAccept(jda -> {
-          if (jda != null) {
-            getInjector().getInstance(MineStatusReflect.class).start(jda);
-            try {
-              getInjector().getInstance(EmojiManager.class).updateDefaultEmojiId();
-            } catch (Exception e) {
-              logger.error("Failed to update default emoji ID: {}", e.getMessage());
-              for (StackTraceElement ste : e.getStackTrace()) {
-                logger.error(ste.toString());
-              }
-            }
+
+    // AWS設定の検証
+    AwsConfig awsConfig = getInjector().getInstance(AwsConfig.class);
+    awsConfig.validateConfig();
+
+    // AWS Discord サービスへの接続
+    getInjector().getInstance(AwsDiscordService.class)
+        .loginDiscordBotAsync().thenAccept(success -> {
+          if (success) {
+            logger.info("✅ AWS Discord Bot への接続が完了しました");
+            // 必要に応じて追加の初期化処理をここに追加
+          } else {
+            logger.warn("⚠️ AWS Discord Bot への接続に失敗しました。Discord機能は無効になります。");
           }
         }).exceptionally(e -> {
-          logger.error("An error occurred while logging in to Discord: {}", e.getMessage());
+          logger.error("AWS Discord サービスの初期化中にエラーが発生しました: {}", e.getMessage());
           for (StackTraceElement ste : e.getStackTrace()) {
             logger.error(ste.toString());
           }
