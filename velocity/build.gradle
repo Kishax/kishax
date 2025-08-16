@@ -4,6 +4,7 @@ plugins {
 
 configurations {
   shadowImpl
+  shadowImpl2
   compileOnly.extendsFrom shadowImpl
   implementation.extendsFrom shadowImpl2
 }
@@ -20,7 +21,9 @@ dependencies {
   annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
   compileOnly 'org.geysermc.geyser:api:2.8.3-SNAPSHOT'
   compileOnly 'org.geysermc.floodgate:api:2.2.4-SNAPSHOT'
-  compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+  shadowImpl 'com.fasterxml.jackson.core:jackson-core:2.18.2'
+  shadowImpl 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+  shadowImpl 'com.fasterxml.jackson.core:jackson-annotations:2.18.2'
   //shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
   shadowImpl2 project(':common')
 }
