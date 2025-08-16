@@ -56,7 +56,7 @@ public class Luckperms {
       user.data().add(node);
       lpapi.getUserManager().saveUser(user);
       // キャッシュをクリア
-      //user.getCachedData().invalidate();
+      // user.getCachedData().invalidate();
       triggerNetworkSync();
     }
   }
@@ -88,14 +88,15 @@ public class Luckperms {
       Node node = Node.builder(permission).build();
       user.data().remove(node);
       lpapi.getUserManager().saveUser(user);
-      //user.getCachedData().invalidate(); // キャッシュをクリア
+      // user.getCachedData().invalidate(); // キャッシュをクリア
       triggerNetworkSync();
     }
   }
 
   public int getPermLevel(String playerName) {
     int permLevel = 0;
-    List<String> groups = new ArrayList<>(Arrays.asList(PermSettings.NEW_USER.get(), PermSettings.SUB_ADMIN.get(), PermSettings.SUPER_ADMIN.get()));
+    List<String> groups = new ArrayList<>(
+        Arrays.asList(PermSettings.NEW_USER.get(), PermSettings.SUB_ADMIN.get(), PermSettings.SUPER_ADMIN.get()));
     Map<String, Boolean> permMap = hasPermissionWithMap(playerName, groups);
     if (permMap.get(PermSettings.SUPER_ADMIN.get())) {
       permLevel = 3;
@@ -113,29 +114,31 @@ public class Luckperms {
       return permissions.stream().collect(Collectors.toMap(permission -> permission, _p -> false));
     }
     List<String> groups = user.getNodes().stream()
-      .filter(node -> node instanceof InheritanceNode)
-      .map(node -> ((InheritanceNode) node).getGroupName())
-      .collect(Collectors.toList());
-    //logger.info("Groups: {}", groups);
-    Map<String, Boolean> hasPermissionBools = permissions.stream().collect(Collectors.toMap(permission -> permission, _p -> false));
+        .filter(node -> node instanceof InheritanceNode)
+        .map(node -> ((InheritanceNode) node).getGroupName())
+        .collect(Collectors.toList());
+    // logger.info("Groups: {}", groups);
+    Map<String, Boolean> hasPermissionBools = permissions.stream()
+        .collect(Collectors.toMap(permission -> permission, _p -> false));
     CopyOnWriteArrayList<String> permissionsCopy = new CopyOnWriteArrayList<>(permissions);
     permissions.stream()
-      .filter(perm -> perm.startsWith("group."))
-      .forEach(perm -> {
-        String groupName = perm.substring(6);
-        if (groups.contains(groupName)) {
-          hasPermissionBools.put(perm, true);
-          permissionsCopy.remove(perm);
-        }
-      });
+        .filter(perm -> perm.startsWith("group."))
+        .forEach(perm -> {
+          String groupName = perm.substring(6);
+          if (groups.contains(groupName)) {
+            hasPermissionBools.put(perm, true);
+            permissionsCopy.remove(perm);
+          }
+        });
     for (String groupName : groups) {
       checkGroupPermissionWithMap(groupName, permissionsCopy, hasPermissionBools);
     }
-    //logger.info("permMap: {}", hasPermissionBools);
+    // logger.info("permMap: {}", hasPermissionBools);
     return hasPermissionBools;
   }
 
-  private void checkGroupPermissionWithMap(String groupName, List<String> permissions, Map<String, Boolean> hasPermissionBools) {
+  private void checkGroupPermissionWithMap(String groupName, List<String> permissions,
+      Map<String, Boolean> hasPermissionBools) {
     Group group = lpapi.getGroupManager().getGroup(groupName);
     if (group == null) {
       return;
@@ -146,9 +149,9 @@ public class Luckperms {
       }
     }));
     List<String> subGroups = group.getNodes().stream()
-      .filter(node -> node instanceof InheritanceNode)
-      .map(node -> ((InheritanceNode) node).getGroupName())
-      .collect(Collectors.toList());
+        .filter(node -> node instanceof InheritanceNode)
+        .map(node -> ((InheritanceNode) node).getGroupName())
+        .collect(Collectors.toList());
     for (String subGroupName : subGroups) {
       checkGroupPermissionWithMap(subGroupName, permissions, hasPermissionBools);
     }
@@ -164,13 +167,13 @@ public class Luckperms {
       return false;
     }
     List<String> groups = user.getNodes().stream()
-      .filter(node -> node instanceof InheritanceNode)
-      .map(node -> ((InheritanceNode) node).getGroupName())
-      .collect(Collectors.toList());
+        .filter(node -> node instanceof InheritanceNode)
+        .map(node -> ((InheritanceNode) node).getGroupName())
+        .collect(Collectors.toList());
     boolean hasGroupPermission = permissions.stream()
-      .filter(perm -> perm.startsWith("group."))
-      .map(perm -> perm.substring(6))
-      .anyMatch(groups::contains);
+        .filter(perm -> perm.startsWith("group."))
+        .map(perm -> perm.substring(6))
+        .anyMatch(groups::contains);
     if (hasGroupPermission) {
       return true;
     }
@@ -188,15 +191,15 @@ public class Luckperms {
       return false;
     }
     boolean hasPermission = group.getNodes().stream()
-      .anyMatch(node -> permissions.stream()
-        .anyMatch(permission -> node.getKey().equalsIgnoreCase(permission)));
+        .anyMatch(node -> permissions.stream()
+            .anyMatch(permission -> node.getKey().equalsIgnoreCase(permission)));
     if (hasPermission) {
       return true;
     }
     List<String> subGroups = group.getNodes().stream()
-      .filter(node -> node instanceof InheritanceNode)
-      .map(node -> ((InheritanceNode) node).getGroupName())
-      .collect(Collectors.toList());
+        .filter(node -> node instanceof InheritanceNode)
+        .map(node -> ((InheritanceNode) node).getGroupName())
+        .collect(Collectors.toList());
     for (String subGroupName : subGroups) {
       if (checkGroupPermission(subGroupName, permissions)) {
         return true;

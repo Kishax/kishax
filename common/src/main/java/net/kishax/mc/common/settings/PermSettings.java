@@ -11,8 +11,7 @@ public enum PermSettings {
   SILENT("kishax.proxy.silent"),
   TPR("kishax.tpr"),
   TELEPORT_REGISTER_POINT("kishax.registerpoint"),
-  IMAGEMAP_REGISTER_MAP("kishax.registermap")
-  ;
+  IMAGEMAP_REGISTER_MAP("kishax.registermap");
 
   private final String value;
 

@@ -5,4 +5,3 @@ import net.kishax.mc.common.socket.message.Message;
 public interface ServerActionHandler {
   void handle(Message.Minecraft.Server server);
 }
-

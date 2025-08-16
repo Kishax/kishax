@@ -40,8 +40,10 @@ public class Confirm {
   private final Luckperms lp;
   private final ImageMap im;
   private final String thisServerName;
+
   @Inject
-  public Confirm(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im, ServerHomeDir shd) {
+  public Confirm(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im,
+      ServerHomeDir shd) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -55,36 +57,36 @@ public class Confirm {
     if (sender instanceof Player player) {
       if (!Confirm.confirmMap.contains(player)) {
         String playerName = player.getName(),
-               playerUUID = player.getUniqueId().toString();
+            playerUUID = player.getUniqueId().toString();
         int permLevel = lp.getPermLevel(playerName);
         if (permLevel < 1) {
           try (Connection conn = db.getConnection()) {
-            int ifMapId = checkExistConfirmMap(conn, new Object[] {thisServerName, true, playerName});
+            int ifMapId = checkExistConfirmMap(conn, new Object[] { thisServerName, true, playerName });
             Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
             if (!memberMap.isEmpty()) {
               if (memberMap.get("id") instanceof Integer id) {
                 String confirmUrl = Settings.CONFIRM_URL.getValue() + "?n=" + id;
-                //player.sendMessage(ChatColor.GREEN + "WEB認証のQRコードを生成します。");
-                String[] imageArgs = {"image", "createqr", confirmUrl};
+                // player.sendMessage(ChatColor.GREEN + "WEB認証のQRコードを生成します。");
+                String[] imageArgs = { "image", "createqr", confirmUrl };
                 if (ifMapId == -1) {
                   im.executeImageMapForConfirm(player, imageArgs);
                 } else {
                   im.giveMapToPlayer(player, ifMapId);
                 }
                 int ranum = OTPGenerator.generateOTPbyInt();
-                int rsAffected3 = updateSecret2(conn, new Object[] {ranum, playerUUID});
+                int rsAffected3 = updateSecret2(conn, new Object[] { ranum, playerUUID });
                 if (rsAffected3 > 0) {
                   sendConfirmationMessage(player, ranum, confirmUrl);
                 } else {
                   Component errorMessage = Component.text("エラーが発生しました。")
-                    .color(NamedTextColor.RED);
+                      .color(NamedTextColor.RED);
                   audiences.player(player).sendMessage(errorMessage);
                 }
               }
             }
           } catch (SQLException | ClassNotFoundException e2) {
             Component errorMessage = Component.text("WEB認証のQRコード生成に失敗しました。")
-              .color(NamedTextColor.RED);
+                .color(NamedTextColor.RED);
             audiences.player(player).sendMessage(errorMessage);
             logger.error("A SQLException error occurred: " + e2.getMessage());
             for (StackTraceElement element : e2.getStackTrace()) {
@@ -93,7 +95,7 @@ public class Confirm {
           }
         } else {
           Component message = Component.text("WEB認証済みプレイヤーが通過しました！")
-            .color(NamedTextColor.GREEN);
+              .color(NamedTextColor.GREEN);
           audiences.player(player).sendMessage(message);
         }
         Confirm.confirmMap.add(player);
@@ -118,82 +120,83 @@ public class Confirm {
     String ranumstr = Integer.toString(ranum);
 
     Component webAuth = Component.text("WEB認証")
-      .color(NamedTextColor.GOLD)
-      .decorate(
-        TextDecoration.BOLD,
-        TextDecoration.UNDERLINED)
-      .clickEvent(ClickEvent.openUrl(confirmUrl))
-      .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
+        .color(NamedTextColor.GOLD)
+        .decorate(
+            TextDecoration.BOLD,
+            TextDecoration.UNDERLINED)
+        .clickEvent(ClickEvent.openUrl(confirmUrl))
+        .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
 
     Component forUser = Component.newline()
-      .appendNewline()
-      .append(Component.text("[サイトへのアクセス方法]"))
-      .appendNewline()
-      .color(NamedTextColor.GOLD)
-      .decorate(
-        TextDecoration.BOLD,
-        TextDecoration.UNDERLINED);
+        .appendNewline()
+        .append(Component.text("[サイトへのアクセス方法]"))
+        .appendNewline()
+        .color(NamedTextColor.GOLD)
+        .decorate(
+            TextDecoration.BOLD,
+            TextDecoration.UNDERLINED);
 
     Component javaUserAccess = Component.text("は、")
-      .color(NamedTextColor.GRAY)
-      .decorate(TextDecoration.ITALIC);
+        .color(NamedTextColor.GRAY)
+        .decorate(TextDecoration.ITALIC);
 
     Component here = Component.text("ココ")
-      .color(NamedTextColor.GOLD)
-      .decorate(
-        TextDecoration.UNDERLINED,
-        TextDecoration.ITALIC)
-      .clickEvent(ClickEvent.openUrl(confirmUrl))
-      .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
+        .color(NamedTextColor.GOLD)
+        .decorate(
+            TextDecoration.UNDERLINED,
+            TextDecoration.ITALIC)
+        .clickEvent(ClickEvent.openUrl(confirmUrl))
+        .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
 
     Component javaUserAccess2 = Component.text("をクリックしてアクセスしてね！")
-      .appendNewline()
-      .color(NamedTextColor.GRAY)
-      .decorate(TextDecoration.ITALIC);
+        .appendNewline()
+        .color(NamedTextColor.GRAY)
+        .decorate(TextDecoration.ITALIC);
 
     Component bedrockUserAccess = Component.text("は、配布されたQRコードを読み取ってアクセスしてね！")
-      .color(NamedTextColor.GRAY)
-      .decorate(TextDecoration.ITALIC);
+        .color(NamedTextColor.GRAY)
+        .decorate(TextDecoration.ITALIC);
 
     Component authCode = Component.newline()
-      .append(Component.text("認証コードは "))
-      .color(NamedTextColor.WHITE);
+        .append(Component.text("認証コードは "))
+        .color(NamedTextColor.WHITE);
 
     Component code = Component.text(ranumstr)
-      .color(NamedTextColor.BLUE)
-      .decorate(TextDecoration.UNDERLINED)
-      .clickEvent(ClickEvent.copyToClipboard(ranumstr))
-      .hoverEvent(HoverEvent.showText(Component.text("クリックしてコピー")));
+        .color(NamedTextColor.BLUE)
+        .decorate(TextDecoration.UNDERLINED)
+        .clickEvent(ClickEvent.copyToClipboard(ranumstr))
+        .hoverEvent(HoverEvent.showText(Component.text("クリックしてコピー")));
 
     Component endMessage = Component.text(" です。")
-      .color(NamedTextColor.WHITE);
+        .color(NamedTextColor.WHITE);
 
     Component regenerate = Component.newline()
-      .append(Component.text("認証コードの再生成"))
-      .color(NamedTextColor.GOLD)
-      .decorate(
-        TextDecoration.BOLD,
-        TextDecoration.UNDERLINED)
-      .clickEvent(ClickEvent.runCommand("/kishaxp retry"))
-      .hoverEvent(HoverEvent.showText(Component.text("クリックして認証コードを再生成します。")));
+        .append(Component.text("認証コードの再生成"))
+        .color(NamedTextColor.GOLD)
+        .decorate(
+            TextDecoration.BOLD,
+            TextDecoration.UNDERLINED)
+        .clickEvent(ClickEvent.runCommand("/kishaxp retry"))
+        .hoverEvent(HoverEvent.showText(Component.text("クリックして認証コードを再生成します。")));
 
     Component bedrockUserGenerate = Component.text("は、 ")
-      .color(NamedTextColor.GRAY)
-      .decorate(TextDecoration.ITALIC);
+        .color(NamedTextColor.GRAY)
+        .decorate(TextDecoration.ITALIC);
 
     Component bedrockUserGenerate2 = Component.text("/retry")
-      .color(NamedTextColor.GRAY)
-      .decorate(
-        TextDecoration.UNDERLINED,
-        TextDecoration.ITALIC);
+        .color(NamedTextColor.GRAY)
+        .decorate(
+            TextDecoration.UNDERLINED,
+            TextDecoration.ITALIC);
 
     Component bedrockUserGenerate3 = Component.text(" とコマンドを打ってね！")
-      .color(NamedTextColor.GRAY)
-      .decorate(TextDecoration.ITALIC);
+        .color(NamedTextColor.GRAY)
+        .decorate(TextDecoration.ITALIC);
 
     new BukkitRunnable() {
       int countdown = 50;
       int gCountdown = 3;
+
       @Override
       public void run() {
         Component message = Component.empty();
@@ -202,59 +205,59 @@ public class Confirm {
           case 47 -> message = message.append(Component.text("サーバー代表のベラです。"));
           case 44 -> message = message.append(Component.text("サーバーに参加するには、"));
           case 41 -> message = message.append(Component.text("KishaxアカウントとMinecraftアカウントをリンクさせる必要があるよ！"));
-            case 39 -> {
-              message = message.append(webAuth)
+          case 39 -> {
+            message = message.append(webAuth)
                 .append(Component.text("より、手続きを進めてね！"));
-            }
-            case 36 -> message = message.append(forUser);
-            case 33 -> {
-              message = message.append(TCUtils.JAVA_USER.get())
+          }
+          case 36 -> message = message.append(forUser);
+          case 33 -> {
+            message = message.append(TCUtils.JAVA_USER.get())
                 .append(javaUserAccess)
                 .append(here)
                 .append(javaUserAccess2);
-            }
-            case 30 -> {
-              message = message
+          }
+          case 30 -> {
+            message = message
                 .append(TCUtils.BEDROCK_USER.get())
                 .append(bedrockUserAccess);
-            }
-            case 27 -> {
-              message = message
+          }
+          case 27 -> {
+            message = message
                 .appendNewline()
                 .append(Component.text("認証コードを生成するよ。"));
-            }
-            case 24, 23, 22 -> {
-              message = message.append(countGenerate(gCountdown));
-              gCountdown--;
-            }
-            case 21 -> {
-              message = message.append(authCode)
+          }
+          case 24, 23, 22 -> {
+            message = message.append(countGenerate(gCountdown));
+            gCountdown--;
+          }
+          case 21 -> {
+            message = message.append(authCode)
                 .append(code)
                 .append(endMessage);
-            }
-            case 18 -> {
-              message = message.append(Component.text("認証コードを再生成する場合は、"));
-            }
-            case 15 -> {
-              message = message.append(regenerate)
+          }
+          case 18 -> {
+            message = message.append(Component.text("認証コードを再生成する場合は、"));
+          }
+          case 15 -> {
+            message = message.append(regenerate)
                 .append(Component.text(" をクリックしてね！"))
                 .appendNewline();
-            }
-            case 13 -> {
-              message = message.append(TCUtils.BEDROCK_USER.get())
+          }
+          case 13 -> {
+            message = message.append(TCUtils.BEDROCK_USER.get())
                 .append(bedrockUserGenerate)
                 .append(bedrockUserGenerate2)
                 .append(bedrockUserGenerate3);
-            }
-            case 10 -> {
-              message = message
+          }
+          case 10 -> {
+            message = message
                 .appendNewline()
                 .append(Component.text("それでは、楽しいマイクラライフを！"));
-            }
-            case 0 -> {
-              cancel();
-              return;
-            }
+          }
+          case 0 -> {
+            cancel();
+            return;
+          }
         }
         if (message != Component.empty()) {
           audiences.player(player).sendMessage(message);
@@ -266,8 +269,8 @@ public class Confirm {
 
   private Component countGenerate(int countdown) {
     return Component.text("生成中..." + countdown)
-      .color(NamedTextColor.GRAY)
-      .decorate(TextDecoration.ITALIC);
+        .color(NamedTextColor.GRAY)
+        .decorate(TextDecoration.ITALIC);
   }
 
   private int checkExistConfirmMap(Connection conn, Object[] args) throws SQLException {

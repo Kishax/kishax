@@ -23,12 +23,10 @@ public class PortalsDelete {
       String portalName = args[2];
       List<Map<?, ?>> portals = psConfig.getListMap("portals");
       if (portals != null) {
-        portals.removeIf(portal -> 
-          portalName.equals(portal.get("uuid")) ||
-          portalName.equals(portal.get("name")) ||
-          portalName.equals(portal.get("corner1")) ||
-          portalName.equals(portal.get("corner2"))
-        );
+        portals.removeIf(portal -> portalName.equals(portal.get("uuid")) ||
+            portalName.equals(portal.get("name")) ||
+            portalName.equals(portal.get("corner1")) ||
+            portalName.equals(portal.get("corner2")));
 
         try {
           psConfig.replaceValue("portals", portals);

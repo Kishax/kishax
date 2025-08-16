@@ -46,8 +46,8 @@ public class PortalsNether {
             double corner2Z = ((Number) corner2List.get(2)).doubleValue();
             // x, y, zのいずれかが一致している場合に作成する
             boolean zE = corner1Z == corner2Z,
-                    xE = corner1X == corner2X,
-                    yE = corner1Y == corner2Y;
+                xE = corner1X == corner2X,
+                yE = corner1Y == corner2Y;
             if (yE) {
               sender.sendMessage(ChatColor.RED + "ポータルの高さが足りません。\nポータルのx,zのいずれかが一致する必要があります。");
               return;

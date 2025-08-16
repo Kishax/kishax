@@ -31,11 +31,12 @@ public enum Type {
   DELETE("削除画面", "delete"),
   CHANGE_MATERIAL("表示アイテム変更", "material_change"),
   TP_POINT_MANAGER("テレポートポイント管理画面", "teleport_point_manager"),
-  SHORTCUT("ショートカットメニュー", "shortcut")
-  ;
+  SHORTCUT("ショートカットメニュー", "shortcut");
+
   private final String title;
   private final String persistantKey;
   private final Material material;
+
   Type(String title, String persistantKey, Material... material) {
     this.title = title;
     this.persistantKey = persistantKey;
@@ -60,26 +61,26 @@ public enum Type {
 
   public static Set<Material> getMaterials() {
     return Arrays.stream(Type.values())
-      .map(Type::getMaterial)
-      .filter(entry -> entry != null)
-      .collect(Collectors.toSet());
+        .map(Type::getMaterial)
+        .filter(entry -> entry != null)
+        .collect(Collectors.toSet());
   }
 
   public static List<String> gets() {
     return Arrays.stream(Type.values())
-      .map(Type::get)
-      .collect(Collectors.toList());
+        .map(Type::get)
+        .collect(Collectors.toList());
   }
 
   public static Optional<Type> search(String titleName) {
     return Arrays.stream(Type.values())
-      .filter(type -> type.get().equalsIgnoreCase(titleName))
-      .findFirst();
+        .filter(type -> type.get().equalsIgnoreCase(titleName))
+        .findFirst();
   }
 
   public static Optional<Type> searchPersistantKeys(String key) {
     return Arrays.stream(Type.values())
-      .filter(type -> type.getPersistantKey().equalsIgnoreCase(key))
-      .findFirst();
+        .filter(type -> type.getPersistantKey().equalsIgnoreCase(key))
+        .findFirst();
   }
 }
