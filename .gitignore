@@ -78,3 +78,34 @@ ehthumbs_vista.db
 [Dd]esktop.ini
 $RECYCLE.BIN/
 *.lnk
+
+
+### AWS & Docker ###
+# AWS機密設定ファイル
+discord-bot/aws/*.json
+discord-bot/aws/parameters-*.json
+discord-bot/aws/task-definition.json
+
+# AWS認証情報
+.aws/
+aws-credentials.json
+*.pem
+
+# Docker機密情報
+.env
+.env.local
+.env.production
+
+# アプリケーション設定
+application.properties
+application-*.properties
+config.yml
+velocity/plugins/kishax/config.yml
+
+# ログファイル
+*.log
+logs/
+
+# デプロイ用スクリプト（機密情報含む可能性）
+deploy.sh
+deploy-*.sh
