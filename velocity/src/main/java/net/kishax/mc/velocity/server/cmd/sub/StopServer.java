@@ -40,7 +40,8 @@ public class StopServer {
 
   @Inject
   public StopServer(ProxyServer server, Logger logger, Database db, ConsoleCommandSource console,
-      AwsDiscordService awsDiscordService, BroadCast bc, DoServerOnline dso, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+      AwsDiscordService awsDiscordService, BroadCast bc, DoServerOnline dso, Luckperms lp,
+      Provider<SocketSwitch> sswProvider) {
     this.server = server;
     this.logger = logger;
     this.db = db;
@@ -114,7 +115,8 @@ public class StopServer {
                 db.insertLog(connection, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);",
                     new Object[] { playerName, playerUUID, currentServerName, true, "stop" });
                 try {
-                  awsDiscordService.sendBotMessage(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。", 0xFF0000);
+                  awsDiscordService.sendBotMessage(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。",
+                      0xFF0000);
                 } catch (Exception e) {
                   logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
                       e.getMessage());
