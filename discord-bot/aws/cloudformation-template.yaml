@@ -273,13 +273,14 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: kishax-discord-lambda
-      Runtime: nodejs18.x
+      Runtime: nodejs20.x
       Handler: index.handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         ZipFile: |
-          const AWS = require('aws-sdk');
-          const sqs = new AWS.SQS();
+          const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
+          
+          const sqsClient = new SQSClient({ region: process.env.AWS_REGION });
           
           exports.handler = async (event) => {
               console.log('Event:', JSON.stringify(event, null, 2));
@@ -287,7 +288,7 @@ Resources:
               try {
                   const requestBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body || event;
                   
-                  const params = {
+                  const command = new SendMessageCommand({
                       QueueUrl: process.env.SQS_QUEUE_URL,
                       MessageBody: JSON.stringify(requestBody),
                       MessageAttributes: {
@@ -296,9 +297,9 @@ Resources:
                               StringValue: requestBody.type || 'unknown'
                           }
                       }
-                  };
+                  });
                   
-                  const result = await sqs.sendMessage(params).promise();
+                  const result = await sqsClient.send(command);
                   
                   return {
                       statusCode: 200,
