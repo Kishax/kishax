@@ -42,9 +42,13 @@ public enum Coords {
   }
 
   public Location getLocation() {
-    World world = Bukkit.getWorld(getWorld());
+    String worldName = getWorld();
+    if (worldName == null || worldName.isEmpty()) {
+      return null;
+    }
+    World world = Bukkit.getWorld(worldName);
     if (world == null) {
-      throw new IllegalArgumentException("World not found: " + getWorld());
+      return null;
     }
     return new Location(world, getX(), getY(), getZ(), getYaw(), getPitch());
   }
@@ -79,5 +83,32 @@ public enum Coords {
 
   public String getServer() {
     return maps.get("server") instanceof String ? (String) maps.get("server") : "";
+  }
+
+  public void saveLocation(Location location) {
+    try (Connection conn = db.getConnection()) {
+      String query = "INSERT INTO coords (name, x, y, z, world, yaw, pitch, server) VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+                     "ON DUPLICATE KEY UPDATE x=?, y=?, z=?, world=?, yaw=?, pitch=?, server=?";
+      PreparedStatement ps = conn.prepareStatement(query);
+      String name = this.name().toLowerCase().replace("_point", "");
+      ps.setString(1, name);
+      ps.setDouble(2, location.getX());
+      ps.setDouble(3, location.getY());
+      ps.setDouble(4, location.getZ());
+      ps.setString(5, location.getWorld().getName());
+      ps.setFloat(6, location.getYaw());
+      ps.setFloat(7, location.getPitch());
+      ps.setString(8, "spigot");
+      ps.setDouble(9, location.getX());
+      ps.setDouble(10, location.getY());
+      ps.setDouble(11, location.getZ());
+      ps.setString(12, location.getWorld().getName());
+      ps.setFloat(13, location.getYaw());
+      ps.setFloat(14, location.getPitch());
+      ps.setString(15, "spigot");
+      ps.executeUpdate();
+    } catch (SQLException | ClassNotFoundException e) {
+      e.printStackTrace();
+    }
   }
 }
