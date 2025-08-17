@@ -185,7 +185,7 @@ public class EventListener {
             awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), originalMessage);
             return;
           }
-          if (config.getBoolean("Conv.Mode")) {
+          if (config.getBoolean("Translate.romaji")) {
             // Map方式
             String kanaMessage = conv.ConvRomaToKana(originalMessage);
             String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
@@ -217,7 +217,7 @@ public class EventListener {
               mixtext += text;
             } else {
               // 日本語
-              if (config.getBoolean("Conv.Mode")) {
+              if (config.getBoolean("Translate.romaji")) {
                 // Map方式
                 kanaMessage = conv.ConvRomaToKana(text);
                 kanjiMessage = conv.ConvRomaToKanji(kanaMessage);

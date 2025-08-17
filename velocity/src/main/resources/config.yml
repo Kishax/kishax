@@ -30,9 +30,19 @@ Permission:
   Short_Name:
     - someperm
 
-Conv:
-  Mode: false
-  Host: "localhost"
-  EXE_Path: ""
+Translate:
+  romaji: false
+
+# Settings that will be synced to MySQL settings table
+Settings:
+  MAX_IMAGE_TILES: 100
+  LARGE_IMAGE_LIMIT_TIMES: 5
+  IMAGE_LIMIT_TIMES: 10
+  IMAGE_FOLDER: "/mc/server/images"
+  CONFIRM_URL: "https://your-confirm-url.com"
+  HOME_SERVER_NAME: "main"
+  HOME_SERVER_IP: "127.0.0.1"
+  INPUT_PERIOD: 60
+  HUB_TELEPORT_TIME: 3
 
 MaxMemory: 0

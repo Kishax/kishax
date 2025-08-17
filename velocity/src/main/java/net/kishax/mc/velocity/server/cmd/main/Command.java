@@ -41,7 +41,7 @@ public class Command implements SimpleCommand {
   private final PlayerUtils pu;
   private final Luckperms lp;
   public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop",
-      "stp", "retry", "debug", "cancel", "perm", "maintenance", "conv", "chat", "cend", "silent"));
+      "stp", "retry", "debug", "cancel", "perm", "maintenance", "translate", "chat", "cend", "silent"));
   public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
   @Inject
@@ -77,7 +77,7 @@ public class Command implements SimpleCommand {
       case "req" -> Main.getInjector().getInstance(Request.class).execute(source, args);
       case "perm" -> Main.getInjector().getInstance(Perm.class).execute(source, args);
       case "maintenance" -> Main.getInjector().getInstance(Maintenance.class).execute(source, args);
-      case "conv" -> Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
+      case "translate" -> Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
       case "chat" -> Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
       case "cend" -> Main.getInjector().getInstance(CEnd.class).execute(invocation);
       case "silent" -> Main.getInjector().getInstance(Silent.class).execute(source, args);
@@ -139,14 +139,14 @@ public class Command implements SimpleCommand {
             }
             return ret;
           }
-          case "conv" -> {
+          case "translate" -> {
             for (String arg1 : SwitchRomajiConvType.args1) {
-              if (source.hasPermission("kishax.proxy.conv." + arg1)) {
+              if (source.hasPermission("kishax.proxy.translate." + arg1)) {
                 ret.add(arg1);
               }
             }
             for (String arg1_1 : SwitchRomajiConvType.args1_1) {
-              if (source.hasPermission("kishax.proxy.conv.*")) {
+              if (source.hasPermission("kishax.proxy.translate.*")) {
                 ret.add(arg1_1);
               }
             }
@@ -171,7 +171,7 @@ public class Command implements SimpleCommand {
               }
             }
           }
-          case "conv" -> {
+          case "translate" -> {
             switch (args[1].toLowerCase()) {
               case "add", "remove" -> {
                 for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) {
@@ -222,7 +222,7 @@ public class Command implements SimpleCommand {
         if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
           return Collections.emptyList();
         switch (args[0].toLowerCase()) {
-          case "conv" -> {
+          case "translate" -> {
             switch (args[1].toLowerCase()) {
               case "add" -> {
                 for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) {
@@ -268,10 +268,10 @@ public class Command implements SimpleCommand {
         if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
           return Collections.emptyList();
         switch (args[0].toLowerCase()) {
-          case "conv" -> {
+          case "translate" -> {
             switch (args[1].toLowerCase()) {
               case "add" -> {
-                if (source.hasPermission("kishax.proxy.conv.*")) {
+                if (source.hasPermission("kishax.proxy.translate.*")) {
                   for (String bool : bools) {
                     ret.add(bool);
                   }
