@@ -31,5 +31,4 @@ include (
   'velocity',
   'spigot:svcore',
   'spigot:sv1_21_8',
-  'libs',
 )
