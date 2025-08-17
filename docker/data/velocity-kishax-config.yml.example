@@ -40,7 +40,7 @@ Settings:
   IMAGE_LIMIT_TIMES: 10
   IMAGE_FOLDER: "/mc/server/images"
   CONFIRM_URL: "${CONFIRM_URL:-https://your-confirm-url.com}"
-  HOME_SERVER_NAME: "${HOME_SERVER_NAME:-main}"
+  HOME_SERVER_NAME: "${HOME_SERVER_NAME:-spigot}"
   HOME_SERVER_IP: "${HOME_SERVER_IP:-127.0.0.1}"
   INPUT_PERIOD: 60
   HUB_TELEPORT_TIME: 3
