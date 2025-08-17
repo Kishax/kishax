@@ -1,0 +1,22 @@
+{
+  "name": "gather-slack-bot",
+  "version": "1.0.0",
+  "description": "Connected Your Gather With Slack",
+  "main": "index.js",
+  "license": "MIT",
+  "author": "Kishax",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "@gathertown/gather-game-client": "^43.0.1",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.1.3"
+  }
+}
