@@ -1,0 +1,67 @@
+### Gradle & IntelliJ ###
+.gradle/
+/.idea/
+**/build/
+out/
+run/
+*.iml
+.idea_modules/
+
+### Eclipse ###
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+.externalToolBuilders/
+*.launch
+.factorypath
+.recommenders/
+.apt_generated/
+.project
+.classpath
+
+### NetBeans ###
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+### Docker機密情報 ###
+.env
+.env.local
+.env.production
+
+### アプリケーション設定 ###
+config.yml
+velocity/plugins/kishax/config.yml
+**/plugins/*/config.yml
+
+### ログファイル ###
+*.log
+logs/
+
+### Minecraft サーバーファイル ###
+eula.txt
+server.properties
+whitelist.json
+banned-*.json
+ops.json
+usercache.json
+usernamecache.json
+world/
+world_nether/
+world_the_end/
+plugins/*/data/
+velocity/forwarding.secret
+
+### MySQL データベース ###
+*.sql.backup
+dump.sql

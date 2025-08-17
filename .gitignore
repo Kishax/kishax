@@ -1,44 +1,16 @@
+### プロジェクト固有 ###
 jdt.ls-java-project/
 *~
 experience/
 /.vscode/
-### Gradle & IntelliJ ###
-.gradle/
-/.idea/
-**/build/
-out/
-run/
-*.iml
-.idea_modules/
-.vscode/
-### Eclipse ###
-.metadata
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.settings/
-.loadpath
-.recommenders
-.externalToolBuilders/
-*.launch
-.factorypath
-.recommenders/
-.apt_generated/
-.project
-.classpath
 
-
+### OS固有ファイル ###
 ### Linux ###
 *~
 .fuse_hidden*
 .directory
 .Trash-*
 .nfs*
-
 
 ### macOS ###
 .DS_Store
@@ -59,16 +31,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-
-### NetBeans ###
-nbproject/private/
-#build/
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
-
-
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db
@@ -79,32 +41,11 @@ ehthumbs_vista.db
 $RECYCLE.BIN/
 *.lnk
 
-
-### AWS & Docker ###
-# AWS機密設定ファイル
-discord-bot/aws/*.json
-discord-bot/aws/parameters-*.json
-discord-bot/aws/task-definition.json
-
+### グローバル設定 ###
 # AWS認証情報
 .aws/
 aws-credentials.json
 *.pem
-
-# Docker機密情報
-.env
-.env.local
-.env.production
-
-# アプリケーション設定
-application.properties
-application-*.properties
-config.yml
-velocity/plugins/kishax/config.yml
-
-# ログファイル
-*.log
-logs/
 
 # デプロイ用スクリプト（機密情報含む可能性）
 deploy.sh
