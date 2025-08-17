@@ -58,7 +58,6 @@ public class DiscordEventListener extends ListenerAdapter {
   private void handleKishaxCommand(SlashCommandInteractionEvent event, String subcommand) {
     switch (subcommand) {
       case "image_add_q" -> handleImageAddQueue(event);
-      case "syncrulebook" -> handleSyncRuleBook(event);
       default -> event.reply("不明なサブコマンドです").setEphemeral(true).queue();
     }
   }
@@ -88,19 +87,6 @@ public class DiscordEventListener extends ListenerAdapter {
     logger.info("画像マップキュー追加: URL={}, Title={}, Comment={}", url, title, comment);
   }
 
-  private void handleSyncRuleBook(SlashCommandInteractionEvent event) {
-    // ルールブック同期の処理
-    try {
-      // TODO: 実際のルールブック同期処理を実装
-      event.reply("ルールブック同期を開始しました").setEphemeral(true).queue();
-      logger.info("ルールブック同期開始");
-    } catch (Exception e) {
-      event.reply("ルールブック同期でエラーが発生しました: " + e.getMessage())
-          .setEphemeral(true)
-          .queue();
-      logger.error("ルールブック同期エラー", e);
-    }
-  }
 
   private void handleRequestApproval(ButtonInteractionEvent event) {
     // リクエスト承認の処理

@@ -183,7 +183,6 @@ aws ecs create-service --cli-input-json file://aws/service-definition.json
 ## Discord コマンド
 
 - `/kishax image_add_q` - 画像マップをキューに追加
-- `/kishax syncrulebook` - ルールブック同期
 
 ## ログ
 
