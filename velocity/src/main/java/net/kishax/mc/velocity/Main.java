@@ -35,6 +35,7 @@ import net.kishax.mc.velocity.server.cmd.sub.Hub;
 import net.kishax.mc.velocity.server.cmd.sub.Retry;
 import net.kishax.mc.velocity.server.cmd.sub.ServerTeleport;
 import net.kishax.mc.velocity.server.events.EventListener;
+import net.kishax.mc.velocity.util.SettingsSyncService;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
 import net.luckperms.api.LuckPermsProvider;
 
@@ -98,6 +99,9 @@ public class Main {
     Database db = getInjector().getInstance(Database.class);
     try (Connection conn = db.getConnection()) {
       getInjector().getInstance(DoServerOnline.class).updateAndSyncDatabase(false);
+      
+      // Settings設定をMySQLに同期
+      getInjector().getInstance(SettingsSyncService.class).syncSettingsToDatabase();
     } catch (SQLException | ClassNotFoundException e1) {
       logger.error("An error occurred while updating the database: {}", e1.getMessage());
     }
