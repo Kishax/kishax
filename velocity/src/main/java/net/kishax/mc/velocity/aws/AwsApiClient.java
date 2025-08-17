@@ -38,7 +38,7 @@ public class AwsApiClient {
   private final String secretKey;
   private final String apiGatewayUrl;
   private final HttpClient httpClient;
-  private final ObjectMapper objectMapper;
+  private ObjectMapper objectMapper;
 
   public AwsApiClient(String region, String serviceName, String accessKey, String secretKey, String apiGatewayUrl) {
     this.region = region;
@@ -47,7 +47,13 @@ public class AwsApiClient {
     this.secretKey = secretKey;
     this.apiGatewayUrl = apiGatewayUrl;
     this.httpClient = HttpClient.newHttpClient();
-    this.objectMapper = new ObjectMapper();
+  }
+
+  private ObjectMapper getObjectMapper() {
+    if (objectMapper == null) {
+      objectMapper = new ObjectMapper();
+    }
+    return objectMapper;
   }
 
   /**
@@ -126,14 +132,40 @@ public class AwsApiClient {
   private CompletableFuture<Void> sendPostRequest(String path, Map<String, Object> payload) {
     return CompletableFuture.supplyAsync(() -> {
       try {
-        String jsonBody = objectMapper.writeValueAsString(payload);
+        String jsonBody = getObjectMapper().writeValueAsString(payload);
 
         Instant now = Instant.now();
         String amzDate = now.atOffset(ZoneOffset.UTC).format(AMZ_DATE);
         String dateStamp = now.atOffset(ZoneOffset.UTC).format(ISO_BASIC_DATE);
 
         // HTTPリクエストを構築
-        URI uri = URI.create(apiGatewayUrl + path);
+        String baseUrl = apiGatewayUrl;
+        if (apiGatewayUrl.endsWith("/")) {
+            baseUrl = apiGatewayUrl.substring(0, apiGatewayUrl.length() - 1);
+        }
+
+        String requestPath = path;
+        if (path.startsWith("/")) {
+            requestPath = path.substring(1);
+        }
+
+        String finalUrl;
+        URI baseUri = URI.create(baseUrl);
+        String basePath = baseUri.getPath();
+
+        // apiGatewayUrlのパス部分がリクエストパスで終わっているかチェック
+        if (basePath != null && !basePath.isEmpty() && basePath.endsWith("/" + requestPath)) {
+            finalUrl = baseUrl;
+        } else {
+            finalUrl = baseUrl + "/" + requestPath;
+        }
+
+        URI uri = URI.create(finalUrl);
+        String canonicalPath = uri.getPath();
+        if (canonicalPath == null || canonicalPath.isEmpty()) {
+            canonicalPath = "/";
+        }
+
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
             .uri(uri)
             .header("Content-Type", "application/json")
@@ -142,7 +174,7 @@ public class AwsApiClient {
 
         // AWS Signature Version 4 の認証ヘッダーを生成
         String authorizationHeader = generateAuthorizationHeader(
-            "POST", path, "", jsonBody, amzDate, dateStamp);
+            "POST", canonicalPath, "", jsonBody, amzDate, dateStamp);
         requestBuilder.header("Authorization", authorizationHeader);
 
         HttpRequest request = requestBuilder.build();

@@ -26,6 +26,7 @@ import net.kishax.mc.common.socket.message.handlers.interfaces.web.MinecraftWebC
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.Main;
 import net.kishax.mc.velocity.database.VelocityDatabaseInfo;
+import net.kishax.mc.velocity.aws.AwsApiClient;
 import net.kishax.mc.velocity.aws.AwsConfig;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
@@ -126,6 +127,20 @@ public class Module extends AbstractModule {
    * lp, pu, dso, pd);
    * }
    */
+
+  @Provides
+  @Singleton
+  public AwsApiClient provideAwsApiClient(AwsConfig awsConfig) {
+    if (awsConfig.isAwsConfigValid()) {
+      return new AwsApiClient(
+          awsConfig.getAwsRegion(),
+          awsConfig.getApiGatewayServiceName(),
+          awsConfig.getAwsAccessKey(),
+          awsConfig.getAwsSecretKey(),
+          awsConfig.getApiGatewayUrl());
+    }
+    throw new RuntimeException("AWS設定が無効です");
+  }
 
   @Provides
   @Singleton
