@@ -47,6 +47,7 @@ import net.kishax.mc.velocity.socket.message.handlers.minecraft.server.VelocityS
 import net.kishax.mc.velocity.socket.message.handlers.web.VelocityMinecraftWebConfirmHandler;
 import net.kishax.mc.velocity.util.RomaToKanji;
 import net.kishax.mc.velocity.util.RomajiConversion;
+import net.kishax.mc.velocity.util.SettingsSyncService;
 import net.kishax.mc.velocity.util.config.ConfigUtils;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
 
@@ -78,6 +79,7 @@ public class Module extends AbstractModule {
     bind(RomaToKanji.class);
     bind(PlayerDisconnect.class);
     bind(RomajiConversion.class);
+    bind(SettingsSyncService.class);
     // AWS Discord サービス関連
     bind(AwsConfig.class);
     bind(AwsDiscordService.class);
