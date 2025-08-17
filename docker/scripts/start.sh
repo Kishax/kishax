@@ -32,7 +32,7 @@ echo "Created forwarding.secret file for Velocity"
 
 # Replace placeholders in config files
 echo "Configuring server files..."
-find /mc -type f -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret" | while read file; do
+find /mc -type f \( -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret" \) | while read file; do
     sed -i.bak "s|\${THIS_IS_SECRET}|${FORWARDING_SECRET}|g" "$file"
     sed -i.bak "s|\${MYSQL_HOST}|${MYSQL_HOST:-mysql}|g" "$file"
     sed -i.bak "s|\${MYSQL_DATABASE}|${MYSQL_DATABASE:-mc}|g" "$file"
@@ -40,6 +40,7 @@ find /mc -type f -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret" | 
     sed -i.bak "s|\${MYSQL_USER}|${MYSQL_USER:-root}|g" "$file"
     sed -i.bak "s|\${MYSQL_PASSWORD}|${MYSQL_PASSWORD:-password}|g" "$file"
     rm -f "$file.bak"
+    echo "Updated placeholders in $file"
 done
 
 # Ensure plugins directories exist
