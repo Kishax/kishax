@@ -79,7 +79,6 @@ public class Module extends AbstractModule {
     bind(AutoShutdown.class);
     bind(Luckperms.class);
     bind(ImageMap.class);
-    bind(Book.class);
     bind(InventoryCheck.class);
     bind(ItemFrames.class);
     bind(CommandForward.class);
