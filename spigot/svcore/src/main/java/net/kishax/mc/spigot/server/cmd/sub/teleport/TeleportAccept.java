@@ -41,7 +41,8 @@ public class TeleportAccept implements TabExecutor {
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
-  public TeleportAccept(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+  public TeleportAccept(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp,
+      Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -63,7 +64,7 @@ public class TeleportAccept implements TabExecutor {
       }
       String targetName = args[0];
       String playerName = player.getName(); // リクエストを選択する側
-                                            //logger.info("targetName: " + targetName);
+                                            // logger.info("targetName: " + targetName);
       Player targetPlayer = plugin.getServer().getPlayer(targetName);
       if (targetPlayer == null) {
         player.sendMessage(ChatColor.RED + "プレイヤーが見つかりません。");
@@ -85,8 +86,8 @@ public class TeleportAccept implements TabExecutor {
                 targetPlayer.teleport(player);
 
                 Component message = Component.text("テレポートしました。")
-                  .color(NamedTextColor.GREEN)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.GREEN)
+                    .decorate(TextDecoration.BOLD);
 
                 audiences.player(player).sendMessage(message);
 
@@ -133,8 +134,8 @@ public class TeleportAccept implements TabExecutor {
                 player.teleport(targetPlayer); // 逆
 
                 Component messages = Component.text("テレポートしました。")
-                  .color(NamedTextColor.GREEN)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.GREEN)
+                    .decorate(TextDecoration.BOLD);
 
                 audiences.player(player).sendMessage(messages);
 
@@ -180,14 +181,14 @@ public class TeleportAccept implements TabExecutor {
                 requestedPlayers.remove(requestedPlayer);
 
                 Component messagePlayer = Component.text(targetName + "のテレポートリクエストを拒否しました。")
-                  .color(NamedTextColor.RED)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.RED)
+                    .decorate(TextDecoration.BOLD);
 
                 audiences.player(player).sendMessage(messagePlayer);
 
                 Component messageTargetPlayer = Component.text(playerName + "がテレポートリクエストを拒否しました。")
-                  .color(NamedTextColor.RED)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.RED)
+                    .decorate(TextDecoration.BOLD);
 
                 audiences.player(targetPlayer).sendMessage(messageTargetPlayer);
 
@@ -214,14 +215,14 @@ public class TeleportAccept implements TabExecutor {
                 requestedPlayers.remove(requestedPlayer);
 
                 Component messagePlayer = Component.text(targetName + "からの逆テレポートリクエストを拒否しました。")
-                  .color(NamedTextColor.RED)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.RED)
+                    .decorate(TextDecoration.BOLD);
 
                 audiences.player(player).sendMessage(messagePlayer);
 
                 Component messageTargetPlayer = Component.text(playerName + "が逆テレポートリクエストを拒否しました。")
-                  .color(NamedTextColor.RED)
-                  .decorate(TextDecoration.BOLD);
+                    .color(NamedTextColor.RED)
+                    .decorate(TextDecoration.BOLD);
 
                 audiences.player(targetPlayer).sendMessage(messageTargetPlayer);
 
@@ -250,21 +251,23 @@ public class TeleportAccept implements TabExecutor {
           switch (cmdName.toLowerCase()) {
             case "tpra" -> {
               Set<Player> requestedPlayers = TeleportRequest.teleportMap.entrySet().stream()
-                .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
+                  .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
+                  .map(Map.Entry::getKey)
+                  .collect(Collectors.toSet());
               for (Player requestedPlayer : requestedPlayers) {
-                if (player.equals(requestedPlayer)) continue;
+                if (player.equals(requestedPlayer))
+                  continue;
                 ret.add(requestedPlayer.getName());
               }
             }
             case "tprma" -> {
               Set<Player> requestedPlayers = TeleportRequest.teleportMeMap.entrySet().stream()
-                .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
+                  .filter(entry -> entry.getValue().stream().anyMatch(map -> map.containsKey(player)))
+                  .map(Map.Entry::getKey)
+                  .collect(Collectors.toSet());
               for (Player requestedPlayer : requestedPlayers) {
-                if (player.equals(requestedPlayer)) continue;
+                if (player.equals(requestedPlayer))
+                  continue;
                 ret.add(requestedPlayer.getName());
               }
             }

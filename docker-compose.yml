@@ -37,6 +37,9 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
       SPIGOT_MEMORY: ${SPIGOT_MEMORY:-2G}
       VELOCITY_MEMORY: ${VELOCITY_MEMORY:-1G}
+      CONFIRM_URL: ${CONFIRM_URL:-https://your-confirm-url.com}
+      HOME_SERVER_NAME: ${HOME_SERVER_NAME:-spigot}
+      HOME_SERVER_IP: ${HOME_SERVER_IP:-127.0.0.1}
     volumes:
       - minecraft_data:/mc/spigot/world
       - minecraft_data_nether:/mc/spigot/world_nether

@@ -27,7 +27,7 @@ public class Silent {
   private final Logger logger;
   private final Database db;
   private final Luckperms lp;
-  public static List<String> args1 = new ArrayList<>(Arrays.asList("add","remove","list"));
+  public static List<String> args1 = new ArrayList<>(Arrays.asList("add", "remove", "list"));
 
   @Inject
   public Silent(Logger logger, Database db, Luckperms lp) {
@@ -48,18 +48,19 @@ public class Silent {
     }
 
     switch (args.length) {
-      case 0, 1 -> source.sendMessage(Component.text("usage: /kishaxp silent <add|remove|list> <player>").color(NamedTextColor.GREEN));
+      case 0, 1 -> source
+          .sendMessage(Component.text("usage: /kishaxp silent <add|remove|list> <player>").color(NamedTextColor.GREEN));
       case 2 -> {
         switch (args[1].toLowerCase()) {
           case "add", "remove" -> source.sendMessage(Component.text("プレイヤー名を入力してください。").color(NamedTextColor.RED));
           case "list" -> {
             TextComponent componentBuilder = Component.text()
-              .append(Component.text("Silent Player List")
-              .color(NamedTextColor.GOLD)
-              .decorate(
-                TextDecoration.BOLD,
-                TextDecoration.UNDERLINED))
-              .build();
+                .append(Component.text("Silent Player List")
+                    .color(NamedTextColor.GOLD)
+                    .decorate(
+                        TextDecoration.BOLD,
+                        TextDecoration.UNDERLINED))
+                .build();
 
             List<CommandSource> silentPlayers = new ArrayList<>();
             String query = "SELECT name FROM members WHERE silent = ?;";
@@ -69,13 +70,13 @@ public class Silent {
               try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                   Component addition = Component.newline()
-                    .appendSpace()
-                    .appendSpace()
-                    .append(Component.text("-")
-                    .appendSpace()
-                    .appendSpace()
-                    .append(Component.text(rs.getString("name")))
-                    .color(NamedTextColor.GREEN));
+                      .appendSpace()
+                      .appendSpace()
+                      .append(Component.text("-")
+                          .appendSpace()
+                          .appendSpace()
+                          .append(Component.text(rs.getString("name")))
+                          .color(NamedTextColor.GREEN));
 
                   componentBuilder = componentBuilder.append(addition);
 
@@ -96,12 +97,14 @@ public class Silent {
               source.sendMessage(componentBuilder);
             }
           }
-          default -> source.sendMessage(Component.text("usage: /kishaxp silent <add|remove|list> <player>").color(NamedTextColor.GREEN));
+          default -> source.sendMessage(
+              Component.text("usage: /kishaxp silent <add|remove|list> <player>").color(NamedTextColor.GREEN));
         }
       }
       case 3 -> {
         if (!args1.contains(args[1].toLowerCase())) {
-          source.sendMessage(Component.text("usage: /kishaxp silent <add|remove|list> <player>").color(NamedTextColor.GREEN));
+          source.sendMessage(
+              Component.text("usage: /kishaxp silent <add|remove|list> <player>").color(NamedTextColor.GREEN));
           return;
         }
         String query = "SELECT * FROM members WHERE name = ?;";
@@ -155,7 +158,7 @@ public class Silent {
         }
       }
     } catch (SQLException | ClassNotFoundException e) {
-      logger.info("An error occurred while Silent#getSilentPlayers: {}", e) ;
+      logger.info("An error occurred while Silent#getSilentPlayers: {}", e);
     }
     return silentPlayers;
   }

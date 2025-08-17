@@ -51,7 +51,8 @@ public class RegisterTeleportPoint implements TabExecutor {
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
-  public RegisterTeleportPoint(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt, ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
+  public RegisterTeleportPoint(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, RunnableTaskUtil rt,
+      ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
     this.audiences = audiences;
     this.logger = logger;
     this.db = db;
@@ -62,7 +63,8 @@ public class RegisterTeleportPoint implements TabExecutor {
   }
 
   @Override
-  public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+  public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+      @NotNull String[] args) {
     if (sender instanceof Player) {
       Player player = (Player) sender;
       String playerName = player.getName();
@@ -93,57 +95,58 @@ public class RegisterTeleportPoint implements TabExecutor {
         World playerWorld = loc.getWorld();
         final String worldName = playerWorld.getName();
         Component titleOrComment = Component.text("タイトル:コメント")
-          .color(NamedTextColor.GOLD)
-          .decorate(
-            TextDecoration.BOLD,
-            TextDecoration.ITALIC,
-            TextDecoration.UNDERLINED)
-          .hoverEvent(HoverEvent.showText(Component.text("クリックして入力")))
-          .clickEvent(ClickEvent.suggestCommand("タイトル:コメント"));
+            .color(NamedTextColor.GOLD)
+            .decorate(
+                TextDecoration.BOLD,
+                TextDecoration.ITALIC,
+                TextDecoration.UNDERLINED)
+            .hoverEvent(HoverEvent.showText(Component.text("クリックして入力")))
+            .clickEvent(ClickEvent.suggestCommand("タイトル:コメント"));
 
         Component example = Component.text("(例)")
-          .appendSpace()
-          .append(Component.text("おうち:いえにかえれるよ。"))
-          .color(NamedTextColor.GRAY);
+            .appendSpace()
+            .append(Component.text("おうち:いえにかえれるよ。"))
+            .color(NamedTextColor.GRAY);
 
         Component note = Component.text("※タイトルとコメントは「:」で区切ってください。")
-          .color(NamedTextColor.GRAY);
+            .color(NamedTextColor.GRAY);
 
         Component note2 = Component.text("※タイトルのみの場合、「:」は必要ありません。")
-          .color(NamedTextColor.GRAY);
+            .color(NamedTextColor.GRAY);
 
         final double roundX = JavaUtils.roundToFirstDecimalPlace(x);
         final double roundY = JavaUtils.roundToFirstDecimalPlace(y);
         final double roundZ = JavaUtils.roundToFirstDecimalPlace(z);
 
-        Component currentCoord = Component.text("現在地: " + worldName + "(" + roundX + ", " + roundY + ", " + roundZ + ")")
-          .color(NamedTextColor.GOLD)
-          .decorate(
-            TextDecoration.BOLD,
-            TextDecoration.UNDERLINED);
+        Component currentCoord = Component
+            .text("現在地: " + worldName + "(" + roundX + ", " + roundY + ", " + roundZ + ")")
+            .color(NamedTextColor.GOLD)
+            .decorate(
+                TextDecoration.BOLD,
+                TextDecoration.UNDERLINED);
 
         TextComponent messages = Component.text()
-          .append(currentCoord)
-          .appendNewline()
-          .append(Component.text("現在地をテレポートポイントに登録しますか？"))
-          .appendNewline()
-          .append(Component.text("登録する場合は"))
-          .append(titleOrComment)
-          .append(Component.text("を入力してください。"))
-          .appendNewline()
-          .append(note)
-          .appendNewline()
-          .append(note2)
-          .appendNewline()
-          .append(example)
-          .appendNewline()
-          .appendNewline()
-          .append(Component.text("処理を中断する場合は"))
-          .append(TCUtils.ZERO.get())
-          .append(Component.text("と入力してください。"))
-          .appendNewline()
-          .append(TCUtils.INPUT_MODE.get())
-          .build();
+            .append(currentCoord)
+            .appendNewline()
+            .append(Component.text("現在地をテレポートポイントに登録しますか？"))
+            .appendNewline()
+            .append(Component.text("登録する場合は"))
+            .append(titleOrComment)
+            .append(Component.text("を入力してください。"))
+            .appendNewline()
+            .append(note)
+            .appendNewline()
+            .append(note2)
+            .appendNewline()
+            .append(example)
+            .appendNewline()
+            .appendNewline()
+            .append(Component.text("処理を中断する場合は"))
+            .append(TCUtils.ZERO.get())
+            .append(Component.text("と入力してください。"))
+            .appendNewline()
+            .append(TCUtils.INPUT_MODE.get())
+            .build();
 
         audiences.player(player).sendMessage(messages);
 
@@ -154,8 +157,8 @@ public class RegisterTeleportPoint implements TabExecutor {
             case "0" -> {
               rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
               Component message = Component.text("処理を中断しました。")
-                .color(NamedTextColor.RED)
-                .decorate(TextDecoration.BOLD);
+                  .color(NamedTextColor.RED)
+                  .decorate(TextDecoration.BOLD);
 
               audiences.player(player).sendMessage(message);
             }
@@ -166,9 +169,9 @@ public class RegisterTeleportPoint implements TabExecutor {
                 // 「:」もしくは全角の「：」が複数ある場合は処理を中断
                 if (input.split("[:：]").length > 2) {
                   Component errorMessage = Component.text("コメントの開始位置が決定できません。")
-                    .appendNewline()
-                    .append(Component.text("「:」もしくは全角の「：」は1つだけ入力してください。"))
-                    .color(NamedTextColor.RED);
+                      .appendNewline()
+                      .append(Component.text("「:」もしくは全角の「：」は1つだけ入力してください。"))
+                      .color(NamedTextColor.RED);
 
                   audiences.player(player).sendMessage(errorMessage);
 
@@ -188,35 +191,35 @@ public class RegisterTeleportPoint implements TabExecutor {
                 rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
 
                 TextComponent note3 = Component.text()
-                  .append(Component.text("プライベートは自分だけが飛べるポイントを、"))
-                  .appendNewline()
-                  .append(Component.text("パブリックは全員が共有で飛べるポイントを指します。"))
-                  .color(NamedTextColor.GRAY)
-                  .decorate(TextDecoration.ITALIC)
-                  .build();
+                    .append(Component.text("プライベートは自分だけが飛べるポイントを、"))
+                    .appendNewline()
+                    .append(Component.text("パブリックは全員が共有で飛べるポイントを指します。"))
+                    .color(NamedTextColor.GRAY)
+                    .decorate(TextDecoration.ITALIC)
+                    .build();
 
                 TextComponent message = Component.text()
-                  .append(Component.text("パブリック")
-                    .decorate(TextDecoration.UNDERLINED))
-                  .append(Component.text("にする場合は"))
-                  .append(TCUtils.ONE.get())
-                  .append(Component.text("と入力してください。"))
-                  .appendNewline()
-                  .append(Component.text("プライベート")
-                    .decorate(TextDecoration.UNDERLINED))
-                  .append(Component.text("にする場合は"))
-                  .append(TCUtils.TWO.get())
-                  .append(Component.text("と入力してください。"))
-                  .appendNewline()
-                  .appendNewline()
-                  .append(note3)
-                  .appendNewline()
-                  .append(Component.text("処理を中断する場合は"))
-                  .append(TCUtils.ZERO.get())
-                  .append(Component.text("と入力してください。"))
-                  .appendNewline()
-                  .append(TCUtils.INPUT_MODE.get())
-                  .build();
+                    .append(Component.text("パブリック")
+                        .decorate(TextDecoration.UNDERLINED))
+                    .append(Component.text("にする場合は"))
+                    .append(TCUtils.ONE.get())
+                    .append(Component.text("と入力してください。"))
+                    .appendNewline()
+                    .append(Component.text("プライベート")
+                        .decorate(TextDecoration.UNDERLINED))
+                    .append(Component.text("にする場合は"))
+                    .append(TCUtils.TWO.get())
+                    .append(Component.text("と入力してください。"))
+                    .appendNewline()
+                    .appendNewline()
+                    .append(note3)
+                    .appendNewline()
+                    .append(Component.text("処理を中断する場合は"))
+                    .append(TCUtils.ZERO.get())
+                    .append(Component.text("と入力してください。"))
+                    .appendNewline()
+                    .append(TCUtils.INPUT_MODE.get())
+                    .build();
 
                 audiences.player(player).sendMessage(message);
 
@@ -227,14 +230,14 @@ public class RegisterTeleportPoint implements TabExecutor {
                     case "0" -> {
                       rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                       Component message2 = Component.text("処理を中断しました。")
-                        .color(NamedTextColor.RED)
-                        .decorate(TextDecoration.BOLD);
+                          .color(NamedTextColor.RED)
+                          .decorate(TextDecoration.BOLD);
 
                       audiences.player(player).sendMessage(message2);
                       return;
                     }
                     case "1", "2" -> {
-                      //boolean isPublic = input2.equals("1");
+                      // boolean isPublic = input2.equals("1");
                       final String type;
                       switch (input2) {
                         case "1" -> type = Type.TELEPORT_POINT_PUBLIC.getPersistantKey();
@@ -249,11 +252,14 @@ public class RegisterTeleportPoint implements TabExecutor {
                       try {
                         rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
                         try (Connection conn = db.getConnection()) {
-                          db.updateLog(conn, "INSERT INTO tp_points (name, uuid, title, comment, x, y, z, yaw, pitch, world, server, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new Object[] {playerName, playerUUID, title, comment, x, y, z, yaw, pitch, worldName, thisServerName, type});
+                          db.updateLog(conn,
+                              "INSERT INTO tp_points (name, uuid, title, comment, x, y, z, yaw, pitch, world, server, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                              new Object[] { playerName, playerUUID, title, comment, x, y, z, yaw, pitch, worldName,
+                                  thisServerName, type });
 
                           Component message3 = Component.text("テレポートポイントを登録しました。")
-                            .color(NamedTextColor.GREEN)
-                            .decorate(TextDecoration.BOLD);
+                              .color(NamedTextColor.GREEN)
+                              .decorate(TextDecoration.BOLD);
 
                           audiences.player(player).sendMessage(message3);
                         } catch (SQLException | ClassNotFoundException e) {
@@ -286,7 +292,7 @@ public class RegisterTeleportPoint implements TabExecutor {
                     }
                     default -> {
                       Component errorMessage2 = Component.text("無効な入力です。")
-                        .color(NamedTextColor.RED);
+                          .color(NamedTextColor.RED);
 
                       audiences.player(player).sendMessage(errorMessage2);
                       rt.extendTask(player, RunnableTaskUtil.Key.TELEPORT_REGISTER_POINT);
@@ -308,14 +314,15 @@ public class RegisterTeleportPoint implements TabExecutor {
       }
     } else {
       Component errorMessage = Component.text("プレイヤーのみが実行できます。")
-        .color(NamedTextColor.RED);
+          .color(NamedTextColor.RED);
       audiences.console().sendMessage(errorMessage);
     }
     return true;
   }
 
   @Override
-  public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+  public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+      @NotNull String label, @NotNull String[] args) {
     return Collections.emptyList();
   }
 }

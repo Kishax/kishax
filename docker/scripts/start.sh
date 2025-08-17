@@ -30,17 +30,52 @@ echo "Generated forwarding secret: $FORWARDING_SECRET"
 echo "$FORWARDING_SECRET" > /mc/velocity/forwarding.secret
 echo "Created forwarding.secret file for Velocity"
 
+# Debug: Show initial forwarding.secret content
+echo "DEBUG: Initial forwarding.secret content:"
+cat /mc/velocity/forwarding.secret
+
+# Debug: Show initial paper-global.yml content for velocity section
+echo "DEBUG: Initial paper-global.yml velocity section:"
+grep -A5 -B5 "velocity:" /mc/spigot/config/paper-global.yml || echo "paper-global.yml not found or no velocity section"
+
 # Replace placeholders in config files
 echo "Configuring server files..."
-find /mc -type f -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret" | while read file; do
+find /mc -type f \( -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret" \) | while read file; do
+    echo "DEBUG: Processing file: $file"
+    
+    # Show content before replacement for critical files
+    if [[ "$file" == *"forwarding.secret"* ]] || [[ "$file" == *"paper-global.yml"* ]]; then
+        echo "DEBUG: Content before replacement in $file:"
+        cat "$file"
+    fi
+    
     sed -i.bak "s|\${THIS_IS_SECRET}|${FORWARDING_SECRET}|g" "$file"
     sed -i.bak "s|\${MYSQL_HOST}|${MYSQL_HOST:-mysql}|g" "$file"
     sed -i.bak "s|\${MYSQL_DATABASE}|${MYSQL_DATABASE:-mc}|g" "$file"
     sed -i.bak "s|\${MYSQL_PORT}|${MYSQL_PORT:-3306}|g" "$file"
     sed -i.bak "s|\${MYSQL_USER}|${MYSQL_USER:-root}|g" "$file"
     sed -i.bak "s|\${MYSQL_PASSWORD}|${MYSQL_PASSWORD:-password}|g" "$file"
+    sed -i.bak "s|\${CONFIRM_URL:-https://your-confirm-url.com}|${CONFIRM_URL:-https://your-confirm-url.com}|g" "$file"
+    sed -i.bak "s|\${HOME_SERVER_NAME:-spigot}|${HOME_SERVER_NAME:-spigot}|g" "$file"
+    sed -i.bak "s|\${HOME_SERVER_IP:-127.0.0.1}|${HOME_SERVER_IP:-127.0.0.1}|g" "$file"
     rm -f "$file.bak"
+    
+    # Show content after replacement for critical files
+    if [[ "$file" == *"forwarding.secret"* ]] || [[ "$file" == *"paper-global.yml"* ]]; then
+        echo "DEBUG: Content after replacement in $file:"
+        cat "$file"
+    fi
+    
+    echo "Updated placeholders in $file"
 done
+
+# Final verification: Show the actual secret values being used
+echo "DEBUG: Final verification of forwarding secrets:"
+echo "Velocity forwarding.secret:"
+cat /mc/velocity/forwarding.secret
+echo ""
+echo "Paper velocity secret in paper-global.yml:"
+grep "secret:" /mc/spigot/config/paper-global.yml || echo "No secret found in paper-global.yml"
 
 # Ensure plugins directories exist
 mkdir -p /mc/spigot/plugins/Kishax

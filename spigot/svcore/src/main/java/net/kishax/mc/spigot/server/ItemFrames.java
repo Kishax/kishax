@@ -8,7 +8,6 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -19,13 +18,11 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import net.kishax.mc.common.database.Database;
-import net.kishax.mc.spigot.server.cmd.sub.Book;
 
 public class ItemFrames {
   private final JavaPlugin plugin;
   private final Logger logger;
   private final Database db;
-  private final Book book;
   private final ImageMap im;
   private static final String OLD_KEY_SUFFIX = "custom_image";
   private static final String OLD_LARGE_KEY_SUFFIX = "custom_large_image";
@@ -35,11 +32,10 @@ public class ItemFrames {
   private static final String MIGRATED_KEY_NAME = "migrated";
 
   @Inject
-  public ItemFrames(JavaPlugin plugin, Logger logger, Database db, Book book, ImageMap im) {
+  public ItemFrames(JavaPlugin plugin, Logger logger, Database db, ImageMap im) {
     this.plugin = plugin;
     this.logger = logger;
     this.db = db;
-    this.book = book;
     this.im = im;
   }
 
@@ -125,14 +121,6 @@ public class ItemFrames {
         } else if (container.has(newLargeKey, PersistentDataType.STRING)) {
           im.loadAndSetImageTile(conn, mapView.getId(), item, mapMeta, mapView);
         }
-      }
-    } else if (item.getType() == org.bukkit.Material.WRITTEN_BOOK &&
-        item.getItemMeta() instanceof BookMeta meta) {
-      if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin,
-          Book.PERSISTANT_KEY),
-          PersistentDataType.STRING)) {
-        item.setItemMeta(book.setBookItemMeta((BookMeta) meta));
-        logger.info("Updated book item frame: {}", itemFrame.getLocation());
       }
     }
   }

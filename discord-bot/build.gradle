@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'net.kishax'
+version = '1.0.0'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // JDA (Discord API)
+    implementation 'net.dv8tion:JDA:5.0.0-beta.18'
+    
+    // AWS SDK for SQS
+    implementation 'software.amazon.awssdk:sqs:2.21.29'
+    implementation 'software.amazon.awssdk:auth:2.21.29'
+    
+    // Logging
+    implementation 'ch.qos.logback:logback-classic:1.4.11'
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    
+    // JSON処理
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    
+    // 設定ファイル処理
+    implementation 'com.typesafe:config:1.4.3'
+}
+
+application {
+    mainClass = 'net.kishax.discord.DiscordBotMain'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'net.kishax.discord.DiscordBotMain'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

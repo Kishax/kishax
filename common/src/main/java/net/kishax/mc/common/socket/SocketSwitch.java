@@ -77,7 +77,8 @@ public class SocketSwitch {
   }
 
   public void startSocketClient(int port, Message msg) {
-    if (port == 0) return;
+    if (port == 0)
+      return;
     clientThread = new Thread(() -> {
       try (Socket socket = new Socket("localhost", port);
           BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));) {
@@ -165,7 +166,8 @@ public class SocketSwitch {
     return false;
   }
 
-  private void sendMessageToServer(Connection conn, String serverType, Message msg) throws SQLException, ClassNotFoundException {
+  private void sendMessageToServer(Connection conn, String serverType, Message msg)
+      throws SQLException, ClassNotFoundException {
     try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {

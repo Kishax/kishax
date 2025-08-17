@@ -32,7 +32,8 @@ public class SwitchChatType {
 
   public void execute(@NotNull CommandSource source, String[] args) {
     switch (args.length) {
-      case 0, 1 -> source.sendMessage(Component.text("usage: /kishaxp chat <switch|status>").color(NamedTextColor.GREEN));
+      case 0, 1 ->
+        source.sendMessage(Component.text("usage: /kishaxp chat <switch|status>").color(NamedTextColor.GREEN));
       case 2 -> {
         switch (args[1].toLowerCase()) {
           case "status" -> {

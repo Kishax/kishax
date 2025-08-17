@@ -1,0 +1,17 @@
+{
+  "name": "kishax-discord-lambda",
+  "version": "1.0.0",
+  "description": "Kishax Discord Lambda function for API Gateway integration",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "zip -r deployment.zip . && aws lambda update-function-code --function-name kishax-discord-lambda --zip-file fileb://deployment.zip"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1500.0"
+  },
+  "devDependencies": {},
+  "keywords": ["aws", "lambda", "discord", "sqs"],
+  "author": "Kishax",
+  "license": "ISC"
+}

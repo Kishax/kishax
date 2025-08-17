@@ -9,9 +9,9 @@ public class EnchantmentUtils {
   /**
    * ItemStackにエンチャントを付与する
    *
-   * @param item ItemStackオブジェクト
+   * @param item        ItemStackオブジェクト
    * @param enchantment 付与するエンチャント
-   * @param level エンチャントのレベル
+   * @param level       エンチャントのレベル
    * @return エンチャント付与に成功すればtrue、失敗すればfalse
    */
   public static boolean addEnchantment(ItemStack item, Enchantment enchantment, int level) {
@@ -72,4 +72,3 @@ public class EnchantmentUtils {
     return false;
   }
 }
-

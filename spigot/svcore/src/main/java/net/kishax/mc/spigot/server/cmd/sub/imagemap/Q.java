@@ -24,11 +24,12 @@ public class Q implements TabExecutor {
   }
 
   @Override
-  public java.util.List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
+  public java.util.List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command cmd, String label,
+      String[] args) {
     // List<String> ret = new ArrayList<>();
     // if (!sender.hasPermission("kishax.q")) {
-    //   ret.add("code");
-    //   return ret;
+    // ret.add("code");
+    // return ret;
     // }
     return Collections.emptyList();
   }
