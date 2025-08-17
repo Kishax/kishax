@@ -24,7 +24,6 @@ import net.kishax.mc.common.server.ServerStatusCache;
 import net.kishax.mc.common.server.interfaces.ServerHomeDir;
 import net.kishax.mc.common.socket.PortFinder;
 import net.kishax.mc.common.socket.SocketSwitch;
-import net.kishax.mc.common.socket.message.handlers.interfaces.discord.RuleBookSyncHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.ServerActionHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.SyncContentHandler;
 import net.kishax.mc.common.util.PlayerUtils;
@@ -35,14 +34,12 @@ import net.kishax.mc.spigot.server.ImageMap;
 import net.kishax.mc.spigot.server.InventoryCheck;
 import net.kishax.mc.spigot.server.ItemFrames;
 import net.kishax.mc.spigot.server.SpigotServerHomeDir;
-import net.kishax.mc.spigot.server.cmd.sub.Book;
 import net.kishax.mc.spigot.server.cmd.sub.CommandForward;
 import net.kishax.mc.spigot.server.cmd.sub.ReloadConfig;
 import net.kishax.mc.spigot.server.cmd.sub.portal.PortalsDelete;
 import net.kishax.mc.spigot.server.events.EventListener;
 import net.kishax.mc.spigot.server.events.WandListener;
 import net.kishax.mc.spigot.server.menu.Menu;
-import net.kishax.mc.spigot.socket.message.handlers.discord.SpigotRuleBookSyncHandler;
 import net.kishax.mc.spigot.socket.message.handlers.minecraft.SpigotSyncContentHandler;
 import net.kishax.mc.spigot.socket.message.handlers.minecraft.server.SpigotServerActionHandler;
 import net.kishax.mc.spigot.util.RunnableTaskUtil;
@@ -89,7 +86,6 @@ public class Module extends AbstractModule {
     bind(BroadCast.class);
     bind(RunnableTaskUtil.class);
 
-    bind(RuleBookSyncHandler.class).to(SpigotRuleBookSyncHandler.class);
     bind(ServerActionHandler.class).to(SpigotServerActionHandler.class);
     bind(SyncContentHandler.class).to(SpigotSyncContentHandler.class);
   }

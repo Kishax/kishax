@@ -7,7 +7,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
@@ -17,7 +16,6 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 
 import net.kishax.mc.common.database.Database;
-import net.kishax.mc.spigot.server.cmd.sub.Book;
 import net.kishax.mc.spigot.server.menu.Type;
 
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,15 +24,13 @@ public class InventoryCheck {
   private final JavaPlugin plugin;
   private final Logger logger;
   private final Database db;
-  private final Book book;
   private final ImageMap im;
 
   @Inject
-  public InventoryCheck(JavaPlugin plugin, Logger logger, Database db, Book book, ImageMap im) {
+  public InventoryCheck(JavaPlugin plugin, Logger logger, Database db, ImageMap im) {
     this.plugin = plugin;
     this.logger = logger;
     this.db = db;
-    this.book = book;
     this.im = im;
   }
 
@@ -51,13 +47,6 @@ public class InventoryCheck {
               ItemMeta meta = item.getItemMeta();
               if (meta != null) {
                 switch (item.getType()) {
-                  case WRITTEN_BOOK -> {
-                    BookMeta bookMeta = (BookMeta) meta;
-                    if (meta != null) {
-                      item.setItemMeta(book.setBookItemMeta(bookMeta));
-                      logger.info("Updating book in {}\'s inventory...", playerName);
-                    }
-                  }
                   case ENCHANTED_BOOK -> {
                     if (meta != null) {
                       if (meta.getPersistentDataContainer().has(new NamespacedKey(plugin, "kishaxmenu"),

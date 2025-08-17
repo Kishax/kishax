@@ -52,7 +52,6 @@ import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.util.JavaUtils;
 import net.kishax.mc.spigot.server.ImageMap;
-import net.kishax.mc.spigot.server.cmd.sub.Book;
 import net.kishax.mc.spigot.server.cmd.sub.CommandForward;
 import net.kishax.mc.spigot.server.cmd.sub.teleport.TeleportRequest;
 import net.kishax.mc.spigot.server.events.EventListener;
@@ -88,14 +87,13 @@ public class Menu {
   private final Luckperms lp;
   private final ImageMap im;
   private final ServerHomeDir shd;
-  private final Book book;
   private final CommandForward cf;
   private final Provider<SocketSwitch> sswProvider;
   private int currentOreIndex = 0;
 
   @Inject
   public Menu(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, ServerStatusCache ssc,
-      Luckperms lp, ImageMap im, ServerHomeDir shd, Book book, CommandForward cf, Provider<SocketSwitch> sswProvider) {
+      Luckperms lp, ImageMap im, ServerHomeDir shd, CommandForward cf, Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -104,7 +102,6 @@ public class Menu {
     this.lp = lp;
     this.im = im;
     this.shd = shd;
-    this.book = book;
     this.cf = cf;
     this.sswProvider = sswProvider;
   }
@@ -336,7 +333,6 @@ public class Menu {
       }
       case 2 -> {
         playerMenuActions.put(11, (event) -> settingMenu(player));
-        playerMenuActions.put(13, (event) -> book.giveRuleBook(player));
         playerMenuActions.put(15, (event) -> {
           player.closeInventory();
           player.sendMessage(ChatColor.GREEN + "ここにあればいいなと思う機能があればDiscordで教えてね");
@@ -352,14 +348,6 @@ public class Menu {
         }
         inv.setItem(11, settingItem);
 
-        ItemStack ruleBookItem = new ItemStack(Material.WRITTEN_BOOK);
-        ItemMeta ruleBookMeta = ruleBookItem.getItemMeta();
-        if (ruleBookMeta != null) {
-          ruleBookMeta.setDisplayName(ChatColor.GREEN + "ルールブック");
-          ruleBookMeta.setLore(Arrays.asList(ChatColor.GRAY + "サーバーのルールを確認できるよ。"));
-          ruleBookItem.setItemMeta(ruleBookMeta);
-        }
-        inv.setItem(13, ruleBookItem);
 
         ItemStack anyItem = new ItemStack(Material.COOKIE);
         ItemMeta anyMeta = anyItem.getItemMeta();
