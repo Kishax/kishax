@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;

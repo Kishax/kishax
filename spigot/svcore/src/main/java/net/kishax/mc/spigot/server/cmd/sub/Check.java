@@ -1,5 +1,6 @@
 package net.kishax.mc.spigot.server.cmd.sub;
 
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
