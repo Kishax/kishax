@@ -16,7 +16,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.settings.PermSettings;
 import net.kishax.mc.velocity.Main;
-import net.kishax.mc.velocity.discord.MessageEditor;
+import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -24,16 +24,16 @@ public class CEnd implements SimpleCommand {
   private final Main plugin;
   private final ProxyServer server;
   private final Logger logger;
-  private final MessageEditor discordME;
+  private final AwsDiscordService awsDiscordService;
   private final Luckperms lp;
-  private final String[] subcommands = {"cend"};
+  private final String[] subcommands = { "cend" };
 
   @Inject
-  public CEnd (Main plugin, ProxyServer server, Logger logger, MessageEditor discordME, Luckperms lp) {
+  public CEnd(Main plugin, ProxyServer server, Logger logger, AwsDiscordService awsDiscordService, Luckperms lp) {
     this.plugin = plugin;
     this.server = server;
     this.logger = logger;
-    this.discordME = discordME;
+    this.awsDiscordService = awsDiscordService;
     this.lp = lp;
   }
 
@@ -47,13 +47,13 @@ public class CEnd implements SimpleCommand {
       }
     }
 
-    Main.isVelocity = false; //フラグをfalseに
+    Main.isVelocity = false; // フラグをfalseに
 
     // 非同期処理を実行
-    //discordME.AddEmbedSomeMessage("End");
+    // discordME.AddEmbedSomeMessage("End");
     CompletableFuture<Void> addEmbedFuture = CompletableFuture.runAsync(() -> {
       try {
-        discordME.AddEmbedSomeMessage("End");
+        awsDiscordService.sendBotMessage("プロキシサーバーが停止しました。", 0xFF0000);
       } catch (Exception e) {
         logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
         for (StackTraceElement ste : e.getStackTrace()) {
@@ -67,8 +67,8 @@ public class CEnd implements SimpleCommand {
 
     allTasks.thenRun(() -> {
       server.getScheduler().buildTask(plugin, () -> {
-        //discord.logoutDiscordBot();
-        //server.shutdown();
+        // discord.logoutDiscordBot();
+        // server.shutdown();
         logger.info("discordME.AddEmbedSomeMessageメソッドが終了しました。");
       }).schedule(); // タスクをスケジュールしてシャットダウンを行う
     });
@@ -82,7 +82,8 @@ public class CEnd implements SimpleCommand {
     switch (args.length) {
       case 0, 1 -> {
         for (String subcmd : subcommands) {
-          if (!source.hasPermission("kishax.proxy." + subcmd)) continue;
+          if (!source.hasPermission("kishax.proxy." + subcmd))
+            continue;
           ret.add(subcmd);
         }
         return ret;

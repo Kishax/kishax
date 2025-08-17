@@ -8,17 +8,15 @@ import java.sql.SQLException;
 import net.kishax.mc.common.database.Database;
 
 public enum Settings {
-  MAX_IMAGE_TILES("maximagetiles"),
-  LARGE_IMAGE_LIMIT_TIMES("largeimageuploadlimittimes"),
-  IMAGE_LIMIT_TIMES("imageuploadlimittimes"),
-  DISCORD_IMAGE_LIMIT_TIMES("discordimageuploadlimittimes"),
-  IMAGE_FOLDER("image_folder"),
-  RULEBOOK_CONTENT("rulebook"),
-  CONFIRM_URL("confirm_url"),
-  HOME_SERVER_NAME("home_server_name"),
-  HOME_SERVER_IP("home_server_ip"),
-  INPUT_PERIOD("input_period"),
-  HUB_TELEPORT_TIME("hubteleporttime"),
+  MAX_IMAGE_TILES("MAX_IMAGE_TILES"),
+  LARGE_IMAGE_LIMIT_TIMES("LARGE_IMAGE_LIMIT_TIMES"),
+  IMAGE_LIMIT_TIMES("IMAGE_LIMIT_TIMES"),
+  IMAGE_FOLDER("IMAGE_FOLDER"),
+  CONFIRM_URL("CONFIRM_URL"),
+  HOME_SERVER_NAME("HOME_SERVER_NAME"),
+  HOME_SERVER_IP("HOME_SERVER_IP"),
+  INPUT_PERIOD("INPUT_PERIOD"),
+  HUB_TELEPORT_TIME("HUB_TELEPORT_TIME"),
   ;
 
   private final Database db = Database.getInstance();

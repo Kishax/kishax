@@ -36,12 +36,13 @@ public class SwitchRomajiConvType {
   }
 
   private void sendDefaultMessage(@NotNull CommandSource source) {
-    if (source.hasPermission("kishax.proxy.conv.*")) {
-      Component usage = Component.text("usage: /kishaxp conv <add|remove|switch|reload> [<add|remove>:key] [<add>:value]")
+    if (source.hasPermission("kishax.proxy.translate.*")) {
+      Component usage = Component
+          .text("usage: /kishaxp translate <add|remove|switch|reload> [<add|remove>:key] [<add>:value]")
           .appendNewline()
-          .append(Component.text("(例) /kishaxp conv add bakumoriraisu 爆盛りライス"))
+          .append(Component.text("(例) /kishaxp translate add bakumoriraisu 爆盛りライス"))
           .appendNewline()
-          .append(Component.text("(例) /kishaxp conv remove bakumoriraisu"))
+          .append(Component.text("(例) /kishaxp translate remove bakumoriraisu"))
           .color(NamedTextColor.GREEN);
       source.sendMessage(usage);
     } else {
@@ -64,8 +65,8 @@ public class SwitchRomajiConvType {
           }
 
           case "switch" -> {
-            Map<String, Object> ConvConfig = config.getStringObjectMap("Conv");
-            if (Objects.isNull(ConvConfig)) {
+            Map<String, Object> TranslateConfig = config.getStringObjectMap("Translate");
+            if (Objects.isNull(TranslateConfig)) {
               source.sendMessage(Component.text("コンフィグの設定が不十分です。").color(NamedTextColor.RED));
               return;
             }
@@ -77,9 +78,9 @@ public class SwitchRomajiConvType {
                 return;
               }
 
-              if (config.getBoolean("Conv.Mode")) {
+              if (config.getBoolean("Translate.romaji")) {
                 source.sendMessage(Component.text("ローマ字変換がpde方式になりました。").color(NamedTextColor.GREEN));
-                ConvConfig.put("Mode", false);
+                TranslateConfig.put("romaji", false);
                 try {
                   config.saveConfig();
                 } catch (IOException e) {
@@ -90,7 +91,7 @@ public class SwitchRomajiConvType {
                 }
               } else {
                 source.sendMessage(Component.text("ローマ字変換がMap方式になりました。").color(NamedTextColor.GREEN));
-                ConvConfig.put("Mode", true);
+                TranslateConfig.put("romaji", true);
                 try {
                   config.saveConfig();
                 } catch (IOException e) {
@@ -114,9 +115,9 @@ public class SwitchRomajiConvType {
                 return;
               }
 
-              if (config.getBoolean("Conv.Mode")) {
+              if (config.getBoolean("Translate.romaji")) {
                 source.sendMessage(Component.text("ローマ字変換がpde方式になりました。").color(NamedTextColor.GREEN));
-                ConvConfig.put("Mode", false);
+                TranslateConfig.put("romaji", false);
                 try {
                   config.saveConfig();
                 } catch (IOException e) {
@@ -127,7 +128,7 @@ public class SwitchRomajiConvType {
                 }
               } else {
                 source.sendMessage(Component.text("ローマ字変換がMap方式になりました。").color(NamedTextColor.GREEN));
-                ConvConfig.put("Mode", true);
+                TranslateConfig.put("romaji", true);
                 try {
                   config.saveConfig();
                 } catch (IOException e) {
@@ -147,9 +148,9 @@ public class SwitchRomajiConvType {
           case "add" -> {
             Component usage = Component.text("変換後の日本語／カタカナ／漢字を入力してください。")
                 .appendNewline()
-                .append(Component.text("(例) /kishaxp conv add bakumoriraisu 爆盛りライス"))
+                .append(Component.text("(例) /kishaxp translate add bakumoriraisu 爆盛りライス"))
                 .appendNewline()
-                .append(Component.text("(例) /kishaxp conv remove bakumoriraisu"))
+                .append(Component.text("(例) /kishaxp translate remove bakumoriraisu"))
                 .color(NamedTextColor.GREEN);
             source.sendMessage(usage);
           }

@@ -94,7 +94,8 @@ public class ImageMap {
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
-  public ImageMap(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, ServerHomeDir shd, RunnableTaskUtil rt, Provider<SocketSwitch> sswProvider) {
+  public ImageMap(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, ServerHomeDir shd,
+      RunnableTaskUtil rt, Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -104,43 +105,43 @@ public class ImageMap {
     this.sswProvider = sswProvider;
   }
 
-  public void leadAction(Connection conn, Player player, RunnableTaskUtil.Key key, String[] usingArgs, Object[] qArgs) throws SQLException, ClassNotFoundException {
+  public void leadAction(Connection conn, Player player, RunnableTaskUtil.Key key, String[] usingArgs, Object[] qArgs)
+      throws SQLException, ClassNotFoundException {
     String playerName = player.getName();
     boolean fromQ = (qArgs != null);
     String url = usingArgs[0],
-    title = usingArgs[1],
-    comment = usingArgs[2];
+        title = usingArgs[1],
+        comment = usingArgs[2];
     // ラージか1✕1かをプレイヤーに問う
     Component message = Component.empty();
     if (fromQ) {
       message = message.append(
-        Component.text("操作が途中で中断された場合、メニュー->画像マップより再開できます。")
-          .appendNewline()
-          .color(NamedTextColor.GRAY)
-      );
+          Component.text("操作が途中で中断された場合、メニュー->画像マップより再開できます。")
+              .appendNewline()
+              .color(NamedTextColor.GRAY));
     }
 
     Component[] times = getPlayerTimesComponent(conn, playerName);
 
     TextComponent messages = Component.text()
-      .append(Component.text("1✕1の画像マップを作成する場合は、"))
-      .append(TCUtils.ZERO.get())
-      .append(Component.text("と入力してください。"))
-      .append(times[0])
-      .appendNewline()
-      .append(Component.text("1✕1のQRコードを作成する場合は、"))
-      .append(TCUtils.ONE.get())
-      .append(Component.text("と入力してください。"))
-      .append(times[0])
-      .appendNewline()
-      .append(Component.text("ラージマップを作成する場合は、"))
-      .append(TCUtils.TWO.get())
-      .append(Component.text("と入力してください。"))
-      .append(times[1])
-      .appendNewline()
-      .append(message)
-      .append(TCUtils.INPUT_MODE.get())
-      .build();
+        .append(Component.text("1✕1の画像マップを作成する場合は、"))
+        .append(TCUtils.ZERO.get())
+        .append(Component.text("と入力してください。"))
+        .append(times[0])
+        .appendNewline()
+        .append(Component.text("1✕1のQRコードを作成する場合は、"))
+        .append(TCUtils.ONE.get())
+        .append(Component.text("と入力してください。"))
+        .append(times[0])
+        .appendNewline()
+        .append(Component.text("ラージマップを作成する場合は、"))
+        .append(TCUtils.TWO.get())
+        .append(Component.text("と入力してください。"))
+        .append(times[1])
+        .appendNewline()
+        .append(message)
+        .append(TCUtils.INPUT_MODE.get())
+        .build();
 
     audiences.player(player).sendMessage(messages);
 
@@ -150,24 +151,24 @@ public class ImageMap {
       switch (input) {
         case "0" -> {
           rt.removeCancelTaskRunnable(player, key);
-          String[] imageArgs = new String[] {"im", "create", url, title, comment};
+          String[] imageArgs = new String[] { "im", "create", url, title, comment };
           executeImageMap(player, imageArgs, qArgs);
         }
         case "1" -> {
           rt.removeCancelTaskRunnable(player, key);
-          String[] imageArgs = new String[] {"im", "createqr", url, title, comment};
+          String[] imageArgs = new String[] { "im", "createqr", url, title, comment };
           executeImageMap(player, imageArgs, qArgs);
         }
         case "2" -> {
           rt.removeCancelTaskRunnable(player, key);
-          String[] imageArgs = new String[] {"im", "largecreate", url, title, comment};
+          String[] imageArgs = new String[] { "im", "largecreate", url, title, comment };
           executeLargeImageMap(player, imageArgs, qArgs, null, null, null);
         }
         default -> {
           Component errorMessage = Component.text("無効な入力です。")
-            .appendNewline()
-            .append(Component.text("0, 1, 2のいずれかを入力してください。"))
-            .color(NamedTextColor.RED);
+              .appendNewline()
+              .append(Component.text("0, 1, 2のいずれかを入力してください。"))
+              .color(NamedTextColor.RED);
           audiences.player(player).sendMessage(errorMessage);
           rt.extendTask(player, key);
         }
@@ -199,10 +200,11 @@ public class ImageMap {
         return;
       }
       String url = args[2],
-      title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
-      comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし";
+          title = (args.length > 3 && !args[3].isEmpty()) ? args[3] : "無名のタイトル",
+          comment = (args.length > 4 && !args[4].isEmpty()) ? args[4] : "コメントなし";
       try (Connection conn = db.getConnection()) {
-        leadAction(conn, player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_IMAGE_MAP_FROM_CMD, new String[] {url, title, comment}, null);
+        leadAction(conn, player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_IMAGE_MAP_FROM_CMD,
+            new String[] { url, title, comment }, null);
       } catch (SQLException | ClassNotFoundException e) {
         player.sendMessage("データベースとの通信に問題が発生しました。");
         logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
@@ -242,7 +244,8 @@ public class ImageMap {
     return imageInfo;
   }
 
-  public Map<Integer, Map<String, Object>> getThisServerImages(Connection conn) throws SQLException, ClassNotFoundException {
+  public Map<Integer, Map<String, Object>> getThisServerImages(Connection conn)
+      throws SQLException, ClassNotFoundException {
     Map<Integer, Map<String, Object>> serverImageInfo = new HashMap<>();
     String query = "SELECT * FROM images WHERE server=?;";
     PreparedStatement ps = conn.prepareStatement(query);
@@ -296,12 +299,12 @@ public class ImageMap {
           int id = (Integer) mapInfo.get("id");
           boolean isQr = (boolean) mapInfo.get("isqr");
           String authorName = (String) mapInfo.get("name"),
-            imageUUID = (String) mapInfo.get("imuuid"),
-            title = (String) mapInfo.get("title"),
-            comment = (String) mapInfo.get("comment"),
-            ext = (String) mapInfo.get("ext"),
-            date = ((Date) mapInfo.get("date")).toString();
-          Object[] mArgs = new Object[] {id, isQr, authorName, imageUUID, title, comment, ext, date, mapId};
+              imageUUID = (String) mapInfo.get("imuuid"),
+              title = (String) mapInfo.get("title"),
+              comment = (String) mapInfo.get("comment"),
+              ext = (String) mapInfo.get("ext"),
+              date = ((Date) mapInfo.get("date")).toString();
+          Object[] mArgs = new Object[] { id, isQr, authorName, imageUUID, title, comment, ext, date, mapId };
           executeImageMapFromGivingMap(player, mArgs);
         }
       } catch (SQLException | ClassNotFoundException e) {
@@ -314,8 +317,9 @@ public class ImageMap {
     }
   }
 
-  public void loadAndSetImageTile(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView) throws SQLException, ClassNotFoundException {
-    //logger.info("Replacing tile image to the map(No.{})...", mapId);
+  public void loadAndSetImageTile(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView)
+      throws SQLException, ClassNotFoundException {
+    // logger.info("Replacing tile image to the map(No.{})...", mapId);
     try {
       BufferedImage tileImage = loadTileImage(conn, mapId);
       if (tileImage != null) {
@@ -334,8 +338,9 @@ public class ImageMap {
     }
   }
 
-  public void loadAndSetImage(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView) throws SQLException, ClassNotFoundException {
-    //logger.info("Replacing image to the map(No.{})...", mapId);
+  public void loadAndSetImage(Connection conn, int mapId, ItemStack item, MapMeta mapMeta, MapView mapView)
+      throws SQLException, ClassNotFoundException {
+    // logger.info("Replacing image to the map(No.{})...", mapId);
     try {
       BufferedImage image = loadImage(conn, mapId);
       if (image != null) {
@@ -358,7 +363,8 @@ public class ImageMap {
 
   @Deprecated
   @SuppressWarnings("null")
-  private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs, Object[] inputs2, Object[] inputs3) {
+  private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs,
+      Object[] inputs2, Object[] inputs3) {
     if (!(sender instanceof Player)) {
       if (sender != null) {
         sender.sendMessage("このコマンドはプレイヤーのみが実行できます。");
@@ -369,7 +375,7 @@ public class ImageMap {
     Player player = (Player) sender;
     if (rt.checkIsOtherInputMode(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE)) {
       Component errorMessage = Component.text("他でインプットモード中です。")
-        .color(NamedTextColor.RED);
+          .color(NamedTextColor.RED);
       audiences.player(player).sendMessage(errorMessage);
       return;
     }
@@ -381,24 +387,24 @@ public class ImageMap {
 
     boolean fromDiscord = (dArgs != null);
     String playerName = player.getName(),
-      playerUUID = player.getUniqueId().toString(),
-      imageUUID = UUID.randomUUID().toString(),
-      url = args[2],
-      title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
-      comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
-      ext;
+        playerUUID = player.getUniqueId().toString(),
+        imageUUID = UUID.randomUUID().toString(),
+        url = args[2],
+        title = (args.length > 3 && !args[3].isEmpty()) ? args[3] : "無名のタイトル",
+        comment = (args.length > 4 && !args[4].isEmpty()) ? args[4] : "コメントなし",
+        ext;
     final int maxTiles = Settings.MAX_IMAGE_TILES.getIntValue();
 
     try (Connection conn = db.getConnection()) {
       // 一日のアップロード回数は制限する
       // ラージマップは要考
       int limitUploadTimes = Settings.LARGE_IMAGE_LIMIT_TIMES.getIntValue(),
-        playerUploadTimes = getPlayerTodayCreateLargeImageTimes(conn, playerName),
-        thisTimes = playerUploadTimes + 1;
+          playerUploadTimes = getPlayerTodayCreateLargeImageTimes(conn, playerName),
+          thisTimes = playerUploadTimes + 1;
 
       if (thisTimes > limitUploadTimes) {
-        Component errorMessage = Component.text("1日の登録回数は"+limitUploadTimes+"回までです。")
-          .color(NamedTextColor.RED);
+        Component errorMessage = Component.text("1日の登録回数は" + limitUploadTimes + "回までです。")
+            .color(NamedTextColor.RED);
         audiences.player(player).sendMessage(errorMessage);
         return;
       }
@@ -408,7 +414,7 @@ public class ImageMap {
       if (inputs == null) {
         if (rt.checkIsInputMode(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE)) {
           Component errorMessage = Component.text("インプットモード中に他のラージマップを作成することはできません。")
-            .color(NamedTextColor.RED);
+              .color(NamedTextColor.RED);
           audiences.player(player).sendMessage(errorMessage);
           return;
         }
@@ -423,19 +429,19 @@ public class ImageMap {
         ext = ExtUtil.getExtension(getUrl);
         if (ext == null) {
           Component errorMessage = Component.text("指定のURLは規定の拡張子を持ちません。")
-            .color(NamedTextColor.RED)
-            .decorate(TextDecoration.BOLD);
+              .color(NamedTextColor.RED)
+              .decorate(TextDecoration.BOLD);
           audiences.player(player).sendMessage(errorMessage);
           return;
         }
 
         LocalDate localDate = LocalDate.now();
         now = fromDiscord ? (String) dArgs[1] : localDate.toString();
-        image =  ImageIO.read(getUrl);
+        image = ImageIO.read(getUrl);
         if (image == null) {
           Component errorMessage = Component.text("URLより画像を取得できませんでした。")
-            .color(NamedTextColor.RED)
-            .decorate(TextDecoration.BOLD);
+              .color(NamedTextColor.RED)
+              .decorate(TextDecoration.BOLD);
 
           audiences.player(player).sendMessage(errorMessage);
           return;
@@ -458,29 +464,29 @@ public class ImageMap {
         int gcd = CalcUtil.gcd(x, y);
         x /= gcd;
         y /= gcd;
-        //int mapsX = (image.getWidth() + 127) / 128;
-        //int mapsY = (image.getHeight() + 127) / 128;
+        // int mapsX = (image.getWidth() + 127) / 128;
+        // int mapsY = (image.getHeight() + 127) / 128;
 
         Component ratio = Component.text(x + ":" + y)
-          .color(NamedTextColor.GOLD)
-          .decorate(
-            TextDecoration.BOLD,
-            TextDecoration.UNDERLINED);
+            .color(NamedTextColor.GOLD)
+            .decorate(
+                TextDecoration.BOLD,
+                TextDecoration.UNDERLINED);
 
         Component message = Component.text("現在、適切な縦横比は、")
-          .append(ratio)
-          .append(Component.text("です。"))
-          .appendNewline()
-          .append(Component.text("元の画像のアスペクト比を維持するため、縦か横のもう一方は自動的に決定されます。"))
-          .append(Component.text("縦か横のサイズを整数値で指定してください。"))
-          .appendNewline()
-          .append(Component.text("(例) x=5 or y=4"))
-          .appendNewline()
-          .append(TCUtils.INPUT_MODE.get());
+            .append(ratio)
+            .append(Component.text("です。"))
+            .appendNewline()
+            .append(Component.text("元の画像のアスペクト比を維持するため、縦か横のもう一方は自動的に決定されます。"))
+            .append(Component.text("縦か横のサイズを整数値で指定してください。"))
+            .appendNewline()
+            .append(Component.text("(例) x=5 or y=4"))
+            .appendNewline()
+            .append(TCUtils.INPUT_MODE.get());
 
         audiences.player(player).sendMessage(message);
 
-        final Object[] inputs_1 = new Object[] {now, ext, image};
+        final Object[] inputs_1 = new Object[] { now, ext, image };
         Map<RunnableTaskUtil.Key, MessageRunnable> playerActions = new HashMap<>();
         playerActions.put(RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE, (input) -> {
           // x=? or y=?
@@ -491,9 +497,9 @@ public class ImageMap {
             xy[1] = xy[1].trim();
             if (!xy[0].equals("x") && !xy[0].equals("y")) {
               Component errorMessage = Component.text("無効な入力です。")
-                .appendNewline()
-                .append(Component.text("(例) x=5 or y=4のように入力してください。"))
-                .color(NamedTextColor.RED);
+                  .appendNewline()
+                  .append(Component.text("(例) x=5 or y=4のように入力してください。"))
+                  .color(NamedTextColor.RED);
               audiences.player(player).sendMessage(errorMessage);
               return;
             }
@@ -502,37 +508,37 @@ public class ImageMap {
               int xOry = Integer.parseInt(xy[1].trim());
               if (xOry == 1) {
                 Component errorMessage = Component.text("ラージマップでないため、x=1, y=1を選択することはできません。")
-                  .appendNewline()
-                  .append(Component.text("(例) x=5 or y=4のように入力してください。"))
-                  .color(NamedTextColor.RED);
+                    .appendNewline()
+                    .append(Component.text("(例) x=5 or y=4のように入力してください。"))
+                    .color(NamedTextColor.RED);
                 audiences.player(player).sendMessage(errorMessage);
                 rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                 return;
               } else if (xOry < 1) {
                 Component errorMessage = Component.text("無効な入力です。")
-                  .appendNewline()
-                  .append(Component.text("(例) x=5 or y=4のように入力してください。"))
-                  .color(NamedTextColor.RED);
+                    .appendNewline()
+                    .append(Component.text("(例) x=5 or y=4のように入力してください。"))
+                    .color(NamedTextColor.RED);
                 audiences.player(player).sendMessage(errorMessage);
                 rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                 return;
               }
               audiences.player(player).sendMessage(TCUtils2.getResponseComponent(input));
-              Object[] inputs_2 = new Object[] {xy[0], xOry};
+              Object[] inputs_2 = new Object[] { xy[0], xOry };
               executeLargeImageMap(sender, args, dArgs, inputs_1, inputs_2, null);
             } catch (NumberFormatException e) {
               Component errorMessage = Component.text("無効な入力です。")
-                .appendNewline()
-                .append(Component.text("(例) x=5 or y=4のように入力してください。"))
-                .color(NamedTextColor.RED);
+                  .appendNewline()
+                  .append(Component.text("(例) x=5 or y=4のように入力してください。"))
+                  .color(NamedTextColor.RED);
               audiences.player(player).sendMessage(errorMessage);
               rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
             }
           } else {
             Component errorMessage = Component.text("無効な入力です。")
-              .appendNewline()
-              .append(Component.text("(例) x=5 or y=4のように入力してください。"))
-              .color(NamedTextColor.RED);
+                .appendNewline()
+                .append(Component.text("(例) x=5 or y=4のように入力してください。"))
+                .color(NamedTextColor.RED);
             audiences.player(player).sendMessage(errorMessage);
             rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
           }
@@ -540,7 +546,7 @@ public class ImageMap {
         rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
       } else {
         if (inputs3 == null) {
-          //saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
+          // saveImageToFileSystem(image, imageUUID, ext); // リサイズ前の画像を保存
           // x=? or y=?
           String xOry = (String) inputs2[0];
           int xOryValue = (Integer) inputs2[1];
@@ -555,32 +561,32 @@ public class ImageMap {
 
           // 総タイル数がmaxTilesを超過しているかを確認する
           if (x * y > maxTiles) {
-            Component errorMessage = Component.text("総タイル数("+maxTiles+")を超過しています。")
-              .appendNewline()
-              .append(Component.text("もう一度、入力してください。"))
-              .color(NamedTextColor.RED);
+            Component errorMessage = Component.text("総タイル数(" + maxTiles + ")を超過しています。")
+                .appendNewline()
+                .append(Component.text("もう一度、入力してください。"))
+                .color(NamedTextColor.RED);
             audiences.player(player).sendMessage(errorMessage);
             rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
             return;
           }
 
           rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
-          Object[] inputs_3 = new Object[] {x, y, null};
+          Object[] inputs_3 = new Object[] { x, y, null };
           // ここでプレイヤーに色を決めさせる
           player.sendMessage("次に、背景色を選択します。");
           Component note = Component.text("jpegかjpgの画像の場合、背景色に透明を選ぶことはできません。")
-            .appendNewline()
-            .color(NamedTextColor.GRAY)
-            .decorate(
-              TextDecoration.UNDERLINED,
-              TextDecoration.ITALIC);
+              .appendNewline()
+              .color(NamedTextColor.GRAY)
+              .decorate(
+                  TextDecoration.UNDERLINED,
+                  TextDecoration.ITALIC);
 
           audiences.player(player).sendMessage(note.append(TCUtils.INPUT_MODE.get()));
 
           Map<Integer, MenuEventRunnable> playerMenuActions = new HashMap<>();
           Inventory inv = Bukkit.createInventory(null, 27, Type.CHOOSE_COLOR.get());
           Map<ItemStack, java.awt.Color> colorItems = ColorItems.getColorItems();
-          //logger.info("colorItems: {}", colorItems);
+          // logger.info("colorItems: {}", colorItems);
 
           int index = 0;
           for (Map.Entry<ItemStack, java.awt.Color> entry : colorItems.entrySet()) {
@@ -606,51 +612,51 @@ public class ImageMap {
             player.closeInventory();
 
             Component link1 = Component.text("ココ")
-              .color(NamedTextColor.GOLD)
-              .decorate(
-                TextDecoration.BOLD,
-                TextDecoration.UNDERLINED)
-              .clickEvent(ClickEvent.openUrl("https://note.cman.jp/color/base_color.cgi"));
+                .color(NamedTextColor.GOLD)
+                .decorate(
+                    TextDecoration.BOLD,
+                    TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.openUrl("https://note.cman.jp/color/base_color.cgi"));
 
             Component link2 = Component.text("ココ")
-              .color(NamedTextColor.GOLD)
-              .decorate(
-                TextDecoration.BOLD,
-                TextDecoration.UNDERLINED)
-              .clickEvent(ClickEvent.openUrl("https://www.cc.kyoto-su.ac.jp/~shimizu/MAKE_HTML/rgb2.html"));
+                .color(NamedTextColor.GOLD)
+                .decorate(
+                    TextDecoration.BOLD,
+                    TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.openUrl("https://www.cc.kyoto-su.ac.jp/~shimizu/MAKE_HTML/rgb2.html"));
 
             TextComponent messages = Component.text()
-              .append(Component.text("カスタム色を選択してください。"))
-              .appendNewline()
-              .append(Component.text("色のRGB値を入力してください。"))
-              .appendNewline()
-              .append(Component.text("(例) 255, 255, 255"))
-              .appendNewline()
-              .append(Component.text("それぞれ、0~255の範囲で入力してください。"))
-              .appendNewline()
-              .append(Component.text("外部サイトのRGBカラーリストを見るには、"))
-              .append(link1)
-              .append(Component.text("をクリックしてください。"))
-              .appendNewline()
-              .append(Component.text("外部サイトのRGBカラーシミュレーターツールを使うには、"))
-              .append(link2)
-              .append(Component.text("をクリックしてください。"))
-              .appendNewline()
-              .append(Component.text("色選択メニューに戻る場合は、0と入力してください。"))
-              .appendNewline()
-              .append(TCUtils.INPUT_MODE.get())
-              .build();
+                .append(Component.text("カスタム色を選択してください。"))
+                .appendNewline()
+                .append(Component.text("色のRGB値を入力してください。"))
+                .appendNewline()
+                .append(Component.text("(例) 255, 255, 255"))
+                .appendNewline()
+                .append(Component.text("それぞれ、0~255の範囲で入力してください。"))
+                .appendNewline()
+                .append(Component.text("外部サイトのRGBカラーリストを見るには、"))
+                .append(link1)
+                .append(Component.text("をクリックしてください。"))
+                .appendNewline()
+                .append(Component.text("外部サイトのRGBカラーシミュレーターツールを使うには、"))
+                .append(link2)
+                .append(Component.text("をクリックしてください。"))
+                .appendNewline()
+                .append(Component.text("色選択メニューに戻る場合は、0と入力してください。"))
+                .appendNewline()
+                .append(TCUtils.INPUT_MODE.get())
+                .build();
             audiences.player(player).sendMessage(messages);
 
             Map<RunnableTaskUtil.Key, MessageRunnable> playerActions = new HashMap<>();
             playerActions.put(RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE, (input) -> {
               if (input.equals("0")) {
                 TextComponent message = Component.text()
-                  .append(TCUtils2.getResponseComponent(input))
-                  .appendNewline()
-                  .append(Component.text("色選択メニューに戻ります。"))
-                  .append(TCUtils.LATER_OPEN_INV_5.get())
-                  .build();
+                    .append(TCUtils2.getResponseComponent(input))
+                    .appendNewline()
+                    .append(Component.text("色選択メニューに戻ります。"))
+                    .append(TCUtils.LATER_OPEN_INV_5.get())
+                    .build();
                 audiences.player(player).sendMessage(message);
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                   player.openInventory(inv);
@@ -661,9 +667,9 @@ public class ImageMap {
               String[] rgb = input.split(",");
               if (rgb.length != 3) {
                 Component errorMessage = Component.text("無効な入力です。")
-                  .appendNewline()
-                  .append(Component.text("(例) 255, 255, 255のように入力してください。"))
-                  .color(NamedTextColor.RED);
+                    .appendNewline()
+                    .append(Component.text("(例) 255, 255, 255のように入力してください。"))
+                    .color(NamedTextColor.RED);
                 audiences.player(player).sendMessage(errorMessage);
                 rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                 return;
@@ -674,22 +680,23 @@ public class ImageMap {
                 int b = Integer.parseInt(rgb[2].trim());
                 if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
                   Component errorMessage = Component.text("無効な入力です。")
-                    .appendNewline()
-                    .append(Component.text("(例) 255, 255, 255のように入力してください。"))
-                    .color(NamedTextColor.RED);
+                      .appendNewline()
+                      .append(Component.text("(例) 255, 255, 255のように入力してください。"))
+                      .color(NamedTextColor.RED);
                   audiences.player(player).sendMessage(errorMessage);
                   rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                   return;
                 }
                 java.awt.Color customColor = new java.awt.Color(r, g, b);
                 inputs_3[2] = customColor;
-                audiences.player(player).sendMessage(TCUtils2.getResponseComponent("(R, G, B) = (" + r + ", " + g + ", " + b + ")"));
+                audiences.player(player)
+                    .sendMessage(TCUtils2.getResponseComponent("(R, G, B) = (" + r + ", " + g + ", " + b + ")"));
                 executeLargeImageMap(sender, args, dArgs, inputs, inputs2, inputs_3);
               } catch (NumberFormatException e) {
                 Component errorMessage = Component.text("無効な入力です。")
-                  .appendNewline()
-                  .append(Component.text("(例) 255, 255, 255のように入力してください。"))
-                  .color(NamedTextColor.RED);
+                    .appendNewline()
+                    .append(Component.text("(例) 255, 255, 255のように入力してください。"))
+                    .color(NamedTextColor.RED);
                 audiences.player(player).sendMessage(errorMessage);
                 rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
               }
@@ -697,23 +704,24 @@ public class ImageMap {
             rt.addTaskRunnable(player, playerActions, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
           });
 
-          Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.CHOOSE_COLOR, playerMenuActions);
+          Menu.menuEventActions.computeIfAbsent(player, _p -> new HashMap<>()).put(Type.CHOOSE_COLOR,
+              playerMenuActions);
           audiences.player(player).sendMessage(TCUtils.LATER_OPEN_INV_5.get());
 
           plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             player.openInventory(inv);
 
             TextComponent messages = Component.text()
-              .append(Component.text("手動で背景色選択メニューを開くには、"))
-              .append(TCUtils.ONE.get())
-              .append(Component.text("と入力してください。"))
-              .appendNewline()
-              .append(Component.text("生成を中止する場合は、"))
-              .append(TCUtils.TWO.get())
-              .append(Component.text("と入力してください。"))
-              .appendNewline()
-              .append(TCUtils.INPUT_MODE.get())
-              .build();
+                .append(Component.text("手動で背景色選択メニューを開くには、"))
+                .append(TCUtils.ONE.get())
+                .append(Component.text("と入力してください。"))
+                .appendNewline()
+                .append(Component.text("生成を中止する場合は、"))
+                .append(TCUtils.TWO.get())
+                .append(Component.text("と入力してください。"))
+                .appendNewline()
+                .append(TCUtils.INPUT_MODE.get())
+                .build();
 
             audiences.player(player).sendMessage(messages);
 
@@ -723,9 +731,9 @@ public class ImageMap {
               switch (input) {
                 case "1" -> {
                   TextComponent messages2 = Component.text()
-                    .appendNewline()
-                    .append(TCUtils.LATER_OPEN_INV_3.get())
-                    .build();
+                      .appendNewline()
+                      .append(TCUtils.LATER_OPEN_INV_3.get())
+                      .build();
                   audiences.player(player).sendMessage(messages2);
 
                   plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -734,27 +742,27 @@ public class ImageMap {
                 }
                 case "2" -> {
                   Component cancelMessage = Component.text("生成を中止しました。")
-                    .color(NamedTextColor.RED);
+                      .color(NamedTextColor.RED);
                   audiences.player(player).sendMessage(cancelMessage);
                   rt.removeCancelTaskRunnable(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
                 }
                 default -> {
                   Component alertMessage = Component.text("無効な入力です。")
-                    .appendNewline()
-                    .color(NamedTextColor.RED);
+                      .appendNewline()
+                      .color(NamedTextColor.RED);
 
                   TextComponent errorMessages = Component.text()
-                    .append(alertMessage)
-                    .append(Component.text("手動で背景色選択メニューを開くには、"))
-                    .append(TCUtils.ONE.get())
-                    .append(Component.text("と入力してください。"))
-                    .appendNewline()
-                    .append(Component.text("生成を中止する場合は、"))
-                    .append(TCUtils.TWO.get())
-                    .append(Component.text("と入力してください。"))
-                    .appendNewline()
-                    .append(TCUtils.INPUT_MODE.get())
-                    .build();
+                      .append(alertMessage)
+                      .append(Component.text("手動で背景色選択メニューを開くには、"))
+                      .append(TCUtils.ONE.get())
+                      .append(Component.text("と入力してください。"))
+                      .appendNewline()
+                      .append(Component.text("生成を中止する場合は、"))
+                      .append(TCUtils.TWO.get())
+                      .append(Component.text("と入力してください。"))
+                      .appendNewline()
+                      .append(TCUtils.INPUT_MODE.get())
+                      .build();
                   audiences.player(player).sendMessage(errorMessages);
 
                   rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
@@ -769,23 +777,23 @@ public class ImageMap {
           if (ext.equals("jpg") || ext.equals("jpeg")) {
             if (ColorItems.isTransparent(color)) {
               Component alertMessage = Component.text("jpg, jpeg形式の画像は透明度を持たないため、透明色を選択することはできません。")
-                .appendNewline()
-                .append(Component.text("背景色を選択し直してください。"))
-                .appendNewline()
-                .color(NamedTextColor.RED);
+                  .appendNewline()
+                  .append(Component.text("背景色を選択し直してください。"))
+                  .appendNewline()
+                  .color(NamedTextColor.RED);
 
               TextComponent errorMessages = Component.text()
-                .append(alertMessage)
-                .append(Component.text("手動で背景色選択メニューを開くには、"))
-                .append(TCUtils.ONE.get())
-                .append(Component.text("と入力してください。"))
-                .appendNewline()
-                .append(Component.text("生成を中止する場合は、"))
-                .append(TCUtils.TWO.get())
-                .append(Component.text("と入力してください。"))
-                .appendNewline()
-                .append(TCUtils.INPUT_MODE.get())
-                .build();
+                  .append(alertMessage)
+                  .append(Component.text("手動で背景色選択メニューを開くには、"))
+                  .append(TCUtils.ONE.get())
+                  .append(Component.text("と入力してください。"))
+                  .appendNewline()
+                  .append(Component.text("生成を中止する場合は、"))
+                  .append(TCUtils.TWO.get())
+                  .append(Component.text("と入力してください。"))
+                  .appendNewline()
+                  .append(TCUtils.INPUT_MODE.get())
+                  .build();
               audiences.player(player).sendMessage(errorMessages);
 
               rt.extendTask(player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_LARGE_IMAGE);
@@ -799,26 +807,26 @@ public class ImageMap {
           int y = (int) inputs3[1];
 
           TextComponent messages = Component.text()
-            .append(Component.text("以下の内容で画像マップを生成します。"))
-            .appendNewline()
-            .append(Component.text("タイトル: " + title))
-            .appendNewline()
-            .append(Component.text("コメント: " + comment))
-            .appendNewline()
-            .append(Component.text("サイズ: " + x + "x" + y + "(" + x * y + ")"))
-            .appendNewline()
-            .append(Component.text("背景色: " + colorName))
-            .appendNewline()
-            .append(Component.text("生成する場合は、"))
-            .append(TCUtils.ONE.get())
-            .append(Component.text("と入力してください。"))
-            .appendNewline()
-            .append(Component.text("生成を中止する場合は、"))
-            .append(TCUtils.TWO.get())
-            .append(Component.text("と入力してください。"))
-            .appendNewline()
-            .append(TCUtils.INPUT_MODE.get())
-            .build();
+              .append(Component.text("以下の内容で画像マップを生成します。"))
+              .appendNewline()
+              .append(Component.text("タイトル: " + title))
+              .appendNewline()
+              .append(Component.text("コメント: " + comment))
+              .appendNewline()
+              .append(Component.text("サイズ: " + x + "x" + y + "(" + x * y + ")"))
+              .appendNewline()
+              .append(Component.text("背景色: " + colorName))
+              .appendNewline()
+              .append(Component.text("生成する場合は、"))
+              .append(TCUtils.ONE.get())
+              .append(Component.text("と入力してください。"))
+              .appendNewline()
+              .append(Component.text("生成を中止する場合は、"))
+              .append(TCUtils.TWO.get())
+              .append(Component.text("と入力してください。"))
+              .appendNewline()
+              .append(TCUtils.INPUT_MODE.get())
+              .build();
 
           audiences.player(player).sendMessage(messages);
 
@@ -856,8 +864,8 @@ public class ImageMap {
                       List<String> lores = new ArrayList<>();
                       lores.add("<ラージイメージマップ>");
                       List<String> commentLines = Arrays.stream(comment.split("\n"))
-                        .map(String::trim)
-                        .collect(Collectors.toList());
+                          .map(String::trim)
+                          .collect(Collectors.toList());
                       lores.addAll(commentLines);
                       lores.add("created by " + playerName);
                       lores.add("created at " + now.replace("-", "/"));
@@ -868,7 +876,9 @@ public class ImageMap {
                         mapMeta.setDisplayName(title + " " + in);
                         mapMeta.setLore(lores);
                         mapMeta.setMapView(mapView);
-                        mapMeta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING, "true");
+                        mapMeta.getPersistentDataContainer().set(
+                            new NamespacedKey(plugin, ImageMap.LARGE_PERSISTANT_KEY), PersistentDataType.STRING,
+                            "true");
                         mapItem.setItemMeta(mapMeta);
                       }
                       mapItems.add(mapItem);
@@ -876,9 +886,15 @@ public class ImageMap {
                     }
                   }
                   if (fromDiscord) {
-                    db.updateLog(conn2, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, date=?, large=?, locked_action=?  WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, null, now, true, true, (String) dArgs[0]});
+                    db.updateLog(conn2,
+                        "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, date=?, large=?, locked_action=?  WHERE otp=?;",
+                        new Object[] { playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment,
+                            false, null, now, true, true, (String) dArgs[0] });
                   } else {
-                    db.insertLog(conn2, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date, large) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment, false, false, Date.valueOf(LocalDate.now()), true});
+                    db.insertLog(conn2,
+                        "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date, large) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                        new Object[] { playerName, playerUUID, serverName, -1, title, imageUUID, ext, url, comment,
+                            false, false, Date.valueOf(LocalDate.now()), true });
                   }
                   Location playerLocation = player.getLocation();
                   World world = player.getWorld();
@@ -891,9 +907,9 @@ public class ImageMap {
                   if (remainingItems.isEmpty()) {
                     try (Connection conn3 = db.getConnection()) {
                       TextComponent messages2 = Component.text()
-                        .append(Component.text("すべての画像マップを渡しました。"))
-                        .append(getPlayerTimesComponent(conn3, playerName)[1])
-                        .build();
+                          .append(Component.text("すべての画像マップを渡しました。"))
+                          .append(getPlayerTimesComponent(conn3, playerName)[1])
+                          .build();
 
                       audiences.player(player).sendMessage(messages2);
                     } catch (SQLException | ClassNotFoundException e) {
@@ -910,8 +926,8 @@ public class ImageMap {
                     if (block.getType() != Material.AIR) {
                       Bukkit.getScheduler().runTask(plugin, () -> {
                         Component message = Component.text("インベントリに入り切らないマップは、ドロップしました。")
-                          .color(NamedTextColor.GREEN)
-                          .decorate(TextDecoration.BOLD);
+                            .color(NamedTextColor.GREEN)
+                            .decorate(TextDecoration.BOLD);
 
                         audiences.player(player).sendMessage(message);
 
@@ -920,7 +936,7 @@ public class ImageMap {
                         }
                         try (Connection conn3 = db.getConnection()) {
                           TextComponent messages2 = Component.text("すべての画像マップを渡しました。")
-                            .append(getPlayerTimesComponent(conn3, playerName)[1]);
+                              .append(getPlayerTimesComponent(conn3, playerName)[1]);
                           audiences.player(player).sendMessage(messages2);
                         } catch (SQLException | ClassNotFoundException e) {
                           player.sendMessage("すべての画像マップを渡しました。(" + thisTimes + "/" + limitUploadTimes + ")");
@@ -933,12 +949,12 @@ public class ImageMap {
                       });
                     } else {
                       TextComponent messages2 = Component.text()
-                        .append(Component.text("インベントリに入り切らないマップをドロップするために、ブロックの上に移動し、"))
-                        .append(TCUtils.ONE.get())
-                        .append(Component.text("と入力してください。"))
-                        .appendNewline()
-                        .append(TCUtils.INPUT_MODE.get())
-                        .build();
+                          .append(Component.text("インベントリに入り切らないマップをドロップするために、ブロックの上に移動し、"))
+                          .append(TCUtils.ONE.get())
+                          .append(Component.text("と入力してください。"))
+                          .appendNewline()
+                          .append(TCUtils.INPUT_MODE.get())
+                          .build();
 
                       audiences.player(player).sendMessage(messages2);
 
@@ -949,18 +965,18 @@ public class ImageMap {
                           Block block_ = playerLocation_.getBlock();
                           if (block_.getType() != Material.AIR) {
                             Component alert = Component.text("ブロックの上に移動してください。")
-                              .color(NamedTextColor.RED);
+                                .color(NamedTextColor.RED);
 
                             Component alert2 = Component.text("と入力してください。")
-                              .appendNewline()
-                              .color(NamedTextColor.RED);
+                                .appendNewline()
+                                .color(NamedTextColor.RED);
 
                             TextComponent alertMessage = Component.text()
-                              .append(alert)
-                              .append(TCUtils.ONE.get())
-                              .append(alert2)
-                              .append(TCUtils.INPUT_MODE.get())
-                              .build();
+                                .append(alert)
+                                .append(TCUtils.ONE.get())
+                                .append(alert2)
+                                .append(TCUtils.INPUT_MODE.get())
+                                .build();
 
                             audiences.player(player).sendMessage(alertMessage);
 
@@ -974,19 +990,20 @@ public class ImageMap {
                             try (Connection conn3 = db.getConnection()) {
                               StringBuilder messageBuilder3 = new StringBuilder();
                               messageBuilder3.append("インベントリに入り切らないマップをドロップしました。")
-                                .append("すべての画像マップを渡しました。");
+                                  .append("すべての画像マップを渡しました。");
 
                               TextComponent messages3 = Component.text()
-                                .append(Component.text(messageBuilder3.toString()))
-                                .append(getPlayerTimesComponent(conn3, playerName)[1])
-                                .build();
+                                  .append(Component.text(messageBuilder3.toString()))
+                                  .append(getPlayerTimesComponent(conn3, playerName)[1])
+                                  .build();
 
                               audiences.player(player).sendMessage(messages3);
                             } catch (SQLException | ClassNotFoundException e) {
                               Component errorMessage = Component.text("データベースエラーが発生しました。")
-                                .color(NamedTextColor.RED);
+                                  .color(NamedTextColor.RED);
                               audiences.player(player).sendMessage(errorMessage);
-                              logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
+                              logger.error("An SQLException | ClassNotFoundException error occurred: {}",
+                                  e.getMessage());
                               for (StackTraceElement element : e.getStackTrace()) {
                                 logger.error(element.toString());
                               }
@@ -995,9 +1012,9 @@ public class ImageMap {
                           });
                         } else {
                           Component errorMessage = Component.text("無効な入力です。")
-                            .appendNewline()
-                            .append(Component.text("もう一度入力し直してください。")) 
-                            .color(NamedTextColor.RED);
+                              .appendNewline()
+                              .append(Component.text("もう一度入力し直してください。"))
+                              .color(NamedTextColor.RED);
                           audiences.player(player).sendMessage(errorMessage);
                         }
                       });
@@ -1021,7 +1038,9 @@ public class ImageMap {
                   }
                 } catch (IOException | SQLException | ClassNotFoundException e) {
                   player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
-                  logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
+                  logger.error(
+                      "An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}",
+                      e.getMessage());
                   for (StackTraceElement element : e.getStackTrace()) {
                     logger.error(element.toString());
                   }
@@ -1029,10 +1048,10 @@ public class ImageMap {
               }
               case "2" -> {
                 TextComponent message = Component.text()
-                  .append(TCUtils2.getResponseComponent(input))
-                  .appendNewline()
-                  .append(Component.text("生成を中止しました。"))
-                  .build();
+                    .append(TCUtils2.getResponseComponent(input))
+                    .appendNewline()
+                    .append(Component.text("生成を中止しました。"))
+                    .build();
 
                 audiences.player(player).sendMessage(message);
 
@@ -1040,9 +1059,9 @@ public class ImageMap {
               }
               default -> {
                 Component errorMessage = Component.text("無効な入力です。")
-                  .appendNewline()
-                  .append(Component.text("もう一度入力し直してください。"))
-                  .color(NamedTextColor.RED);
+                    .appendNewline()
+                    .append(Component.text("もう一度入力し直してください。"))
+                    .color(NamedTextColor.RED);
 
                 audiences.player(player).sendMessage(errorMessage);
 
@@ -1055,7 +1074,8 @@ public class ImageMap {
       }
     } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException e) {
       player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
-      logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
+      logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}",
+          e.getMessage());
       for (StackTraceElement element : e.getStackTrace()) {
         logger.error(element.toString());
       }
@@ -1075,26 +1095,26 @@ public class ImageMap {
         return;
       }
       boolean isQr = args[1].equalsIgnoreCase("createqr"),
-        fromDiscord = (dArgs != null);
+          fromDiscord = (dArgs != null);
       String playerName = player.getName(),
-        playerUUID = player.getUniqueId().toString(),
-        imageUUID = UUID.randomUUID().toString(),
-        url = args[2],
-        title = (args.length > 3 && !args[3].isEmpty()) ? args[3]: "無名のタイトル",
-        comment = (args.length > 4 && !args[4].isEmpty()) ? args[4]: "コメントなし",
-        ext;
+          playerUUID = player.getUniqueId().toString(),
+          imageUUID = UUID.randomUUID().toString(),
+          url = args[2],
+          title = (args.length > 3 && !args[3].isEmpty()) ? args[3] : "無名のタイトル",
+          comment = (args.length > 4 && !args[4].isEmpty()) ? args[4] : "コメントなし",
+          ext;
       try (Connection conn = db.getConnection()) {
         int limitUploadTimes = Settings.IMAGE_LIMIT_TIMES.getIntValue(),
-        playerUploadTimes = getPlayerTodayCreateImageTimes(conn, playerName),
-        thisTimes = playerUploadTimes + 1;
+            playerUploadTimes = getPlayerTodayCreateImageTimes(conn, playerName),
+            thisTimes = playerUploadTimes + 1;
         if (thisTimes > limitUploadTimes) {
           StringBuilder messageBuilder = new StringBuilder();
           messageBuilder.append("1日の登録回数は")
-            .append(limitUploadTimes)
-            .append("回までです。");
+              .append(limitUploadTimes)
+              .append("回までです。");
 
           Component errorMessage = Component.text(messageBuilder.toString())
-            .color(NamedTextColor.RED);
+              .color(NamedTextColor.RED);
 
           audiences.player(player).sendMessage(errorMessage);
           return;
@@ -1116,16 +1136,16 @@ public class ImageMap {
           ext = ExtUtil.getExtension(getUrl);
           if (ext == null) {
             Component errorMessage = Component.text("指定のURLは規定の拡張子を持ちません。")
-              .color(NamedTextColor.RED)
-              .decorate(TextDecoration.BOLD);
+                .color(NamedTextColor.RED)
+                .decorate(TextDecoration.BOLD);
             audiences.player(player).sendMessage(errorMessage);
             return;
           }
 
-          BufferedImage imageDefault =  ImageIO.read(getUrl);
+          BufferedImage imageDefault = ImageIO.read(getUrl);
           if (imageDefault == null) {
             Component errorMessage = Component.text("URLより画像を取得できませんでした。")
-            .color(NamedTextColor.RED);
+                .color(NamedTextColor.RED);
 
             audiences.player(player).sendMessage(errorMessage);
             return;
@@ -1137,8 +1157,8 @@ public class ImageMap {
         List<String> lores = new ArrayList<>();
         lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
         List<String> commentLines = Arrays.stream(comment.split("\n"))
-        .map(String::trim)
-        .collect(Collectors.toList());
+            .map(String::trim)
+            .collect(Collectors.toList());
         lores.addAll(commentLines);
         lores.add("created by " + playerName);
         lores.add("created at " + now.replace("-", "/"));
@@ -1153,14 +1173,21 @@ public class ImageMap {
           meta.setDisplayName(title);
           meta.setLore(lores);
           meta.setMapView(mapView);
-          meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
+          meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY),
+              PersistentDataType.STRING, "true");
           mapItem.setItemMeta(meta);
         }
 
         if (fromDiscord) {
-          db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, date=?, locked_action=? WHERE otp=?;", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null, now, true, (String) dArgs[0]});
-          } else {
-          db.insertLog(conn, "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", new Object[] {playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, confirm, Date.valueOf(LocalDate.now())});
+          db.updateLog(conn,
+              "UPDATE images SET name=?, uuid=?, server=?, mapid=?, title=?, imuuid=?, ext=?, url=?, comment=?, isqr=?, otp=?, date=?, locked_action=? WHERE otp=?;",
+              new Object[] { playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr, null,
+                  now, true, (String) dArgs[0] });
+        } else {
+          db.insertLog(conn,
+              "INSERT INTO images (name, uuid, server, mapid, title, imuuid, ext, url, comment, isqr, confirm, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+              new Object[] { playerName, playerUUID, serverName, mapId, title, imageUUID, ext, url, comment, isQr,
+                  confirm, Date.valueOf(LocalDate.now()) });
         }
 
         HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(mapItem);
@@ -1173,9 +1200,9 @@ public class ImageMap {
           if (!confirm) {
             try (Connection conn3 = db.getConnection()) {
               TextComponent messages = Component.text()
-                .append(Component.text("画像マップを渡しました。"))
-                .append(getPlayerTimesComponent(conn3, playerName)[0])
-                .build();
+                  .append(Component.text("画像マップを渡しました。"))
+                  .append(getPlayerTimesComponent(conn3, playerName)[0])
+                  .build();
 
               audiences.player(player).sendMessage(messages);
             } catch (SQLException | ClassNotFoundException e) {
@@ -1198,8 +1225,8 @@ public class ImageMap {
             });
           } else {
             Component message = Component.text("空中で実行しないでください！")
-              .color(NamedTextColor.RED)
-              .decorate(TextDecoration.BOLD);
+                .color(NamedTextColor.RED)
+                .decorate(TextDecoration.BOLD);
 
             audiences.player(player).sendMessage(message);
           }
@@ -1221,7 +1248,8 @@ public class ImageMap {
         }
       } catch (IOException | SQLException | URISyntaxException | ClassNotFoundException | WriterException e) {
         player.sendMessage("画像のダウンロードまたは保存に失敗しました: " + url);
-        logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
+        logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}",
+            e.getMessage());
         for (StackTraceElement element : e.getStackTrace()) {
           logger.error(element.toString());
         }
@@ -1255,8 +1283,8 @@ public class ImageMap {
           }
           if (checkOTPIsCorrect(conn, otp)) {
             Component message = Component.text("認証に成功しました。")
-              .color(NamedTextColor.GREEN)
-              .decorate(TextDecoration.BOLD);
+                .color(NamedTextColor.GREEN)
+                .decorate(TextDecoration.BOLD);
 
             audiences.player(player).sendMessage(message);
 
@@ -1266,10 +1294,11 @@ public class ImageMap {
             url = (String) imageInfo.get("url");
             date = Date.valueOf(((Date) imageInfo.get("date")).toLocalDate()).toString();
             // locked->false, nameをプレイヤーネームに更新する
-            db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, locked=? WHERE otp=?;", new Object[] {player.getName(), player.getUniqueId().toString(), serverName, false, otp});
+            db.updateLog(conn, "UPDATE images SET name=?, uuid=?, server=?, locked=? WHERE otp=?;",
+                new Object[] { player.getName(), player.getUniqueId().toString(), serverName, false, otp });
           } else {
             Component errorMessage = Component.text("ワンタイムパスワードが間違っています。")
-              .color(NamedTextColor.RED);
+                .color(NamedTextColor.RED);
 
             audiences.player(player).sendMessage(errorMessage);
             return;
@@ -1281,7 +1310,8 @@ public class ImageMap {
           url = (String) Args[3];
           date = (String) Args[4];
         }
-        leadAction(conn, player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_IMAGE_MAP_FROM_Q, new String[] {url, title, comment}, new Object[] {otp, date});
+        leadAction(conn, player, RunnableTaskUtil.Key.IMAGEMAP_CREATE_IMAGE_MAP_FROM_Q,
+            new String[] { url, title, comment }, new Object[] { otp, date });
       } catch (SQLException | ClassNotFoundException e) {
         player.sendMessage("データベースとの通信に問題が発生しました。");
         logger.error("An SQLException | ClassNotFoundException error occurred: {}", e.getMessage());
@@ -1296,7 +1326,8 @@ public class ImageMap {
     }
   }
 
-  private Component[] getPlayerTimesComponent(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
+  private Component[] getPlayerTimesComponent(Connection conn, String playerName)
+      throws SQLException, ClassNotFoundException {
     int limitUploadSmallTimes = Settings.IMAGE_LIMIT_TIMES.getIntValue(),
         limitUploadLargeTimes = Settings.LARGE_IMAGE_LIMIT_TIMES.getIntValue(),
         playerUploadSmallTimes = getPlayerTodayCreateImageTimes(conn, playerName),
@@ -1305,14 +1336,14 @@ public class ImageMap {
         thisLargeTimes = playerUploadLargeTimes + 1;
 
     Component smallTimes = Component.text(playerUploadSmallTimes + "/" + limitUploadSmallTimes)
-      .decorate(
-          TextDecoration.BOLD,
-          TextDecoration.UNDERLINED);
+        .decorate(
+            TextDecoration.BOLD,
+            TextDecoration.UNDERLINED);
 
     Component largeTimes = Component.text(playerUploadLargeTimes + "/" + limitUploadLargeTimes)
-      .decorate(
-          TextDecoration.BOLD,
-          TextDecoration.UNDERLINED);
+        .decorate(
+            TextDecoration.BOLD,
+            TextDecoration.UNDERLINED);
 
     if (playerUploadSmallTimes >= limitUploadSmallTimes) {
       smallTimes.color(NamedTextColor.RED);
@@ -1330,7 +1361,7 @@ public class ImageMap {
       largeTimes.color(NamedTextColor.GOLD);
     }
 
-    return new Component[] {smallTimes, largeTimes};
+    return new Component[] { smallTimes, largeTimes };
   }
 
   @Deprecated
@@ -1340,20 +1371,20 @@ public class ImageMap {
       int id = (int) mArgs[0];
       boolean isQr = (boolean) mArgs[1];
       String authorName = (String) mArgs[2],
-      imageUUID = (String) mArgs[3],
-      title = (String) mArgs[4],
-      comment = (String) mArgs[5],
-      ext = (String) mArgs[6],
-      date = (String) mArgs[7],
-      fullPath = Settings.IMAGE_FOLDER.getValue() + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
-      playerName = player.getName();
+          imageUUID = (String) mArgs[3],
+          title = (String) mArgs[4],
+          comment = (String) mArgs[5],
+          ext = (String) mArgs[6],
+          date = (String) mArgs[7],
+          fullPath = Settings.IMAGE_FOLDER.getValue() + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
+          playerName = player.getName();
       BufferedImage image = ImageIO.read(new File(fullPath));
       image = !isQr ? resizeImage(image, 128, 128) : image;
       List<String> lores = new ArrayList<>();
       lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
       List<String> commentLines = Arrays.stream(comment.split("\n"))
-        .map(String::trim)
-        .collect(Collectors.toList());
+          .map(String::trim)
+          .collect(Collectors.toList());
       lores.addAll(commentLines);
       lores.add("created by " + authorName);
       lores.add("created at " + date.replace("-", "/"));
@@ -1367,7 +1398,8 @@ public class ImageMap {
         meta.setDisplayName(title);
         meta.setLore(lores);
         meta.setMapView(mapView);
-        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY), PersistentDataType.STRING, "true");
+        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, ImageMap.PERSISTANT_KEY),
+            PersistentDataType.STRING, "true");
         mapItem.setItemMeta(meta);
       }
       Map<String, String> modifyMap = new HashMap<>();
@@ -1380,7 +1412,7 @@ public class ImageMap {
         // mapIdを更新する必要がある
         // なぜなら、このサーバーにはないマップを生成するため
         // giveMapメソッドで、そのワールド内にないことは確認済みなので
-        db.updateLog(conn, "UPDATE images SET mapid=? WHERE id=?;", new Object[] {mapId, id});
+        db.updateLog(conn, "UPDATE images SET mapid=? WHERE id=?;", new Object[] { mapId, id });
       }
       player.getInventory().addItem(mapItem);
       if (!isGiveMap) {
@@ -1388,14 +1420,16 @@ public class ImageMap {
       }
     } catch (IOException | SQLException | ClassNotFoundException e) {
       player.sendMessage("画像の読み取りに失敗しました。");
-      logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}", e.getMessage());
+      logger.error("An IOException | SQLException | URISyntaxException | ClassNotFoundException error occurred: {}",
+          e.getMessage());
       for (StackTraceElement element : e.getStackTrace()) {
         logger.error(element.toString());
       }
     }
   }
 
-  private void saveImageToDatabase(Connection conn, int mapId, int x, int y, BufferedImage image, String ext) throws SQLException, IOException {
+  private void saveImageToDatabase(Connection conn, int mapId, int x, int y, BufferedImage image, String ext)
+      throws SQLException, IOException {
     byte[] imageBytes = getImageBytes(image, ext);
     String sql = "INSERT INTO image_tiles (server, mapid, x, y, image) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE image = VALUES(image)";
     try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -1411,9 +1445,9 @@ public class ImageMap {
   private byte[] getImageBytes(BufferedImage image, String ext) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     Thumbnails.of(image)
-      .scale(1)
-      .outputFormat(ext)
-      .toOutputStream(baos);
+        .scale(1)
+        .outputFormat(ext)
+        .toOutputStream(baos);
     return baos.toByteArray();
   }
 
@@ -1427,8 +1461,8 @@ public class ImageMap {
           boolean isQr = rs.getBoolean("isqr");
           Date date = rs.getDate("date");
           String imageUUID = rs.getString("imuuid"),
-            ext = rs.getString("ext"),
-            fullPath = getFullPath(date, imageUUID, ext);
+              ext = rs.getString("ext"),
+              fullPath = getFullPath(date, imageUUID, ext);
           BufferedImage image = ImageIO.read(new File(fullPath));
           if (image != null) {
             return isQr ? image : resizeImage(image, 128, 128);
@@ -1455,7 +1489,8 @@ public class ImageMap {
     return null;
   }
 
-  private Map<String, Object> getMapInfoForThisServerByMapId(Connection conn, int mapId) throws SQLException, ClassNotFoundException {
+  private Map<String, Object> getMapInfoForThisServerByMapId(Connection conn, int mapId)
+      throws SQLException, ClassNotFoundException {
     Map<String, Object> mapInfo = new HashMap<>();
     String query = "SELECT * FROM images WHERE mapid=? AND server=?;";
     PreparedStatement ps = conn.prepareStatement(query);
@@ -1472,7 +1507,8 @@ public class ImageMap {
     return mapInfo;
   }
 
-  private void copyLineFromMenu(Connection conn, int id, Map<String, String> modifyMap) throws SQLException, ClassNotFoundException {
+  private void copyLineFromMenu(Connection conn, int id, Map<String, String> modifyMap)
+      throws SQLException, ClassNotFoundException {
     List<String> modifiedImageColumnsList = new ArrayList<>(ImageMap.imagesColumnsList);
     List<String> imagesColumnsListCopied = new ArrayList<>(ImageMap.imagesColumnsList);
 
@@ -1480,24 +1516,25 @@ public class ImageMap {
       String key = entry.getKey();
       String newValue = entry.getValue();
       modifiedImageColumnsList = modifiedImageColumnsList.stream()
-        .map(s -> s.equals(key) ? newValue : s)
-        .collect(Collectors.toList());
+          .map(s -> s.equals(key) ? newValue : s)
+          .collect(Collectors.toList());
     }
 
     // idカラムを除外
     imagesColumnsListCopied.remove("id");
     modifiedImageColumnsList.remove("id");
     String query = "INSERT INTO images (" + String.join(", ", imagesColumnsListCopied) + ") " +
-      "SELECT " + String.join(", ", modifiedImageColumnsList) + " " +
-      "FROM images " +
-      "WHERE id = ?;";
-    //logger.info(query);
+        "SELECT " + String.join(", ", modifiedImageColumnsList) + " " +
+        "FROM images " +
+        "WHERE id = ?;";
+    // logger.info(query);
     PreparedStatement ps = conn.prepareStatement(query);
     ps.setInt(1, id);
     ps.executeUpdate();
   }
 
-  private Map<String, Object> getImageInfoByOTP(Connection conn, String otp) throws SQLException, ClassNotFoundException {
+  private Map<String, Object> getImageInfoByOTP(Connection conn, String otp)
+      throws SQLException, ClassNotFoundException {
     Map<String, Object> imageInfo = new HashMap<>();
     String query = "SELECT * FROM images WHERE otp=?;";
     PreparedStatement ps = conn.prepareStatement(query);
@@ -1513,7 +1550,8 @@ public class ImageMap {
     return imageInfo;
   }
 
-  private int getPlayerTodayCreateImageTimes(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
+  private int getPlayerTodayCreateImageTimes(Connection conn, String playerName)
+      throws SQLException, ClassNotFoundException {
     String query = "SELECT COUNT(*) FROM images WHERE menu != ? AND name = ? AND DATE(date) = ?";
     PreparedStatement ps = conn.prepareStatement(query);
     ps.setBoolean(1, true);
@@ -1526,7 +1564,8 @@ public class ImageMap {
     return 0;
   }
 
-  private int getPlayerTodayCreateLargeImageTimes(Connection conn, String playerName) throws SQLException, ClassNotFoundException {
+  private int getPlayerTodayCreateLargeImageTimes(Connection conn, String playerName)
+      throws SQLException, ClassNotFoundException {
     String query = "SELECT COUNT(*) FROM images WHERE menu != ? AND name = ? AND DATE(date) = ? AND large = ?;";
     PreparedStatement ps = conn.prepareStatement(query);
     ps.setBoolean(1, true);
@@ -1546,8 +1585,8 @@ public class ImageMap {
 
   private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) throws IOException {
     return Thumbnails.of(originalImage)
-      .size(targetWidth, targetHeight)
-      .asBufferedImage();
+        .size(targetWidth, targetHeight)
+        .asBufferedImage();
   }
 
   private boolean checkOTPIsCorrect(Connection conn, String code) throws SQLException, ClassNotFoundException {
@@ -1578,7 +1617,8 @@ public class ImageMap {
     return MatrixToImageWriter.toBufferedImage(bitMatrix);
   }
 
-  private void saveImageToFileSystem(BufferedImage image, String imageUUID, String ext) throws IOException, SQLException, ClassNotFoundException {
+  private void saveImageToFileSystem(BufferedImage image, String imageUUID, String ext)
+      throws IOException, SQLException, ClassNotFoundException {
     Path dirPath = Paths.get(Settings.IMAGE_FOLDER.getValue(), LocalDate.now().toString().replace("-", ""));
     if (!Files.exists(dirPath)) {
       Files.createDirectories(dirPath);
@@ -1591,8 +1631,8 @@ public class ImageMap {
   @SuppressWarnings("unused")
   private BufferedImage rotateImage(BufferedImage image, double angle) throws IOException {
     return Thumbnails.of(image)
-      .scale(1)
-      .rotate(angle)
-      .asBufferedImage();
+        .scale(1)
+        .rotate(angle)
+        .asBufferedImage();
   }
 }

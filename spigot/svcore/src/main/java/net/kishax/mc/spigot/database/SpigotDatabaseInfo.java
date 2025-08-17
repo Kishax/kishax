@@ -12,6 +12,7 @@ public class SpigotDatabaseInfo implements DatabaseInfo {
   private final String password;
   private final String defaultDatabase;
   private final int port;
+
   @Inject
   public SpigotDatabaseInfo(JavaPlugin plugin) {
     this.host = plugin.getConfig().getString("MySQL.Host", "");

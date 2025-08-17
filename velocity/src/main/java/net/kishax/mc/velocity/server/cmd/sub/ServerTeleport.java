@@ -27,7 +27,7 @@ public class ServerTeleport implements SimpleCommand {
   private final Database db;
   private final Luckperms lp;
   private final DoServerOnline dso;
-  private final String[] subcommands = {"stp"};
+  private final String[] subcommands = { "stp" };
 
   @Inject
   public ServerTeleport(Logger logger, ProxyServer server, Database db, Luckperms lp, DoServerOnline dso) {
@@ -89,7 +89,8 @@ public class ServerTeleport implements SimpleCommand {
     switch (args.length) {
       case 0, 1 -> {
         for (String subcmd : subcommands) {
-          if (!source.hasPermission("kishax.proxy." + subcmd)) continue;
+          if (!source.hasPermission("kishax.proxy." + subcmd))
+            continue;
           for (String onlineServer : db.getServersList(true)) {
             ret.add(onlineServer);
           }
@@ -102,7 +103,7 @@ public class ServerTeleport implements SimpleCommand {
 
   private void serverTeleport(Player player, String targetServerName) {
     boolean containsServer = server.getAllServers().stream()
-      .anyMatch(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName));
+        .anyMatch(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(targetServerName));
     if (!containsServer) {
       player.sendMessage(Component.text("サーバー名が違います。").color(NamedTextColor.RED));
       return;
@@ -115,20 +116,21 @@ public class ServerTeleport implements SimpleCommand {
     try (Connection conn = db.getConnection()) {
       Map<String, Map<String, Object>> statusMap = dso.loadStatusTable(conn);
       statusMap.entrySet().stream()
-        .filter(entry -> entry.getKey() instanceof String && entry.getKey().equals(targetServerName))
-        .forEach(entry -> {
-          Map<String, Object> serverInfo = entry.getValue();
-          if (permLevel < 2 && serverInfo.get("enter") instanceof Boolean enter && !enter) {
-            player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
-            return;
-          }
-          if (serverInfo.get("online") instanceof Boolean online && !online) {
-            player.sendMessage(Component.text(targetServerName+"サーバーは現在オフラインです。").color(NamedTextColor.RED));
-            logger.info(targetServerName+"サーバーは現在オフラインです。");
-            return;
-          }
-          server.getServer(targetServerName).ifPresent(registeredServer -> player.createConnectionRequest(registeredServer).fireAndForget());
-        });
+          .filter(entry -> entry.getKey() instanceof String && entry.getKey().equals(targetServerName))
+          .forEach(entry -> {
+            Map<String, Object> serverInfo = entry.getValue();
+            if (permLevel < 2 && serverInfo.get("enter") instanceof Boolean enter && !enter) {
+              player.sendMessage(Component.text("許可されていません。").color(NamedTextColor.RED));
+              return;
+            }
+            if (serverInfo.get("online") instanceof Boolean online && !online) {
+              player.sendMessage(Component.text(targetServerName + "サーバーは現在オフラインです。").color(NamedTextColor.RED));
+              logger.info(targetServerName + "サーバーは現在オフラインです。");
+              return;
+            }
+            server.getServer(targetServerName)
+                .ifPresent(registeredServer -> player.createConnectionRequest(registeredServer).fireAndForget());
+          });
     } catch (SQLException | ClassNotFoundException e) {
       logger.error("A SQLException | ClassNotFoundException error occurred: " + e.getMessage());
       for (StackTraceElement element : e.getStackTrace()) {

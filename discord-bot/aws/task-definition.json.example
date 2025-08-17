@@ -1,0 +1,80 @@
+{
+  "family": "kishax-discord-bot",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR_ECS_EXECUTION_ROLE",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/YOUR_ECS_TASK_ROLE",
+  "containerDefinitions": [
+    {
+      "name": "discord-bot",
+      "image": "YOUR_ACCOUNT_ID.dkr.ecr.YOUR_REGION.amazonaws.com/kishax-discord-bot:latest",
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/kishax-discord-bot",
+          "awslogs-region": "YOUR_AWS_REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "environment": [
+        {
+          "name": "AWS_REGION",
+          "value": "YOUR_AWS_REGION"
+        },
+        {
+          "name": "SQS_MAX_MESSAGES",
+          "value": "10"
+        },
+        {
+          "name": "SQS_WAIT_TIME_SECONDS",
+          "value": "20"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DISCORD_TOKEN",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/token"
+        },
+        {
+          "name": "DISCORD_CHANNEL_ID",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/channel-id"
+        },
+        {
+          "name": "DISCORD_CHAT_CHANNEL_ID",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/chat-channel-id"
+        },
+        {
+          "name": "DISCORD_ADMIN_CHANNEL_ID",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/admin-channel-id"
+        },
+        {
+          "name": "DISCORD_RULE_CHANNEL_ID",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/rule-channel-id"
+        },
+        {
+          "name": "DISCORD_RULE_MESSAGE_ID",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/rule-message-id"
+        },
+        {
+          "name": "SQS_QUEUE_URL",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/sqs/queue-url"
+        },
+        {
+          "name": "DISCORD_GUILD_ID",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/guild-id"
+        },
+        {
+          "name": "DISCORD_EMOJI_DEFAULT_NAME",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/emoji-default-name"
+        },
+        {
+          "name": "DISCORD_PRESENCE_ACTIVITY",
+          "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT_ID:parameter/kishax/discord/presence-activity"
+        }
+      ]
+    }
+  ]
+}

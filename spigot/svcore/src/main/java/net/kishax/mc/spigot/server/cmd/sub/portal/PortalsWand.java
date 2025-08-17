@@ -28,7 +28,8 @@ public class PortalsWand {
         ItemStack wand = new ItemStack(Material.STONE_AXE);
         ItemMeta meta = wand.getItemMeta();
         if (meta != null) {
-          meta.getPersistentDataContainer().set(new NamespacedKey(plugin, PortalsWand.PERSISTANT_KEY), PersistentDataType.STRING, "true");
+          meta.getPersistentDataContainer().set(new NamespacedKey(plugin, PortalsWand.PERSISTANT_KEY),
+              PersistentDataType.STRING, "true");
           meta.setDisplayName(ChatColor.GREEN + "Portal Wand");
           wand.setItemMeta(meta);
         }

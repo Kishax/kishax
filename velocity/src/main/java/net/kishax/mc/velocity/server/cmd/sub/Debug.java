@@ -28,15 +28,15 @@ public class Debug {
     Map<String, Object> DiscordConfig = config.getStringObjectMap("Discord");
     if (DebugConfig == null || DiscordConfig == null) {
       Component errorMessage = Component.text("コンフィグの設定が正しくありません。")
-        .appendNewline()
-        .append(Component.text("(Debug or Discord) Map is Empty.")
-            .color(NamedTextColor.RED));
+          .appendNewline()
+          .append(Component.text("(Debug or Discord) Map is Empty.")
+              .color(NamedTextColor.RED));
       source.sendMessage(errorMessage);
       return;
     }
 
     String value1 = config.getString("Debug.Webhook_URL", null),
-      value2 = config.getString("Discord.Webhook_URL", null);
+        value2 = config.getString("Discord.Webhook_URL", null);
 
     if (value1 != null && value2 != null) {
       DiscordConfig.put("Webhook_URL", value1);
@@ -46,11 +46,11 @@ public class Debug {
     }
 
     long value3 = config.getLong("Debug.ChannelId", 0),
-      value4 = config.getLong("Discord.ChannelId", 0),
-      value5 = config.getLong("Debug.ChatChannelId", 0),
-      value6 = config.getLong("Discord.ChatChannelId", 0),
-      value7 = config.getLong("Debug.AdminChannelId", 0),
-      value8 = config.getLong("Discord.AdminChannelId", 0);
+        value4 = config.getLong("Discord.ChannelId", 0),
+        value5 = config.getLong("Debug.ChatChannelId", 0),
+        value6 = config.getLong("Discord.ChatChannelId", 0),
+        value7 = config.getLong("Debug.AdminChannelId", 0),
+        value8 = config.getLong("Discord.AdminChannelId", 0);
 
     if (value3 != 0 && value4 != 0) {
       DiscordConfig.put("ChannelId", value3);

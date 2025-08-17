@@ -17,7 +17,7 @@ import net.kishax.mc.common.settings.PermSettings;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.socket.message.handlers.interfaces.web.MinecraftWebConfirmHandler;
-import net.kishax.mc.velocity.discord.MessageEditor;
+import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -32,18 +32,18 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
   private final Database db;
   private final VelocityConfig config;
   private final Luckperms lp;
-  private final MessageEditor discordME;
+  private final AwsDiscordService awsDiscordService;
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
   public VelocityMinecraftWebConfirmHandler(Logger logger, ProxyServer server, Database db, VelocityConfig config,
-      Luckperms lp, MessageEditor discordME, Provider<SocketSwitch> sswProvider) {
+      Luckperms lp, AwsDiscordService awsDiscordService, Provider<SocketSwitch> sswProvider) {
     this.logger = logger;
     this.server = server;
     this.db = db;
     this.config = config;
     this.lp = lp;
-    this.discordME = discordME;
+    this.awsDiscordService = awsDiscordService;
     this.sswProvider = sswProvider;
   }
 
@@ -112,7 +112,7 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
     }
 
     try {
-      discordME.AddEmbedSomeMessage("AddMember", mineName);
+      awsDiscordService.sendBotMessage(mineName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB);
     } catch (Exception e) {
       logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
       for (StackTraceElement ste : e.getStackTrace()) {

@@ -39,7 +39,8 @@ public class ServerStatusCache {
   private Map<String, Map<String, String>> memberMap = new ConcurrentHashMap<>();
 
   @Inject
-  public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso, Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
+  public ServerStatusCache(Logger logger, Database db, PortFinder pf, DoServerOnline dso,
+      Provider<SocketSwitch> sswProvider, ServerHomeDir shd) {
     this.logger = logger;
     this.db = db;
     this.pf = pf;
@@ -89,13 +90,12 @@ public class ServerStatusCache {
 
           // サーバーネームをソート
           Map<String, Map<String, Object>> sortedServers = servers.entrySet().stream()
-            .sorted(Map.Entry.comparingByKey())
-            .collect(Collectors.toMap(
-              Map.Entry::getKey,
-              Map.Entry::getValue,
-              (e1, _p) -> e1,
-              LinkedHashMap::new
-            ));
+              .sorted(Map.Entry.comparingByKey())
+              .collect(Collectors.toMap(
+                  Map.Entry::getKey,
+                  Map.Entry::getValue,
+                  (e1, _p) -> e1,
+                  LinkedHashMap::new));
 
           sortedServerStatusMap.put(serverType, sortedServers);
         }
@@ -133,13 +133,14 @@ public class ServerStatusCache {
   public void refreshManualOnlineServer(String specificServerName) {
     Map<String, Map<String, Map<String, Object>>> statusMapCopied = getStatusMap();
     statusMapCopied.values().stream()
-      .flatMap(serverMap -> serverMap.entrySet().stream())
-      .filter(entry -> entry.getValue().get("name") instanceof String serverName && serverName.equals(specificServerName))
-      .forEach(entry -> {
-        entry.getValue().put("online", true);
-        setStatusMap(statusMap);
-        //logger.info("Server {} is now online", extracted);
-      });
+        .flatMap(serverMap -> serverMap.entrySet().stream())
+        .filter(
+            entry -> entry.getValue().get("name") instanceof String serverName && serverName.equals(specificServerName))
+        .forEach(entry -> {
+          entry.getValue().put("online", true);
+          setStatusMap(statusMap);
+          // logger.info("Server {} is now online", extracted);
+        });
   }
 
   public Map<String, Map<String, Map<String, Object>>> getStatusMap() {
@@ -152,10 +153,10 @@ public class ServerStatusCache {
 
   public String getServerType(String serverName) {
     return getStatusMap().entrySet().stream()
-      .filter(entry -> entry.getValue().containsKey(serverName))
-      .map(Map.Entry::getKey)
-      .findFirst()
-      .orElse(null);
+        .filter(entry -> entry.getValue().containsKey(serverName))
+        .map(Map.Entry::getKey)
+        .findFirst()
+        .orElse(null);
   }
 
   public void refreshMemberInfo() {
@@ -170,7 +171,8 @@ public class ServerStatusCache {
             private static final long serialVersionUID = 1L;
             {
               put("uuid", uuid);
-            }});
+            }
+          });
         }
         this.memberMap = newMemberMap;
       }

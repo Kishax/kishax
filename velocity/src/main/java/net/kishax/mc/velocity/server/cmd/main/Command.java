@@ -40,7 +40,8 @@ public class Command implements SimpleCommand {
   private final Database db;
   private final PlayerUtils pu;
   private final Luckperms lp;
-  public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop", "stp", "retry", "debug", "cancel", "perm","maintenance","conv","chat","cend", "silent"));
+  public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop",
+      "stp", "retry", "debug", "cancel", "perm", "maintenance", "translate", "chat", "cend", "silent"));
   public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
   @Inject
@@ -55,10 +56,11 @@ public class Command implements SimpleCommand {
   public void execute(Invocation invocation) {
     CommandSource source = invocation.source();
     String[] args = invocation.arguments();
-    if (args.length == 0 || !subcommands.contains(args[0].toLowerCase())) return;
+    if (args.length == 0 || !subcommands.contains(args[0].toLowerCase()))
+      return;
     String subCommand = args[0];
     if (source instanceof Player player) {
-      if (!lp.hasPermission(player.getUsername(),"kishax.proxy." + subCommand)) {
+      if (!lp.hasPermission(player.getUsername(), "kishax.proxy." + subCommand)) {
         source.sendMessage(Component.text("権限がありません。").color(NamedTextColor.RED));
         return;
       }
@@ -75,7 +77,7 @@ public class Command implements SimpleCommand {
       case "req" -> Main.getInjector().getInstance(Request.class).execute(source, args);
       case "perm" -> Main.getInjector().getInstance(Perm.class).execute(source, args);
       case "maintenance" -> Main.getInjector().getInstance(Maintenance.class).execute(source, args);
-      case "conv" -> Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
+      case "translate" -> Main.getInjector().getInstance(SwitchRomajiConvType.class).execute(source, args);
       case "chat" -> Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
       case "cend" -> Main.getInjector().getInstance(CEnd.class).execute(invocation);
       case "silent" -> Main.getInjector().getInstance(Silent.class).execute(source, args);
@@ -91,13 +93,15 @@ public class Command implements SimpleCommand {
     switch (args.length) {
       case 0, 1 -> {
         for (String subcmd : subcommands) {
-          if (!source.hasPermission("kishax.proxy." + subcmd)) continue;
+          if (!source.hasPermission("kishax.proxy." + subcmd))
+            continue;
           ret.add(subcmd);
         }
         return ret;
       }
       case 2 -> {
-        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase())) return Collections.emptyList();
+        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
+          return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "silent" -> {
             for (String subcmd : Silent.args1) {
@@ -135,14 +139,14 @@ public class Command implements SimpleCommand {
             }
             return ret;
           }
-          case "conv" -> {
+          case "translate" -> {
             for (String arg1 : SwitchRomajiConvType.args1) {
-              if(source.hasPermission("kishax.proxy.conv."+arg1)) {
+              if (source.hasPermission("kishax.proxy.translate." + arg1)) {
                 ret.add(arg1);
               }
             }
-            for(String arg1_1 : SwitchRomajiConvType.args1_1) {
-              if(source.hasPermission("kishax.proxy.conv.*")) {
+            for (String arg1_1 : SwitchRomajiConvType.args1_1) {
+              if (source.hasPermission("kishax.proxy.translate.*")) {
                 ret.add(arg1_1);
               }
             }
@@ -154,7 +158,8 @@ public class Command implements SimpleCommand {
         }
       }
       case 3 -> {
-        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase())) return Collections.emptyList();
+        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
+          return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "silent" -> {
             switch (args[1].toLowerCase()) {
@@ -166,8 +171,8 @@ public class Command implements SimpleCommand {
               }
             }
           }
-          case "conv" -> {
-            switch(args[1].toLowerCase()) {
+          case "translate" -> {
+            switch (args[1].toLowerCase()) {
               case "add", "remove" -> {
                 for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) {
                   ret.add(entry.getKey());
@@ -176,7 +181,7 @@ public class Command implements SimpleCommand {
               }
             }
           }
-          case "perm"-> {
+          case "perm" -> {
             switch (args[1].toLowerCase()) {
               case "add", "remove" -> {
                 List<String> permS = config.getList("Permission.Short_Name");
@@ -187,10 +192,10 @@ public class Command implements SimpleCommand {
               }
             }
           }
-          case "maintenance"-> {
+          case "maintenance" -> {
             switch (args[1].toLowerCase()) {
               case "switch" -> {
-                for(String args2 : Maintenance.args2) {
+                for (String args2 : Maintenance.args2) {
                   ret.add(args2);
                 }
                 return ret;
@@ -214,13 +219,14 @@ public class Command implements SimpleCommand {
         }
       }
       case 4 -> {
-        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase())) return Collections.emptyList();
+        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
+          return Collections.emptyList();
         switch (args[0].toLowerCase()) {
-          case "conv" -> {
+          case "translate" -> {
             switch (args[1].toLowerCase()) {
-              case "add"-> {
+              case "add" -> {
                 for (Map.Entry<String, String> entry : RomajiConversion.csvSets.entrySet()) {
-                  if(entry.getKey().equalsIgnoreCase(args[2])) {
+                  if (entry.getKey().equalsIgnoreCase(args[2])) {
                     ret.add(entry.getValue());
                   }
                 }
@@ -228,9 +234,9 @@ public class Command implements SimpleCommand {
               }
             }
           }
-          case "perm"-> {
+          case "perm" -> {
             switch (args[1].toLowerCase()) {
-              case "add", "remove"-> {
+              case "add", "remove" -> {
                 pu.loadPlayers(); // プレイヤーリストをロード
                 List<String> permS = config.getList("Permission.Short_Name");
                 if (permS.contains(args[2].toLowerCase())) {
@@ -242,12 +248,12 @@ public class Command implements SimpleCommand {
               }
             }
           }
-          case "maintenance"-> {
+          case "maintenance" -> {
             switch (args[1].toLowerCase()) {
-              case "switch"-> {
+              case "switch" -> {
                 switch (args[2].toLowerCase()) {
-                  case "discord"-> {
-                    for(String args3 : Maintenance.args3) {
+                  case "discord" -> {
+                    for (String args3 : Maintenance.args3) {
                       ret.add(args3);
                     }
                     return ret;
@@ -259,13 +265,14 @@ public class Command implements SimpleCommand {
         }
       }
       case 5 -> {
-        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase())) return Collections.emptyList();
+        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
+          return Collections.emptyList();
         switch (args[0].toLowerCase()) {
-          case "conv" -> {
+          case "translate" -> {
             switch (args[1].toLowerCase()) {
-              case "add"-> {
-                if(source.hasPermission("kishax.proxy.conv.*")) {
-                  for(String bool : bools) {
+              case "add" -> {
+                if (source.hasPermission("kishax.proxy.translate.*")) {
+                  for (String bool : bools) {
                     ret.add(bool);
                   }
                   return ret;
