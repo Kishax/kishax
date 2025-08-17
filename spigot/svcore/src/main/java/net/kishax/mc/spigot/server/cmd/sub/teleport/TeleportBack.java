@@ -49,7 +49,13 @@ public class TeleportBack implements TabExecutor {
       int permLevel = lp.getPermLevel(playerName);
       if (permLevel < 1) {
         player.sendMessage(ChatColor.RED + "まだWEB認証が完了していません。");
-        player.teleport(Coords.ROOM_POINT.getLocation());
+        Location roomLocation = Coords.ROOM_POINT.getLocation();
+        if (roomLocation != null) {
+          player.teleport(roomLocation);
+        } else {
+          Coords.ROOM_POINT.saveLocation(player.getLocation());
+          player.sendMessage(ChatColor.YELLOW + "ルームポイントを現在の座標に設定しました。");
+        }
       } else {
         if (EventListener.playerBeforeLocationMap.containsKey(player)) {
           Message msg = new Message();

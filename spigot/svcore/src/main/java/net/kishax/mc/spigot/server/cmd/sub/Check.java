@@ -29,12 +29,24 @@ public class Check {
       int permLevel = lp.getPermLevel(playerName);
       if (permLevel < 1) {
         player.sendMessage(ChatColor.RED + "まだWEB認証が完了していません。");
-        player.teleport(Coords.ROOM_POINT.getLocation());
+        Location roomLocation = Coords.ROOM_POINT.getLocation();
+        if (roomLocation != null) {
+          player.teleport(roomLocation);
+        } else {
+          Coords.ROOM_POINT.saveLocation(player.getLocation());
+          player.sendMessage(ChatColor.YELLOW + "ルームポイントを現在の座標に設定しました。");
+        }
       } else {
         final int hubTpTime = Settings.HUB_TELEPORT_TIME.getIntValue();
         player.sendMessage(ChatColor.GREEN + "WEB認証...PASS\n\nALL CORRECT");
         if (hubTpTime == 0) {
-          player.teleport(Coords.HUB_POINT.getLocation());
+          Location hubLocation = Coords.HUB_POINT.getLocation();
+          if (hubLocation != null) {
+            player.teleport(hubLocation);
+          } else {
+            Coords.HUB_POINT.saveLocation(player.getLocation());
+            player.sendMessage(ChatColor.YELLOW + "ハブポイントを現在の座標に設定しました。");
+          }
         } else {
           player.sendMessage(ChatColor.GREEN + (hubTpTime + "秒後にハブに移動します。"));
           new BukkitRunnable() {
@@ -43,7 +55,13 @@ public class Check {
             @Override
             public void run() {
               if (countdown <= 0) {
-                player.teleport(Coords.HUB_POINT.getLocation());
+                Location hubLocation = Coords.HUB_POINT.getLocation();
+                if (hubLocation != null) {
+                  player.teleport(hubLocation);
+                } else {
+                  Coords.HUB_POINT.saveLocation(player.getLocation());
+                  player.sendMessage(ChatColor.YELLOW + "ハブポイントを現在の座標に設定しました。");
+                }
                 cancel();
                 return;
               }
