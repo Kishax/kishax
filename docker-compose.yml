@@ -1,0 +1,18 @@
+services:
+  gather-bot:
+    build: .
+    container_name: gather-slack-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    networks:
+      - gather-bot-network
+    # ポートマッピング（必要に応じて）
+    # ports:
+    #   - "3000:3000"
+
+networks:
+  gather-bot-network:
+    driver: bridge
