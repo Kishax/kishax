@@ -69,7 +69,18 @@ npm run db:studio    # GUI管理画面
 npm run db:migrate   # マイグレーション
 ```
 
-## 🚀 本番デプロイ（AWS App Runner）
+## 🚀 本番デプロイ
+
+いくつかのステップでAWSを使用して本番環境にデプロイできます。
+
+まず、CI/CDに関しては、[GITHUB-ACTIONS-SETUP.md](GITHUB-ACTIONS-SETUP.md) を参照してください。
+
+私が現在の本番環境で使用しているのは、実はAppRunnerではなく、AWS ECS Fargateです。
+詳細は、[DEPLOY-WITH-ECS-FARGATE.md](DEPLOY-WITH-ECS-FARGATE.md) を参照してください。
+しかし、App Runnerも簡単にデプロイできるので、こちらを紹介します。
+
+以下は、AWS App Runnerを使用した簡単なデプロイ手順です。
+詳細は、[DEPLOY-WITH-APPRUNNER.md](DEPLOY-WITH-APPRUNNER.md) を参照してください。
 
 ### 1. 事前準備
 ```bash
