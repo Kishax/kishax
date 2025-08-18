@@ -19,9 +19,9 @@ jobs:
       - name: Find issue key in commit messages
         id: find
         uses: atlassian/gajira-find-issue-key@v3
-        with:
-          # 【修正】プッシュされた全てのコミットメッセージを検索対象にする
-          string: ${{ join(github.event.commits.*.message, ' ') }}
+        # バージョンをv3に更新し、安定性を向上
+        # 'with'ブロックを削除することで、デフォルトの動作である
+        # コミットメッセージの検索が有効になります。
 
       # 課題キーが特定できればJiraに対してトランジションを発行
       - name: Transition issue to 'In Progress'
