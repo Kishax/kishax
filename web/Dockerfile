@@ -11,9 +11,8 @@ RUN apk add --no-cache git
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# 依存関係をインストール（環境に応じて切り替え）
-ARG NODE_ENV=production
-RUN if [ "$NODE_ENV" = "development" ] ; then npm ci ; else npm ci --only=production ; fi
+# 依存関係をインストール（devDependenciesも含む、ビルド時に必要）
+RUN npm ci
 
 # Prismaクライアントを生成
 RUN npx prisma generate

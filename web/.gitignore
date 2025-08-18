@@ -41,3 +41,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AWS deployment files (contains sensitive account info)
+aws/task-definition.json
+aws/github-actions-policy.json
