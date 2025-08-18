@@ -1,0 +1,112 @@
+name: Deploy to ECS Fargate
+
+on:
+  push:
+    branches: [master]
+    paths: 
+      - '**'
+      - '!discord-bot/**'
+      - '!gather-bot/**'
+      - '!README.md'
+      - '!DEPLOY-*.md'
+      - '!GITHUB-*.md'
+  pull_request:
+    branches: [master]
+    types: [closed]
+    paths:
+      - '**'
+      - '!discord-bot/**'
+      - '!gather-bot/**'
+      - '!README.md'
+      - '!DEPLOY-*.md'
+      - '!GITHUB-*.md'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-1
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REPOSITORY: kishax-web
+  ECS_SERVICE: kishax-web-service
+  ECS_CLUSTER: kishax-cluster
+  ECS_TASK_DEFINITION: kishax-web-task
+  CONTAINER_NAME: kishax-web
+  EXECUTION_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/ecsTaskExecutionRole
+  TASK_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/AppRunnerInstanceRole
+  SECRETS_ARN: arn:aws:secretsmanager:ap-northeast-1:${{ secrets.AWS_ACCOUNT_ID }}:secret:kishax-apprunner-secrets-${{ secrets.SECRETS_SUFFIX }}
+
+jobs:
+  deploy:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    environment: production
+    # プルリクエストの場合はマージされた場合のみ実行
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Build a docker container and push it to ECR 
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Generate task definition from template
+      run: |
+        # テンプレートから実際のタスク定義を生成
+        sed -e "s/YOUR_ACCOUNT_ID/${{ env.AWS_ACCOUNT_ID }}/g" \
+            -e "s/YOUR_REGION/${{ env.AWS_REGION }}/g" \
+            -e "s/your-app/${{ env.ECR_REPOSITORY }}/g" \
+            -e "s/your-secrets/kishax-apprunner-secrets-${{ secrets.SECRETS_SUFFIX }}/g" \
+            aws/task-definition.json.example > aws/task-definition-generated.json
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: aws/task-definition-generated.json
+        container-name: ${{ env.CONTAINER_NAME }}
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
+
+    - name: Slack Notification on Success
+      if: success()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: '✅ デプロイが完了しました！'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: Slack Notification on Failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: '❌ デプロイに失敗しました'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
