@@ -120,7 +120,7 @@ deploy-lambda: ## Lambda関数をデプロイ
 .PHONY: deploy-discord-bot
 deploy-discord-bot: ## Discord Botをデプロイ
 	@echo "🚀 Discord Botをデプロイ中..."
-	cd discord-bot && \
+	cd apps/discord-bot && \
 	docker buildx build --platform linux/amd64 -t kishax-discord-bot . && \
 	aws ecr get-login-password --region $(AWS_REGION) --profile $(AWS_PROFILE) | \
 		docker login --username AWS --password-stdin $(AWS_ECR_DISCORD_BOT) && \
@@ -136,7 +136,7 @@ deploy-discord-bot: ## Discord Botをデプロイ
 .PHONY: deploy-gather-bot
 deploy-gather-bot: ## Gather Botをデプロイ
 	@echo "🚀 Gather Botをデプロイ中..."
-	cd gather-bot && \
+	cd apps/gather-bot && \
 	docker buildx build --platform linux/amd64 -t kishax-gather-bot . && \
 	aws ecr get-login-password --region $(AWS_REGION) --profile $(AWS_PROFILE) | \
 		docker login --username AWS --password-stdin $(AWS_ECR_GATHER_BOT) && \
@@ -152,7 +152,7 @@ deploy-gather-bot: ## Gather Botをデプロイ
 .PHONY: deploy-web
 deploy-web: ## Web アプリケーションをデプロイ
 	@echo "🚀 Web アプリケーションをデプロイ中..."
-	cd web && \
+	cd apps/web && \
 	npm install && \
 	npx prisma generate && \
 	docker buildx build --platform linux/amd64 -t kishax-web . && \
@@ -409,7 +409,7 @@ buildx-and-push: ## 指定されたサービスのDockerイメージをビルド
 		ecr_repo_var=ECR_REPO_$${service_upper}; \
 		ecr_repo=$$($$(ecr_repo_var)); \
 		\
-		cd $(service) && \
+		cd apps/$(service) && \
 		docker buildx build --platform linux/amd64 -t kishax-$(service):latest-amd64 . && \
 		aws ecr get-login-password --region $(AWS_REGION) --profile $(AWS_PROFILE) | \
 			docker login --username AWS --password-stdin $${ecr_repo} && \

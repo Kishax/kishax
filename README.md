@@ -6,11 +6,12 @@ Minecraft サーバー Kishax の統合インフラストラクチャプロジ�
 
 ```
 kishax/
-├── aws/                    # AWS共通リソース・ポリシー
-├── discord-bot/           # Discord Bot (ECS)
-├── gather-bot/            # Gather Bot (ECS)
-├── mc-plugins/            # Minecraft プラグイン (Velocity + Spigot)
-├── web/                   # Web アプリケーション (ECS)
+├── apps/                   # アプリケーション層
+│   ├── discord-bot/       # Discord Bot (ECS)
+│   ├── gather-bot/        # Gather Bot (ECS)
+│   ├── mc-plugins/        # Minecraft プラグイン (Velocity + Spigot)
+│   └── web/               # Web アプリケーション (ECS)
+├── aws/                   # AWS共通リソース・ポリシー
 └── docs/                  # 共通ドキュメント
 ```
 
