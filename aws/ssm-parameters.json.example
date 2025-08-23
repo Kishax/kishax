@@ -1,0 +1,152 @@
+[
+  {
+    "Name": "/kishax/discord/admin-channel-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/discord/channel-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/discord/chat-channel-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/discord/emoji-default-name",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/discord/guild-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/discord/presence-activity",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/discord/rule-channel-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/discord/rule-message-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/discord/token",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/gather/api-key",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/gather/space-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/slack/webhook-url",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/sqs/queue-url",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/auth-secret",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/database-url",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/discord-client-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/discord-client-secret",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/email-from",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/email-host",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/email-pass",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/email-port",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/email-user",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/google-client-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/google-client-secret",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/mc-socket-host",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/mc-socket-port",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/nextauth-secret",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/nextauth-url",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/twitter-client-id",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  },
+  {
+    "Name": "/kishax/web/twitter-client-secret",
+    "Value": "YOUR_VALUE_HERE",
+    "Type": "SecureString"
+  }
+]

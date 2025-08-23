@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "AccountId",
+    "ParameterValue": "$(AWS_ACCOUNT_ID)"
+  },
+  {
+    "ParameterKey": "VpcId",
+    "ParameterValue": "$(AWS_VPC_ID)"
+  },
+  {
+    "ParameterKey": "SubnetIds",
+    "ParameterValue": "$(AWS_PRIVATE_SUBNET_IDS)"
+  },
+  {
+    "ParameterKey": "PublicSubnetIds",
+    "ParameterValue": "$(AWS_PUBLIC_SUBNET_IDS)"
+  }
+]
