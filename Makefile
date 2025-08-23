@@ -168,6 +168,64 @@ deploy-web: ## Web アプリケーションをデプロイ
 	@echo "✅ Web アプリケーションのデプロイが完了しました"
 
 ## =============================================================================
+## テスト・動作確認
+## =============================================================================
+
+.PHONY: test-integration
+test-integration: ## 統合テスト実行（API Gateway → SQS → Discord Bot）
+	@echo "🧪 Kishax 統合テスト実行中..."
+	cd aws/integration-test && make test-integration
+
+.PHONY: test-mc-plugins-integration
+test-mc-plugins-integration: ## Minecraft Plugin統合テスト
+	@echo "🎮 Minecraft Plugin 統合テスト実行中..."
+	cd aws/integration-test && make test-mc-plugins
+
+.PHONY: test-full-flow
+test-full-flow: ## 完全フロー統合テスト（MC → API Gateway → Discord）
+	@echo "🔄 完全統合フローテスト実行中..."
+	cd aws/integration-test && make test-full-flow
+
+.PHONY: test-lambda
+test-lambda: ## Lambda関数をテスト
+	@echo "🧪 Lambda関数をテスト中..."
+	cd aws/lambda/sqs-forwarder && \
+	aws lambda invoke \
+		--function-name $(AWS_LAMBDA_FUNCTION_NAME) \
+		--payload fileb://api-gateway-test.json \
+		--profile $(AWS_PROFILE) \
+		test-response.json && \
+	cat test-response.json
+	@echo "✅ Lambda関数のテストが完了しました"
+
+.PHONY: test-api-gateway
+test-api-gateway: ## API Gatewayをテスト
+	@echo "🧪 API Gatewayをテスト中..."
+	aws apigateway test-invoke-method \
+		--rest-api-id $(API_GATEWAY_ID) \
+		--resource-id $(API_GATEWAY_RESOURCE_ID) \
+		--http-method POST \
+		--body '{"type": "test_connection", "message": "Makefile test"}' \
+		--profile $(AWS_PROFILE)
+	@echo "✅ API Gatewayのテストが完了しました"
+
+.PHONY: test-minecraft-discord
+test-minecraft-discord: ## Minecraft→Discord連携をテスト
+	@echo "🧪 Minecraft→Discord連携をテスト中..."
+	@echo "Minecraftサーバーからプレイヤーのjoin/leaveイベントを発生させて、"
+	@echo "Discordチャンネルにメッセージが表示されることを確認してください。"
+
+.PHONY: test-player-leave
+test-player-leave: ## Player Leave 統合テスト実行
+	@echo "🚪 Player Leave 統合テスト実行中..."
+	cd aws/integration-test && make test-player-leave
+
+.PHONY: test-player-join
+test-player-join: ## Player Join 統合テスト実行
+	@echo "🎮 Player Join 統合テスト実行中..."
+	cd aws/integration-test && make test-player-join
+
+## =============================================================================
 ## 監視・デバッグ
 ## =============================================================================
 

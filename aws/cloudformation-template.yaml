@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Kishax Infrastructure - Discord Bot, SQS, Lambda, API Gateway'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Kishax Infrastructure - Discord Bot, SQS, Lambda, API Gateway"
 
 Parameters:
   AccountId:
@@ -28,7 +28,7 @@ Resources:
     Properties:
       QueueName: kishax-discord-queue-v2
       VisibilityTimeout: 300
-      MessageRetentionPeriod: 1209600  # 14 days
+      MessageRetentionPeriod: 1209600 # 14 days
       ReceiveMessageWaitTimeSeconds: 20
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DiscordDeadLetterQueue.Arn
@@ -43,7 +43,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: kishax-discord-dlq-v2
-      MessageRetentionPeriod: 1209600  # 14 days
+      MessageRetentionPeriod: 1209600 # 14 days
       Tags:
         - Key: Project
           Value: Kishax
@@ -63,7 +63,7 @@ Resources:
     Properties:
       RoleName: kishax-infrastructure-lambda-role
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -74,7 +74,7 @@ Resources:
       Policies:
         - PolicyName: SQSAccessPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -82,12 +82,12 @@ Resources:
                 Resource: !GetAtt DiscordQueue.Arn
         - PolicyName: SSMAccessPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - ssm:GetParameter
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/sqs/queue-url'
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/sqs/queue-url"
 
   SqsForwarderLambdaFunction:
     Type: AWS::Lambda::Function
@@ -147,7 +147,7 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SqsForwarderLambdaFunction.Arn}/invocations'
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SqsForwarderLambdaFunction.Arn}/invocations"
 
   # Server Status endpoint
   ApiGatewayServerStatusResource:
@@ -167,7 +167,7 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SqsForwarderLambdaFunction.Arn}/invocations'
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SqsForwarderLambdaFunction.Arn}/invocations"
 
   # Player Request endpoint
   ApiGatewayPlayerRequestResource:
@@ -187,7 +187,7 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SqsForwarderLambdaFunction.Arn}/invocations'
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SqsForwarderLambdaFunction.Arn}/invocations"
 
   # Broadcast endpoint
   ApiGatewayBroadcastResource:
@@ -207,7 +207,7 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SqsForwarderLambdaFunction.Arn}/invocations'
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SqsForwarderLambdaFunction.Arn}/invocations"
 
   # Lambda permissions for API Gateway
   LambdaApiGatewayPermission:
@@ -216,7 +216,7 @@ Resources:
       FunctionName: !Ref SqsForwarderLambdaFunction
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*'
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*"
 
   # API Gateway Deployment
   ApiGatewayDeployment:
@@ -294,7 +294,7 @@ Resources:
     Properties:
       RoleName: kishax-infrastructure-ecs-execution-role
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -305,26 +305,26 @@ Resources:
       Policies:
         - PolicyName: SSMAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - ssm:GetParameters
                   - ssm:GetParameter
-                Resource: 
-                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/*'
-                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/sqs/*'
-                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/*'
-                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/gather/*'
-                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/slack/*'
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/*"
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/sqs/*"
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/*"
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/gather/*"
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/slack/*"
 
-  # Task Role (for Discord Bot application)  
+  # Task Role (for Discord Bot application)
   EcsTaskRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: kishax-infrastructure-ecs-task-role
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -333,7 +333,7 @@ Resources:
       Policies:
         - PolicyName: SQSAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -343,24 +343,24 @@ Resources:
                 Resource: !GetAtt DiscordQueue.Arn
         - PolicyName: LogsAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/ecs/kishax-discord-bot:*'
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/ecs/kishax-discord-bot:*"
         - PolicyName: SSMAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - ssm:GetParameters
                   - ssm:GetParameter
-                Resource: 
-                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/*'
-                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/sqs/*'
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/*"
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/sqs/*"
 
   # CloudWatch Log Groups
   DiscordBotLogGroup:
@@ -406,7 +406,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsTaskRole.Arn
       ContainerDefinitions:
         - Name: kishax-web
-          Image: !Sub '${AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/kishax-web:latest'
+          Image: !Sub "${AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/kishax-web:latest"
           PortMappings:
             - ContainerPort: 3000
               Protocol: tcp
@@ -421,39 +421,39 @@ Resources:
               Value: "3000"
           Secrets:
             - Name: DATABASE_URL
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/database-url'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/database-url"
             - Name: AUTH_SECRET
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/auth-secret'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/auth-secret"
             - Name: NEXTAUTH_SECRET
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/nextauth-secret'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/nextauth-secret"
             - Name: NEXTAUTH_URL
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/nextauth-url'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/nextauth-url"
             - Name: GOOGLE_CLIENT_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/google-client-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/google-client-id"
             - Name: GOOGLE_CLIENT_SECRET
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/google-client-secret'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/google-client-secret"
             - Name: DISCORD_CLIENT_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/discord-client-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/discord-client-id"
             - Name: DISCORD_CLIENT_SECRET
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/discord-client-secret'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/discord-client-secret"
             - Name: TWITTER_CLIENT_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/twitter-client-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/twitter-client-id"
             - Name: TWITTER_CLIENT_SECRET
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/twitter-client-secret'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/twitter-client-secret"
             - Name: EMAIL_HOST
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-host'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-host"
             - Name: EMAIL_PORT
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-port'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-port"
             - Name: EMAIL_USER
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-user'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-user"
             - Name: EMAIL_PASS
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-pass'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-pass"
             - Name: EMAIL_FROM
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-from'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/email-from"
             - Name: MC_SOCKET_HOST
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/mc-socket-host'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/mc-socket-host"
             - Name: MC_SOCKET_PORT
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/mc-socket-port'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/web/mc-socket-port"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -466,7 +466,7 @@ Resources:
 
   WebService:
     Type: AWS::ECS::Service
-    DependsOn: 
+    DependsOn:
       - HttpsListener
       - WebTargetGroup
     Properties:
@@ -571,7 +571,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsTaskRole.Arn
       ContainerDefinitions:
         - Name: gather-bot
-          Image: !Sub '${AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/kishax-gather-bot:latest'
+          Image: !Sub "${AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/kishax-gather-bot:latest"
           Environment:
             - Name: PORT
               Value: "3000"
@@ -581,11 +581,11 @@ Resources:
               Value: "production"
           Secrets:
             - Name: GATHER_API_KEY
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/gather/api-key'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/gather/api-key"
             - Name: GATHER_SPACE_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/gather/space-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/gather/space-id"
             - Name: SLACK_WEBHOOK_URL
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/slack/webhook-url'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/slack/webhook-url"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -630,7 +630,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsTaskRole.Arn
       ContainerDefinitions:
         - Name: discord-bot
-          Image: !Sub '${AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/kishax-discord-bot:latest'
+          Image: !Sub "${AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/kishax-discord-bot:latest"
           Environment:
             - Name: AWS_REGION
               Value: !Ref AWS::Region
@@ -642,25 +642,25 @@ Resources:
               Value: "20"
           Secrets:
             - Name: DISCORD_TOKEN
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/token'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/token"
             - Name: DISCORD_CHANNEL_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/channel-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/channel-id"
             - Name: DISCORD_CHAT_CHANNEL_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/chat-channel-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/chat-channel-id"
             - Name: DISCORD_ADMIN_CHANNEL_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/admin-channel-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/admin-channel-id"
             - Name: DISCORD_RULE_CHANNEL_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/rule-channel-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/rule-channel-id"
             - Name: DISCORD_RULE_MESSAGE_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/rule-message-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/rule-message-id"
             - Name: DISCORD_GUILD_ID
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/guild-id'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/guild-id"
             - Name: DISCORD_PRESENCE_ACTIVITY
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/presence-activity'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/presence-activity"
             - Name: DISCORD_EMOJI_DEFAULT_NAME
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/emoji-default-name'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/discord/emoji-default-name"
             - Name: SQS_QUEUE_URL
-              ValueFrom: !Sub 'arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/sqs/queue-url'
+              ValueFrom: !Sub "arn:aws:ssm:${AWS::Region}:${AccountId}:parameter/kishax/sqs/queue-url"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -695,119 +695,120 @@ Outputs:
     Description: SQS Queue URL
     Value: !Ref DiscordQueue
     Export:
-      Name: !Sub '${AWS::StackName}-SqsQueueUrl'
+      Name: !Sub "${AWS::StackName}-SqsQueueUrl"
 
   SqsQueueArn:
-    Description: SQS Queue ARN  
+    Description: SQS Queue ARN
     Value: !GetAtt DiscordQueue.Arn
     Export:
-      Name: !Sub '${AWS::StackName}-SqsQueueArn'
+      Name: !Sub "${AWS::StackName}-SqsQueueArn"
 
   # Lambda Outputs
   LambdaFunctionArn:
     Description: Lambda Function ARN
     Value: !GetAtt SqsForwarderLambdaFunction.Arn
     Export:
-      Name: !Sub '${AWS::StackName}-LambdaFunctionArn'
+      Name: !Sub "${AWS::StackName}-LambdaFunctionArn"
 
   LambdaFunctionName:
     Description: Lambda Function Name
     Value: !Ref SqsForwarderLambdaFunction
     Export:
-      Name: !Sub '${AWS::StackName}-LambdaFunctionName'
+      Name: !Sub "${AWS::StackName}-LambdaFunctionName"
 
   # API Gateway Outputs
   ApiGatewayUrl:
     Description: API Gateway URL
-    Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod'
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod"
     Export:
-      Name: !Sub '${AWS::StackName}-ApiGatewayUrl'
+      Name: !Sub "${AWS::StackName}-ApiGatewayUrl"
 
   ApiGatewayId:
     Description: API Gateway ID
     Value: !Ref ApiGateway
     Export:
-      Name: !Sub '${AWS::StackName}-ApiGatewayId'
+      Name: !Sub "${AWS::StackName}-ApiGatewayId"
 
   # ECS Outputs
   EcsClusterArn:
     Description: ECS Cluster ARN
     Value: !GetAtt EcsCluster.Arn
     Export:
-      Name: !Sub '${AWS::StackName}-EcsClusterArn'
+      Name: !Sub "${AWS::StackName}-EcsClusterArn"
 
   EcsTaskExecutionRoleArn:
     Description: ECS Task Execution Role ARN
     Value: !GetAtt EcsTaskExecutionRole.Arn
     Export:
-      Name: !Sub '${AWS::StackName}-EcsTaskExecutionRoleArn'
+      Name: !Sub "${AWS::StackName}-EcsTaskExecutionRoleArn"
 
   EcsTaskRoleArn:
     Description: ECS Task Role ARN
     Value: !GetAtt EcsTaskRole.Arn
     Export:
-      Name: !Sub '${AWS::StackName}-EcsTaskRoleArn'
+      Name: !Sub "${AWS::StackName}-EcsTaskRoleArn"
 
   SecurityGroupId:
     Description: Security Group ID
     Value: !Ref EcsSecurityGroup
     Export:
-      Name: !Sub '${AWS::StackName}-SecurityGroupId'
+      Name: !Sub "${AWS::StackName}-SecurityGroupId"
 
   # Web ECS Outputs
   WebServiceArn:
     Description: Web ECS Service ARN
     Value: !Ref WebService
     Export:
-      Name: !Sub '${AWS::StackName}-WebServiceArn'
+      Name: !Sub "${AWS::StackName}-WebServiceArn"
 
   WebTaskDefinitionArn:
     Description: Web Task Definition ARN
     Value: !Ref WebTaskDefinition
     Export:
-      Name: !Sub '${AWS::StackName}-WebTaskDefinitionArn'
+      Name: !Sub "${AWS::StackName}-WebTaskDefinitionArn"
 
   # ALB Outputs
   LoadBalancerArn:
     Description: Application Load Balancer ARN
     Value: !Ref ApplicationLoadBalancer
     Export:
-      Name: !Sub '${AWS::StackName}-LoadBalancerArn'
+      Name: !Sub "${AWS::StackName}-LoadBalancerArn"
 
   LoadBalancerDNSName:
     Description: Application Load Balancer DNS Name
     Value: !GetAtt ApplicationLoadBalancer.DNSName
     Export:
-      Name: !Sub '${AWS::StackName}-LoadBalancerDNSName'
+      Name: !Sub "${AWS::StackName}-LoadBalancerDNSName"
 
   WebTargetGroupArn:
     Description: Web Target Group ARN
     Value: !Ref WebTargetGroup
     Export:
-      Name: !Sub '${AWS::StackName}-WebTargetGroupArn'
+      Name: !Sub "${AWS::StackName}-WebTargetGroupArn"
 
   # Gather Bot ECS Outputs
   GatherBotServiceArn:
     Description: Gather Bot ECS Service ARN
     Value: !Ref GatherBotService
     Export:
-      Name: !Sub '${AWS::StackName}-GatherBotServiceArn'
+      Name: !Sub "${AWS::StackName}-GatherBotServiceArn"
 
   GatherBotTaskDefinitionArn:
     Description: Gather Bot Task Definition ARN
     Value: !Ref GatherBotTaskDefinition
     Export:
-      Name: !Sub '${AWS::StackName}-GatherBotTaskDefinitionArn'
+      Name: !Sub "${AWS::StackName}-GatherBotTaskDefinitionArn"
 
   # Discord Bot ECS Outputs
   DiscordBotServiceArn:
     Description: Discord Bot ECS Service ARN
     Value: !Ref DiscordBotService
     Export:
-      Name: !Sub '${AWS::StackName}-DiscordBotServiceArn'
+      Name: !Sub "${AWS::StackName}-DiscordBotServiceArn"
 
   DiscordBotTaskDefinitionArn:
     Description: Discord Bot Task Definition ARN
     Value: !Ref DiscordBotTaskDefinition
     Export:
-      Name: !Sub '${AWS::StackName}-DiscordBotTaskDefinitionArn'
+      Name: !Sub "${AWS::StackName}-DiscordBotTaskDefinitionArn"
+

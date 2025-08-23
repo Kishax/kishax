@@ -39,11 +39,6 @@ nbdist/
 .env.local
 .env.production
 
-### アプリケーション設定 ###
-config.yml
-velocity/plugins/kishax/config.yml
-**/plugins/*/config.yml
-
 ### ログファイル ###
 *.log
 logs/
