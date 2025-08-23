@@ -17,32 +17,14 @@ kishax/
 
 ## サービス概要
 
-### Discord Bot
-Minecraft サーバーのイベントを Discord チャンネルに通知
+このプロジェクトは4つの主要アプリケーションとAWSインフラから構成されています：
 
-- **技術スタック**: Java, Discord JDA
-- **インフラ**: AWS ECS (Fargate)
-- **通信**: SQS経由でメッセージ受信
+- **Discord Bot**: MinecraftイベントのDiscord通知 (Java/ECS)
+- **Gather Bot**: Gather.town監視とSlack通知 (Node.js/ECS)  
+- **Minecraft Plugins**: Velocity/Spigotプラグイン (Java)
+- **Web Application**: プレイヤー認証・管理 (Next.js/ECS)
 
-### Gather Bot  
-Slack 通知機能付きの Gather.town 監視ボット
-
-- **技術スタック**: Node.js
-- **インフラ**: AWS ECS (Fargate)
-- **機能**: ユーザー状態監視、Slack通知
-
-### Minecraft Plugins
-Velocity Proxy と Spigot サーバー用のプラグイン
-
-- **技術スタック**: Java, Velocity API, Spigot API
-- **機能**: プレイヤー管理、AWS連携、テレポート、権限管理
-
-### Web Application
-プレイヤー認証・管理用Webアプリケーション
-
-- **技術スタック**: Next.js, TypeScript, Prisma
-- **インフラ**: AWS ECS (Fargate)
-- **機能**: Discord/Google認証、OTP認証、プレイヤー管理
+📁 **詳細**: [apps/README.md](./apps/README.md)
 
 ## クイックスタート
 
@@ -65,7 +47,9 @@ make deploy-web
 
 ### Minecraftプラグインビルド
 ```bash
-make build-mc-plugins
+# プラグイン個別ビルドは apps/mc-plugins/ で実行
+cd apps/mc-plugins
+make build-all
 ```
 
 ## アーキテクチャ概要
@@ -78,9 +62,10 @@ make build-mc-plugins
 
 ## 開発ガイド
 
-- [デプロイメントガイド](./aws/DEPLOY.md)
-- [AWS インフラ詳細](./aws/README.md)
-- [各サービス別README](./*/README.md)
+- **アプリケーション**: [apps/README.md](./apps/README.md)
+- **AWS インフラ**: [aws/README.md](./aws/README.md)  
+- **デプロイメント**: [aws/DEPLOY.md](./aws/DEPLOY.md)
+- **各サービス詳細**: [apps/*/README.md](./apps/)
 
 ## ライセンス
 
