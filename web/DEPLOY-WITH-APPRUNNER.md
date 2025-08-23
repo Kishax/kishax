@@ -27,21 +27,21 @@
 # VPC作成
 aws ec2 create-vpc \
   --cidr-block 10.0.0.0/16 \
-  --region ap-northeast-1 \
+  --region $(AWS_REGION) \
   --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=kishax-vpc}]'
 
 # プライベートサブネット作成（AZ-1a）
 aws ec2 create-subnet \
   --vpc-id vpc-xxxxx \
   --cidr-block 10.0.1.0/24 \
-  --availability-zone ap-northeast-1a \
+  --availability-zone $(AWS_REGION)a \
   --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=kishax-private-1a}]'
 
 # プライベートサブネット作成（AZ-1c）
 aws ec2 create-subnet \
   --vpc-id vpc-xxxxx \
   --cidr-block 10.0.2.0/24 \
-  --availability-zone ap-northeast-1c \
+  --availability-zone $(AWS_REGION)c \
   --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=kishax-private-1c}]'
 ```
 
@@ -88,7 +88,7 @@ aws apprunner create-vpc-connector \
   --vpc-connector-name kishax-vpc-connector \
   --subnets subnet-xxxxx subnet-yyyyy \
   --security-groups sg-apprunner-xxxxx \
-  --region ap-northeast-1
+  --region $(AWS_REGION)
 ```
 
 ### 4. RDS作成（プライベート）
@@ -150,13 +150,13 @@ aws secretsmanager create-secret \
   --secret-string '{
     "NEXTAUTH_URL": "https://your-domain.awsapprunner.com",
     "NEXTAUTH_SECRET": "your-32-char-secret-here",
-    "DATABASE_URL": "postgresql://postgres:YOUR_PASSWORD@kishax-postgres.xxxxx.ap-northeast-1.rds.amazonaws.com:5432/postgres",
+    "DATABASE_URL": "postgresql://postgres:YOUR_PASSWORD@kishax-postgres.xxxxx.$(AWS_REGION).rds.amazonaws.com:5432/postgres",
     "GOOGLE_CLIENT_ID": "your-google-client-id",
     "GOOGLE_CLIENT_SECRET": "your-google-client-secret",
     "DISCORD_CLIENT_ID": "your-discord-client-id",
     "DISCORD_CLIENT_SECRET": "your-discord-client-secret"
   }' \
-  --region ap-northeast-1
+  --region $(AWS_REGION)
 ```
 
 ### 7. App Runnerサービス作成
@@ -211,7 +211,7 @@ aws apprunner create-service \
   --network-configuration '{
     "EgressConfiguration": {
       "EgressType": "VPC",
-      "VpcConnectorArn": "arn:aws:apprunner:ap-northeast-1:YOUR_ACCOUNT:vpcconnector/kishax-vpc-connector"
+      "VpcConnectorArn": "arn:aws:apprunner:$(AWS_REGION):$(AWS_ACCOUNT_ID):vpcconnector/kishax-vpc-connector"
     }
   }'
 ```
@@ -262,7 +262,7 @@ aws ec2 authorize-security-group-ingress \
   --group-id sg-rds-public-xxxxx \
   --protocol tcp \
   --port 5432 \
-  --cidr 3.112.23.0/29  # App Runner ap-northeast-1の例
+  --cidr 3.112.23.0/29  # App Runner $(AWS_REGION)の例
 
 # 必要に応じて管理用IP追加
 aws ec2 authorize-security-group-ingress \
@@ -304,13 +304,13 @@ aws secretsmanager create-secret \
   --secret-string '{
     "NEXTAUTH_URL": "https://your-domain.awsapprunner.com",
     "NEXTAUTH_SECRET": "your-32-char-secret-here",
-    "DATABASE_URL": "postgresql://postgres:YOUR_PASSWORD@kishax-postgres-public.xxxxx.ap-northeast-1.rds.amazonaws.com:5432/postgres",
+    "DATABASE_URL": "postgresql://postgres:YOUR_PASSWORD@kishax-postgres-public.xxxxx.$(AWS_REGION).rds.amazonaws.com:5432/postgres",
     "GOOGLE_CLIENT_ID": "your-google-client-id",
     "GOOGLE_CLIENT_SECRET": "your-google-client-secret",
     "DISCORD_CLIENT_ID": "your-discord-client-id",
     "DISCORD_CLIENT_SECRET": "your-discord-client-secret"
   }' \
-  --region ap-northeast-1
+  --region $(AWS_REGION)
 ```
 
 ### 5. App Runnerサービス作成（VPCコネクタなし）
@@ -366,11 +366,11 @@ npx prisma db seed  # seedがあれば
 aws acm request-certificate \
   --domain-name yourdomain.com \
   --validation-method DNS \
-  --region ap-northeast-1
+  --region $(AWS_REGION)
 
 # App Runnerにカスタムドメイン関連付け
 aws apprunner associate-custom-domain \
-  --service-arn arn:aws:apprunner:ap-northeast-1:account:service/kishax-app \
+  --service-arn arn:aws:apprunner:$(AWS_REGION):$(AWS_ACCOUNT_ID):service/kishax-app \
   --domain-name yourdomain.com
 ```
 

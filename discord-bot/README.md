@@ -84,8 +84,8 @@ DISCORD_EMOJI_DEFAULT_NAME=steve
 DISCORD_PRESENCE_ACTIVITY=Kishaxサーバー
 
 # AWS設定
-AWS_REGION=ap-northeast-1
-SQS_QUEUE_URL=https://sqs.ap-northeast-1.amazonaws.com/ACCOUNT_ID/kishax-discord-queue
+AWS_REGION=$(AWS_REGION)
+SQS_QUEUE_URL=https://sqs.$(AWS_REGION).amazonaws.com/$(AWS_ACCOUNT_ID)/kishax-discord-queue
 ```
 
 ### 2. ローカル実行
@@ -124,16 +124,16 @@ aws cloudformation create-stack \
 
 ```bash
 # ECRログイン
-aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin ACCOUNT_ID.dkr.ecr.ap-northeast-1.amazonaws.com
+aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 
 # リポジトリ作成
-aws ecr create-repository --repository-name kishax-discord-bot --region ap-northeast-1
+aws ecr create-repository --repository-name kishax-discord-bot --region $(AWS_REGION)
 
 # イメージタグ付け
-docker tag kishax-discord-bot:latest ACCOUNT_ID.dkr.ecr.ap-northeast-1.amazonaws.com/kishax-discord-bot:latest
+docker tag kishax-discord-bot:latest $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/kishax-discord-bot:latest
 
 # プッシュ
-docker push ACCOUNT_ID.dkr.ecr.ap-northeast-1.amazonaws.com/kishax-discord-bot:latest
+docker push $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/kishax-discord-bot:latest
 ```
 
 ### 3. ECS サービス作成

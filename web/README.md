@@ -9,15 +9,7 @@
 
 ### 環境設定
 ```bash
-git clone https://github.com/your-username/kishax-nextjs.git
-cd kishax-nextjs
 cp .env.example .env
-# .envファイルを編集
-
-# Playwright & Claude MCP セットアップ
-npx playwright install chrome
-claude mcp add playwright npx @playwright/mcp@latest
-claude mcp add --transport sse deepwiki https://mcp.deepwiki.com/sse
 ```
 
 ### 開発方法を選択
@@ -149,10 +141,6 @@ npx prisma migrate deploy
 
 開発者・サポーター・アドバイザーを募集中！  
 CSS/HTML、Node.jsサーバーコードに興味がある方は [お問い合わせ](https://maekawa.dev/contact) まで。
-
-## 📄 ライセンス
-
-[MIT](LICENSE)
 
 ---
 

@@ -23,11 +23,11 @@ public class CommandRegistrar {
                       .addOption(OptionType.STRING, "url", "画像リンクの設定項目", false)
                       .addOption(OptionType.ATTACHMENT, "image", "ファイルの添付項目", false)
                       .addOption(OptionType.STRING, "title", "画像マップのタイトル設定項目", false)
-                      .addOption(OptionType.STRING, "comment", "画像マップのコメント設定項目", false),
-))
-          .queue(
-              success -> logger.info("スラッシュコマンドを登録しました"),
-              error -> logger.error("スラッシュコマンドの登録に失敗しました", error));
+                      .addOption(OptionType.STRING, "comment", "画像マップのコメント設定項目", false)
+              )
+      ).queue(
+          success -> logger.info("スラッシュコマンドを登録しました"),
+          error -> logger.error("スラッシュコマンドの登録に失敗しました", error));
 
     } catch (Exception e) {
       logger.error("コマンド登録でエラーが発生しました", e);

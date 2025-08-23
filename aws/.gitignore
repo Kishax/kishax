@@ -1,0 +1,3 @@
+configs/api-gateway-config.json
+configs/sqs-config.json
+ssm-parameters.json
