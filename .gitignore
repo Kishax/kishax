@@ -1,4 +1,6 @@
 ### プロジェクト固有 ###
+.env
+.env.backup
 jdt.ls-java-project/
 *~
 experience/
@@ -42,11 +44,13 @@ $RECYCLE.BIN/
 *.lnk
 
 ### グローバル設定 ###
-# AWS認証情報
-.aws/
-aws-credentials.json
 *.pem
 
 # デプロイ用スクリプト（機密情報含む可能性）
 deploy.sh
 deploy-*.sh
+
+# 動的生成される本番用AWS設定ファイル
+aws/cloudformation-template.prod.yaml
+aws/cloudformation-parameters.prod.json
+aws/scripts/node_modules/

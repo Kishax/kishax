@@ -34,7 +34,7 @@ GitHub Actions を使用することで、`master` ブランチへのプッシ�
 |-----------|-----|------|
 | `AWS_ACCESS_KEY_ID` | `AKIA****************` | GitHub Actions 専用 IAM ユーザーのアクセスキー |
 | `AWS_SECRET_ACCESS_KEY` | `************************************` | GitHub Actions 専用 IAM ユーザーのシークレットキー |
-| `AWS_ACCOUNT_ID` | `123456789012` | AWS アカウント ID |
+| `AWS_ACCOUNT_ID` | `$(AWS_ACCOUNT_ID)` | AWS アカウント ID |
 | `SECRETS_SUFFIX` | `XXXXXX` | Secrets Manager のサフィックス |
 
 #### オプション Secrets
@@ -77,7 +77,7 @@ GitHub Actions を使用することで、`master` ブランチへのプッシ�
    **AWS_ACCOUNT_ID の設定:**
    ```
    Name: AWS_ACCOUNT_ID
-   Secret: 123456789012
+   Secret: $(AWS_ACCOUNT_ID)
    ```
 
    **SECRETS_SUFFIX の設定:**
@@ -150,8 +150,8 @@ GitHub Actions を使用することで、`master` ブランチへのプッシ�
       "Effect": "Allow",
       "Action": ["iam:PassRole"],
       "Resource": [
-        "arn:aws:iam::126112056177:role/ecsTaskExecutionRole",
-        "arn:aws:iam::126112056177:role/AppRunnerInstanceRole"
+        "arn:aws:iam::$(AWS_ACCOUNT_ID):role/ecsTaskExecutionRole",
+        "arn:aws:iam::$(AWS_ACCOUNT_ID):role/AppRunnerInstanceRole"
       ]
     },
     {
@@ -163,7 +163,7 @@ GitHub Actions を使用することで、`master` ブランチへのプッシ�
         "logs:DescribeLogGroups",
         "logs:DescribeLogStreams"
       ],
-      "Resource": "arn:aws:logs:ap-northeast-1:126112056177:log-group:/ecs/kishax-web*"
+      "Resource": "arn:aws:logs:$(AWS_REGION):$(AWS_ACCOUNT_ID):log-group:/ecs/kishax-web*"
     }
   ]
 }
@@ -201,7 +201,7 @@ on:
 
 ```yaml
 env:
-  AWS_REGION: ap-northeast-1
+  AWS_REGION: $(AWS_REGION)
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   ECR_REPOSITORY: kishax-web
   ECS_SERVICE: kishax-web-service
@@ -225,13 +225,13 @@ env:
 aws ecs describe-services \
   --cluster kishax-cluster \
   --services kishax-web-service \
-  --profile AdministratorAccess-126112056177
+  --profile $(AWS_PROFILE)
 
 # CloudWatch ログ確認
 aws logs filter-log-events \
   --log-group-name "/ecs/kishax-web" \
   --start-time $(date -d '10 minutes ago' +%s)000 \
-  --profile AdministratorAccess-126112056177
+  --profile $(AWS_PROFILE)
 ```
 
 ### Slack 通知例
@@ -282,11 +282,11 @@ Error: denied: requested access to the resource is denied
 ```bash
 # ECR 権限確認
 aws ecr describe-repositories --repository-names kishax-web \
-  --profile AdministratorAccess-126112056177
+  --profile $(AWS_PROFILE)
 
 # IAM ポリシー確認
 aws iam list-attached-user-policies --user-name github-actions-deploy \
-  --profile AdministratorAccess-126112056177
+  --profile $(AWS_PROFILE)
 ```
 
 #### 3. ECS デプロイ失敗
@@ -302,12 +302,12 @@ Error: Service update failed
 aws ecs describe-services \
   --cluster kishax-cluster \
   --services kishax-web-service \
-  --profile AdministratorAccess-126112056177
+  --profile $(AWS_PROFILE)
 
 # タスク定義確認
 aws ecs describe-task-definition \
   --task-definition kishax-web-task \
-  --profile AdministratorAccess-126112056177
+  --profile $(AWS_PROFILE)
 ```
 
 #### 4. Slack 通知失敗
@@ -340,7 +340,7 @@ aws ecs run-task \
   --task-definition kishax-web-task \
   --launch-type FARGATE \
   --network-configuration 'awsvpcConfiguration={subnets=[subnet-xxxxx],securityGroups=[sg-xxxxx],assignPublicIp=ENABLED}' \
-  --profile AdministratorAccess-126112056177
+  --profile $(AWS_PROFILE)
 ```
 
 ## 🔄 ワークフロー カスタマイズ

@@ -48,7 +48,7 @@ aws sts get-caller-identity
 # VPC作成
 aws ec2 create-vpc \
   --cidr-block 10.0.0.0/16 \
-  --region ap-northeast-1 \
+  --region $(AWS_REGION) \
   --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=kishax-vpc}]'
 
 # Internet Gateway作成・アタッチ
@@ -63,26 +63,26 @@ aws ec2 attach-internet-gateway \
 aws ec2 create-subnet \
   --vpc-id vpc-xxxxx \
   --cidr-block 10.0.1.0/24 \
-  --availability-zone ap-northeast-1a \
+  --availability-zone $(AWS_REGION)a \
   --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=kishax-public-1a}]'
 
 aws ec2 create-subnet \
   --vpc-id vpc-xxxxx \
   --cidr-block 10.0.2.0/24 \
-  --availability-zone ap-northeast-1c \
+  --availability-zone $(AWS_REGION)c \
   --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=kishax-public-1c}]'
 
 # プライベートサブネット作成（ECS/RDS用）
 aws ec2 create-subnet \
   --vpc-id vpc-xxxxx \
   --cidr-block 10.0.3.0/24 \
-  --availability-zone ap-northeast-1a \
+  --availability-zone $(AWS_REGION)a \
   --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=kishax-private-1a}]'
 
 aws ec2 create-subnet \
   --vpc-id vpc-xxxxx \
   --cidr-block 10.0.4.0/24 \
-  --availability-zone ap-northeast-1c \
+  --availability-zone $(AWS_REGION)c \
   --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=kishax-private-1c}]'
 ```
 
@@ -169,7 +169,7 @@ aws acm request-certificate \
   --domain-name kishax.net \
   --subject-alternative-names "*.kishax.net" \
   --validation-method DNS \
-  --region ap-northeast-1
+  --region $(AWS_REGION)
 
 # DNS検証レコードをRoute 53に追加（証明書ARNで確認）
 aws acm describe-certificate --certificate-arn arn:aws:acm:...
@@ -264,11 +264,11 @@ aws iam attach-role-policy \
 # ECRリポジトリ作成
 aws ecr create-repository \
   --repository-name kishax-web \
-  --region ap-northeast-1
+  --region $(AWS_REGION)
 
 # Docker認証
-aws ecr get-login-password --region ap-northeast-1 | \
-  docker login --username AWS --password-stdin YOUR_ACCOUNT.dkr.ecr.ap-northeast-1.amazonaws.com
+aws ecr get-login-password --region $(AWS_REGION) | \
+  docker login --username AWS --password-stdin $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ```
 
 ### 9. ECSクラスター作成
@@ -290,20 +290,20 @@ aws secretsmanager create-secret \
   --secret-string '{
     "NEXTAUTH_URL": "https://kishax.net",
     "NEXTAUTH_SECRET": "your-32-char-secret-here",
-    "DATABASE_URL": "postgresql://postgres:YOUR_PASSWORD@kishax-postgres.xxxxx.ap-northeast-1.rds.amazonaws.com:5432/postgres",
+    "DATABASE_URL": "postgresql://postgres:YOUR_PASSWORD@kishax-postgres.xxxxx.$(AWS_REGION).rds.amazonaws.com:5432/postgres",
     "GOOGLE_CLIENT_ID": "your-google-client-id",
     "GOOGLE_CLIENT_SECRET": "your-google-client-secret",
     "DISCORD_CLIENT_ID": "your-discord-client-id",
     "DISCORD_CLIENT_SECRET": "your-discord-client-secret",
     "TWITTER_CLIENT_ID": "your-twitter-client-id",
     "TWITTER_CLIENT_SECRET": "your-twitter-client-secret",
-    "EMAIL_HOST": "email-smtp.ap-northeast-1.amazonaws.com",
+    "EMAIL_HOST": "email-smtp.$(AWS_REGION).amazonaws.com",
     "EMAIL_PORT": "587",
     "EMAIL_USER": "your-ses-smtp-username",
     "EMAIL_PASS": "your-ses-smtp-password",
     "EMAIL_FROM": "noreply@kishax.net"
   }' \
-  --region ap-northeast-1
+  --region $(AWS_REGION)
 ```
 
 ### 11. CloudWatch Logs設定
@@ -312,7 +312,7 @@ aws secretsmanager create-secret \
 # ログループ作成
 aws logs create-log-group \
   --log-group-name "/ecs/kishax-web" \
-  --region ap-northeast-1
+  --region $(AWS_REGION)
 ```
 
 ### 12. ECSタスク定義とサービス作成
@@ -363,7 +363,7 @@ aws route53 change-resource-record-sets \
         "Name": "kishax.net",
         "Type": "A",
         "AliasTarget": {
-          "DNSName": "kishax-alb-xxxxx.ap-northeast-1.elb.amazonaws.com",
+          "DNSName": "kishax-alb-xxxxx.$(AWS_REGION).elb.amazonaws.com",
           "EvaluateTargetHealth": true,
           "HostedZoneId": "Z14GRHDCWA56QT"
         }
@@ -399,10 +399,12 @@ aws iam create-access-key --user-name github-actions-deploy
 GitHub リポジトリの Settings > Secrets で以下を設定:
 
 ```
-AWS_ACCESS_KEY_ID: AKIAXXXXXXXXXXXXXXXX
-AWS_SECRET_ACCESS_KEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID_FOR_GITHUB_ACTIONS)
+AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY_FOR_GITHUB_ACTIONS)
 SLACK_WEBHOOK_URL: https://hooks.slack.com/services/... (オプション)
 ```
+
+> 💡 **重要**: これらの資格情報は最小権限の専用IAMユーザー用です。本番環境では絶対に管理者権限を使用しないでください。
 
 ### 3. GitHub Actionsワークフロー
 
@@ -472,7 +474,7 @@ aws application-autoscaling put-scaling-policy \
 
 ## 💰 コスト最適化
 
-### 月額コスト詳細（ap-northeast-1）
+### 月額コスト詳細（$(AWS_REGION)）
 
 - **ECS Fargate**: 1 vCPU, 2GB RAM × 24時間 ≈ $25/月
 - **RDS t3.micro**: 20GB ストレージ付き ≈ $13/月  
@@ -546,7 +548,7 @@ aws ec2 describe-security-groups --group-ids sg-xxxxx
 
 ```bash
 # RDS接続テスト（踏み台サーバーから）
-psql -h kishax-postgres.xxxxx.ap-northeast-1.rds.amazonaws.com \
+psql -h kishax-postgres.xxxxx.$(AWS_REGION).rds.amazonaws.com \
      -U postgres -d postgres
 
 # Secrets Manager値確認

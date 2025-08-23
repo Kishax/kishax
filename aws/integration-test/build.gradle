@@ -1,0 +1,124 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'net.kishax'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+// カスタムソースセット定義
+sourceSets {
+    test {
+        java {
+            srcDirs = [
+                'src/test/java',
+                'api-gateway/src/test/java',
+                'discord-bot/src/test/java', 
+                'mc-plugins/src/test/java',
+                'web/src/test/java'
+            ]
+        }
+    }
+}
+
+dependencies {
+    // AWS SDK
+    implementation platform('software.amazon.awssdk:bom:2.21.29')
+    implementation 'software.amazon.awssdk:apigateway'
+    implementation 'software.amazon.awssdk:sqs'
+    implementation 'software.amazon.awssdk:lambda'
+    implementation 'software.amazon.awssdk:ssm'
+    implementation 'software.amazon.awssdk:auth'
+    implementation 'software.amazon.awssdk:sso'
+    implementation 'software.amazon.awssdk:ssooidc'
+    
+    // HTTP Client
+    implementation 'software.amazon.awssdk:apache-client'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+    
+    // JSON処理
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.15.2'
+    
+    // テストフレームワーク
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+    
+    // 環境変数読み取り
+    implementation 'io.github.cdimascio:dotenv-java:3.0.0'
+    
+    // ログ
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    implementation 'ch.qos.logback:logback-classic:1.4.8'
+}
+
+test {
+    useJUnitPlatform()
+    
+    // テスト実行設定
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+    
+    // .envファイルから環境変数を読み込み
+    doFirst {
+        def envFile = file('.env')
+        if (envFile.exists()) {
+            envFile.eachLine { line ->
+                if (line.contains('=') && !line.startsWith('#')) {
+                    def (key, value) = line.split('=', 2)
+                    environment key.trim(), value.trim()
+                }
+            }
+        }
+    }
+    
+    // システムプロパティ
+    systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+}
+
+// 統合テスト用タスク
+task integrationTest(type: Test) {
+    description = 'Runs integration tests for Kishax infrastructure'
+    group = 'verification'
+    
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    
+    testLogging {
+        events "started", "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+    }
+    
+    // テスト結果レポート
+    finalizedBy 'jacocoTestReport'
+}
+
+// レポート生成
+apply plugin: 'jacoco'
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}

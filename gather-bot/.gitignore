@@ -10,6 +10,9 @@ npm-debug.log*
 # Configuration files
 config.jsonc
 
+# AWS configuration files
+aws/task-definition.json
+
 # Logs
 logs/
 *.log

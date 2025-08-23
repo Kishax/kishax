@@ -130,7 +130,3 @@ Sockets are enable us to communicate between Velocity and Spigot Servers.
 
 ## Dependancy
 * [Luckperms](https://github.com/LuckPerms/LuckPerms)
-
-## Lisence
-[MIT](LICENSE)
-

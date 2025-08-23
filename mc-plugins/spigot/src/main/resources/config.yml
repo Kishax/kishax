@@ -1,0 +1,22 @@
+# Configuration File
+Menu:
+  Server: false
+  ImageMap: false
+
+Portals:
+  Move: false
+  Wand: false
+
+MySQL:
+  Host: ""
+  Database: ""
+  Port: 3306
+  User: ""
+  Password: ""
+
+Socket:
+  Server_Port:
+
+AutoStop:
+  Mode: false
+  Interval: 3
