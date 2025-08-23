@@ -44,49 +44,157 @@ status-services: ## ECSサービスステータスを確認
 		--query 'services[].{ServiceName:serviceName,DesiredCount:desiredCount,RunningCount:runningCount,Status:status}' \
 		--output table
 
+# =============================================================================
+# サービス再起動 (force-new-deployment)
+# =============================================================================
+
 .PHONY: restart-discord-bot
-restart-discord-bot: ## Discord Botサービスを再起動
+restart-discord-bot: ## Discord Botサービスを再起動 (force-new-deployment)
 	@echo "🔄 Discord Botサービスを再起動中..."
 	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-discord-bot-service-v2 --force-new-deployment --profile $(AWS_PROFILE) > /dev/null
-	@echo "✅ Discord Botサービスの再起動を要求しました"
+	@echo "✅ Discord Botサービスの再起動を要求しました (新しいタスクで再開)"
 
 .PHONY: restart-gather-bot
-restart-gather-bot: ## Gather Botサービスを再起動
+restart-gather-bot: ## Gather Botサービスを再起動 (force-new-deployment)
 	@echo "🔄 Gather Botサービスを再起動中..."
 	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-gather-bot-service-v2 --force-new-deployment --profile $(AWS_PROFILE) > /dev/null
-	@echo "✅ Gather Botサービスの再起動を要求しました"
+	@echo "✅ Gather Botサービスの再起動を要求しました (新しいタスクで再開)"
 
 .PHONY: restart-web
-restart-web: ## Webサービスを再起動
+restart-web: ## Webサービスを再起動 (force-new-deployment)
 	@echo "🔄 Webサービスを再起動中..."
 	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-web-service-v2 --force-new-deployment --profile $(AWS_PROFILE) > /dev/null
-	@echo "✅ Webサービスの再起動を要求しました"
+	@echo "✅ Webサービスの再起動を要求しました (新しいタスクで再開)"
 
 .PHONY: restart-all-services
-restart-all-services: restart-discord-bot restart-gather-bot restart-web ## 全ECSサービスを再起動
+restart-all-services: restart-discord-bot restart-gather-bot restart-web ## 全ECSサービスを再起動 (force-new-deployment)
 	@echo "✅ 全サービスの再起動を要求しました"
 
-.PHONY: stop-discord-bot
-stop-discord-bot: ## Discord Botサービスを停止
-	@echo "🛑 Discord Botサービスを停止中..."
+# =============================================================================
+# サービス有効/無効化 (desired-count操作)
+# =============================================================================
+
+.PHONY: enable-discord-bot
+enable-discord-bot: ## Discord Botサービスを有効化 (desired-count=1)
+	@echo "🟢 Discord Botサービスを有効化中..."
+	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-discord-bot-service-v2 --desired-count 1 --profile $(AWS_PROFILE) > /dev/null
+	@echo "✅ Discord Botサービスを有効化しました"
+
+.PHONY: enable-gather-bot
+enable-gather-bot: ## Gather Botサービスを有効化 (desired-count=1)
+	@echo "🟢 Gather Botサービスを有効化中..."
+	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-gather-bot-service-v2 --desired-count 1 --profile $(AWS_PROFILE) > /dev/null
+	@echo "✅ Gather Botサービスを有効化しました"
+
+.PHONY: enable-web
+enable-web: ## Webサービスを有効化 (desired-count=1)
+	@echo "🟢 Webサービスを有効化中..."
+	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-web-service-v2 --desired-count 1 --profile $(AWS_PROFILE) > /dev/null
+	@echo "✅ Webサービスを有効化しました"
+
+.PHONY: enable-all-services
+enable-all-services: enable-discord-bot enable-gather-bot enable-web ## 全ECSサービスを有効化
+	@echo "✅ 全サービスの有効化を完了しました"
+
+.PHONY: disable-discord-bot
+disable-discord-bot: ## Discord Botサービスを無効化 (desired-count=0)
+	@echo "🔴 Discord Botサービスを無効化中..."
 	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-discord-bot-service-v2 --desired-count 0 --profile $(AWS_PROFILE) > /dev/null
-	@echo "✅ Discord Botサービスの停止を要求しました"
+	@echo "✅ Discord Botサービスを無効化しました"
+
+.PHONY: disable-gather-bot
+disable-gather-bot: ## Gather Botサービスを無効化 (desired-count=0)
+	@echo "🔴 Gather Botサービスを無効化中..."
+	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-gather-bot-service-v2 --desired-count 0 --profile $(AWS_PROFILE) > /dev/null
+	@echo "✅ Gather Botサービスを無効化しました"
+
+.PHONY: disable-web
+disable-web: ## Webサービスを無効化 (desired-count=0)
+	@echo "🔴 Webサービスを無効化中..."
+	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-web-service-v2 --desired-count 0 --profile $(AWS_PROFILE) > /dev/null
+	@echo "✅ Webサービスを無効化しました"
+
+.PHONY: disable-all-services
+disable-all-services: disable-discord-bot disable-gather-bot disable-web ## 全ECSサービスを無効化
+	@echo "✅ 全サービスの無効化を完了しました"
+
+# =============================================================================
+# サービス開始/停止 (タスク操作)
+# =============================================================================
+
+.PHONY: start-discord-bot
+start-discord-bot: ## Discord Bot停止中サービスを開始
+	@echo "▶️ Discord Botサービスを開始中..."
+	@CURRENT_COUNT=$$(aws ecs describe-services --cluster kishax-infrastructure-cluster --services kishax-discord-bot-service-v2 --profile $(AWS_PROFILE) --query "services[0].desiredCount" --output text); \
+	if [ "$$CURRENT_COUNT" = "0" ]; then \
+		aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-discord-bot-service-v2 --desired-count 1 --profile $(AWS_PROFILE) > /dev/null; \
+		echo "✅ Discord Botサービスを開始しました"; \
+	else \
+		echo "ℹ️ Discord Botサービスは既に実行中です (desired-count=$$CURRENT_COUNT)"; \
+	fi
+
+.PHONY: start-gather-bot
+start-gather-bot: ## Gather Bot停止中サービスを開始
+	@echo "▶️ Gather Botサービスを開始中..."
+	@CURRENT_COUNT=$$(aws ecs describe-services --cluster kishax-infrastructure-cluster --services kishax-gather-bot-service-v2 --profile $(AWS_PROFILE) --query "services[0].desiredCount" --output text); \
+	if [ "$$CURRENT_COUNT" = "0" ]; then \
+		aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-gather-bot-service-v2 --desired-count 1 --profile $(AWS_PROFILE) > /dev/null; \
+		echo "✅ Gather Botサービスを開始しました"; \
+	else \
+		echo "ℹ️ Gather Botサービスは既に実行中です (desired-count=$$CURRENT_COUNT)"; \
+	fi
+
+.PHONY: start-web
+start-web: ## Web停止中サービスを開始
+	@echo "▶️ Webサービスを開始中..."
+	@CURRENT_COUNT=$$(aws ecs describe-services --cluster kishax-infrastructure-cluster --services kishax-web-service-v2 --profile $(AWS_PROFILE) --query "services[0].desiredCount" --output text); \
+	if [ "$$CURRENT_COUNT" = "0" ]; then \
+		aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-web-service-v2 --desired-count 1 --profile $(AWS_PROFILE) > /dev/null; \
+		echo "✅ Webサービスを開始しました"; \
+	else \
+		echo "ℹ️ Webサービスは既に実行中です (desired-count=$$CURRENT_COUNT)"; \
+	fi
+
+.PHONY: start-all-services
+start-all-services: start-discord-bot start-gather-bot start-web ## 全停止中サービスを開始
+	@echo "✅ 全サービスの開始チェックを完了しました"
+
+.PHONY: stop-discord-bot
+stop-discord-bot: ## Discord Bot実行中タスクを即座に停止
+	@echo "⏹️ Discord Bot実行中タスクを即座停止中..."
+	@TASK_ARNS=$$(aws ecs list-tasks --cluster kishax-infrastructure-cluster --service kishax-discord-bot-service-v2 --profile $(AWS_PROFILE) --query "taskArns" --output text); \
+	if [ "$$TASK_ARNS" != "" ] && [ "$$TASK_ARNS" != "None" ]; then \
+		aws ecs stop-task --cluster kishax-infrastructure-cluster --task $$TASK_ARNS --profile $(AWS_PROFILE) > /dev/null; \
+		echo "✅ Discord Botタスクを停止しました"; \
+	else \
+		echo "ℹ️ Discord Botの実行中タスクはありません"; \
+	fi
 
 .PHONY: stop-gather-bot
-stop-gather-bot: ## Gather Botサービスを停止
-	@echo "🛑 Gather Botサービスを停止中..."
-	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-gather-bot-service-v2 --desired-count 0 --profile $(AWS_PROFILE) > /dev/null
-	@echo "✅ Gather Botサービスの停止を要求しました"
+stop-gather-bot: ## Gather Bot実行中タスクを即座に停止
+	@echo "⏹️ Gather Bot実行中タスクを即座停止中..."
+	@TASK_ARNS=$$(aws ecs list-tasks --cluster kishax-infrastructure-cluster --service kishax-gather-bot-service-v2 --profile $(AWS_PROFILE) --query "taskArns" --output text); \
+	if [ "$$TASK_ARNS" != "" ] && [ "$$TASK_ARNS" != "None" ]; then \
+		aws ecs stop-task --cluster kishax-infrastructure-cluster --task $$TASK_ARNS --profile $(AWS_PROFILE) > /dev/null; \
+		echo "✅ Gather Botタスクを停止しました"; \
+	else \
+		echo "ℹ️ Gather Botの実行中タスクはありません"; \
+	fi
 
 .PHONY: stop-web
-stop-web: ## Webサービスを停止
-	@echo "🛑 Webサービスを停止中..."
-	@aws ecs update-service --cluster kishax-infrastructure-cluster --service kishax-web-service-v2 --desired-count 0 --profile $(AWS_PROFILE) > /dev/null
-	@echo "✅ Webサービスの停止を要求しました"
+stop-web: ## Web実行中タスクを即座に停止
+	@echo "⏹️ Web実行中タスクを即座停止中..."
+	@TASK_ARNS=$$(aws ecs list-tasks --cluster kishax-infrastructure-cluster --service kishax-web-service-v2 --profile $(AWS_PROFILE) --query "taskArns" --output text); \
+	if [ "$$TASK_ARNS" != "" ] && [ "$$TASK_ARNS" != "None" ]; then \
+		aws ecs stop-task --cluster kishax-infrastructure-cluster --task $$TASK_ARNS --profile $(AWS_PROFILE) > /dev/null; \
+		echo "✅ Webタスクを停止しました"; \
+	else \
+		echo "ℹ️ Webの実行中タスクはありません"; \
+	fi
 
 .PHONY: stop-all-services
-stop-all-services: stop-discord-bot stop-gather-bot stop-web ## 全ECSサービスを停止
-	@echo "✅ 全サービスの停止を要求しました"
+stop-all-services: stop-discord-bot stop-gather-bot stop-web ## 全実行中タスクを即座に停止
+	@echo "✅ 全タスクの停止を完了しました"
 
 .PHONY: cancel-stack-update
 cancel-stack-update: ## CloudFormationスタック更新をキャンセル
@@ -362,13 +470,13 @@ generate-prod-configs: ## 本番用AWS設定ファイルを動的生成
 .PHONY: update-infra
 update-infra: generate-prod-configs ## CloudFormationスタックを更新
 	@echo "🚀 CloudFormationスタックを更新中..."
-	# aws cloudformation update-stack \
-	# 	--profile $(AWS_PROFILE) \
-	# 	--region $(AWS_REGION) \
-	# 	--stack-name kishax-infrastructure \
-	# 	--template-body file://aws/cloudformation-template.prod.yaml \
-	# 	--parameters file://aws/cloudformation-parameters.prod.json \
-	# 	--capabilities CAPABILITY_NAMED_IAM
+	aws cloudformation update-stack \
+		--profile $(AWS_PROFILE) \
+		--region $(AWS_REGION) \
+		--stack-name kishax-infrastructure \
+		--template-body file://aws/cloudformation-template.prod.yaml \
+		--parameters file://aws/cloudformation-parameters.prod.json \
+		--capabilities CAPABILITY_NAMED_IAM
 	@echo "✅ CloudFormationスタックの更新を開始しました"
 
 
