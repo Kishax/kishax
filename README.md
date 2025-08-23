@@ -45,91 +45,39 @@ Velocity Proxy と Spigot サーバー用のプラグイン
 
 ## クイックスタート
 
-1. **環境変数設定**
-   ```bash
-   # 各サービスのSSMパラメータを設定
-   # 詳細はDEPLOY.mdを参照
-   ```
+### 初回セットアップ
+```bash
+make setup-first-time
+make setup-prerequisites
+```
 
-2. **デプロイ**
-   ```bash
-   # 全サービスデプロイ
-   make deploy-all
+### デプロイ
+```bash
+# 全サービスデプロイ
+make deploy-all
 
-   # 個別サービスデプロイ
-   make deploy-discord-bot
-   make deploy-gather-bot
-   make deploy-web
-   make deploy-lambda
+# 個別サービスデプロイ  
+make deploy-discord-bot
+make deploy-gather-bot
+make deploy-web
+```
 
-   # CloudFormation統合スタック管理
-   make update-infra
-   make update-ssm
-   ```
+### Minecraftプラグインビルド
+```bash
+make build-mc-plugins
+```
 
-3. **Minecraftプラグインビルド**
-   ```bash
-   make build-mc-plugins
-   ```
-
-4. **監視・デバッグ**
-   ```bash
-   # サービス状態確認
-   make status-ecs
-   make status-lambda
-
-   # ログ確認
-   make logs-discord-bot
-   make logs-gather-bot
-   make logs-web
-   make logs-lambda
-   ```
-
-5. **テスト・動作確認**
-   ```bash
-   make test-lambda
-   make test-api-gateway
-   make test-minecraft-discord
-   ```
-
-6. **開発ツール**
-   ```bash
-   # SSMパラメータ管理
-   make ssm-backup
-   make validate-ssm
-
-   # AWS設定管理
-   make setup-config-files
-   make validate-aws-configs
-
-   # 初回セットアップ
-   make setup-first-time
-   make setup-prerequisites
-   ```
-
-## 環境変数管理
-
-全ての機密情報は AWS SSM Parameter Store で管理されています。
-
-- `/kishax/discord/*` - Discord Bot設定
-- `/kishax/gather/*` - Gather Bot設定
-- `/kishax/slack/*` - Slack通知設定
-- `/kishax/web/*` - Web アプリケーション設定
-- `/kishax/sqs/*` - SQS設定
-
-## アーキテクチャ
+## アーキテクチャ概要
 
 ```
 [Minecraft Server] → [API Gateway] → [Lambda] → [SQS] → [Discord Bot]
-                                                     ↓
-[Web App] ←→ [RDS PostgreSQL]              [Discord API]
-
+[Web App] ←→ [RDS PostgreSQL]
 [Gather Bot] → [Slack API]
 ```
 
 ## 開発ガイド
 
-- [デプロイメントガイド](./DEPLOY.md)
+- [デプロイメントガイド](./aws/DEPLOY.md)
 - [AWS インフラ詳細](./aws/README.md)
 - [各サービス別README](./*/README.md)
 
