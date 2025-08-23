@@ -50,8 +50,8 @@ jobs:
       # 3. 課題キーが見つからなかった場合に新規作成
       # =================================================================
       - name: Create Jira issue if not found
-        # PRがオープンされた時だけ、新しいタスクを作成するように条件を限定
-        if: github.event.action == 'opened' && !steps.find_issue.outputs.issue
+        # PRがオープンされた時で、issue keyが見つからなかった場合に新しいタスクを作成
+        if: github.event.action == 'opened' && steps.find_issue.outcome == 'failure'
         id: create_issue
         uses: atlassian/gajira-create@v3
         with:
@@ -88,7 +88,7 @@ jobs:
       # 4. 【ここから共通処理】担当者割り当てとステータス移行
       # =================================================================
       - name: Get Jira Account ID from mapping
-        if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
+        if: steps.find_issue.outcome == 'success' || steps.create_issue.outcome == 'success'
         id: get_jira_account_id
         uses: actions/github-script@v7
         env:
@@ -107,8 +107,8 @@ jobs:
           result-encoding: string
 
       - name: Assign Jira issue using REST API
-        # PRがオープンまたは再オープンされた時だけ担当者を割り当てる
-        if: (github.event.action == 'opened' || github.event.action == 'reopened') && steps.get_jira_account_id.outputs.result
+        # PRがオープンまたは再オープンされた時で、JiraアカウントIDが取得できた場合に担当者を割り当てる
+        if: (github.event.action == 'opened' || github.event.action == 'reopened') && steps.get_jira_account_id.outputs.result != 'null' && steps.get_jira_account_id.outputs.result != ''
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
@@ -125,7 +125,7 @@ jobs:
             --data "{\"accountId\": \"${ACCOUNT_ID}\"}"
 
       - name: Get current issue status using REST API
-        if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
+        if: steps.find_issue.outcome == 'success' || steps.create_issue.outcome == 'success'
         id: get_status
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
@@ -146,7 +146,7 @@ jobs:
       # -----------------------------------------------------------------
       - name: Transition issue to 'In Progress'
         if: >
-          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          (steps.find_issue.outcome == 'success' || steps.create_issue.outcome == 'success') &&
           (github.event.action == 'opened' || github.event.action == 'reopened') &&
           contains(steps.get_status.outputs.status, 'タスク')
         uses: atlassian/gajira-transition@v3
@@ -160,7 +160,7 @@ jobs:
 
       - name: Transition issue to 'In Review'
         if: >
-          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          (steps.find_issue.outcome == 'success' || steps.create_issue.outcome == 'success') &&
           github.event.action == 'review_requested' &&
           contains(steps.get_status.outputs.status, '進行中')
         uses: atlassian/gajira-transition@v3
@@ -174,7 +174,7 @@ jobs:
 
       - name: Transition issue to 'Done'
         if: >
-          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          (steps.find_issue.outcome == 'success' || steps.create_issue.outcome == 'success') &&
           github.event.action == 'closed' &&
           github.event.pull_request.merged == true &&
           (contains(steps.get_status.outputs.status, '進行中') || contains(steps.get_status.outputs.status, 'レビュー待ち'))
