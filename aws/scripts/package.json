@@ -1,0 +1,13 @@
+{
+  "name": "kishax-aws-config-generator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AWS設定ファイル動的生成ツール",
+  "main": "generate-config.js",
+  "scripts": {
+    "generate": "node generate-config.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  }
+}
