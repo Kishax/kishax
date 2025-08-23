@@ -1,0 +1,11 @@
+{
+  "body": "{\"type\": \"minecraft_join\", \"player\": \"TestPlayer\", \"server\": \"kishax-mc\"}",
+  "httpMethod": "POST",
+  "path": "/discord",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "requestContext": {
+    "requestId": "test-request-123"
+  }
+}
