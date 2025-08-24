@@ -2,6 +2,9 @@
 
 [![Visit Website](https://img.shields.io/badge/Visit_Website-007BFF?style=for-the-badge)](https://kishax.net/)  
 
+## Note
+This is also used by [Kishax/infrastructure](https://github.com/Kishax/infrastructure).
+
 ## Feature
 This is able to use in both Velocity and Spigot. But this is created for myself for my server. So this plugin is maybe good for plugin developers. Freely to Edit! For developers, please refer to [README-DEV.md](README-DEV.md).  
 Also, this repository uses discord-bot with AWS. See [../discord-bot/](../discord-bot/) in details.
@@ -130,3 +133,4 @@ Sockets are enable us to communicate between Velocity and Spigot Servers.
 
 ## Dependancy
 * [Luckperms](https://github.com/LuckPerms/LuckPerms)
+
