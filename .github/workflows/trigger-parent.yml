@@ -13,10 +13,11 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
-    
+
     env:
       PARENT_REPO_URL: https://api.github.com/repos/Kishax/infrastructure/dispatches
-      EVENT_TYPE: Detect changes from kishax
+      # リポジトリ名を動的に取得
+      EVENT_TYPE: "Detect changes from ${{ github.event.repository.name }}"
 
     steps:
       - name: Trigger repository_dispatch in Kishax/infrastructure
