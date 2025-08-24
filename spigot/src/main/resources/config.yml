@@ -10,12 +10,12 @@ Portals:
 MySQL:
   Host: ""
   Database: ""
-  Port: 
+  Port: 3306
   User: ""
   Password: ""
 
 Socket:
-  Server_Port: 
+  Server_Port:
 
 AutoStop:
   Mode: false

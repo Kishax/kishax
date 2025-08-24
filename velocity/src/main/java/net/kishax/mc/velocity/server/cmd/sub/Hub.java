@@ -27,7 +27,7 @@ public class Hub implements SimpleCommand {
   private final Logger logger;
   private final Database db;
   private final Luckperms lp;
-  private final String[] subcommands = {"hub"};
+  private final String[] subcommands = { "hub" };
 
   @Inject
   public Hub(ProxyServer server, Logger logger, Database db, Luckperms lp) {
@@ -58,7 +58,8 @@ public class Hub implements SimpleCommand {
         if (rs.next()) {
           String serverName = rs.getString("name");
           player.sendMessage(Component.text("Sending you to the hub..."));
-          this.server.getServer(serverName).ifPresent(presentServer -> player.createConnectionRequest(presentServer).fireAndForget());
+          this.server.getServer(serverName)
+              .ifPresent(presentServer -> player.createConnectionRequest(presentServer).fireAndForget());
         } else {
           source.sendMessage(Component.text("Hub server is not available.").color(NamedTextColor.RED));
         }
@@ -80,7 +81,8 @@ public class Hub implements SimpleCommand {
     switch (args.length) {
       case 0, 1 -> {
         for (String subcmd : subcommands) {
-          if (!source.hasPermission("kishax.proxy." + subcmd)) continue;
+          if (!source.hasPermission("kishax.proxy." + subcmd))
+            continue;
           ret.add(subcmd);
         }
         return ret;

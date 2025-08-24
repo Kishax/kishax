@@ -39,7 +39,8 @@ public class PlayerUtils {
   }
 
   public synchronized void loadPlayers() {
-    if (isLoaded) return;
+    if (isLoaded)
+      return;
     String query = "SELECT * FROM members;";
     try (Connection conn = db.getConnection();
         PreparedStatement ps = conn.prepareStatement(query)) {
@@ -123,7 +124,8 @@ public class PlayerUtils {
 
   public String getPlayerNameByUUIDFromDB(String playerUUID) {
     try (Connection conn = db.getConnection();
-        PreparedStatement ps = conn.prepareStatement("SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;")) {
+        PreparedStatement ps = conn
+            .prepareStatement("SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;")) {
       ps.setString(1, playerUUID);
       try (ResultSet rs = ps.executeQuery()) {
         if (rs.next()) {
@@ -141,7 +143,8 @@ public class PlayerUtils {
 
   public UUID getPlayerNameByUUIDFromDB(UUID playerUUID) {
     try (Connection conn = db.getConnection();
-        PreparedStatement ps = conn.prepareStatement("SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;")) {
+        PreparedStatement ps = conn
+            .prepareStatement("SELECT name FROM members WHERE uuid=? ORDER BY id DESC LIMIT 1;")) {
       ps.setString(1, playerUUID.toString());
       try (ResultSet rs = ps.executeQuery()) {
         if (rs.next()) {
@@ -163,9 +166,9 @@ public class PlayerUtils {
     try {
       HttpClient client = HttpClient.newHttpClient();
       HttpRequest request = HttpRequest.newBuilder()
-        .uri(new URI(urlString))
-        .header("User-Agent", "Mozilla/5.0")
-        .build();
+          .uri(new URI(urlString))
+          .header("User-Agent", "Mozilla/5.0")
+          .build();
 
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
       if (response.statusCode() == 200) {
@@ -178,7 +181,8 @@ public class PlayerUtils {
         return null;
       }
     } catch (JsonSyntaxException | IOException | InterruptedException | URISyntaxException e) {
-      logger.error("A JsonSyntaxException | IOException | InterruptedException | URISyntaxException error occurred: {}", e.getMessage());
+      logger.error("A JsonSyntaxException | IOException | InterruptedException | URISyntaxException error occurred: {}",
+          e.getMessage());
       for (StackTraceElement element : e.getStackTrace()) {
         logger.error(element.toString());
       }

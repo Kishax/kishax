@@ -37,7 +37,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class Command implements TabExecutor {
   private final JavaPlugin plugin;
   private final PortalsConfig psConfig;
-  private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload","fv","mcvc","portal","hideplayer", "im", "image", "menu", "button", "check", "setpoint", "confirm", "back"));
+  private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload", "fv", "mcvc", "portal", "hideplayer",
+      "im", "image", "menu", "button", "check", "setpoint", "confirm", "back"));
 
   @Inject
   public Command(JavaPlugin plugin, PortalsConfig psConfig) {
@@ -68,7 +69,7 @@ public class Command implements TabExecutor {
       case "menu" -> Main.getInjector().getInstance(MenuExecutor.class).execute(sender, cmd, label, args);
       case "check" -> Main.getInjector().getInstance(Check.class).execute(sender, cmd, label, args);
       case "setpoint" -> Main.getInjector().getInstance(SetPoint.class).execute(sender, cmd, label, args);
-      case "image","im" -> {
+      case "image", "im" -> {
         if (args.length > 1) {
           if (!sender.hasPermission("kishax." + args[0] + "." + args[1])) {
             sender.sendMessage(ChatColor.RED + "権限がありません。");
@@ -112,13 +113,15 @@ public class Command implements TabExecutor {
       case 1 -> {
         Collections.sort(subcommands);
         for (String subcmd : subcommands) {
-          if (!sender.hasPermission("kishax." + subcmd)) continue;
+          if (!sender.hasPermission("kishax." + subcmd))
+            continue;
           ret.add(subcmd);
         }
         return StringUtil.copyPartialMatches(args[0].toLowerCase(), ret, new ArrayList<>());
       }
       case 2 -> {
-        if (!sender.hasPermission("kishax." + args[0].toLowerCase())) return Collections.emptyList();
+        if (!sender.hasPermission("kishax." + args[0].toLowerCase()))
+          return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "setpoint" -> {
             List<String> types = new ArrayList<>(Arrays.asList("load", "room", "hub"));
@@ -126,15 +129,17 @@ public class Command implements TabExecutor {
           }
           case "potion" -> {
             for (PotionEffectType potion : PotionEffectType.values()) {
-              if (!sender.hasPermission("kishax.potion." + potion.getName().toLowerCase())) continue;
+              if (!sender.hasPermission("kishax.potion." + potion.getName().toLowerCase()))
+                continue;
               ret.add(potion.getName());
             }
             return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
           }
           case "portal" -> {
-            List<String> portalCmds = new ArrayList<>(Arrays.asList("nether","wand","delete","rename"));
+            List<String> portalCmds = new ArrayList<>(Arrays.asList("nether", "wand", "delete", "rename"));
             for (String portalcmd : portalCmds) {
-              if (!sender.hasPermission("kishax.portal." + portalcmd)) continue;
+              if (!sender.hasPermission("kishax.portal." + portalcmd))
+                continue;
               ret.add(portalcmd);
             }
             return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
@@ -145,7 +150,7 @@ public class Command implements TabExecutor {
             }
             return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
           }
-          case "image","im" -> {
+          case "image", "im" -> {
             for (String args2 : ImageMap.args2) {
               ret.add(args2);
             }
@@ -160,7 +165,8 @@ public class Command implements TabExecutor {
         }
       }
       case 3 -> {
-        if (!sender.hasPermission("kishax." + args[0].toLowerCase())) return Collections.emptyList();
+        if (!sender.hasPermission("kishax." + args[0].toLowerCase()))
+          return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "menu" -> {
             switch (args[1].toLowerCase()) {
@@ -169,13 +175,13 @@ public class Command implements TabExecutor {
                   ret.add(portalMenuServerCmd);
                 }
                 return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
-                  }
+              }
               case "tp" -> {
                 for (String portalMenuTpCmd : MenuExecutor.args2tp) {
                   ret.add(portalMenuTpCmd);
                 }
                 return StringUtil.copyPartialMatches(args[2].toLowerCase(), ret, new ArrayList<>());
-                  }
+              }
               case "image" -> {
                 for (String imageArg : MenuExecutor.args2image) {
                   ret.add(imageArg);
@@ -186,7 +192,7 @@ public class Command implements TabExecutor {
           }
           case "portal" -> {
             switch (args[1].toLowerCase()) {
-              case "delete","rename" -> {
+              case "delete", "rename" -> {
                 List<Map<?, ?>> portals = psConfig.getListMap("portals");
                 if (portals != null) {
                   for (Map<?, ?> portal : portals) {
@@ -207,7 +213,8 @@ public class Command implements TabExecutor {
         }
       }
       case 4 -> {
-        if (!sender.hasPermission("kishax." + args[0].toLowerCase())) return Collections.emptyList();
+        if (!sender.hasPermission("kishax." + args[0].toLowerCase()))
+          return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "menu" -> {
             switch (args[1].toLowerCase()) {

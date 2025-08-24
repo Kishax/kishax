@@ -1,6 +1,7 @@
 package net.kishax.mc.velocity.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,6 +42,10 @@ public class RomajiConversion {
     RomajiDefinitionData = new ArrayList<>();
 
     try {
+      if (!Files.exists(filePath)) {
+        logger.info("romaji.csv file not found at: " + filePath + ". Copying from resources...");
+        copyFromResources(filePath);
+      }
       List<String> lines = Files.readAllLines(filePath);
 
       // データの読み込み処理
@@ -56,6 +61,22 @@ public class RomajiConversion {
       for (StackTraceElement element : e.getStackTrace()) {
         logger.error(element.toString());
       }
+    }
+  }
+
+  private void copyFromResources(Path targetPath) throws IOException {
+    try (InputStream resourceStream = getClass().getResourceAsStream("/romaji.csv")) {
+      if (resourceStream == null) {
+        logger.error("romaji.csv not found in resources. Romaji conversion will be disabled.");
+        return;
+      }
+
+      // ディレクトリが存在しない場合は作成
+      Files.createDirectories(targetPath.getParent());
+
+      // リソースファイルをコピー
+      Files.copy(resourceStream, targetPath);
+      logger.info("Successfully copied romaji.csv from resources to: " + targetPath);
     }
   }
 

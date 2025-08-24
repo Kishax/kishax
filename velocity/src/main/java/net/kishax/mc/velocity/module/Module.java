@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -27,12 +26,9 @@ import net.kishax.mc.common.socket.message.handlers.interfaces.web.MinecraftWebC
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.Main;
 import net.kishax.mc.velocity.database.VelocityDatabaseInfo;
-import net.kishax.mc.velocity.discord.Discord;
-import net.kishax.mc.velocity.discord.DiscordEventListener;
-import net.kishax.mc.velocity.discord.EmojiManager;
-import net.kishax.mc.velocity.discord.MessageEditor;
-import net.kishax.mc.velocity.discord.Webhooker;
-import net.kishax.mc.velocity.server.Board;
+import net.kishax.mc.velocity.aws.AwsApiClient;
+import net.kishax.mc.velocity.aws.AwsConfig;
+import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.GeyserMC;
@@ -51,6 +47,7 @@ import net.kishax.mc.velocity.socket.message.handlers.minecraft.server.VelocityS
 import net.kishax.mc.velocity.socket.message.handlers.web.VelocityMinecraftWebConfirmHandler;
 import net.kishax.mc.velocity.util.RomaToKanji;
 import net.kishax.mc.velocity.util.RomajiConversion;
+import net.kishax.mc.velocity.util.SettingsSyncService;
 import net.kishax.mc.velocity.util.config.ConfigUtils;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
 
@@ -59,6 +56,7 @@ public class Module extends AbstractModule {
   private final ProxyServer server;
   private final Logger logger;
   private final Path dataDirectory;
+
   public Module(Main plugin, ProxyServer server, Logger logger, Path dataDirectory) {
     this.plugin = plugin;
     this.server = server;
@@ -81,19 +79,23 @@ public class Module extends AbstractModule {
     bind(RomaToKanji.class);
     bind(PlayerDisconnect.class);
     bind(RomajiConversion.class);
-    //bind(Discord.class);
-    bind(DiscordEventListener.class);
-    bind(EmojiManager.class);
-    bind(MessageEditor.class);
+    bind(SettingsSyncService.class);
+    // AWS Discord サービス関連
+    bind(AwsConfig.class);
+    bind(AwsDiscordService.class);
+    // Discord関連は無効化
+    // bind(Discord.class);
+    // bind(DiscordEventListener.class);
+    // bind(EmojiManager.class);
+    // bind(MessageEditor.class);
+    // bind(Webhooker.class);
     bind(MineStatus.class);
     bind(ConfigUtils.class);
-    //bind(Request.class).to(VelocityRequest.class);
+    bind(Request.class).to(VelocityRequest.class);
     bind(GeyserMC.class);
     bind(Maintenance.class);
-    bind(Board.class);
     bind(CommandForwarder.class);
     bind(Luckperms.class);
-    bind(Webhooker.class);
 
     bind(ForwardHandler.class).to(VelocityForwardHandler.class);
     bind(ImageMapHandler.class).to(VelocityImageMapHandler.class);
@@ -106,40 +108,40 @@ public class Module extends AbstractModule {
     bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
   }
 
-  @Provides
-  @Singleton
-  public Request provideRequest(
-    ProxyServer server, 
-    Logger logger, 
-    VelocityConfig config, 
-    Database db, 
-    BroadCast bc, 
-    Discord discord, 
-    MessageEditor discordME, 
-    EmojiManager emoji, 
-    Luckperms lp, 
-    PlayerUtils pu, 
-    DoServerOnline dso,
-    PlayerDisconnect pd
-  ) {
-    return new VelocityRequest(server, logger, config, db, bc, discord, discordME, emoji, lp, pu, dso, pd);
-  }
+  // 一時的にコメントアウト（VelocityRequestがDiscord依存のため後で対応）
+  /*
+   * @Provides
+   * 
+   * @Singleton
+   * public Request provideRequest(
+   * ProxyServer server,
+   * Logger logger,
+   * VelocityConfig config,
+   * Database db,
+   * BroadCast bc,
+   * AwsDiscordService awsDiscordService,
+   * Luckperms lp,
+   * PlayerUtils pu,
+   * DoServerOnline dso,
+   * PlayerDisconnect pd
+   * ) {
+   * return new VelocityRequest(server, logger, config, db, bc, awsDiscordService,
+   * lp, pu, dso, pd);
+   * }
+   */
 
   @Provides
   @Singleton
-  public Discord provideDiscord(
-    Logger logger, 
-    VelocityConfig config, 
-    Database db, 
-    Provider<Request> reqProvider,
-    Provider<MessageEditor> discordMEProvider,
-    BroadCast bc
-  ) {
-    try {
-      return new Discord(logger, config, db, discordMEProvider, reqProvider, bc);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+  public AwsApiClient provideAwsApiClient(AwsConfig awsConfig) {
+    if (awsConfig.isAwsConfigValid()) {
+      return new AwsApiClient(
+          awsConfig.getAwsRegion(),
+          awsConfig.getApiGatewayServiceName(),
+          awsConfig.getAwsAccessKey(),
+          awsConfig.getAwsSecretKey(),
+          awsConfig.getApiGatewayUrl());
     }
+    throw new RuntimeException("AWS設定が無効です");
   }
 
   @Provides

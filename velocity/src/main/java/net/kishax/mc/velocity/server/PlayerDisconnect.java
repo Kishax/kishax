@@ -13,7 +13,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import net.kishax.mc.common.database.Database;
-import net.kishax.mc.velocity.discord.MessageEditor;
+import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.util.RomaToKanji;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -24,16 +24,16 @@ public class PlayerDisconnect {
   private final Logger logger;
   private final Database db;
   private final ConsoleCommandSource console;
-  private final MessageEditor discordME;
+  private final AwsDiscordService awsDiscordService;
 
   @Inject
   public PlayerDisconnect(Logger logger, ProxyServer server, Database db, BroadCast bc, ConsoleCommandSource console,
-      RomaToKanji conv, MessageEditor discordME) {
+      RomaToKanji conv, AwsDiscordService awsDiscordService) {
     this.logger = logger;
     this.server = server;
     this.db = db;
     this.console = console;
-    this.discordME = discordME;
+    this.awsDiscordService = awsDiscordService;
   }
 
   public void menteDisconnect(List<String> UUIDs) {
@@ -79,7 +79,7 @@ public class PlayerDisconnect {
       int rsAffected = ps.executeUpdate();
       if (rsAffected > 0) {
         try {
-          discordME.AddEmbedSomeMessage("Invader", player);
+          awsDiscordService.sendBotMessage("侵入者が現れました。プレイヤー: " + player.getUsername(), 0xFF0000);
         } catch (Exception e) {
           logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
           for (StackTraceElement ste : e.getStackTrace()) {

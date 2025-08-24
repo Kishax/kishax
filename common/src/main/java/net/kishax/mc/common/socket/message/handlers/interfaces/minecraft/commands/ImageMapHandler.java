@@ -5,4 +5,3 @@ import net.kishax.mc.common.socket.message.Message;
 public interface ImageMapHandler {
   void handle(Message.Minecraft.Command.ImageMap imagemap);
 }
-

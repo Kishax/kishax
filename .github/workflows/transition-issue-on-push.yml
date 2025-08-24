@@ -18,8 +18,8 @@ jobs:
       # 【修正】プッシュされた全コミットメッセージから課題キーを抽出する
       - name: Find issue key in commit messages
         id: find
-        # バージョンをv3に更新し、安定性を向上
         uses: atlassian/gajira-find-issue-key@v3
+        # バージョンをv3に更新し、安定性を向上
         # 'with'ブロックを削除することで、デフォルトの動作である
         # コミットメッセージの検索が有効になります。
 

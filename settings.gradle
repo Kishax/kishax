@@ -2,20 +2,10 @@ pluginManagement {
   repositories {
     mavenLocal()
     gradlePluginPortal()
-    maven {
-      name = 'fabric'
-        url = 'https://maven.fabricmc.net/'
-    }
-    maven {
-      name = 'MinecraftForge'
-      url = 'https://maven.minecraftforge.net/'
-    }
-    maven { url = 'https://maven.parchmentmc.org' }
     // maven {
     //   name = "papermc"
     //   url = uri("https://repo.papermc.io/repository/maven-public/")
     // }
-    maven { url = 'https://maven.neoforged.net/releases' }
   }
 }
 
@@ -28,20 +18,10 @@ dependencyResolutionManagement {
     mavenLocal()
     gradlePluginPortal()
     mavenCentral()
-    maven {
-      name = 'fabric'
-      url = 'https://maven.fabricmc.net/'
-    }
-    maven {
-      name = 'MinecraftForge'
-      url = 'https://maven.minecraftforge.net/'
-    }
-    maven { url = 'https://maven.parchmentmc.org' }
     // maven {
     //   name = "papermc"
     //   url = uri("https://repo.papermc.io/repository/maven-public/")
     // }
-    maven { url = 'https://maven.neoforged.net/releases' }
   }
 }
 
@@ -50,18 +30,5 @@ include (
   'common',
   'velocity',
   'spigot:svcore',
-  'spigot:sv1_20_2',
-  'spigot:sv1_21_3',
-  'spigot:sv1_21_4',
-  'spigot:sv1_21_5',
-  'spigot:sv1_21_6',
-  'spigot:sv1_21_7',
-  'fabric:favcore',
-  'fabric:fav1_20_1',
-  'fabric:fav1_20_4',
-  'forge:fovcore',
-  'forge:fov1_21_1',
-  'neoforge:neofovcore',
-  'neoforge:neofov1_21_1',
-  'libs',
+  'spigot:sv1_21_8',
 )

@@ -21,10 +21,10 @@ public class ReloadConfig {
   public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
     try {
       psConfig.loadConfig();
-      sender.sendMessage(ChatColor.GREEN+"コンフィグをリロードしました。");
+      sender.sendMessage(ChatColor.GREEN + "コンフィグをリロードしました。");
     } catch (Exception e) {
-      sender.sendMessage(ChatColor.RED+"コンフィグのリロードに失敗しました。");
-      logger.error("An error occurred while reloading the config: "+e.getMessage());
+      sender.sendMessage(ChatColor.RED + "コンフィグのリロードに失敗しました。");
+      logger.error("An error occurred while reloading the config: " + e.getMessage());
       for (StackTraceElement element : e.getStackTrace()) {
         logger.error(element.toString());
       }

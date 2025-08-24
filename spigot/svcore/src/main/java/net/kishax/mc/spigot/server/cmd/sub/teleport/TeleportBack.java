@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
@@ -33,7 +34,8 @@ public class TeleportBack implements TabExecutor {
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
-  public TeleportBack(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, Provider<SocketSwitch> sswProvider) {
+  public TeleportBack(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp,
+      Provider<SocketSwitch> sswProvider) {
     this.audiences = audiences;
     this.logger = logger;
     this.db = db;
@@ -48,7 +50,13 @@ public class TeleportBack implements TabExecutor {
       int permLevel = lp.getPermLevel(playerName);
       if (permLevel < 1) {
         player.sendMessage(ChatColor.RED + "まだWEB認証が完了していません。");
-        player.teleport(Coords.ROOM_POINT.getLocation());
+        Location roomLocation = Coords.ROOM_POINT.getLocation();
+        if (roomLocation != null) {
+          player.teleport(roomLocation);
+        } else {
+          Coords.ROOM_POINT.saveLocation(player.getLocation());
+          player.sendMessage(ChatColor.YELLOW + "ルームポイントを現在の座標に設定しました。");
+        }
       } else {
         if (EventListener.playerBeforeLocationMap.containsKey(player)) {
           Message msg = new Message();
@@ -68,8 +76,8 @@ public class TeleportBack implements TabExecutor {
           }
 
           Component message = Component.text("テレポート前の座標に戻りました。")
-            .color(NamedTextColor.GREEN)
-            .decorate(TextDecoration.BOLD);
+              .color(NamedTextColor.GREEN)
+              .decorate(TextDecoration.BOLD);
 
           audiences.player(player).sendMessage(message);
 
@@ -77,8 +85,8 @@ public class TeleportBack implements TabExecutor {
           EventListener.playerBeforeLocationMap.remove(player);
         } else {
           Component message = Component.text("テレポート前の座標がありません。")
-            .color(NamedTextColor.RED)
-            .decorate(TextDecoration.BOLD);
+              .color(NamedTextColor.RED)
+              .decorate(TextDecoration.BOLD);
 
           audiences.player(player).sendMessage(message);
         }

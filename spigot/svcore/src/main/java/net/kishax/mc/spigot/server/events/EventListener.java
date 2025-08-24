@@ -347,9 +347,23 @@ public final class EventListener implements Listener {
     if (EventListener.isHub.get()) {
       int permLevel = lp.getPermLevel(player.getName());
       if (permLevel < 1) {
-        player.teleport(Coords.LOAD_POINT.getLocation());
+        Location loadLocation = Coords.LOAD_POINT.getLocation();
+        if (loadLocation != null) {
+          player.teleport(loadLocation);
+        } else {
+          Location currentLocation = player.getLocation();
+          Coords.LOAD_POINT.saveLocation(currentLocation);
+          player.sendMessage(ChatColor.YELLOW + "初回参加のため、現在の座標をロードポイントとして設定しました。");
+        }
       } else {
-        player.teleport(Coords.HUB_POINT.getLocation());
+        Location hubLocation = Coords.HUB_POINT.getLocation();
+        if (hubLocation != null) {
+          player.teleport(hubLocation);
+        } else {
+          Location currentLocation = player.getLocation();
+          Coords.HUB_POINT.saveLocation(currentLocation);
+          player.sendMessage(ChatColor.YELLOW + "初回参加のため、現在の座標をハブポイントとして設定しました。");
+        }
         if (player.getGameMode() != GameMode.CREATIVE) {
           player.setGameMode(GameMode.CREATIVE);
           player.sendMessage(ChatColor.GREEN + "クリエイティブモードに変更しました。");

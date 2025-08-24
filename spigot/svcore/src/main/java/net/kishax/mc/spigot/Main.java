@@ -80,7 +80,7 @@ public class Main extends JavaPlugin {
     try {
       getInjector().getInstance(DoServerOffline.class).updateDatabase();
     } catch (Exception e) {
-      logger.error( "An error occurred while updating the database: {}", e.getMessage());
+      logger.error("An error occurred while updating the database: {}", e.getMessage());
     }
     getInjector().getInstance(AutoShutdown.class).stopCheckForPlayers();
     logger.info("Socket Server stopping...");
@@ -89,17 +89,17 @@ public class Main extends JavaPlugin {
 
   private void registerCommand() {
     PluginCommand kishaxCmd = getCommand("kishax"),
-      qCmd = getCommand("q"),
-      tprCmd = getCommand("tpr"),
-      tprmCmd = getCommand("tprm"),
-      tprmaCmd = getCommand("tprma"),
-      tpraCmd = getCommand("tpra"),
-      tprdCmd = getCommand("tprd"),
-      tprmdCmd = getCommand("tprmd"),
-      registerpointCmd = getCommand("registerpoint"),
-      registerimagemapCmd = getCommand("registerimagemap"),
-      backCmd = getCommand("back"),
-      nvCmd = getCommand("nv");
+        qCmd = getCommand("q"),
+        tprCmd = getCommand("tpr"),
+        tprmCmd = getCommand("tprm"),
+        tprmaCmd = getCommand("tprma"),
+        tpraCmd = getCommand("tpra"),
+        tprdCmd = getCommand("tprd"),
+        tprmdCmd = getCommand("tprmd"),
+        registerpointCmd = getCommand("registerpoint"),
+        registerimagemapCmd = getCommand("registerimagemap"),
+        backCmd = getCommand("back"),
+        nvCmd = getCommand("nv");
 
     if (kishaxCmd != null) {
       kishaxCmd.setExecutor(getInjector().getInstance(Command.class));
@@ -109,7 +109,8 @@ public class Main extends JavaPlugin {
       qCmd.setExecutor(getInjector().getInstance(Q.class));
     }
 
-    if (tprCmd != null && tprmCmd != null && tpraCmd != null && tprmaCmd != null && tprdCmd != null && tprmdCmd != null) {
+    if (tprCmd != null && tprmCmd != null && tpraCmd != null && tprmaCmd != null && tprdCmd != null
+        && tprmdCmd != null) {
       tprCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
       tprmCmd.setExecutor(getInjector().getInstance(TeleportRequest.class));
       tpraCmd.setExecutor(getInjector().getInstance(TeleportAccept.class));

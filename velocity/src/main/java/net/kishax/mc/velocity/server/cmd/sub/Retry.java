@@ -28,7 +28,7 @@ public class Retry implements SimpleCommand {
   private final Logger logger;
   private final Database db;
   private final Luckperms lp;
-  private final String[] subcommands = {"retry"};
+  private final String[] subcommands = { "retry" };
 
   @Inject
   public Retry(Logger logger, Database db, Luckperms lp) {
@@ -42,7 +42,7 @@ public class Retry implements SimpleCommand {
     CommandSource source = invocation.source();
     if (!(source instanceof Player)) {
       if (source != null) {
-        source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));	
+        source.sendMessage(Component.text("このコマンドはプレイヤーのみが実行できます。").color(NamedTextColor.RED));
       }
       return;
     }
@@ -61,13 +61,13 @@ public class Retry implements SimpleCommand {
       int rsAffected = ps.executeUpdate();
       if (rsAffected > 0) {
         TextComponent component = Component.text()
-          .append(Component.text("認証コードを再生成しました。").color(NamedTextColor.GREEN))
-          .append(Component.text("\n認証コードは ").color(NamedTextColor.WHITE))
-          .append(Component.text(ranumstr).color(NamedTextColor.BLUE)
-            .clickEvent(ClickEvent.copyToClipboard(ranumstr))
-            .hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
-          .append(Component.text(" です。").color(NamedTextColor.WHITE))
-          .build();
+            .append(Component.text("認証コードを再生成しました。").color(NamedTextColor.GREEN))
+            .append(Component.text("\n認証コードは ").color(NamedTextColor.WHITE))
+            .append(Component.text(ranumstr).color(NamedTextColor.BLUE)
+                .clickEvent(ClickEvent.copyToClipboard(ranumstr))
+                .hoverEvent(HoverEvent.showText(Component.text("(クリックして)コピー"))))
+            .append(Component.text(" です。").color(NamedTextColor.WHITE))
+            .build();
         player.sendMessage(component);
       } else {
         player.sendMessage(Component.text("認証コードの再生成に失敗しました。").color(NamedTextColor.RED));
@@ -88,7 +88,8 @@ public class Retry implements SimpleCommand {
     switch (args.length) {
       case 0, 1 -> {
         for (String subcmd : subcommands) {
-          if (!source.hasPermission("kishax.proxy." + subcmd)) continue;
+          if (!source.hasPermission("kishax.proxy." + subcmd))
+            continue;
           ret.add(subcmd);
         }
         return ret;

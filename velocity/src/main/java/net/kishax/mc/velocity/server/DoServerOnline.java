@@ -178,7 +178,9 @@ public class DoServerOnline {
           makeProxyOnline(conn);
         }
         // Toml, Config情報, DB情報をすべて同期 (Tomlを主軸に)
-        Map<String, Map<String, Object>> configMap = cutils.getConfigMap("Servers");
+        Map<String, Map<String, Object>> tempConfigMap = cutils.getConfigMap("Servers");
+        final Map<String, Map<String, Object>> configMap = tempConfigMap != null ? tempConfigMap
+            : new ConcurrentHashMap<>();
         Map<String, Integer> velocityToml = getServerFromToml();
         Map<String, Map<String, Object>> dbStatusMap = new ConcurrentHashMap<>(loadStatusTable(conn));
         // dbにあってTomlにないサーバーは削除対象

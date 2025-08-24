@@ -1,7 +1,3 @@
-jdt.ls-java-project/
-*~
-experience/
-/.vscode/
 ### Gradle & IntelliJ ###
 .gradle/
 /.idea/
@@ -10,7 +6,7 @@ out/
 run/
 *.iml
 .idea_modules/
-.vscode/
+
 ### Eclipse ###
 .metadata
 bin/
@@ -31,50 +27,36 @@ local.properties
 .project
 .classpath
 
-
-### Linux ###
-*~
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
-
-
-### macOS ###
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-
 ### NetBeans ###
 nbproject/private/
-#build/
 nbbuild/
 dist/
 nbdist/
 .nb-gradle/
 
+### Docker機密情報 ###
+.env
+.env.local
+.env.production
 
-### Windows ###
-# Windows thumbnail cache files
-Thumbs.db
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-*.lnk
+### ログファイル ###
+*.log
+logs/
+
+### Minecraft サーバーファイル ###
+eula.txt
+server.properties
+whitelist.json
+banned-*.json
+ops.json
+usercache.json
+usernamecache.json
+world/
+world_nether/
+world_the_end/
+plugins/*/data/
+velocity/forwarding.secret
+
+### MySQL データベース ###
+*.sql.backup
+dump.sql

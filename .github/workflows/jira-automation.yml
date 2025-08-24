@@ -50,8 +50,8 @@ jobs:
       # 3. 課題キーが見つからなかった場合に新規作成
       # =================================================================
       - name: Create Jira issue if not found
-        # PRがオープンされた時だけ、新しいタスクを作成するように条件を限定
-        if: github.event.action == 'opened' && !steps.find_issue.outputs.issue
+        # PRがオープンされた時で、issue keyが見つからなかった場合に新しいタスクを作成
+        if: github.event.action == 'opened' && steps.find_issue.outcome == 'failure'
         id: create_issue
         uses: atlassian/gajira-create@v3
         with:
@@ -85,10 +85,75 @@ jobs:
             });
 
       # =================================================================
-      # 4. 【ここから共通処理】担当者割り当てとステータス移行
+      # 3.5. PR-Close時にissue keyが見つからない場合のPRコメント検索
+      # =================================================================
+      - name: Search for Jira issue key in bot comments (for close action)
+        if: github.event.action == 'closed' && steps.find_issue.outcome == 'failure'
+        id: find_issue_in_comments
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            // まず、github-actions botの自動作成コメントを優先検索
+            for (const comment of comments.data) {
+              // github-actions botのコメントをチェック
+              if (comment.user.login === 'github-actions[bot]' || comment.user.type === 'Bot') {
+                // 「✅ Jira issue XXXX-XXX has been automatically created」パターンをチェック
+                const autoCreatedPattern = /✅ Jira issue ([A-Z]+-\d+) has been automatically created/;
+                const match = comment.body.match(autoCreatedPattern);
+                if (match) {
+                  console.log(`Found auto-created issue key: ${match[1]} in bot comment`);
+                  return match[1];
+                }
+              }
+            }
+            
+            // bot自動コメントで見つからない場合は、全コメントから一般的なJira keyを検索
+            const issueKeyPattern = /([A-Z]+-\d+)/g;
+            for (const comment of comments.data) {
+              const matches = comment.body.match(issueKeyPattern);
+              if (matches && matches.length > 0) {
+                console.log(`Found issue key: ${matches[0]} in manual comment`);
+                return matches[0];
+              }
+            }
+            
+            console.log('No issue key found in PR comments');
+            return null;
+          result-encoding: string
+
+      # =================================================================
+      # 4. 【ここから共通処理】課題キーの確定とデバッグ出力
+      # =================================================================
+      - name: Set and debug issue key
+        id: set_issue_key
+        run: |
+          ISSUE_KEY=""
+          if [ "${{ steps.find_issue.outcome }}" == "success" ]; then
+            ISSUE_KEY="${{ steps.find_issue.outputs.issue }}"
+          elif [ "${{ steps.create_issue.outcome }}" == "success" ]; then
+            ISSUE_KEY="${{ steps.create_issue.outputs.issue }}"
+          elif [ "${{ steps.find_issue_in_comments.outputs.result }}" != "null" ] && [ "${{ steps.find_issue_in_comments.outputs.result }}" != "" ]; then
+            ISSUE_KEY="${{ steps.find_issue_in_comments.outputs.result }}"
+          fi
+          
+          if [ -n "$ISSUE_KEY" ]; then
+            echo "Jira Issue Key: $ISSUE_KEY"
+            echo "issue_key=$ISSUE_KEY" >> $GITHUB_OUTPUT
+          else
+            echo "Jira Issue Key not found."
+          fi
+
+      # =================================================================
+      # 5. 担当者割り当てとステータス移行
       # =================================================================
       - name: Get Jira Account ID from mapping
-        if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
+        if: steps.set_issue_key.outputs.issue_key
         id: get_jira_account_id
         uses: actions/github-script@v7
         env:
@@ -107,16 +172,15 @@ jobs:
           result-encoding: string
 
       - name: Assign Jira issue using REST API
-        # PRがオープンまたは再オープンされた時だけ担当者を割り当てる
+        # PRがオープンまたは再オープンされた時で、JiraアカウントIDが取得できた場合に担当者を割り当てる
         if: (github.event.action == 'opened' || github.event.action == 'reopened') && steps.get_jira_account_id.outputs.result
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          ISSUE_KEY: ${{ steps.set_issue_key.outputs.issue_key }}
+          ACCOUNT_ID: ${{ steps.get_jira_account_id.outputs.result }}
         run: |
-          ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
-          ACCOUNT_ID=${{ steps.get_jira_account_id.outputs.result }}
-
           curl --fail --request PUT \
             --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}/assignee" \
             --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
@@ -125,15 +189,14 @@ jobs:
             --data "{\"accountId\": \"${ACCOUNT_ID}\"}"
 
       - name: Get current issue status using REST API
-        if: steps.find_issue.outputs.issue || steps.create_issue.outputs.issue
+        if: steps.set_issue_key.outputs.issue_key
         id: get_status
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          ISSUE_KEY: ${{ steps.set_issue_key.outputs.issue_key }}
         run: |
-          ISSUE_KEY=${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
-
           STATUS=$(curl --fail --silent --request GET \
             --url "${JIRA_BASE_URL}/rest/api/3/issue/${ISSUE_KEY}?fields=status" \
             --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
@@ -142,47 +205,35 @@ jobs:
           echo "status=$STATUS" >> $GITHUB_OUTPUT
 
       # -----------------------------------------------------------------
-      # 5. ステータス移行
+      # 6. ステータス移行
       # -----------------------------------------------------------------
       - name: Transition issue to 'In Progress'
         if: >
-          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          steps.set_issue_key.outputs.issue_key &&
           (github.event.action == 'opened' || github.event.action == 'reopened') &&
           contains(steps.get_status.outputs.status, 'タスク')
         uses: atlassian/gajira-transition@v3
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
-          issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          issue: ${{ steps.set_issue_key.outputs.issue_key }}
           transition: "進行中"
 
       - name: Transition issue to 'In Review'
         if: >
-          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          steps.set_issue_key.outputs.issue_key &&
           github.event.action == 'review_requested' &&
           contains(steps.get_status.outputs.status, '進行中')
         uses: atlassian/gajira-transition@v3
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
-          issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          issue: ${{ steps.set_issue_key.outputs.issue_key }}
           transition: "レビュー待ち"
 
       - name: Transition issue to 'Done'
         if: >
-          (steps.find_issue.outputs.issue || steps.create_issue.outputs.issue) &&
+          steps.set_issue_key.outputs.issue_key &&
           github.event.action == 'closed' &&
           github.event.pull_request.merged == true &&
           (contains(steps.get_status.outputs.status, '進行中') || contains(steps.get_status.outputs.status, 'レビュー待ち'))
         uses: atlassian/gajira-transition@v3
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
         with:
-          issue: ${{ steps.find_issue.outputs.issue || steps.create_issue.outputs.issue }}
+          issue: ${{ steps.set_issue_key.outputs.issue_key }}
           transition: "完了"
