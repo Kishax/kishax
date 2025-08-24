@@ -1,0 +1,28 @@
+name: Trigger Parent Repo
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    
+    env:
+      PARENT_REPO_URL: https://api.github.com/repos/Kishax/infrastructure/dispatches
+      EVENT_TYPE: Detect changes from kishax
+
+    steps:
+      - name: Trigger repository_dispatch in Kishax/infrastructure
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.PARENT_REPO_PAT }}" \
+          ${{ env.PARENT_REPO_URL }} \
+          -d '{"event_type":"${{ env.EVENT_TYPE }}"}'
