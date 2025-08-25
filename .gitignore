@@ -45,7 +45,6 @@ logs/
 
 ### Minecraft サーバーファイル ###
 eula.txt
-server.properties
 whitelist.json
 banned-*.json
 ops.json
