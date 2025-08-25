@@ -22,33 +22,34 @@ for sql_file in /mc/mysql/init/*.sql; do
     fi
 done
 
-# Generate random secret for Velocity forwarding
-FORWARDING_SECRET=$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9' | head -c 12)
-echo "Generated forwarding secret: $FORWARDING_SECRET"
-
-# Create forwarding.secret file for Velocity
-echo "$FORWARDING_SECRET" > /mc/velocity/forwarding.secret
-echo "Created forwarding.secret file for Velocity"
-
-# Debug: Show initial forwarding.secret content
-echo "DEBUG: Initial forwarding.secret content:"
-cat /mc/velocity/forwarding.secret
-
-# Debug: Show initial paper-global.yml content for velocity section
-echo "DEBUG: Initial paper-global.yml velocity section:"
-grep -A5 -B5 "velocity:" /mc/spigot/config/paper-global.yml || echo "paper-global.yml not found or no velocity section"
+# Check if forwarding.secret already exists
+if [ -f "/mc/velocity/forwarding.secret" ]; then
+    # Use existing secret
+    FORWARDING_SECRET=$(cat /mc/velocity/forwarding.secret)
+    echo "Using existing forwarding secret: $FORWARDING_SECRET"
+else
+    # Generate new secret for first time
+    FORWARDING_SECRET=$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9' | head -c 12)
+    echo "Generated new forwarding secret: $FORWARDING_SECRET"
+    
+    # Create forwarding.secret file for Velocity
+    echo "$FORWARDING_SECRET" > /mc/velocity/forwarding.secret
+    echo "Created forwarding.secret file for Velocity"
+fi
 
 # Replace placeholders in config files
 echo "Configuring server files..."
-find /mc -type f \( -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret" \) | while read file; do
-    echo "DEBUG: Processing file: $file"
+echo "DEBUG: AWS Environment Variables:"
+echo "AWS_REGION=${AWS_REGION}"
+echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:0:10}..." # 最初の10文字のみ表示
+echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:0:10}..." # 最初の10文字のみ表示  
+echo "WEB_TO_MC_QUEUE_URL=${WEB_TO_MC_QUEUE_URL}"
+echo "MC_TO_WEB_QUEUE_URL=${MC_TO_WEB_QUEUE_URL}"
+echo "API_GATEWAY_URL=${API_GATEWAY_URL}"
+find /mc -type f \( -name "*.yml" -o -name "*.toml" \) | while read file; do
+    echo "Processing: $file"
     
-    # Show content before replacement for critical files
-    if [[ "$file" == *"forwarding.secret"* ]] || [[ "$file" == *"paper-global.yml"* ]]; then
-        echo "DEBUG: Content before replacement in $file:"
-        cat "$file"
-    fi
-    
+    # Apply all replacements
     sed -i.bak "s|\${THIS_IS_SECRET}|${FORWARDING_SECRET}|g" "$file"
     sed -i.bak "s|\${MYSQL_HOST}|${MYSQL_HOST:-mysql}|g" "$file"
     sed -i.bak "s|\${MYSQL_DATABASE}|${MYSQL_DATABASE:-mc}|g" "$file"
@@ -67,22 +68,26 @@ find /mc -type f \( -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret"
     sed -i.bak "s|\${API_GATEWAY_URL}|${API_GATEWAY_URL}|g" "$file"
     rm -f "$file.bak"
     
-    # Show content after replacement for critical files
-    if [[ "$file" == *"forwarding.secret"* ]] || [[ "$file" == *"paper-global.yml"* ]]; then
-        echo "DEBUG: Content after replacement in $file:"
-        cat "$file"
+    # Show key replacements for critical files
+    if [[ "$file" == *"paper-global.yml"* ]]; then
+        SECRET_VALUE=$(grep "secret:" "$file" | head -1 | awk '{print $2}')
+        echo "  paper-global.yml secret: $SECRET_VALUE"
     fi
-    
-    echo "Updated placeholders in $file"
+    if [[ "$file" == *"config.yml"* ]] && [[ "$file" == *"kishax"* ]]; then
+        AWS_KEY=$(grep "AccessKey:" "$file" | head -1 | awk '{print $2}' | cut -c1-10)
+        echo "  kishax config AWS key: ${AWS_KEY}..."
+    fi
 done
 
-# Final verification: Show the actual secret values being used
-echo "DEBUG: Final verification of forwarding secrets:"
-echo "Velocity forwarding.secret:"
-cat /mc/velocity/forwarding.secret
-echo ""
-echo "Paper velocity secret in paper-global.yml:"
-grep "secret:" /mc/spigot/config/paper-global.yml || echo "No secret found in paper-global.yml"
+# Final verification
+VELOCITY_SECRET=$(cat /mc/velocity/forwarding.secret)
+PAPER_SECRET=$(grep "secret:" /mc/spigot/config/paper-global.yml | head -1 | awk '{print $2}')
+echo "Final check - Velocity: $VELOCITY_SECRET, Paper: $PAPER_SECRET"
+if [ "$VELOCITY_SECRET" = "$PAPER_SECRET" ]; then
+    echo "✅ Forwarding secrets match!"
+else
+    echo "❌ Forwarding secrets do NOT match!"
+fi
 
 # Ensure plugins directories exist
 mkdir -p /mc/spigot/plugins/Kishax
