@@ -12,13 +12,17 @@ MySQL:
 Socket:
   Server_Port: 6000
 
-# AWS Discord Service Configuration
+# AWS SQS Communication Configuration
 AWS:
-  Region: "${AWS_REGION:-ap-northeast-1}"
+  Region: "${AWS_REGION}"
+  SQS:
+    WebToMcQueueUrl: "${WEB_TO_MC_QUEUE_URL}"
+    McToWebQueueUrl: "${MC_TO_WEB_QUEUE_URL}"
+  Credentials:
+    AccessKey: "${AWS_ACCESS_KEY_ID}"
+    SecretKey: "${AWS_SECRET_ACCESS_KEY}"
   ApiGateway:
-    Endpoint: "${AWS_API_GATEWAY_ENDPOINT}"
-    AccessKey: "${AWS_ACCESS_KEY}"
-    SecretKey: "${AWS_SECRET_KEY}"
+    Endpoint: "${API_GATEWAY_URL}/discord"
 
 Debug:
   Mode: false
@@ -59,12 +63,12 @@ Servers:
     type: null
     modded:
       mode: false
-      listUrl: ''
-      loaderType: ''
-      loaderUrl: ''
+      listUrl: ""
+      loaderType: ""
+      loaderUrl: ""
     distributed:
       mode: false
-      url: ''
+      url: ""
     memory: 1
     exec: /mc/server/home/u1.sh
     allow_prestart: true
