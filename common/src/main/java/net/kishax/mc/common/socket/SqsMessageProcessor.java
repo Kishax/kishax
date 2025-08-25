@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
-import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
 
 import java.util.List;
@@ -20,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SqsMessageProcessor {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(SqsMessageProcessor.class);
 
-    private final SqsClient sqsClient;
+    private final software.amazon.awssdk.services.sqs.SqsClient awsSqsClient;
     private final String webToMcQueueUrl;
     private final ObjectMapper objectMapper;
     private final ScheduledExecutorService executor;
@@ -28,8 +27,8 @@ public class SqsMessageProcessor {
     private final SqsMessageHandler messageHandler;
 
     @Inject
-    public SqsMessageProcessor(SqsClient sqsClient, String webToMcQueueUrl, SqsMessageHandler messageHandler) {
-        this.sqsClient = sqsClient;
+    public SqsMessageProcessor(software.amazon.awssdk.services.sqs.SqsClient awsSqsClient, String webToMcQueueUrl, SqsMessageHandler messageHandler) {
+        this.awsSqsClient = awsSqsClient;
         this.webToMcQueueUrl = webToMcQueueUrl;
         this.messageHandler = messageHandler;
         this.objectMapper = new ObjectMapper();
@@ -75,7 +74,7 @@ public class SqsMessageProcessor {
                     .messageAttributeNames("All")
                     .build();
 
-            ReceiveMessageResponse response = sqsClient.receiveMessage(request);
+            ReceiveMessageResponse response = awsSqsClient.receiveMessage(request);
             List<Message> messages = response.messages();
 
             if (!messages.isEmpty()) {
@@ -159,7 +158,7 @@ public class SqsMessageProcessor {
                     .receiptHandle(message.receiptHandle())
                     .build();
 
-            sqsClient.deleteMessage(deleteRequest);
+            awsSqsClient.deleteMessage(deleteRequest);
             logger.debug("メッセージを削除しました: {}", message.messageId());
         } catch (Exception e) {
             logger.error("メッセージ削除でエラーが発生しました: {}", message.messageId(), e);
