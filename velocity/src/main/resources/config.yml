@@ -12,13 +12,17 @@ MySQL:
 Socket:
   Server_Port: 6000
 
-# AWS Discord Service Configuration
+# AWS SQS Communication Configuration
 AWS:
   Region: "ap-northeast-1"
-  ApiGateway:
-    Endpoint: "YOUR_AWS_API_GATEWAY_ENDPOINT"
+  SQS:
+    WebToMcQueueUrl: "YOUR_WEB_TO_MC_QUEUE_URL"
+    McToWebQueueUrl: "YOUR_MC_TO_WEB_QUEUE_URL"
+  Credentials:
     AccessKey: "YOUR_AWS_ACCESS_KEY"
     SecretKey: "YOUR_AWS_SECRET_KEY"
+  ApiGateway:
+    Endpoint: "YOUR_AWS_API_GATEWAY_ENDPOINT"
 
 Debug:
   Mode: false

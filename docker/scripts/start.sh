@@ -58,6 +58,13 @@ find /mc -type f \( -name "*.yml" -o -name "*.toml" -o -name "forwarding.secret"
     sed -i.bak "s|\${CONFIRM_URL:-https://your-confirm-url.com}|${CONFIRM_URL:-https://your-confirm-url.com}|g" "$file"
     sed -i.bak "s|\${HOME_SERVER_NAME:-spigot}|${HOME_SERVER_NAME:-spigot}|g" "$file"
     sed -i.bak "s|\${HOME_SERVER_IP:-127.0.0.1}|${HOME_SERVER_IP:-127.0.0.1}|g" "$file"
+    # AWS SQS Configuration replacements
+    sed -i.bak "s|\${AWS_REGION}|${AWS_REGION:-ap-northeast-1}|g" "$file"
+    sed -i.bak "s|\${AWS_ACCESS_KEY_ID}|${AWS_ACCESS_KEY_ID}|g" "$file"
+    sed -i.bak "s|\${AWS_SECRET_ACCESS_KEY}|${AWS_SECRET_ACCESS_KEY}|g" "$file"
+    sed -i.bak "s|\${WEB_TO_MC_QUEUE_URL}|${WEB_TO_MC_QUEUE_URL}|g" "$file"
+    sed -i.bak "s|\${MC_TO_WEB_QUEUE_URL}|${MC_TO_WEB_QUEUE_URL}|g" "$file"
+    sed -i.bak "s|\${API_GATEWAY_URL}|${API_GATEWAY_URL}|g" "$file"
     rm -f "$file.bak"
     
     # Show content after replacement for critical files

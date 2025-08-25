@@ -19,6 +19,7 @@ import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.socket.message.handlers.interfaces.web.MinecraftWebConfirmHandler;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
+import net.kishax.mc.common.socket.SqsClient;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -34,10 +35,11 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
   private final Luckperms lp;
   private final AwsDiscordService awsDiscordService;
   private final Provider<SocketSwitch> sswProvider;
+  private final SqsClient sqsClient;
 
   @Inject
   public VelocityMinecraftWebConfirmHandler(Logger logger, ProxyServer server, Database db, VelocityConfig config,
-      Luckperms lp, AwsDiscordService awsDiscordService, Provider<SocketSwitch> sswProvider) {
+      Luckperms lp, AwsDiscordService awsDiscordService, Provider<SocketSwitch> sswProvider, SqsClient sqsClient) {
     this.logger = logger;
     this.server = server;
     this.db = db;
@@ -45,6 +47,7 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
     this.lp = lp;
     this.awsDiscordService = awsDiscordService;
     this.sswProvider = sswProvider;
+    this.sqsClient = sqsClient;
   }
 
   @Override
@@ -111,6 +114,7 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
       }
     }
 
+    // Discord通知送信
     try {
       awsDiscordService.sendBotMessage(mineName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB);
     } catch (Exception e) {
@@ -118,6 +122,30 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
       for (StackTraceElement ste : e.getStackTrace()) {
         logger.error(ste.toString());
       }
+    }
+
+    // Web側に認証完了レスポンス送信
+    sendAuthResponseToWeb(confirm.who.name, confirm.who.uuid, true, "WEB認証が完了しました。");
+  }
+
+  /**
+   * Web側に認証レスポンスを送信
+   */
+  private void sendAuthResponseToWeb(String playerName, String playerUuid, boolean success, String message) {
+    if (sqsClient == null) {
+      logger.warn("SQSクライアントが利用できません。認証レスポンスを送信できません。");
+      return;
+    }
+
+    try {
+      sqsClient.sendAuthResponse(playerName, playerUuid, success, message)
+          .thenRun(() -> logger.info("認証レスポンスを送信しました: {} ({}), success={}", playerName, playerUuid, success))
+          .exceptionally(ex -> {
+            logger.error("認証レスポンス送信に失敗しました: {} ({})", playerName, playerUuid, ex);
+            return null;
+          });
+    } catch (Exception e) {
+      logger.error("認証レスポンス送信でエラーが発生しました: {} ({})", playerName, playerUuid, e);
     }
   }
 }

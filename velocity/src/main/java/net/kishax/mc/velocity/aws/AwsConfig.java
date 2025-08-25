@@ -30,7 +30,7 @@ public class AwsConfig {
    * AWS Access Key を取得
    */
   public String getAwsAccessKey() {
-    String accessKey = config.getString("AWS.ApiGateway.AccessKey", "");
+    String accessKey = config.getString("AWS.Credentials.AccessKey", "");
     if (accessKey.isEmpty()) {
       logger.warn("AWS Access Key が設定されていません");
     }
@@ -42,12 +42,34 @@ public class AwsConfig {
    * AWS Secret Key を取得
    */
   public String getAwsSecretKey() {
-    String secretKey = config.getString("AWS.ApiGateway.SecretKey", "");
+    String secretKey = config.getString("AWS.Credentials.SecretKey", "");
     if (secretKey.isEmpty()) {
       logger.warn("AWS Secret Key が設定されていません");
     }
     logger.debug("AWS Secret Key loaded: {}", secretKey.isEmpty() ? "EMPTY" : "LOADED");
     return secretKey;
+  }
+
+  /**
+   * Web→MC Queue URL を取得
+   */
+  public String getWebToMcQueueUrl() {
+    String queueUrl = config.getString("AWS.SQS.WebToMcQueueUrl", "");
+    if (queueUrl.isEmpty()) {
+      logger.warn("Web→MC Queue URL が設定されていません");
+    }
+    return queueUrl;
+  }
+
+  /**
+   * MC→Web Queue URL を取得
+   */
+  public String getMcToWebQueueUrl() {
+    String queueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
+    if (queueUrl.isEmpty()) {
+      logger.warn("MC→Web Queue URL が設定されていません");
+    }
+    return queueUrl;
   }
 
   /**
@@ -76,10 +98,16 @@ public class AwsConfig {
   public boolean isAwsConfigValid() {
     return !getAwsAccessKey().isEmpty() &&
         !getAwsSecretKey().isEmpty() &&
-        !getApiGatewayUrl().isEmpty();
+        !getMcToWebQueueUrl().isEmpty() &&
+        !getWebToMcQueueUrl().isEmpty();
   }
 
-  // Discord設定チェックは不要（AWS移行済み）
+  /**
+   * SQS設定が有効かチェック
+   */
+  public boolean isSqsConfigValid() {
+    return !getMcToWebQueueUrl().isEmpty() && !getWebToMcQueueUrl().isEmpty();
+  }
 
   /**
    * 設定の検証を行い、ログ出力
@@ -90,17 +118,21 @@ public class AwsConfig {
     if (isAwsConfigValid()) {
       logger.info("✅ AWS設定が正常です");
       logger.info("  - Region: {}", getAwsRegion());
-      logger.info("  - API Gateway URL: {}", getApiGatewayUrl());
+      logger.info("  - MC→Web Queue URL: {}", getMcToWebQueueUrl());
+      logger.info("  - Web→MC Queue URL: {}", getWebToMcQueueUrl());
+      if (!getApiGatewayUrl().isEmpty()) {
+        logger.info("  - API Gateway URL: {}", getApiGatewayUrl());
+      }
     } else {
       logger.error("❌ AWS設定が不完全です");
       if (getAwsAccessKey().isEmpty())
-        logger.error("  - AWS.ApiGateway.AccessKey が未設定");
+        logger.error("  - AWS.Credentials.AccessKey が未設定");
       if (getAwsSecretKey().isEmpty())
-        logger.error("  - AWS.ApiGateway.SecretKey が未設定");
-      if (getApiGatewayUrl().isEmpty())
-        logger.error("  - AWS.ApiGateway.Endpoint が未設定");
+        logger.error("  - AWS.Credentials.SecretKey が未設定");
+      if (getMcToWebQueueUrl().isEmpty())
+        logger.error("  - AWS.SQS.McToWebQueueUrl が未設定");
+      if (getWebToMcQueueUrl().isEmpty())
+        logger.error("  - AWS.SQS.WebToMcQueueUrl が未設定");
     }
-
-    // Discord設定チェックは不要（AWS Discord Bot に移行済み）
   }
 }
