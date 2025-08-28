@@ -19,12 +19,14 @@ import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.socket.message.handlers.interfaces.web.MinecraftWebConfirmHandler;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
+import net.kishax.mc.common.socket.SqsClient;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHandler {
   private final Logger logger;
@@ -34,10 +36,11 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
   private final Luckperms lp;
   private final AwsDiscordService awsDiscordService;
   private final Provider<SocketSwitch> sswProvider;
+  private final SqsClient sqsClient;
 
   @Inject
   public VelocityMinecraftWebConfirmHandler(Logger logger, ProxyServer server, Database db, VelocityConfig config,
-      Luckperms lp, AwsDiscordService awsDiscordService, Provider<SocketSwitch> sswProvider) {
+      Luckperms lp, AwsDiscordService awsDiscordService, Provider<SocketSwitch> sswProvider, SqsClient sqsClient) {
     this.logger = logger;
     this.server = server;
     this.db = db;
@@ -45,6 +48,23 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
     this.lp = lp;
     this.awsDiscordService = awsDiscordService;
     this.sswProvider = sswProvider;
+    this.sqsClient = sqsClient;
+  }
+  
+  private void ensureSqsClientInitialized() {
+    if (!sqsClient.isInitialized()) {
+      try {
+        String region = config.getString("AWS.Region", "ap-northeast-1");
+        String accessKey = config.getString("AWS.Credentials.AccessKey", "");
+        String secretKey = config.getString("AWS.Credentials.SecretKey", "");
+        String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
+        String apiGatewayUrl = config.getString("AWS.ApiGateway.Endpoint", "");
+        
+        sqsClient.initialize(region, accessKey, secretKey, mcToWebQueueUrl, apiGatewayUrl);
+      } catch (Exception e) {
+        logger.error("SqsClient の初期化に失敗しました", e);
+      }
+    }
   }
 
   @Override
@@ -111,6 +131,7 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
       }
     }
 
+    // Discord通知送信
     try {
       awsDiscordService.sendBotMessage(mineName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB);
     } catch (Exception e) {
@@ -118,6 +139,64 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
       for (StackTraceElement ste : e.getStackTrace()) {
         logger.error(ste.toString());
       }
+    }
+
+    // Web側に認証完了レスポンス送信
+    sendAuthResponseToWeb(confirm.who.name, confirm.who.uuid, true, "WEB認証が完了しました。");
+  }
+
+  /**
+   * Web側に認証レスポンスを送信
+   */
+  private void sendAuthResponseToWeb(String playerName, String playerUuid, boolean success, String message) {
+    if (sqsClient == null) {
+      logger.warn("SQSクライアントが利用できません。認証レスポンスを送信できません。");
+      return;
+    }
+
+    try {
+      sqsClient.sendAuthResponse(playerName, playerUuid, success, message)
+          .thenRun(() -> logger.info("認証レスポンスを送信しました: {} ({}), success={}", playerName, playerUuid, success))
+          .exceptionally(ex -> {
+            logger.error("認証レスポンス送信に失敗しました: {} ({})", playerName, playerUuid, ex);
+            return null;
+          });
+    } catch (Exception e) {
+      logger.error("認証レスポンス送信でエラーが発生しました: {} ({})", playerName, playerUuid, e);
+    }
+  }
+
+  /**
+   * SQS経由でのWeb→MC認証確認メッセージを処理
+   */
+  public void handleWebToMinecraft(JsonNode confirmData) {
+    try {
+      String playerName = confirmData.path("who").path("name").asText();
+      String playerUuid = confirmData.path("who").path("uuid").asText();
+      
+      if (playerName.isEmpty() || playerUuid.isEmpty()) {
+        logger.warn("SQS認証確認メッセージに必要な情報が不足しています: {}", confirmData);
+        return;
+      }
+
+      logger.info("SQS経由での認証確認処理を開始: {} ({})", playerName, playerUuid);
+      
+      // 直接認証処理を実行（既存のhandleロジックを簡略化）
+      lp.addPermission(playerName, PermSettings.NEW_USER.get());
+
+      // Web側に認証完了レスポンス送信
+      sendAuthResponseToWeb(playerName, playerUuid, true, "WEB認証が完了しました。");
+      
+      // Discord通知送信
+      try {
+        awsDiscordService.sendBotMessage(playerName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB);
+      } catch (Exception e) {
+        logger.error("Discord通知送信エラー", e);
+      }
+      
+      logger.info("SQS経由での認証確認処理が完了しました: {} ({})", playerName, playerUuid);
+    } catch (Exception e) {
+      logger.error("SQS認証確認メッセージ処理でエラーが発生しました", e);
     }
   }
 }
