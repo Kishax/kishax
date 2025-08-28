@@ -65,7 +65,9 @@ public class Confirm {
             Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
             if (!memberMap.isEmpty()) {
               if (memberMap.get("id") instanceof Integer id) {
-                String confirmUrl = Settings.CONFIRM_URL.getValue() + "?n=" + id;
+                // 新形式のURL（トークンベース）を使用
+                String authToken = generateAuthToken(player);
+                String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
                 // player.sendMessage(ChatColor.GREEN + "WEB認証のQRコードを生成します。");
                 String[] imageArgs = { "image", "createqr", confirmUrl };
                 if (ifMapId == -1) {
@@ -286,5 +288,12 @@ public class Confirm {
         return -1;
       }
     }
+  }
+
+  /**
+   * 認証トークンを生成
+   */
+  private String generateAuthToken(Player player) {
+    return OTPGenerator.generateOTP(32) + "_" + System.currentTimeMillis();
   }
 }

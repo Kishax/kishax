@@ -44,6 +44,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -53,6 +54,8 @@ import com.google.inject.Inject;
 
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
+import net.kishax.mc.common.settings.Settings;
+import net.kishax.mc.common.util.OTPGenerator;
 import net.kishax.mc.common.server.ServerStatusCache;
 import net.kishax.mc.spigot.server.InvSaver;
 import net.kishax.mc.spigot.server.InventoryCheck;
@@ -67,9 +70,14 @@ import net.kishax.mc.spigot.util.interfaces.MessageRunnable;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public final class EventListener implements Listener {
   public static Map<Player, Map<RunnableTaskUtil.Key, MessageRunnable>> playerInputerMap = new HashMap<>();
@@ -180,6 +188,17 @@ public final class EventListener implements Listener {
       if (meta != null) {
         if (action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR) {
           Material material = item.getType();
+
+          // QRコード右クリック処理
+          if (material == Material.FILLED_MAP && meta instanceof MapMeta) {
+            MapMeta mapMeta = (MapMeta) meta;
+            if (isConfirmMap(mapMeta)) {
+              event.setCancelled(true);
+              handleConfirmMapRightClick(player);
+              return;
+            }
+          }
+
           Set<Material> materials = Type.getMaterials();
           if (materials.contains(material)) {
             menu.getShortCutMap().forEach((key, value) -> {
@@ -498,5 +517,160 @@ public final class EventListener implements Listener {
     return loc.getX() >= x1 && loc.getX() < x2 + 1 &&
         loc.getY() >= y1 && loc.getY() < y2 + 1 &&
         loc.getZ() >= z1 && loc.getZ() < z2 + 1;
+  }
+
+  /**
+   * QRコードマップかどうかを判定
+   */
+  private boolean isConfirmMap(MapMeta mapMeta) {
+    List<String> lore = mapMeta.getLore();
+    return lore != null && lore.stream().anyMatch(line -> line.contains("<QRコード>"));
+  }
+
+  /**
+   * QRコード右クリック時の処理
+   */
+  private void handleConfirmMapRightClick(Player player) {
+    try (Connection conn = db.getConnection()) {
+      // プレイヤーの認証情報を取得
+      Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
+      if (memberMap.isEmpty()) {
+        Component errorMessage = Component.text("プレイヤー情報が見つかりません。")
+            .color(NamedTextColor.RED);
+        audiences.player(player).sendMessage(errorMessage);
+        return;
+      }
+
+      if (!(memberMap.get("id") instanceof Integer id)) {
+        Component errorMessage = Component.text("プレイヤーIDの取得に失敗しました。")
+            .color(NamedTextColor.RED);
+        audiences.player(player).sendMessage(errorMessage);
+        return;
+      }
+
+      // 新しい認証URLとOTPを生成
+      String authUrl = Settings.CONFIRM_URL.getValue() + "?t=" + generateAuthToken(player);
+      String otp = String.format("%06d", OTPGenerator.generateOTPbyInt());
+
+      // OTPをデータベースに保存
+      updatePlayerOTP(conn, player.getUniqueId().toString(), Integer.parseInt(otp));
+
+      // 認証URLとOTPをプレイヤーに送信
+      sendAuthenticationInfo(player, authUrl, otp);
+
+    } catch (SQLException | ClassNotFoundException e) {
+      Component errorMessage = Component.text("認証情報の生成に失敗しました。")
+          .color(NamedTextColor.RED);
+      audiences.player(player).sendMessage(errorMessage);
+      logger.error("Error generating authentication info: {}", e.getMessage());
+      for (StackTraceElement element : e.getStackTrace()) {
+        logger.error(element.toString());
+      }
+    }
+  }
+
+  /**
+   * 認証トークンを生成
+   */
+  private String generateAuthToken(Player player) {
+    return OTPGenerator.generateOTP(32) + "_" + System.currentTimeMillis();
+  }
+
+  /**
+   * プレイヤーのOTPを更新
+   */
+  private void updatePlayerOTP(Connection conn, String playerUUID, int otp) throws SQLException {
+    String query = "UPDATE members SET secret2=? WHERE uuid=?;";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setInt(1, otp);
+      ps.setString(2, playerUUID);
+      ps.executeUpdate();
+    }
+  }
+
+  /**
+   * 認証情報をプレイヤーに送信
+   */
+  private void sendAuthenticationInfo(Player player, String authUrl, String otp) {
+    Component titleMessage = Component.text("━━━━━ MC認証情報 ━━━━━")
+        .color(NamedTextColor.GOLD)
+        .decorate(TextDecoration.BOLD);
+
+    Component urlLabel = Component.text("認証URL: ")
+        .color(NamedTextColor.YELLOW);
+
+    Component urlComponent = Component.text(authUrl)
+        .color(NamedTextColor.AQUA)
+        .decorate(TextDecoration.UNDERLINED)
+        .clickEvent(ClickEvent.openUrl(authUrl))
+        .hoverEvent(HoverEvent.showText(Component.text("クリックして認証ページを開く")));
+
+    Component otpLabel = Component.text("ワンタイムパスワード: ")
+        .color(NamedTextColor.YELLOW);
+
+    Component otpComponent = Component.text(otp)
+        .color(NamedTextColor.GREEN)
+        .decorate(TextDecoration.BOLD)
+        .clickEvent(ClickEvent.copyToClipboard(otp))
+        .hoverEvent(HoverEvent.showText(Component.text("クリックしてコピー")));
+
+    Component instructionMessage = Component.text("右クリックで認証URLとワンタイムパスワードを取得できます。アクセスすることで、Kishaxサーバでの主要機能をアンロックできます。")
+        .color(NamedTextColor.GRAY)
+        .decorate(TextDecoration.ITALIC);
+
+    Component separatorMessage = Component.text("━━━━━━━━━━━━━━━━━━━")
+        .color(NamedTextColor.GOLD)
+        .decorate(TextDecoration.BOLD);
+
+    audiences.player(player).sendMessage(titleMessage);
+    audiences.player(player).sendMessage(Component.empty());
+    audiences.player(player).sendMessage(urlLabel.append(urlComponent));
+    audiences.player(player).sendMessage(Component.empty());
+    audiences.player(player).sendMessage(otpLabel.append(otpComponent));
+    audiences.player(player).sendMessage(Component.empty());
+    audiences.player(player).sendMessage(instructionMessage);
+    audiences.player(player).sendMessage(separatorMessage);
+  }
+
+  /**
+   * プレイヤーの認証状態をチェック
+   */
+  public boolean isPlayerAuthenticated(Player player) {
+    try (Connection conn = db.getConnection()) {
+      return checkPlayerAuthStatus(conn, player.getName());
+    } catch (SQLException | ClassNotFoundException e) {
+      logger.error("Error checking player auth status: {}", e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * データベースでプレイヤーの認証状態をチェック
+   */
+  private boolean checkPlayerAuthStatus(Connection conn, String playerName) throws SQLException {
+    String query = "SELECT perm_level FROM members WHERE name = ? LIMIT 1";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, playerName);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          int permLevel = rs.getInt("perm_level");
+          return permLevel >= 1; // 権限レベル1以上で認証済みと判定
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * プレイヤーの認証状態を更新（認証完了時）
+   */
+  public void updatePlayerAuthStatus(Connection conn, String playerUUID, boolean authenticated) throws SQLException {
+    int permLevel = authenticated ? 1 : 0;
+    String query = "UPDATE members SET perm_level = ? WHERE uuid = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setInt(1, permLevel);
+      ps.setString(2, playerUUID);
+      ps.executeUpdate();
+    }
   }
 }
