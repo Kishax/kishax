@@ -298,6 +298,8 @@ CREATE TABLE `members` (
   `hubinv` tinyint(1) DEFAULT 1,
   `tptype` tinyint(1) DEFAULT 1,
   `silent` tinyint(1) DEFAULT 0,
+  `auth_token` varchar(255) DEFAULT NULL,
+  `auth_token_expires` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=234 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
