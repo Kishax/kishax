@@ -14,11 +14,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.server.interfaces.ServerHomeDir;
 import net.kishax.mc.common.settings.Settings;
+import net.kishax.mc.common.socket.SocketSwitch;
+import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.util.OTPGenerator;
 import net.kishax.mc.spigot.server.ImageMap;
 import net.kishax.mc.spigot.server.textcomponent.TCUtils;
@@ -40,10 +43,11 @@ public class Confirm {
   private final Luckperms lp;
   private final ImageMap im;
   private final String thisServerName;
+  private final Provider<SocketSwitch> sswProvider;
 
   @Inject
   public Confirm(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im,
-      ServerHomeDir shd) {
+      ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -51,6 +55,7 @@ public class Confirm {
     this.lp = lp;
     this.im = im;
     this.thisServerName = shd.getServerName();
+    this.sswProvider = sswProvider;
   }
 
   public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -65,19 +70,32 @@ public class Confirm {
             Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
             if (!memberMap.isEmpty()) {
               if (memberMap.get("id") instanceof Integer id) {
-                // 新形式のURL（トークンベース）を使用
+                // トークンの生成と有効期限設定（10分間）
                 String authToken = generateAuthToken(player);
+                long expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
+                
+                // データベースにトークンを保存
+                db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
+                
+                // 新形式のURL（トークンベース）を使用
                 String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
-                // player.sendMessage(ChatColor.GREEN + "WEB認証のQRコードを生成します。");
+                
+                // QRコード生成・配布
                 String[] imageArgs = { "image", "createqr", confirmUrl };
                 if (ifMapId == -1) {
                   im.executeImageMapForConfirm(player, imageArgs);
                 } else {
                   im.giveMapToPlayer(player, ifMapId);
                 }
+                
+                // OTP生成・保存
                 int ranum = OTPGenerator.generateOTPbyInt();
                 int rsAffected3 = updateSecret2(conn, new Object[] { ranum, playerUUID });
+                
                 if (rsAffected3 > 0) {
+                  // Web側（SQS）にプレイヤー情報とトークンを送信
+                  sendAuthTokenToWeb(player, authToken, expiresAt, "create");
+                  
                   sendConfirmationMessage(player, ranum, confirmUrl);
                 } else {
                   Component errorMessage = Component.text("エラーが発生しました。")
@@ -295,5 +313,29 @@ public class Confirm {
    */
   private String generateAuthToken(Player player) {
     return OTPGenerator.generateOTP(32) + "_" + System.currentTimeMillis();
+  }
+
+  /**
+   * Web側（SQS）に認証トークン情報を送信
+   */
+  private void sendAuthTokenToWeb(Player player, String token, long expiresAt, String action) {
+    try {
+      Message msg = new Message();
+      msg.web = new Message.Web();
+      msg.web.authToken = new Message.Web.AuthToken();
+      msg.web.authToken.who = new Message.Minecraft.Who();
+      msg.web.authToken.who.name = player.getName();
+      msg.web.authToken.who.uuid = player.getUniqueId().toString();
+      msg.web.authToken.token = token;
+      msg.web.authToken.expiresAt = expiresAt;
+      msg.web.authToken.action = action;
+
+      SocketSwitch ssw = sswProvider.get();
+      ssw.sendToWeb(msg);
+      
+      logger.info("Sent auth token info to Web for player: {}", player.getName());
+    } catch (Exception e) {
+      logger.error("Failed to send auth token info to Web: {}", e.getMessage());
+    }
   }
 }
