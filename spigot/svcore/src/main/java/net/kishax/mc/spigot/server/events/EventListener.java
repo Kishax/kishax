@@ -51,10 +51,13 @@ import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.settings.Settings;
+import net.kishax.mc.common.socket.SocketSwitch;
+import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.util.OTPGenerator;
 import net.kishax.mc.common.server.ServerStatusCache;
 import net.kishax.mc.spigot.server.InvSaver;
@@ -94,11 +97,12 @@ public final class EventListener implements Listener {
   private final Luckperms lp;
   private final InventoryCheck inv;
   private final ItemFrames fif;
+  private final Provider<SocketSwitch> sswProvider;
   private final Set<Player> playersInPortal = new HashSet<>();
 
   @Inject
   public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, PortalsConfig psConfig,
-      Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, ItemFrames fif) {
+      Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, ItemFrames fif, Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -109,6 +113,7 @@ public final class EventListener implements Listener {
     this.lp = lp;
     this.inv = inv;
     this.fif = fif;
+    this.sswProvider = sswProvider;
   }
 
   @EventHandler
@@ -548,12 +553,47 @@ public final class EventListener implements Listener {
         return;
       }
 
-      // 新しい認証URLとOTPを生成
-      String authUrl = Settings.CONFIRM_URL.getValue() + "?t=" + generateAuthToken(player);
+      String playerUUID = player.getUniqueId().toString();
+      String authToken;
+      String action;
+      long expiresAt;
+      
+      // 既存のトークンを確認
+      Map<String, Object> tokenInfo = db.getAuthTokenInfo(conn, playerUUID);
+      if (!tokenInfo.isEmpty() && tokenInfo.get("token") != null) {
+        String existingToken = (String) tokenInfo.get("token");
+        java.sql.Timestamp expires = (java.sql.Timestamp) tokenInfo.get("expires");
+        
+        // トークンが有効かチェック
+        if (expires != null && expires.getTime() > System.currentTimeMillis()) {
+          // 既存の有効なトークンを使用
+          authToken = existingToken;
+          expiresAt = expires.getTime();
+          action = "refresh";
+        } else {
+          // トークンが無効なので新規生成
+          authToken = generateAuthToken(player);
+          expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
+          db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
+          action = "update";
+        }
+      } else {
+        // トークンが存在しないので新規生成
+        authToken = generateAuthToken(player);
+        expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
+        db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
+        action = "create";
+      }
+
+      // 認証URLとOTPを生成
+      String authUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
       String otp = String.format("%06d", OTPGenerator.generateOTPbyInt());
 
       // OTPをデータベースに保存
-      updatePlayerOTP(conn, player.getUniqueId().toString(), Integer.parseInt(otp));
+      updatePlayerOTP(conn, playerUUID, Integer.parseInt(otp));
+
+      // Web側（SQS）にプレイヤー情報とトークンを送信
+      sendAuthTokenToWeb(player, authToken, expiresAt, action);
 
       // 認証URLとOTPをプレイヤーに送信
       sendAuthenticationInfo(player, authUrl, otp);
@@ -630,6 +670,30 @@ public final class EventListener implements Listener {
     audiences.player(player).sendMessage(Component.empty());
     audiences.player(player).sendMessage(instructionMessage);
     audiences.player(player).sendMessage(separatorMessage);
+  }
+
+  /**
+   * Web側（SQS）に認証トークン情報を送信
+   */
+  private void sendAuthTokenToWeb(Player player, String token, long expiresAt, String action) {
+    try {
+      Message msg = new Message();
+      msg.web = new Message.Web();
+      msg.web.authToken = new Message.Web.AuthToken();
+      msg.web.authToken.who = new Message.Minecraft.Who();
+      msg.web.authToken.who.name = player.getName();
+      msg.web.authToken.who.uuid = player.getUniqueId().toString();
+      msg.web.authToken.token = token;
+      msg.web.authToken.expiresAt = expiresAt;
+      msg.web.authToken.action = action;
+
+      SocketSwitch ssw = sswProvider.get();
+      ssw.sendToWeb(msg);
+      
+      logger.info("Sent auth token info to Web for player: {} (action: {})", player.getName(), action);
+    } catch (Exception e) {
+      logger.error("Failed to send auth token info to Web: {}", e.getMessage());
+    }
   }
 
   /**
