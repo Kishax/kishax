@@ -33,6 +33,7 @@ public class Message {
     public Server server;
     public Sync sync;
     public Command cmd;
+    public Otp otp;
 
     public static class Who {
       public String name;
@@ -88,6 +89,13 @@ public class Message {
         public Who who;
         public Boolean mode;
       }
+    }
+
+    public static class Otp {
+      public String mcid;
+      public String uuid;
+      public String otp;
+      public String action; // "send_otp"
     }
   }
 }

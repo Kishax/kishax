@@ -91,6 +91,20 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
         }
     }
 
+    @Override
+    public void handleOtpToMinecraft(String mcid, String uuid, String otp) {
+        try {
+            logger.info("Web→MC OTP送信: {} ({}) OTP: {}", mcid, uuid, otp);
+            
+            // 既存のメッセージハンドラーシステムを使用してSpigotにOTPを送信
+            JsonNode otpMessage = createOtpMessage(mcid, uuid, otp);
+            forwardOtpToSpigot(otpMessage);
+            
+        } catch (Exception e) {
+            logger.error("OTP送信処理でエラーが発生しました: {} ({})", mcid, uuid, e);
+        }
+    }
+
     private JsonNode createConfirmMessage(String playerName, String playerUuid) {
         // 既存のMinecraftWebConfirmHandler用のメッセージ形式を作成
         try {
@@ -156,5 +170,38 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
         
         // サーバー詳細情報を収集してレスポンス
         // TODO: SqsClientを使ってレスポンスを送信
+    }
+
+    private JsonNode createOtpMessage(String mcid, String uuid, String otp) {
+        // MC側OTP送信用のメッセージ形式を作成
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            return mapper.createObjectNode()
+                    .set("minecraft", mapper.createObjectNode()
+                            .set("otp", mapper.createObjectNode()
+                                    .put("mcid", mcid)
+                                    .put("uuid", uuid)
+                                    .put("otp", otp)
+                                    .put("action", "send_otp")));
+        } catch (Exception e) {
+            logger.error("OTPメッセージ作成でエラーが発生しました", e);
+            return null;
+        }
+    }
+
+    private void forwardOtpToSpigot(JsonNode otpMessage) {
+        if (otpMessage == null) {
+            logger.warn("OTPメッセージがnullのためSpigotへの転送をスキップしました");
+            return;
+        }
+
+        try {
+            // 既存のSocketシステムを使用してSpigotに転送
+            // TODO: 実際のSocket転送実装
+            logger.info("SpigotへOTPメッセージを転送: {}", otpMessage.toString());
+            
+        } catch (Exception e) {
+            logger.error("SpigotへのOTP転送でエラーが発生しました", e);
+        }
     }
 }

@@ -27,4 +27,9 @@ public interface SqsMessageHandler {
      * Webからのプレイヤーリクエスト処理
      */
     void handlePlayerRequest(String requestType, String playerName, JsonNode data);
+
+    /**
+     * Web→MC OTP送信処理
+     */
+    void handleOtpToMinecraft(String mcid, String uuid, String otp);
 }

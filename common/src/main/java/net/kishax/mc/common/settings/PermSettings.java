@@ -4,7 +4,6 @@ public enum PermSettings {
   NEW_USER("group.new-user"),
   SUB_ADMIN("group.sub-admin"),
   SUPER_ADMIN("group.super-admin"),
-  RETRY("kishax.proxy.retry"),
   HUB("kishax.proxy.hub"),
   CEND("kishax.proxy.cend"),
   PERM("kishax.proxy.perm"),

@@ -32,7 +32,6 @@ import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.cmd.main.Command;
 import net.kishax.mc.velocity.server.cmd.sub.CEnd;
 import net.kishax.mc.velocity.server.cmd.sub.Hub;
-import net.kishax.mc.velocity.server.cmd.sub.Retry;
 import net.kishax.mc.velocity.server.cmd.sub.ServerTeleport;
 import net.kishax.mc.velocity.server.events.EventListener;
 import net.kishax.mc.velocity.util.SettingsSyncService;
@@ -114,7 +113,6 @@ public class Main {
     commandManager.register(commandManager.metaBuilder("kishaxp").build(), getInjector().getInstance(Command.class));
     commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
     commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
-    commandManager.register(commandManager.metaBuilder("retry").build(), getInjector().getInstance(Retry.class));
     commandManager.register(commandManager.metaBuilder("stp").build(), getInjector().getInstance(ServerTeleport.class));
     VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
     int port = config.getInt("Socket.Server_Port", 0);

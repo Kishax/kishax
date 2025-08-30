@@ -58,7 +58,7 @@ import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.settings.Settings;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.Message;
-import net.kishax.mc.common.util.OTPGenerator;
+import java.security.SecureRandom;
 import net.kishax.mc.common.server.ServerStatusCache;
 import net.kishax.mc.spigot.server.InvSaver;
 import net.kishax.mc.spigot.server.InventoryCheck;
@@ -587,7 +587,7 @@ public final class EventListener implements Listener {
 
       // 認証URLとOTPを生成
       String authUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
-      String otp = String.format("%06d", OTPGenerator.generateOTPbyInt());
+      String otp = String.format("%06d", generateOTPbyInt());
 
       // OTPをデータベースに保存
       updatePlayerOTP(conn, playerUUID, Integer.parseInt(otp));
@@ -613,7 +613,23 @@ public final class EventListener implements Listener {
    * 認証トークンを生成
    */
   private String generateAuthToken(Player player) {
-    return OTPGenerator.generateOTP(32) + "_" + System.currentTimeMillis();
+    return generateOTP(32) + "_" + System.currentTimeMillis();
+  }
+
+  private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  private static final SecureRandom random = new SecureRandom();
+
+  private static String generateOTP(int length) {
+    StringBuilder otp = new StringBuilder(length);
+    for (int i = 0; i < length; i++) {
+      int index = random.nextInt(CHARACTERS.length());
+      otp.append(CHARACTERS.charAt(index));
+    }
+    return otp.toString();
+  }
+
+  private static int generateOTPbyInt() {
+    return (100000 + random.nextInt(900000));
   }
 
   /**
