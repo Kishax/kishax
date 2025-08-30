@@ -1156,6 +1156,14 @@ public class ImageMap {
 
         List<String> lores = new ArrayList<>();
         lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
+        if (isQr && confirm) {
+          lores.add("");
+          lores.add("§7右クリックで認証URLと");
+          lores.add("§7ワンタイムパスワードを取得できます。");
+          lores.add("§7アクセスすることで、Kishaxサーバでの");
+          lores.add("§7主要機能をアンロックできます。");
+          lores.add("");
+        }
         List<String> commentLines = Arrays.stream(comment.split("\n"))
             .map(String::trim)
             .collect(Collectors.toList());

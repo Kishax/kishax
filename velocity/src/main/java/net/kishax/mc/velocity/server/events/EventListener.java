@@ -647,6 +647,29 @@ public class EventListener {
                     }
                     return;
                   }
+
+                  // 正常な初参加プレイヤーをmembersテーブルに登録
+                  String insertQuery = "INSERT INTO members (name, uuid, server, ban, confirm) VALUES (?, ?, ?, ?, ?);";
+                  try (PreparedStatement insertPs = conn.prepareStatement(insertQuery)) {
+                    insertPs.setString(1, playerName);
+                    insertPs.setString(2, playerUUID);
+                    insertPs.setString(3, currentServerName);
+                    insertPs.setBoolean(4, false); // ban = false
+                    insertPs.setBoolean(5, false); // confirm = false
+                    int insertResult = insertPs.executeUpdate();
+                    if (insertResult > 0) {
+                      logger.info("Successfully registered new player to members table: {} ({})", playerName,
+                          playerUUID);
+                    } else {
+                      logger.error("Failed to register new player to members table: {} ({})", playerName, playerUUID);
+                    }
+                  } catch (SQLException insertEx) {
+                    logger.error("Error inserting new player into members table: {}", insertEx.getMessage());
+                    for (StackTraceElement ste : insertEx.getStackTrace()) {
+                      logger.error(ste.toString());
+                    }
+                  }
+
                   String DiscordInviteUrl = config.getString("Discord.InviteUrl", "");
                   if (!DiscordInviteUrl.isEmpty()) {
                     component = Component.text(playerName + "が" + currentServerName + "サーバーに初参加しました。")

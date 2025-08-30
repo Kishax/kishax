@@ -45,6 +45,10 @@ import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.Velocity
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.VelocityTeleportPointHandler;
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.server.VelocityServerActionHandler;
 import net.kishax.mc.velocity.socket.message.handlers.web.VelocityMinecraftWebConfirmHandler;
+import net.kishax.mc.velocity.socket.VelocitySocketSwitch;
+import net.kishax.mc.velocity.socket.VelocityMessageProcessor;
+import net.kishax.mc.velocity.socket.handlers.AuthTokenHandler;
+import net.kishax.mc.velocity.aws.AwsSqsService;
 import net.kishax.mc.velocity.util.RomaToKanji;
 import net.kishax.mc.velocity.util.RomajiConversion;
 import net.kishax.mc.velocity.util.SettingsSyncService;
@@ -106,6 +110,11 @@ public class Module extends AbstractModule {
     bind(ServerActionHandler.class).to(VelocityServerActionHandler.class);
 
     bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
+    
+    // Velocity専用のSocket処理とAWS統合
+    bind(VelocityMessageProcessor.class);
+    bind(AuthTokenHandler.class);
+    bind(AwsSqsService.class);
   }
 
   // 一時的にコメントアウト（VelocityRequestがDiscord依存のため後で対応）
@@ -147,6 +156,6 @@ public class Module extends AbstractModule {
   @Provides
   @Singleton
   public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
-    return new SocketSwitch(logger, injector);
+    return new VelocitySocketSwitch(logger, injector);
   }
 }

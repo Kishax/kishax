@@ -7,9 +7,17 @@ public class Message {
 
   public static class Web {
     public MinecraftConfirm confirm;
+    public AuthToken authToken;
 
     public static class MinecraftConfirm {
       public Message.Minecraft.Who who;
+    }
+
+    public static class AuthToken {
+      public Message.Minecraft.Who who;
+      public String token;
+      public Long expiresAt;
+      public String action; // "create", "update", "refresh"
     }
   }
 

@@ -30,9 +30,15 @@ Debug:
 
 Permission:
   Detail_Name:
-    - something.permission
+    - group.super-admin
+    - group.sub-admin
+    - group.sub-command-admin
+    - group.new-user
   Short_Name:
-    - someperm
+    - superadmin
+    - subadmin
+    - subcommandadmin
+    - newuser
 
 Translate:
   romaji: false

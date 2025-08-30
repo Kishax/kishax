@@ -286,6 +286,77 @@ public class Database {
     }
   }
 
+  /**
+   * プレイヤーの認証トークンを保存・更新
+   */
+  public void updateAuthToken(Connection conn, String playerUUID, String token, long expiresAt) 
+      throws SQLException {
+    String query = "UPDATE members SET auth_token = ?, auth_token_expires = ? WHERE uuid = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, token);
+      ps.setTimestamp(2, new Timestamp(expiresAt));
+      ps.setString(3, playerUUID);
+      ps.executeUpdate();
+    }
+  }
+
+  /**
+   * プレイヤーの認証トークン情報を取得
+   */
+  public Map<String, Object> getAuthTokenInfo(Connection conn, String playerUUID) 
+      throws SQLException {
+    Map<String, Object> tokenInfo = new HashMap<>();
+    String query = "SELECT auth_token, auth_token_expires FROM members WHERE uuid = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, playerUUID);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          tokenInfo.put("token", rs.getString("auth_token"));
+          tokenInfo.put("expires", rs.getTimestamp("auth_token_expires"));
+        }
+      }
+    }
+    return tokenInfo;
+  }
+
+  /**
+   * トークンからプレイヤー情報を取得
+   */
+  public Map<String, Object> getMemberByToken(Connection conn, String token) 
+      throws SQLException {
+    Map<String, Object> memberInfo = new HashMap<>();
+    String query = "SELECT * FROM members WHERE auth_token = ? AND auth_token_expires > NOW()";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, token);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          int columnCount = rs.getMetaData().getColumnCount();
+          for (int i = 1; i <= columnCount; i++) {
+            String columnName = rs.getMetaData().getColumnName(i);
+            memberInfo.put(columnName, rs.getObject(columnName));
+          }
+        }
+      }
+    }
+    return memberInfo;
+  }
+
+  /**
+   * 認証トークンが有効かチェック
+   */
+  public boolean isTokenValid(Connection conn, String token) throws SQLException {
+    String query = "SELECT COUNT(*) FROM members WHERE auth_token = ? AND auth_token_expires > NOW()";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, token);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return rs.getInt(1) > 0;
+        }
+      }
+    }
+    return false;
+  }
+
   @SuppressWarnings("unused")
   private Class<?> getTypes(Object value) {
     return value.getClass();
