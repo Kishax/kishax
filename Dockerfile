@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     openssl \
     jq \
+    screen \
     && rm -rf /var/lib/apt/lists/*
 
 # Create directories
