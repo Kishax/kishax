@@ -1,4 +1,6 @@
-.PHONY: deploy deploy-plugin deploy-config
+include .env
+
+.PHONY: deploy deploy-plugin deploy-config mysql
 
 deploy-plugin:
 	./gradlew build -x test
@@ -14,3 +16,6 @@ deploy-config:
 	docker compose restart kishax-server
 
 deploy: deploy-plugin deploy-config
+
+mysql:
+	docker exec -it kishax-mysql mysql -h 127.0.0.1 -u $(MYSQL_USER) -p'$(MYSQL_PASSWORD)'
