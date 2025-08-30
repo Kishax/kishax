@@ -5,15 +5,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
 
 import org.slf4j.Logger;
 
@@ -191,48 +186,4 @@ public class SocketSwitch {
     }
   }
 
-  /**
-   * Web側（SQS経由でAPI Gateway）にメッセージを送信
-   */
-  public void sendToWeb(Message msg) {
-    Thread webSendThread = new Thread(() -> {
-      try {
-        String apiGatewayUrl = Settings.API_GATEWAY_URL.getValue();
-        if (apiGatewayUrl == null || apiGatewayUrl.isEmpty()) {
-          logger.warn("API Gateway URL is not configured. Skipping web message send.");
-          return;
-        }
-
-        HttpClient client = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
-
-        String jsonMessage = gson.toJson(msg);
-        
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(apiGatewayUrl))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(jsonMessage))
-            .timeout(Duration.ofSeconds(30))
-            .build();
-
-        HttpResponse<String> response = client.send(request, 
-            HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() == 200) {
-          logger.info("Successfully sent message to Web via API Gateway");
-        } else {
-          logger.warn("Failed to send message to Web. Status code: {}, Response: {}", 
-              response.statusCode(), response.body());
-        }
-
-      } catch (Exception e) {
-        logger.error("Error sending message to Web via API Gateway: {}", e.getMessage());
-        for (StackTraceElement element : e.getStackTrace()) {
-          logger.error(element.toString());
-        }
-      }
-    });
-    webSendThread.start();
-  }
 }

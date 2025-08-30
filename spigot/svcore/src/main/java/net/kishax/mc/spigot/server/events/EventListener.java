@@ -592,8 +592,8 @@ public final class EventListener implements Listener {
       // OTPをデータベースに保存
       updatePlayerOTP(conn, playerUUID, Integer.parseInt(otp));
 
-      // Web側（SQS）にプレイヤー情報とトークンを送信
-      sendAuthTokenToWeb(player, authToken, expiresAt, action);
+      // Velocity経由でWeb側にプレイヤー情報とトークンを送信  
+      sendAuthTokenToVelocity(conn, player, authToken, expiresAt, action);
 
       // 認証URLとOTPをプレイヤーに送信
       sendAuthenticationInfo(player, authUrl, otp);
@@ -673,9 +673,9 @@ public final class EventListener implements Listener {
   }
 
   /**
-   * Web側（SQS）に認証トークン情報を送信
+   * Velocity経由でWeb側に認証トークン情報を送信
    */
-  private void sendAuthTokenToWeb(Player player, String token, long expiresAt, String action) {
+  private void sendAuthTokenToVelocity(Connection conn, Player player, String token, long expiresAt, String action) {
     try {
       Message msg = new Message();
       msg.web = new Message.Web();
@@ -688,11 +688,11 @@ public final class EventListener implements Listener {
       msg.web.authToken.action = action;
 
       SocketSwitch ssw = sswProvider.get();
-      ssw.sendToWeb(msg);
+      ssw.sendVelocityServer(conn, msg);
       
-      logger.info("Sent auth token info to Web for player: {} (action: {})", player.getName(), action);
+      logger.info("Sent auth token info to Velocity for player: {} (action: {})", player.getName(), action);
     } catch (Exception e) {
-      logger.error("Failed to send auth token info to Web: {}", e.getMessage());
+      logger.error("Failed to send auth token info to Velocity: {}", e.getMessage());
     }
   }
 

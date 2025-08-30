@@ -93,8 +93,8 @@ public class Confirm {
                 int rsAffected3 = updateSecret2(conn, new Object[] { ranum, playerUUID });
                 
                 if (rsAffected3 > 0) {
-                  // Web側（SQS）にプレイヤー情報とトークンを送信
-                  sendAuthTokenToWeb(player, authToken, expiresAt, "create");
+                  // Velocity経由でWeb側にプレイヤー情報とトークンを送信
+                  sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
                   
                   sendConfirmationMessage(player, ranum, confirmUrl);
                 } else {
@@ -316,9 +316,9 @@ public class Confirm {
   }
 
   /**
-   * Web側（SQS）に認証トークン情報を送信
+   * Velocity経由でWeb側に認証トークン情報を送信
    */
-  private void sendAuthTokenToWeb(Player player, String token, long expiresAt, String action) {
+  private void sendAuthTokenToVelocity(Connection conn, Player player, String token, long expiresAt, String action) {
     try {
       Message msg = new Message();
       msg.web = new Message.Web();
@@ -331,11 +331,11 @@ public class Confirm {
       msg.web.authToken.action = action;
 
       SocketSwitch ssw = sswProvider.get();
-      ssw.sendToWeb(msg);
+      ssw.sendVelocityServer(conn, msg);
       
-      logger.info("Sent auth token info to Web for player: {}", player.getName());
+      logger.info("Sent auth token info to Velocity for player: {}", player.getName());
     } catch (Exception e) {
-      logger.error("Failed to send auth token info to Web: {}", e.getMessage());
+      logger.error("Failed to send auth token info to Velocity: {}", e.getMessage());
     }
   }
 }
