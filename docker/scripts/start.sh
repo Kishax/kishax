@@ -112,17 +112,26 @@ done
 echo "Configuration completed!"
 echo "Starting servers..."
 
-# Start Velocity proxy in background
-echo "Starting Velocity proxy..."
+# Start Velocity proxy in screen session
+echo "Starting Velocity proxy in screen session 'velocity'..."
 cd /mc/velocity
-java -Xmx${VELOCITY_MEMORY:-1G} -jar velocity-*.jar &
-VELOCITY_PID=$!
+screen -dmS velocity java -Xmx${VELOCITY_MEMORY:-1G} -jar velocity-*.jar
 
 # Wait a moment for Velocity to start
 echo "Waiting for Velocity to initialize..."
 sleep 10
 
-# Start Paper server (foreground)
-echo "Starting Paper server..."
+# Start Paper server in screen session
+echo "Starting Paper server in screen session 'spigot'..."
 cd /mc/spigot
-exec java -Xmx${SPIGOT_MEMORY:-2G} -jar paper-*.jar --nogui
+screen -dmS spigot java -Xmx${SPIGOT_MEMORY:-2G} -jar paper-*.jar --nogui
+
+# Keep container running by attaching to spigot screen
+echo "Servers started! Use 'make mc-spigot' or 'make mc-velocity' to access server consoles."
+echo "Available screen sessions:"
+screen -list
+
+# Keep container alive by waiting for screen sessions
+while screen -list | grep -q "spigot\|velocity"; do
+    sleep 30
+done

@@ -13,6 +13,8 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/data/TABLES.sql:/docker-entrypoint-initdb.d/01-tables.sql
+      - ./docker/data/init-seeds.sh:/docker-entrypoint-initdb.d/02-init-seeds.sh
+      - ./docker/data/seeds:/docker-entrypoint-initdb.d/seeds
     ports:
       - "3306:3306"
     command: --default-authentication-plugin=mysql_native_password
