@@ -17,5 +17,12 @@ deploy-config:
 
 deploy: deploy-plugin deploy-config
 
-mysql:
+mysql: ## MySQLコンテナに接続
+	@if [ "$(MAKECMDGOALS)" = "mysql" ]; then \
+		echo "実行コマンド: docker exec -it kishax-mysql mysql -h 127.0.0.1 -u $(MYSQL_USER) -p'$(MYSQL_PASSWORD)'"; \
+	fi
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-mysql; then \
+		echo "⚠️  kishax-mysqlコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
 	docker exec -it kishax-mysql mysql -h 127.0.0.1 -u $(MYSQL_USER) -p'$(MYSQL_PASSWORD)'
