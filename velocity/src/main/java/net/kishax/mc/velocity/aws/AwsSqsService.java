@@ -34,21 +34,17 @@ public class AwsSqsService {
     String accessKeyId = config.getString("AWS.Credentials.AccessKey", "");
     String secretAccessKey = config.getString("AWS.Credentials.SecretKey", "");
 
-    logger.info("DEBUG: AWS Region from config: {}", region);
-    logger.info("DEBUG: AWS AccessKey configured: {}", !accessKeyId.isEmpty());
-    logger.info("DEBUG: AWS SecretKey configured: {}", !secretAccessKey.isEmpty());
-
     if (accessKeyId.isEmpty() || secretAccessKey.isEmpty()) {
       logger.warn("AWS credentials not configured in config.yml. SQS functionality will be disabled.");
       this.sqsClient = null;
     } else {
-      logger.info("DEBUG: Creating SQS client...");
+      logger.info("Initializing SQS client for region: {}", region);
       this.sqsClient = SqsClient.builder()
           .region(Region.of(region))
           .credentialsProvider(StaticCredentialsProvider.create(
               AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
           .build();
-      logger.info("DEBUG: SQS client created successfully");
+      logger.info("SQS client initialized successfully");
     }
 
     this.gson = new Gson();
@@ -58,16 +54,14 @@ public class AwsSqsService {
    * 認証トークン情報をWeb側(SQS)に送信
    */
   public void sendAuthTokenToWeb(Message.Web.AuthToken authToken) {
-    logger.info("DEBUG: sendAuthTokenToWeb called for player: {} ({})", authToken.who.name, authToken.who.uuid);
+    logger.info("Sending auth token to SQS for player: {} ({})", authToken.who.name, authToken.who.uuid);
     try {
       if (this.sqsClient == null) {
         logger.warn("SQS client not initialized. Skipping auth token send.");
         return;
       }
-      logger.info("DEBUG: SQS client is initialized");
 
       String queueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
-      logger.info("DEBUG: Queue URL from config: {}", queueUrl);
 
       if (queueUrl.isEmpty()) {
         logger.warn("AWS.SQS.McToWebQueueUrl is not configured. Skipping auth token send.");
@@ -84,7 +78,6 @@ public class AwsSqsService {
       messageData.put("action", authToken.action);
 
       String jsonMessage = gson.toJson(messageData);
-      logger.info("DEBUG: Message JSON created: {}", jsonMessage);
 
       SendMessageRequest sendRequest = SendMessageRequest.builder()
           .queueUrl(queueUrl)
@@ -93,9 +86,7 @@ public class AwsSqsService {
           .messageDeduplicationId(authToken.who.uuid + "_" + System.currentTimeMillis()) // FIFO キューの場合
           .build();
 
-      logger.info("DEBUG: Sending message to SQS...");
       SendMessageResponse response = sqsClient.sendMessage(sendRequest);
-      logger.info("DEBUG: SQS send response received");
 
       if (response.sdkHttpResponse().isSuccessful()) {
         logger.info("Successfully sent auth token to SQS for player: {} (MessageId: {})",
@@ -106,12 +97,10 @@ public class AwsSqsService {
       }
 
     } catch (Exception e) {
-      logger.error("DEBUG: Exception occurred in sendAuthTokenToWeb");
       logger.error("Error sending auth token to SQS: {}", e.getMessage());
       for (StackTraceElement element : e.getStackTrace()) {
         logger.error(element.toString());
       }
     }
-    logger.info("DEBUG: sendAuthTokenToWeb method completed");
   }
 }
