@@ -26,6 +26,7 @@ import net.kishax.mc.common.socket.PortFinder;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.ServerActionHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.SyncContentHandler;
+import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.OtpHandler;
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.spigot.database.SpigotDatabaseInfo;
 import net.kishax.mc.spigot.server.AutoShutdown;
@@ -42,6 +43,7 @@ import net.kishax.mc.spigot.server.events.WandListener;
 import net.kishax.mc.spigot.server.menu.Menu;
 import net.kishax.mc.spigot.socket.message.handlers.minecraft.SpigotSyncContentHandler;
 import net.kishax.mc.spigot.socket.message.handlers.minecraft.server.SpigotServerActionHandler;
+import net.kishax.mc.spigot.socket.message.handlers.minecraft.SpigotOtpHandler;
 import net.kishax.mc.spigot.util.RunnableTaskUtil;
 import net.kishax.mc.spigot.util.config.PortalsConfig;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -87,6 +89,7 @@ public class Module extends AbstractModule {
 
     bind(ServerActionHandler.class).to(SpigotServerActionHandler.class);
     bind(SyncContentHandler.class).to(SpigotSyncContentHandler.class);
+    bind(OtpHandler.class).to(SpigotOtpHandler.class);
   }
 
   @Provides

@@ -17,6 +17,7 @@ import net.kishax.mc.common.database.interfaces.DatabaseInfo;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.ServerActionHandler;
+import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.OtpHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.commands.ForwardHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.commands.ImageMapHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.commands.InputHandler;
@@ -44,6 +45,7 @@ import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.Velocity
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.VelocityTeleportPlayerHandler;
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.VelocityTeleportPointHandler;
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.server.VelocityServerActionHandler;
+import net.kishax.mc.velocity.socket.message.handlers.minecraft.VelocityOtpHandler;
 import net.kishax.mc.velocity.socket.message.handlers.web.VelocityMinecraftWebConfirmHandler;
 import net.kishax.mc.velocity.socket.VelocitySocketSwitch;
 import net.kishax.mc.velocity.socket.VelocityMessageProcessor;
@@ -108,6 +110,7 @@ public class Module extends AbstractModule {
     bind(TeleportPointHandler.class).to(VelocityTeleportPointHandler.class);
 
     bind(ServerActionHandler.class).to(VelocityServerActionHandler.class);
+    bind(OtpHandler.class).to(VelocityOtpHandler.class);
 
     bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
     

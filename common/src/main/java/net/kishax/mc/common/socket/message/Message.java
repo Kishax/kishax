@@ -3,6 +3,7 @@ package net.kishax.mc.common.socket.message;
 public class Message {
   public Web web;
   public Minecraft mc;
+  public Minecraft minecraft; // ソケット通信用の別名フィールド
   public Discord discord;
 
   public static class Web {

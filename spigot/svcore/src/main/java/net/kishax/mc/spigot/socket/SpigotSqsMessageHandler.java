@@ -96,23 +96,8 @@ public class SpigotSqsMessageHandler implements SqsMessageHandler {
 
   @Override
   public void handleOtpToMinecraft(String mcid, String uuid, String otp) {
-    try {
-      logger.info("Web→MC OTP受信: {} ({}) OTP: {}", mcid, uuid, otp);
-
-      // メインスレッドで実行（Bukkit API呼び出しのため）
-      Bukkit.getScheduler().runTask(plugin, () -> {
-        Player player = Bukkit.getPlayer(mcid);
-        if (player != null && player.getUniqueId().toString().equals(uuid)) {
-          // プレイヤーにOTPを送信（DB保存なし）
-          sendOtpToPlayer(player, otp);
-        } else {
-          logger.warn("プレイヤーが見つからないかUUIDが一致しません: {} ({})", mcid, uuid);
-        }
-      });
-
-    } catch (Exception e) {
-      logger.error("OTP受信処理でエラーが発生しました: {} ({})", mcid, uuid, e);
-    }
+    // OTP処理はVelocity→Spigot socket通信で処理されるため、この実装は不要
+    logger.warn("SpigotSqsMessageHandlerでのOTP処理は廃止されました。Velocity→Spigot socket通信を使用してください。");
   }
 
   /**
@@ -265,47 +250,6 @@ public class SpigotSqsMessageHandler implements SqsMessageHandler {
     });
   }
 
-  /**
-   * Web側に認証レスポンス送信
-   */
-  /**
-   * プレイヤーにOTPを送信
-   */
-  private void sendOtpToPlayer(Player player, String otp) {
-    try {
-      // OTPをチャットで表示（Adventure Component使用）
-      net.kyori.adventure.text.Component otpMessage = net.kyori.adventure.text.Component.text()
-          .append(net.kyori.adventure.text.Component.text("【WEB認証】").color(net.kyori.adventure.text.format.NamedTextColor.GOLD))
-          .appendNewline()
-          .append(net.kyori.adventure.text.Component.text("ワンタイムパスワード: ").color(net.kyori.adventure.text.format.NamedTextColor.WHITE))
-          .append(net.kyori.adventure.text.Component.text(otp)
-              .color(net.kyori.adventure.text.format.NamedTextColor.BLUE)
-              .decorate(net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
-              .clickEvent(net.kyori.adventure.text.event.ClickEvent.copyToClipboard(otp))
-              .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(
-                  net.kyori.adventure.text.Component.text("クリックしてコピー"))))
-          .appendNewline()
-          .append(net.kyori.adventure.text.Component.text("このコードをWEB認証ページで入力してください。").color(net.kyori.adventure.text.format.NamedTextColor.GRAY))
-          .build();
-
-      // Adventure APIでメッセージ送信
-      if (plugin instanceof net.kyori.adventure.platform.bukkit.BukkitAudiences) {
-        ((net.kyori.adventure.platform.bukkit.BukkitAudiences) plugin).player(player).sendMessage(otpMessage);
-      } else {
-        // fallback: 通常のBukkit messaging
-        player.sendMessage("§6【WEB認証】");
-        player.sendMessage("§fワンタイムパスワード: §9§n" + otp);
-        player.sendMessage("§7このコードをWEB認証ページで入力してください。");
-      }
-
-      logger.info("プレイヤー {} にOTPを送信しました: {}", player.getName(), otp);
-
-    } catch (Exception e) {
-      logger.error("プレイヤーへのOTP送信でエラーが発生しました: {}", player.getName(), e);
-      // fallback: 簡単なメッセージ
-      player.sendMessage("§cOTP送信でエラーが発生しました。");
-    }
-  }
 
   /**
    * Web側に認証レスポンス送信

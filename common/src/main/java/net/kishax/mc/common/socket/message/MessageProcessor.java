@@ -28,6 +28,7 @@ public class MessageProcessor {
         .map(discord -> discord.rulebook)
         .ifPresent(rulebook -> injector.getInstance(RuleBookSyncHandler.class).handle(rulebook));
 
+    // mcフィールドの処理
     if (msg.mc != null) {
       Optional.ofNullable(msg.mc.server)
           .ifPresent(server -> {
@@ -55,6 +56,27 @@ public class MessageProcessor {
 
             Optional.ofNullable(cmd.input)
                 .ifPresent(input -> injector.getInstance(InputHandler.class).handle(input));
+          });
+
+      Optional.ofNullable(msg.mc.otp)
+          .ifPresent(otp -> {
+            try {
+              injector.getInstance(OtpHandler.class).handle(otp);
+            } catch (ProvisionException e) {
+              // OtpHandlerが存在しない場合はスキップ
+            }
+          });
+    }
+
+    // minecraftフィールドの処理（ソケット通信用）
+    if (msg.minecraft != null) {
+      Optional.ofNullable(msg.minecraft.otp)
+          .ifPresent(otp -> {
+            try {
+              injector.getInstance(OtpHandler.class).handle(otp);
+            } catch (ProvisionException e) {
+              // OtpHandlerが存在しない場合はスキップ
+            }
           });
     }
   }
