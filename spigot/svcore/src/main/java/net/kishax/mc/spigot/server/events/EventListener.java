@@ -99,6 +99,10 @@ public final class EventListener implements Listener {
   private final ItemFrames fif;
   private final Provider<SocketSwitch> sswProvider;
   private final Set<Player> playersInPortal = new HashSet<>();
+  
+  // QRコード右クリック制限用マップ（プレイヤー -> 最後のクリック時間）
+  private final Map<Player, Long> qrClickCooldowns = new HashMap<>();
+  private static final long QR_CLICK_COOLDOWN_MS = 30000; // 30秒のクールダウン
 
   @Inject
   public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, PortalsConfig psConfig,
@@ -536,6 +540,21 @@ public final class EventListener implements Listener {
    * QRコード右クリック時の処理
    */
   private void handleConfirmMapRightClick(Player player) {
+    // クールダウンチェック
+    long currentTime = System.currentTimeMillis();
+    Long lastClickTime = qrClickCooldowns.get(player);
+    
+    if (lastClickTime != null && (currentTime - lastClickTime) < QR_CLICK_COOLDOWN_MS) {
+      long remainingSeconds = (QR_CLICK_COOLDOWN_MS - (currentTime - lastClickTime)) / 1000;
+      Component cooldownMessage = Component.text("QRコードは" + remainingSeconds + "秒後に再度右クリックできます。")
+          .color(NamedTextColor.YELLOW);
+      audiences.player(player).sendMessage(cooldownMessage);
+      return;
+    }
+    
+    // クリック時間を記録
+    qrClickCooldowns.put(player, currentTime);
+    
     try (Connection conn = db.getConnection()) {
       // プレイヤーの認証情報を取得
       Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
