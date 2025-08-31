@@ -41,8 +41,10 @@ fi
 echo "Configuring server files..."
 echo "DEBUG: AWS Environment Variables:"
 echo "AWS_REGION=${AWS_REGION}"
-echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:0:10}..." # 最初の10文字のみ表示
-echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:0:10}..." # 最初の10文字のみ表示  
+echo "MC_WEB_SQS_ACCESS_KEY_ID=${MC_WEB_SQS_ACCESS_KEY_ID:0:10}..." # 最初の10文字のみ表示
+echo "MC_WEB_SQS_SECRET_ACCESS_KEY=${MC_WEB_SQS_SECRET_ACCESS_KEY:0:10}..." # 最初の10文字のみ表示
+echo "DISCORD_API_ACCESS_KEY_ID=${DISCORD_API_ACCESS_KEY_ID:0:10}..." # 最初の10文字のみ表示
+echo "DISCORD_API_SECRET_ACCESS_KEY=${DISCORD_API_SECRET_ACCESS_KEY:0:10}..." # 最初の10文字のみ表示
 echo "WEB_TO_MC_QUEUE_URL=${WEB_TO_MC_QUEUE_URL}"
 echo "MC_TO_WEB_QUEUE_URL=${MC_TO_WEB_QUEUE_URL}"
 echo "API_GATEWAY_URL=${API_GATEWAY_URL}"
@@ -59,10 +61,15 @@ find /mc -type f \( -name "*.yml" -o -name "*.toml" \) | while read file; do
     sed -i.bak "s|\${CONFIRM_URL:-https://your-confirm-url.com}|${CONFIRM_URL:-https://your-confirm-url.com}|g" "$file"
     sed -i.bak "s|\${HOME_SERVER_NAME:-spigot}|${HOME_SERVER_NAME:-spigot}|g" "$file"
     sed -i.bak "s|\${HOME_SERVER_IP:-127.0.0.1}|${HOME_SERVER_IP:-127.0.0.1}|g" "$file"
-    # AWS SQS Configuration replacements
+    # AWS Configuration replacements
     sed -i.bak "s|\${AWS_REGION}|${AWS_REGION:-ap-northeast-1}|g" "$file"
-    sed -i.bak "s|\${AWS_ACCESS_KEY_ID}|${AWS_ACCESS_KEY_ID}|g" "$file"
-    sed -i.bak "s|\${AWS_SECRET_ACCESS_KEY}|${AWS_SECRET_ACCESS_KEY}|g" "$file"
+    # MC-Web SQS Configuration replacements
+    sed -i.bak "s|\${MC_WEB_SQS_ACCESS_KEY_ID}|${MC_WEB_SQS_ACCESS_KEY_ID}|g" "$file"
+    sed -i.bak "s|\${MC_WEB_SQS_SECRET_ACCESS_KEY}|${MC_WEB_SQS_SECRET_ACCESS_KEY}|g" "$file"
+    # Discord API Configuration replacements
+    sed -i.bak "s|\${DISCORD_API_ACCESS_KEY_ID}|${DISCORD_API_ACCESS_KEY_ID}|g" "$file"
+    sed -i.bak "s|\${DISCORD_API_SECRET_ACCESS_KEY}|${DISCORD_API_SECRET_ACCESS_KEY}|g" "$file"
+    # Queue URLs and API Gateway
     sed -i.bak "s|\${WEB_TO_MC_QUEUE_URL}|${WEB_TO_MC_QUEUE_URL}|g" "$file"
     sed -i.bak "s|\${MC_TO_WEB_QUEUE_URL}|${MC_TO_WEB_QUEUE_URL}|g" "$file"
     sed -i.bak "s|\${API_GATEWAY_URL}|${API_GATEWAY_URL}|g" "$file"

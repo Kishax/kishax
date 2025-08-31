@@ -18,9 +18,13 @@ AWS:
   SQS:
     WebToMcQueueUrl: "${WEB_TO_MC_QUEUE_URL}"
     McToWebQueueUrl: "${MC_TO_WEB_QUEUE_URL}"
-  Credentials:
-    AccessKey: "${AWS_ACCESS_KEY_ID}"
-    SecretKey: "${AWS_SECRET_ACCESS_KEY}"
+    Credentials:
+      AccessKey: "${MC_WEB_SQS_ACCESS_KEY_ID}"
+      SecretKey: "${MC_WEB_SQS_SECRET_ACCESS_KEY}"
+  Discord:
+    Credentials:
+      AccessKey: "${DISCORD_API_ACCESS_KEY_ID}"
+      SecretKey: "${DISCORD_API_SECRET_ACCESS_KEY}"
   ApiGateway:
     Endpoint: "${API_GATEWAY_URL}/discord"
 

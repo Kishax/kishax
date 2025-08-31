@@ -31,8 +31,8 @@ public class AwsSqsService {
 
     // AWS SQS クライアントを初期化 - config.ymlから認証情報を取得
     String region = config.getString("AWS.Region", "ap-northeast-1");
-    String accessKeyId = config.getString("AWS.Credentials.AccessKey", "");
-    String secretAccessKey = config.getString("AWS.Credentials.SecretKey", "");
+    String accessKeyId = config.getString("AWS.SQS.Credentials.AccessKey", "");
+    String secretAccessKey = config.getString("AWS.SQS.Credentials.SecretKey", "");
 
     if (accessKeyId.isEmpty() || secretAccessKey.isEmpty()) {
       logger.warn("AWS credentials not configured in config.yml. SQS functionality will be disabled.");
