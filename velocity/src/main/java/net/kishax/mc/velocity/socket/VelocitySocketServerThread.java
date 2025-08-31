@@ -26,14 +26,18 @@ public class VelocitySocketServerThread extends Thread {
 
   @Override
   public void run() {
+    // logger.info("DEBUG: New socket connection established from: {}", socket.getRemoteSocketAddress());
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));) {
       String line;
       while (Objects.nonNull(line = reader.readLine())) {
+        // logger.info("DEBUG: Received socket message: {}", line);
         Gson gson = new Gson();
         try {
           Message message = gson.fromJson(line, Message.class);
+          // logger.info("DEBUG: Parsed message successfully, processing...");
           VelocityMessageProcessor msgProcessor = injector.getInstance(VelocityMessageProcessor.class);
           msgProcessor.process(message);
+          // logger.info("DEBUG: Message processing completed");
         } catch (Exception e) {
           logger.error("JSON parse error: {}", e.getMessage());
         }

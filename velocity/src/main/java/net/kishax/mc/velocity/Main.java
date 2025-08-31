@@ -97,7 +97,7 @@ public class Main {
         });
     Database db = getInjector().getInstance(Database.class);
     try (Connection conn = db.getConnection()) {
-      getInjector().getInstance(DoServerOnline.class).updateAndSyncDatabase(false);
+      // この行は削除（上記の新しい実装で置き換え）
       
       // Settings設定をMySQLに同期
       getInjector().getInstance(SettingsSyncService.class).syncSettingsToDatabase();
@@ -118,6 +118,13 @@ public class Main {
     int port = config.getInt("Socket.Server_Port", 0);
     if (port != 0) {
       getInjector().getProvider(SocketSwitch.class).get().startSocketServer(port);
+    }
+    
+    // データベース同期時にsocketPortを渡す
+    try {
+      getInjector().getInstance(DoServerOnline.class).updateAndSyncDatabase(false, port);
+    } catch (Exception e) {
+      logger.error("Failed to update database with socket port: {}", e.getMessage());
     }
     logger.info(FloodgateApi.getInstance().toString());
     logger.info("linking with Floodgate...");
