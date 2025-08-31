@@ -585,18 +585,14 @@ public final class EventListener implements Listener {
         action = "create";
       }
 
-      // 認証URLとOTPを生成
+      // 認証URLを生成
       String authUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
-      String otp = String.format("%06d", generateOTPbyInt());
-
-      // OTPをデータベースに保存
-      updatePlayerOTP(conn, playerUUID, Integer.parseInt(otp));
 
       // Velocity経由でWeb側にプレイヤー情報とトークンを送信  
       sendAuthTokenToVelocity(conn, player, authToken, expiresAt, action);
 
-      // 認証URLとOTPをプレイヤーに送信
-      sendAuthenticationInfo(player, authUrl, otp);
+      // 認証URLをプレイヤーに送信
+      sendAuthenticationInfo(player, authUrl);
 
     } catch (SQLException | ClassNotFoundException e) {
       Component errorMessage = Component.text("認証情報の生成に失敗しました。")
@@ -628,26 +624,12 @@ public final class EventListener implements Listener {
     return otp.toString();
   }
 
-  private static int generateOTPbyInt() {
-    return (100000 + random.nextInt(900000));
-  }
 
-  /**
-   * プレイヤーのOTPを更新
-   */
-  private void updatePlayerOTP(Connection conn, String playerUUID, int otp) throws SQLException {
-    String query = "UPDATE members SET secret2=? WHERE uuid=?;";
-    try (PreparedStatement ps = conn.prepareStatement(query)) {
-      ps.setInt(1, otp);
-      ps.setString(2, playerUUID);
-      ps.executeUpdate();
-    }
-  }
 
   /**
    * 認証情報をプレイヤーに送信
    */
-  private void sendAuthenticationInfo(Player player, String authUrl, String otp) {
+  private void sendAuthenticationInfo(Player player, String authUrl) {
     Component titleMessage = Component.text("━━━━━ MC認証情報 ━━━━━")
         .color(NamedTextColor.GOLD)
         .decorate(TextDecoration.BOLD);
@@ -661,16 +643,7 @@ public final class EventListener implements Listener {
         .clickEvent(ClickEvent.openUrl(authUrl))
         .hoverEvent(HoverEvent.showText(Component.text("クリックして認証ページを開く")));
 
-    Component otpLabel = Component.text("ワンタイムパスワード: ")
-        .color(NamedTextColor.YELLOW);
-
-    Component otpComponent = Component.text(otp)
-        .color(NamedTextColor.GREEN)
-        .decorate(TextDecoration.BOLD)
-        .clickEvent(ClickEvent.copyToClipboard(otp))
-        .hoverEvent(HoverEvent.showText(Component.text("クリックしてコピー")));
-
-    Component instructionMessage = Component.text("右クリックで認証URLとワンタイムパスワードを取得できます。アクセスすることで、Kishaxサーバでの主要機能をアンロックできます。")
+    Component instructionMessage = Component.text("右クリックで認証URLを取得できます。アクセスすることで、Kishaxサーバでの主要機能をアンロックできます。")
         .color(NamedTextColor.GRAY)
         .decorate(TextDecoration.ITALIC);
 
@@ -681,8 +654,6 @@ public final class EventListener implements Listener {
     audiences.player(player).sendMessage(titleMessage);
     audiences.player(player).sendMessage(Component.empty());
     audiences.player(player).sendMessage(urlLabel.append(urlComponent));
-    audiences.player(player).sendMessage(Component.empty());
-    audiences.player(player).sendMessage(otpLabel.append(otpComponent));
     audiences.player(player).sendMessage(Component.empty());
     audiences.player(player).sendMessage(instructionMessage);
     audiences.player(player).sendMessage(separatorMessage);

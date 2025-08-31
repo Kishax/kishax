@@ -88,20 +88,10 @@ public class Confirm {
                   im.giveMapToPlayer(player, ifMapId);
                 }
                 
-                // OTP生成・保存
-                int ranum = generateOTPbyInt();
-                int rsAffected3 = updateSecret2(conn, new Object[] { ranum, playerUUID });
+                // Velocity経由でWeb側にプレイヤー情報とトークンを送信
+                sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
                 
-                if (rsAffected3 > 0) {
-                  // Velocity経由でWeb側にプレイヤー情報とトークンを送信
-                  sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
-                  
-                  sendConfirmationMessage(player, ranum, confirmUrl);
-                } else {
-                  Component errorMessage = Component.text("エラーが発生しました。")
-                      .color(NamedTextColor.RED);
-                  audiences.player(player).sendMessage(errorMessage);
-                }
+                sendConfirmationMessage(player, confirmUrl);
               }
             }
           } catch (SQLException | ClassNotFoundException e2) {
@@ -127,17 +117,8 @@ public class Confirm {
     }
   }
 
-  private int updateSecret2(Connection conn, Object[] args) throws SQLException {
-    String query = "UPDATE members SET secret2=? WHERE uuid=?;";
-    PreparedStatement ps = conn.prepareStatement(query);
-    for (int i = 0; i < args.length; i++) {
-      ps.setObject(i + 1, args[i]);
-    }
-    return ps.executeUpdate();
-  }
 
-  private void sendConfirmationMessage(Player player, int ranum, String confirmUrl) {
-    String ranumstr = Integer.toString(ranum);
+  private void sendConfirmationMessage(Player player, String confirmUrl) {
 
     Component welcomeMessage = Component.text("Kishaxサーバーへようこそ！")
         .color(NamedTextColor.GREEN)
@@ -181,15 +162,6 @@ public class Confirm {
         .appendNewline()
         .appendNewline();
 
-    Component authCode = Component.text("認証コード: ")
-        .color(NamedTextColor.WHITE)
-        .append(Component.text(ranumstr)
-            .color(NamedTextColor.BLUE)
-            .decorate(TextDecoration.UNDERLINED)
-            .clickEvent(ClickEvent.copyToClipboard(ranumstr))
-            .hoverEvent(HoverEvent.showText(Component.text("クリックしてコピー"))))
-        .appendNewline()
-        .appendNewline();
 
     Component finalMessage = Component.text("それでは、楽しいマイクラライフを！")
         .color(NamedTextColor.GREEN);
@@ -203,7 +175,6 @@ public class Confirm {
         .append(accessMethodTitle)
         .append(javaUserInstruction)
         .append(bedrockUserInstruction)
-        .append(authCode)
         .append(finalMessage);
 
     audiences.player(player).sendMessage(fullMessage);
@@ -244,9 +215,6 @@ public class Confirm {
     return otp.toString();
   }
 
-  private static int generateOTPbyInt() {
-    return (100000 + random.nextInt(900000));
-  }
 
   /**
    * Velocity経由でWeb側に認証トークン情報を送信
