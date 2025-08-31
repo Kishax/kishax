@@ -82,8 +82,6 @@ public class AwsSqsService {
       SendMessageRequest sendRequest = SendMessageRequest.builder()
           .queueUrl(queueUrl)
           .messageBody(jsonMessage)
-          .messageGroupId("auth-token-group") // FIFO キューの場合
-          .messageDeduplicationId(authToken.who.uuid + "_" + System.currentTimeMillis()) // FIFO キューの場合
           .build();
 
       SendMessageResponse response = sqsClient.sendMessage(sendRequest);
