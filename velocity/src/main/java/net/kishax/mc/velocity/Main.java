@@ -22,6 +22,8 @@ import net.kishax.mc.common.database.Database;
 // リフレクション・動的ライブラリローディングは AWS移行により不要
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
+import net.kishax.mc.common.socket.SqsMessageProcessor;
+import net.kishax.mc.common.socket.SqsClient;
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.aws.AwsConfig;
@@ -126,6 +128,14 @@ public class Main {
     } catch (Exception e) {
       logger.error("Failed to update database with socket port: {}", e.getMessage());
     }
+    
+    // SQS関連サービスの初期化
+    try {
+      initializeSqsServices();
+    } catch (Exception e) {
+      logger.error("Failed to initialize SQS services: {}", e.getMessage());
+    }
+    
     logger.info(FloodgateApi.getInstance().toString());
     logger.info("linking with Floodgate...");
   }
@@ -133,11 +143,67 @@ public class Main {
   public static Injector getInjector() {
     return injector;
   }
+  
+  private void initializeSqsServices() {
+    try {
+      VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
+      AwsConfig awsConfig = getInjector().getInstance(AwsConfig.class);
+      
+      // SQS設定を取得
+      String region = awsConfig.getAwsRegion();
+      String accessKey = awsConfig.getSqsAccessKey();
+      String secretKey = awsConfig.getSqsSecretKey();
+      String webToMcQueueUrl = config.getString("AWS.SQS.WebToMcQueueUrl", "");
+      String apiGatewayUrl = awsConfig.getApiGatewayUrl();
+      
+      if (webToMcQueueUrl.isEmpty()) {
+        logger.warn("WebToMcQueueUrl が設定されていません。SQS機能は無効になります。");
+        return;
+      }
+      
+      // AWS SQS Clientを作成
+      software.amazon.awssdk.services.sqs.SqsClient awsSqsClient = software.amazon.awssdk.services.sqs.SqsClient.builder()
+          .region(software.amazon.awssdk.regions.Region.of(region))
+          .credentialsProvider(software.amazon.awssdk.auth.credentials.StaticCredentialsProvider.create(
+              software.amazon.awssdk.auth.credentials.AwsBasicCredentials.create(accessKey, secretKey)
+          ))
+          .build();
+      
+      // SqsClientの初期化
+      SqsClient sqsClient = getInjector().getInstance(SqsClient.class);
+      sqsClient.initialize(region, accessKey, secretKey, webToMcQueueUrl, apiGatewayUrl);
+      logger.info("SQS クライアントが初期化されました");
+      
+      // SqsMessageProcessorの初期化と開始
+      SqsMessageProcessor sqsProcessor = getInjector().getInstance(SqsMessageProcessor.class);
+      sqsProcessor.initialize(awsSqsClient, webToMcQueueUrl);
+      sqsProcessor.start();
+      logger.info("SQS メッセージプロセッサーが開始されました");
+      
+    } catch (Exception e) {
+      logger.error("SQS サービスの初期化に失敗しました: {}", e.getMessage());
+      throw e;
+    }
+  }
 
   @Subscribe
   public void onProxyShutdown(ProxyShutdownEvent e) {
     if (!isEnable)
       return;
+    
+    // SQS関連サービスの停止
+    try {
+      SqsMessageProcessor sqsProcessor = getInjector().getInstance(SqsMessageProcessor.class);
+      sqsProcessor.stop();
+      logger.info("SQS メッセージプロセッサーが停止しました");
+      
+      SqsClient sqsClient = getInjector().getInstance(SqsClient.class);
+      sqsClient.close();
+      logger.info("SQS クライアントが停止しました");
+    } catch (Exception ex) {
+      logger.error("SQS サービスの停止中にエラーが発生しました: {}", ex.getMessage());
+    }
+    
     getInjector().getInstance(DoServerOffline.class).updateDatabase();
     getInjector().getProvider(SocketSwitch.class).get().stopSocketClient();
     logger.info("Client Socket Stopping...");

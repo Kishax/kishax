@@ -103,10 +103,35 @@ public class AwsConfig {
   }
 
   /**
+   * SQS用 AWS Access Key を取得
+   */
+  public String getSqsAccessKey() {
+    String accessKey = config.getString("AWS.SQS.Credentials.AccessKey", "");
+    if (accessKey.isEmpty()) {
+      logger.warn("AWS SQS Access Key が設定されていません");
+    }
+    logger.debug("AWS SQS Access Key loaded: {}", accessKey.isEmpty() ? "EMPTY" : "LOADED");
+    return accessKey;
+  }
+
+  /**
+   * SQS用 AWS Secret Key を取得
+   */
+  public String getSqsSecretKey() {
+    String secretKey = config.getString("AWS.SQS.Credentials.SecretKey", "");
+    if (secretKey.isEmpty()) {
+      logger.warn("AWS SQS Secret Key が設定されていません");
+    }
+    logger.debug("AWS SQS Secret Key loaded: {}", secretKey.isEmpty() ? "EMPTY" : "LOADED");
+    return secretKey;
+  }
+
+  /**
    * SQS設定が有効かチェック
    */
   public boolean isSqsConfigValid() {
-    return !getMcToWebQueueUrl().isEmpty() && !getWebToMcQueueUrl().isEmpty();
+    return !getMcToWebQueueUrl().isEmpty() && !getWebToMcQueueUrl().isEmpty() &&
+           !getSqsAccessKey().isEmpty() && !getSqsSecretKey().isEmpty();
   }
 
   /**

@@ -19,12 +19,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SqsMessageProcessor {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(SqsMessageProcessor.class);
 
-    private final software.amazon.awssdk.services.sqs.SqsClient awsSqsClient;
-    private final String webToMcQueueUrl;
+    private software.amazon.awssdk.services.sqs.SqsClient awsSqsClient;
+    private String webToMcQueueUrl;
     private final ObjectMapper objectMapper;
     private final ScheduledExecutorService executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final SqsMessageHandler messageHandler;
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     @Inject
     public SqsMessageProcessor(software.amazon.awssdk.services.sqs.SqsClient awsSqsClient, String webToMcQueueUrl, SqsMessageHandler messageHandler) {
@@ -38,8 +39,21 @@ public class SqsMessageProcessor {
             return t;
         });
     }
+    
+    public void initialize(software.amazon.awssdk.services.sqs.SqsClient awsSqsClient, String webToMcQueueUrl) {
+        if (initialized.compareAndSet(false, true)) {
+            this.awsSqsClient = awsSqsClient;
+            this.webToMcQueueUrl = webToMcQueueUrl;
+            logger.info("SqsMessageProcessor が初期化されました");
+        }
+    }
 
     public void start() {
+        if (!initialized.get()) {
+            logger.warn("SqsMessageProcessor が初期化されていません。開始をスキップします。");
+            return;
+        }
+        
         if (running.compareAndSet(false, true)) {
             logger.info("MC-SQSメッセージプロセッサーを開始します");
             executor.scheduleWithFixedDelay(this::pollMessages, 0, 5, TimeUnit.SECONDS);
@@ -62,7 +76,7 @@ public class SqsMessageProcessor {
     }
 
     private void pollMessages() {
-        if (!running.get()) {
+        if (!running.get() || !initialized.get() || awsSqsClient == null || webToMcQueueUrl == null) {
             return;
         }
 

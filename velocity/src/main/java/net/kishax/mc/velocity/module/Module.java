@@ -51,6 +51,10 @@ import net.kishax.mc.velocity.socket.VelocitySocketSwitch;
 import net.kishax.mc.velocity.socket.VelocityMessageProcessor;
 import net.kishax.mc.velocity.socket.handlers.AuthTokenHandler;
 import net.kishax.mc.velocity.aws.AwsSqsService;
+import net.kishax.mc.common.socket.SqsClient;
+import net.kishax.mc.common.socket.SqsMessageProcessor;
+import net.kishax.mc.common.socket.SqsMessageHandler;
+import net.kishax.mc.velocity.socket.VelocitySqsMessageHandler;
 import net.kishax.mc.velocity.util.RomaToKanji;
 import net.kishax.mc.velocity.util.RomajiConversion;
 import net.kishax.mc.velocity.util.SettingsSyncService;
@@ -118,6 +122,9 @@ public class Module extends AbstractModule {
     bind(VelocityMessageProcessor.class);
     bind(AuthTokenHandler.class);
     bind(AwsSqsService.class);
+    
+    // SQS関連のバインディング
+    bind(SqsMessageHandler.class).to(VelocitySqsMessageHandler.class);
   }
 
   // 一時的にコメントアウト（VelocityRequestがDiscord依存のため後で対応）
@@ -160,5 +167,19 @@ public class Module extends AbstractModule {
   @Singleton
   public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
     return new VelocitySocketSwitch(logger, injector);
+  }
+  
+  @Provides
+  @Singleton
+  public SqsClient provideSqsClient() {
+    // 遅延初期化用のダミーインスタンス
+    return new SqsClient();
+  }
+  
+  @Provides
+  @Singleton
+  public SqsMessageProcessor provideSqsMessageProcessor(SqsMessageHandler messageHandler) {
+    // WebToMcQueueUrlは後で設定されるので、ダミー値で初期化
+    return new SqsMessageProcessor(null, "", messageHandler);
   }
 }
