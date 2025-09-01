@@ -94,6 +94,12 @@ public class SpigotSqsMessageHandler implements SqsMessageHandler {
     }
   }
 
+  @Override
+  public void handleOtpToMinecraft(String mcid, String uuid, String otp) {
+    // OTP処理はVelocity→Spigot socket通信で処理されるため、この実装は不要
+    logger.warn("SpigotSqsMessageHandlerでのOTP処理は廃止されました。Velocity→Spigot socket通信を使用してください。");
+  }
+
   /**
    * テレポートコマンド処理
    */
@@ -243,6 +249,7 @@ public class SpigotSqsMessageHandler implements SqsMessageHandler {
       }
     });
   }
+
 
   /**
    * Web側に認証レスポンス送信

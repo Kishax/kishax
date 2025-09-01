@@ -44,15 +44,21 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
+import net.kishax.mc.common.settings.Settings;
+import net.kishax.mc.common.socket.SocketSwitch;
+import net.kishax.mc.common.socket.message.Message;
+import java.security.SecureRandom;
 import net.kishax.mc.common.server.ServerStatusCache;
 import net.kishax.mc.spigot.server.InvSaver;
 import net.kishax.mc.spigot.server.InventoryCheck;
@@ -67,9 +73,14 @@ import net.kishax.mc.spigot.util.interfaces.MessageRunnable;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.md_5.bungee.api.ChatColor;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public final class EventListener implements Listener {
   public static Map<Player, Map<RunnableTaskUtil.Key, MessageRunnable>> playerInputerMap = new HashMap<>();
@@ -86,11 +97,16 @@ public final class EventListener implements Listener {
   private final Luckperms lp;
   private final InventoryCheck inv;
   private final ItemFrames fif;
+  private final Provider<SocketSwitch> sswProvider;
   private final Set<Player> playersInPortal = new HashSet<>();
+  
+  // QRコード右クリック制限用マップ（プレイヤー -> 最後のクリック時間）
+  private final Map<Player, Long> qrClickCooldowns = new HashMap<>();
+  private static final long QR_CLICK_COOLDOWN_MS = 30000; // 30秒のクールダウン
 
   @Inject
   public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, PortalsConfig psConfig,
-      Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, ItemFrames fif) {
+      Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, ItemFrames fif, Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -101,6 +117,7 @@ public final class EventListener implements Listener {
     this.lp = lp;
     this.inv = inv;
     this.fif = fif;
+    this.sswProvider = sswProvider;
   }
 
   @EventHandler
@@ -180,6 +197,17 @@ public final class EventListener implements Listener {
       if (meta != null) {
         if (action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR) {
           Material material = item.getType();
+
+          // QRコード右クリック処理
+          if (material == Material.FILLED_MAP && meta instanceof MapMeta) {
+            MapMeta mapMeta = (MapMeta) meta;
+            if (isConfirmMap(mapMeta)) {
+              event.setCancelled(true);
+              handleConfirmMapRightClick(player);
+              return;
+            }
+          }
+
           Set<Material> materials = Type.getMaterials();
           if (materials.contains(material)) {
             menu.getShortCutMap().forEach((key, value) -> {
@@ -498,5 +526,221 @@ public final class EventListener implements Listener {
     return loc.getX() >= x1 && loc.getX() < x2 + 1 &&
         loc.getY() >= y1 && loc.getY() < y2 + 1 &&
         loc.getZ() >= z1 && loc.getZ() < z2 + 1;
+  }
+
+  /**
+   * QRコードマップかどうかを判定
+   */
+  private boolean isConfirmMap(MapMeta mapMeta) {
+    List<String> lore = mapMeta.getLore();
+    return lore != null && lore.stream().anyMatch(line -> line.contains("<QRコード>"));
+  }
+
+  /**
+   * QRコード右クリック時の処理
+   */
+  private void handleConfirmMapRightClick(Player player) {
+    // クールダウンチェック
+    long currentTime = System.currentTimeMillis();
+    Long lastClickTime = qrClickCooldowns.get(player);
+    
+    if (lastClickTime != null && (currentTime - lastClickTime) < QR_CLICK_COOLDOWN_MS) {
+      long remainingSeconds = (QR_CLICK_COOLDOWN_MS - (currentTime - lastClickTime)) / 1000;
+      Component cooldownMessage = Component.text("QRコードは" + remainingSeconds + "秒後に再度右クリックできます。")
+          .color(NamedTextColor.YELLOW);
+      audiences.player(player).sendMessage(cooldownMessage);
+      return;
+    }
+    
+    // クリック時間を記録
+    qrClickCooldowns.put(player, currentTime);
+    
+    try (Connection conn = db.getConnection()) {
+      // プレイヤーの認証情報を取得
+      Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
+      if (memberMap.isEmpty()) {
+        Component errorMessage = Component.text("プレイヤー情報が見つかりません。")
+            .color(NamedTextColor.RED);
+        audiences.player(player).sendMessage(errorMessage);
+        return;
+      }
+
+      if (!(memberMap.get("id") instanceof Integer id)) {
+        Component errorMessage = Component.text("プレイヤーIDの取得に失敗しました。")
+            .color(NamedTextColor.RED);
+        audiences.player(player).sendMessage(errorMessage);
+        return;
+      }
+
+      String playerUUID = player.getUniqueId().toString();
+      String authToken;
+      String action;
+      long expiresAt;
+      
+      // 既存のトークンを確認
+      Map<String, Object> tokenInfo = db.getAuthTokenInfo(conn, playerUUID);
+      if (!tokenInfo.isEmpty() && tokenInfo.get("token") != null) {
+        String existingToken = (String) tokenInfo.get("token");
+        java.sql.Timestamp expires = (java.sql.Timestamp) tokenInfo.get("expires");
+        
+        // トークンが有効かチェック
+        if (expires != null && expires.getTime() > System.currentTimeMillis()) {
+          // 既存の有効なトークンを使用
+          authToken = existingToken;
+          expiresAt = expires.getTime();
+          action = "refresh";
+        } else {
+          // トークンが無効なので新規生成
+          authToken = generateAuthToken(player);
+          expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
+          db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
+          action = "update";
+        }
+      } else {
+        // トークンが存在しないので新規生成
+        authToken = generateAuthToken(player);
+        expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
+        db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
+        action = "create";
+      }
+
+      // 認証URLを生成
+      String authUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
+
+      // Velocity経由でWeb側にプレイヤー情報とトークンを送信  
+      sendAuthTokenToVelocity(conn, player, authToken, expiresAt, action);
+
+      // 認証URLをプレイヤーに送信
+      sendAuthenticationInfo(player, authUrl);
+
+    } catch (SQLException | ClassNotFoundException e) {
+      Component errorMessage = Component.text("認証情報の生成に失敗しました。")
+          .color(NamedTextColor.RED);
+      audiences.player(player).sendMessage(errorMessage);
+      logger.error("Error generating authentication info: {}", e.getMessage());
+      for (StackTraceElement element : e.getStackTrace()) {
+        logger.error(element.toString());
+      }
+    }
+  }
+
+  /**
+   * 認証トークンを生成
+   */
+  private String generateAuthToken(Player player) {
+    return generateOTP(32) + "_" + System.currentTimeMillis();
+  }
+
+  private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  private static final SecureRandom random = new SecureRandom();
+
+  private static String generateOTP(int length) {
+    StringBuilder otp = new StringBuilder(length);
+    for (int i = 0; i < length; i++) {
+      int index = random.nextInt(CHARACTERS.length());
+      otp.append(CHARACTERS.charAt(index));
+    }
+    return otp.toString();
+  }
+
+
+
+  /**
+   * 認証情報をプレイヤーに送信
+   */
+  private void sendAuthenticationInfo(Player player, String authUrl) {
+    Component titleMessage = Component.text("━━━━━ MC認証情報 ━━━━━")
+        .color(NamedTextColor.GOLD)
+        .decorate(TextDecoration.BOLD);
+
+    Component urlLabel = Component.text("認証URL: ")
+        .color(NamedTextColor.YELLOW);
+
+    Component urlComponent = Component.text(authUrl)
+        .color(NamedTextColor.AQUA)
+        .decorate(TextDecoration.UNDERLINED)
+        .clickEvent(ClickEvent.openUrl(authUrl))
+        .hoverEvent(HoverEvent.showText(Component.text("クリックして認証ページを開く")));
+
+    Component instructionMessage = Component.text("右クリックで認証URLを取得できます。アクセスすることで、Kishaxサーバでの主要機能をアンロックできます。")
+        .color(NamedTextColor.GRAY)
+        .decorate(TextDecoration.ITALIC);
+
+    Component separatorMessage = Component.text("━━━━━━━━━━━━━━━━━━━")
+        .color(NamedTextColor.GOLD)
+        .decorate(TextDecoration.BOLD);
+
+    audiences.player(player).sendMessage(titleMessage);
+    audiences.player(player).sendMessage(Component.empty());
+    audiences.player(player).sendMessage(urlLabel.append(urlComponent));
+    audiences.player(player).sendMessage(Component.empty());
+    audiences.player(player).sendMessage(instructionMessage);
+    audiences.player(player).sendMessage(separatorMessage);
+  }
+
+  /**
+   * Velocity経由でWeb側に認証トークン情報を送信
+   */
+  private void sendAuthTokenToVelocity(Connection conn, Player player, String token, long expiresAt, String action) {
+    try {
+      Message msg = new Message();
+      msg.web = new Message.Web();
+      msg.web.authToken = new Message.Web.AuthToken();
+      msg.web.authToken.who = new Message.Minecraft.Who();
+      msg.web.authToken.who.name = player.getName();
+      msg.web.authToken.who.uuid = player.getUniqueId().toString();
+      msg.web.authToken.token = token;
+      msg.web.authToken.expiresAt = expiresAt;
+      msg.web.authToken.action = action;
+
+      SocketSwitch ssw = sswProvider.get();
+      ssw.sendVelocityServer(conn, msg);
+      
+      logger.info("Sent auth token info to Velocity for player: {} (action: {})", player.getName(), action);
+    } catch (Exception e) {
+      logger.error("Failed to send auth token info to Velocity: {}", e.getMessage());
+    }
+  }
+
+  /**
+   * プレイヤーの認証状態をチェック
+   */
+  public boolean isPlayerAuthenticated(Player player) {
+    try (Connection conn = db.getConnection()) {
+      return checkPlayerAuthStatus(conn, player.getName());
+    } catch (SQLException | ClassNotFoundException e) {
+      logger.error("Error checking player auth status: {}", e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * データベースでプレイヤーの認証状態をチェック
+   */
+  private boolean checkPlayerAuthStatus(Connection conn, String playerName) throws SQLException {
+    String query = "SELECT perm_level FROM members WHERE name = ? LIMIT 1";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setString(1, playerName);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          int permLevel = rs.getInt("perm_level");
+          return permLevel >= 1; // 権限レベル1以上で認証済みと判定
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * プレイヤーの認証状態を更新（認証完了時）
+   */
+  public void updatePlayerAuthStatus(Connection conn, String playerUUID, boolean authenticated) throws SQLException {
+    int permLevel = authenticated ? 1 : 0;
+    String query = "UPDATE members SET perm_level = ? WHERE uuid = ?";
+    try (PreparedStatement ps = conn.prepareStatement(query)) {
+      ps.setInt(1, permLevel);
+      ps.setString(2, playerUUID);
+      ps.executeUpdate();
+    }
   }
 }

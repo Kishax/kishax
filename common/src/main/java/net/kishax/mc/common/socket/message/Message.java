@@ -3,13 +3,22 @@ package net.kishax.mc.common.socket.message;
 public class Message {
   public Web web;
   public Minecraft mc;
+  public Minecraft minecraft; // ソケット通信用の別名フィールド
   public Discord discord;
 
   public static class Web {
     public MinecraftConfirm confirm;
+    public AuthToken authToken;
 
     public static class MinecraftConfirm {
       public Message.Minecraft.Who who;
+    }
+
+    public static class AuthToken {
+      public Message.Minecraft.Who who;
+      public String token;
+      public Long expiresAt;
+      public String action; // "create", "update", "refresh"
     }
   }
 
@@ -25,6 +34,7 @@ public class Message {
     public Server server;
     public Sync sync;
     public Command cmd;
+    public Otp otp;
 
     public static class Who {
       public String name;
@@ -80,6 +90,13 @@ public class Message {
         public Who who;
         public Boolean mode;
       }
+    }
+
+    public static class Otp {
+      public String mcid;
+      public String uuid;
+      public String otp;
+      public String action; // "send_otp"
     }
   }
 }

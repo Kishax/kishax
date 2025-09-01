@@ -22,7 +22,6 @@ import net.kishax.mc.velocity.server.cmd.sub.Hub;
 import net.kishax.mc.velocity.server.cmd.sub.Maintenance;
 import net.kishax.mc.velocity.server.cmd.sub.Perm;
 import net.kishax.mc.velocity.server.cmd.sub.ReloadConfig;
-import net.kishax.mc.velocity.server.cmd.sub.Retry;
 import net.kishax.mc.velocity.server.cmd.sub.ServerTeleport;
 import net.kishax.mc.velocity.server.cmd.sub.Silent;
 import net.kishax.mc.velocity.server.cmd.sub.StartServer;
@@ -41,7 +40,7 @@ public class Command implements SimpleCommand {
   private final PlayerUtils pu;
   private final Luckperms lp;
   public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop",
-      "stp", "retry", "debug", "cancel", "perm", "maintenance", "translate", "chat", "cend", "silent"));
+      "stp", "debug", "cancel", "perm", "maintenance", "translate", "chat", "cend", "silent"));
   public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
   @Inject
@@ -71,7 +70,6 @@ public class Command implements SimpleCommand {
       case "start" -> Main.getInjector().getInstance(StartServer.class).execute(source, args);
       case "stop" -> Main.getInjector().getInstance(StopServer.class).execute(source, args);
       case "hub" -> Main.getInjector().getInstance(Hub.class).execute(invocation);
-      case "retry" -> Main.getInjector().getInstance(Retry.class).execute(invocation);
       case "reload" -> Main.getInjector().getInstance(ReloadConfig.class).execute(source, args);
       case "stp" -> Main.getInjector().getInstance(ServerTeleport.class).execute2(invocation);
       case "req" -> Main.getInjector().getInstance(Request.class).execute(source, args);

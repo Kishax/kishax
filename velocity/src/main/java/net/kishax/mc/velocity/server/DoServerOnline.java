@@ -126,12 +126,16 @@ public class DoServerOnline {
     }
   }
 
-  private void makeProxyOnline(Connection conn) throws SQLException {
-    String query = "UPDATE status SET online=? WHERE name=?;";
+  private void makeProxyOnline(Connection conn, int socketPort) throws SQLException {
+    String query = "UPDATE status SET online=?, socketport=? WHERE name=?;";
     PreparedStatement ps = conn.prepareStatement(query);
     ps.setBoolean(1, true);
-    ps.setString(2, "proxy");
-    ps.executeUpdate();
+    ps.setInt(2, socketPort);
+    ps.setString(3, "proxy");
+    int rsAffected = ps.executeUpdate();
+    if (rsAffected > 0) {
+      logger.info("DEBUG: Updated proxy socketport to {} in database", socketPort);
+    }
   }
 
   private void deleteDBServer(Connection conn, String serverName) throws SQLException {
@@ -154,8 +158,8 @@ public class DoServerOnline {
     }
   }
 
-  public void updateAndSyncDatabase(Boolean fromReloadCmd) throws SQLException, ClassNotFoundException {
-    updateDatabase(fromReloadCmd);
+  public void updateAndSyncDatabase(Boolean fromReloadCmd, int socketPort) throws SQLException, ClassNotFoundException {
+    updateDatabase(fromReloadCmd, socketPort);
 
     try (Connection conn2 = db.getConnection()) {
       Message msg = new Message();
@@ -169,13 +173,13 @@ public class DoServerOnline {
     }
   }
 
-  private void updateDatabase(Boolean fromReloadCmd) throws SQLException, ClassNotFoundException {
+  private void updateDatabase(Boolean fromReloadCmd, int socketPort) throws SQLException, ClassNotFoundException {
     server.getScheduler().buildTask(plugin, () -> {
       try (Connection conn = db.getConnection()) {
         // コマンドから実行していなければ
         if (!fromReloadCmd) {
           resetDBPlayerList(conn);
-          makeProxyOnline(conn);
+          makeProxyOnline(conn, socketPort);
         }
         // Toml, Config情報, DB情報をすべて同期 (Tomlを主軸に)
         Map<String, Map<String, Object>> tempConfigMap = cutils.getConfigMap("Servers");
@@ -226,7 +230,7 @@ public class DoServerOnline {
         if (isAdded.get()) {
           // 追加されたサーバーがある場合は、再度同期を行う
           logger.info("追加されたサーバーがあるため、再度同期を実行します。");
-          updateDatabase(fromReloadCmd);
+          updateDatabase(fromReloadCmd, socketPort);
         }
         // toml, db, configのキーが同期した
         // ここから、configMapとDBの情報を比較

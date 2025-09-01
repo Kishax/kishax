@@ -14,12 +14,15 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.server.interfaces.ServerHomeDir;
 import net.kishax.mc.common.settings.Settings;
-import net.kishax.mc.common.util.OTPGenerator;
+import net.kishax.mc.common.socket.SocketSwitch;
+import net.kishax.mc.common.socket.message.Message;
+import java.security.SecureRandom;
 import net.kishax.mc.spigot.server.ImageMap;
 import net.kishax.mc.spigot.server.textcomponent.TCUtils;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -40,10 +43,11 @@ public class Confirm {
   private final Luckperms lp;
   private final ImageMap im;
   private final String thisServerName;
+  private final Provider<SocketSwitch> sswProvider;
 
   @Inject
   public Confirm(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im,
-      ServerHomeDir shd) {
+      ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -51,6 +55,7 @@ public class Confirm {
     this.lp = lp;
     this.im = im;
     this.thisServerName = shd.getServerName();
+    this.sswProvider = sswProvider;
   }
 
   public void execute(CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
@@ -65,23 +70,28 @@ public class Confirm {
             Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
             if (!memberMap.isEmpty()) {
               if (memberMap.get("id") instanceof Integer id) {
-                String confirmUrl = Settings.CONFIRM_URL.getValue() + "?n=" + id;
-                // player.sendMessage(ChatColor.GREEN + "WEB認証のQRコードを生成します。");
+                // トークンの生成と有効期限設定（10分間）
+                String authToken = generateAuthToken(player);
+                long expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
+                
+                // データベースにトークンを保存
+                db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
+                
+                // 新形式のURL（トークンベース）を使用
+                String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
+                
+                // QRコード生成・配布
                 String[] imageArgs = { "image", "createqr", confirmUrl };
                 if (ifMapId == -1) {
                   im.executeImageMapForConfirm(player, imageArgs);
                 } else {
                   im.giveMapToPlayer(player, ifMapId);
                 }
-                int ranum = OTPGenerator.generateOTPbyInt();
-                int rsAffected3 = updateSecret2(conn, new Object[] { ranum, playerUUID });
-                if (rsAffected3 > 0) {
-                  sendConfirmationMessage(player, ranum, confirmUrl);
-                } else {
-                  Component errorMessage = Component.text("エラーが発生しました。")
-                      .color(NamedTextColor.RED);
-                  audiences.player(player).sendMessage(errorMessage);
-                }
+                
+                // Velocity経由でWeb側にプレイヤー情報とトークンを送信
+                sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
+                
+                sendConfirmationMessage(player, confirmUrl);
               }
             }
           } catch (SQLException | ClassNotFoundException e2) {
@@ -107,17 +117,17 @@ public class Confirm {
     }
   }
 
-  private int updateSecret2(Connection conn, Object[] args) throws SQLException {
-    String query = "UPDATE members SET secret2=? WHERE uuid=?;";
-    PreparedStatement ps = conn.prepareStatement(query);
-    for (int i = 0; i < args.length; i++) {
-      ps.setObject(i + 1, args[i]);
-    }
-    return ps.executeUpdate();
-  }
 
-  private void sendConfirmationMessage(Player player, int ranum, String confirmUrl) {
-    String ranumstr = Integer.toString(ranum);
+  private void sendConfirmationMessage(Player player, String confirmUrl) {
+
+    Component welcomeMessage = Component.text("Kishaxサーバーへようこそ！")
+        .color(NamedTextColor.GREEN)
+        .appendNewline();
+
+    Component introMessage = Component.text("サーバーに参加するには、KishaxアカウントとMinecraftアカウントをリンクさせる必要があります。")
+        .color(NamedTextColor.WHITE)
+        .appendNewline()
+        .appendNewline();
 
     Component webAuth = Component.text("WEB認証")
         .color(NamedTextColor.GOLD)
@@ -127,151 +137,49 @@ public class Confirm {
         .clickEvent(ClickEvent.openUrl(confirmUrl))
         .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
 
-    Component forUser = Component.newline()
+    Component authInstruction = Component.text("より、手続きを進めてください！")
+        .color(NamedTextColor.WHITE)
         .appendNewline()
-        .append(Component.text("[サイトへのアクセス方法]"))
+        .appendNewline();
+
+    Component accessMethodTitle = Component.text("[アクセス方法]")
+        .color(NamedTextColor.GOLD)
+        .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
+        .appendNewline();
+
+    Component javaUserInstruction = TCUtils.JAVA_USER.get()
+        .append(Component.text("は、"))
+        .append(Component.text("ココ")
+            .color(NamedTextColor.GOLD)
+            .decorate(TextDecoration.UNDERLINED)
+            .clickEvent(ClickEvent.openUrl(confirmUrl))
+            .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く"))))
+        .append(Component.text("をクリックしてアクセスしてください！"))
+        .appendNewline();
+
+    Component bedrockUserInstruction = TCUtils.BEDROCK_USER.get()
+        .append(Component.text("は、配布されたQRコードを読み取ってアクセスしてください！"))
         .appendNewline()
-        .color(NamedTextColor.GOLD)
-        .decorate(
-            TextDecoration.BOLD,
-            TextDecoration.UNDERLINED);
+        .appendNewline();
 
-    Component javaUserAccess = Component.text("は、")
-        .color(NamedTextColor.GRAY)
-        .decorate(TextDecoration.ITALIC);
 
-    Component here = Component.text("ココ")
-        .color(NamedTextColor.GOLD)
-        .decorate(
-            TextDecoration.UNDERLINED,
-            TextDecoration.ITALIC)
-        .clickEvent(ClickEvent.openUrl(confirmUrl))
-        .hoverEvent(HoverEvent.showText(Component.text("クリックしてWEB認証ページを開く")));
+    Component finalMessage = Component.text("それでは、楽しいマイクラライフを！")
+        .color(NamedTextColor.GREEN);
 
-    Component javaUserAccess2 = Component.text("をクリックしてアクセスしてね！")
-        .appendNewline()
-        .color(NamedTextColor.GRAY)
-        .decorate(TextDecoration.ITALIC);
+    // 即座にすべてのメッセージを送信
+    Component fullMessage = Component.empty()
+        .append(welcomeMessage)
+        .append(introMessage)
+        .append(webAuth)
+        .append(authInstruction)
+        .append(accessMethodTitle)
+        .append(javaUserInstruction)
+        .append(bedrockUserInstruction)
+        .append(finalMessage);
 
-    Component bedrockUserAccess = Component.text("は、配布されたQRコードを読み取ってアクセスしてね！")
-        .color(NamedTextColor.GRAY)
-        .decorate(TextDecoration.ITALIC);
-
-    Component authCode = Component.newline()
-        .append(Component.text("認証コードは "))
-        .color(NamedTextColor.WHITE);
-
-    Component code = Component.text(ranumstr)
-        .color(NamedTextColor.BLUE)
-        .decorate(TextDecoration.UNDERLINED)
-        .clickEvent(ClickEvent.copyToClipboard(ranumstr))
-        .hoverEvent(HoverEvent.showText(Component.text("クリックしてコピー")));
-
-    Component endMessage = Component.text(" です。")
-        .color(NamedTextColor.WHITE);
-
-    Component regenerate = Component.newline()
-        .append(Component.text("認証コードの再生成"))
-        .color(NamedTextColor.GOLD)
-        .decorate(
-            TextDecoration.BOLD,
-            TextDecoration.UNDERLINED)
-        .clickEvent(ClickEvent.runCommand("/kishaxp retry"))
-        .hoverEvent(HoverEvent.showText(Component.text("クリックして認証コードを再生成します。")));
-
-    Component bedrockUserGenerate = Component.text("は、 ")
-        .color(NamedTextColor.GRAY)
-        .decorate(TextDecoration.ITALIC);
-
-    Component bedrockUserGenerate2 = Component.text("/retry")
-        .color(NamedTextColor.GRAY)
-        .decorate(
-            TextDecoration.UNDERLINED,
-            TextDecoration.ITALIC);
-
-    Component bedrockUserGenerate3 = Component.text(" とコマンドを打ってね！")
-        .color(NamedTextColor.GRAY)
-        .decorate(TextDecoration.ITALIC);
-
-    new BukkitRunnable() {
-      int countdown = 50;
-      int gCountdown = 3;
-
-      @Override
-      public void run() {
-        Component message = Component.empty();
-        switch (countdown) {
-          case 50 -> message = message.append(Component.text("Kishaxサーバーへようこそ！"));
-          case 47 -> message = message.append(Component.text("サーバー代表のベラです。"));
-          case 44 -> message = message.append(Component.text("サーバーに参加するには、"));
-          case 41 -> message = message.append(Component.text("KishaxアカウントとMinecraftアカウントをリンクさせる必要があるよ！"));
-          case 39 -> {
-            message = message.append(webAuth)
-                .append(Component.text("より、手続きを進めてね！"));
-          }
-          case 36 -> message = message.append(forUser);
-          case 33 -> {
-            message = message.append(TCUtils.JAVA_USER.get())
-                .append(javaUserAccess)
-                .append(here)
-                .append(javaUserAccess2);
-          }
-          case 30 -> {
-            message = message
-                .append(TCUtils.BEDROCK_USER.get())
-                .append(bedrockUserAccess);
-          }
-          case 27 -> {
-            message = message
-                .appendNewline()
-                .append(Component.text("認証コードを生成するよ。"));
-          }
-          case 24, 23, 22 -> {
-            message = message.append(countGenerate(gCountdown));
-            gCountdown--;
-          }
-          case 21 -> {
-            message = message.append(authCode)
-                .append(code)
-                .append(endMessage);
-          }
-          case 18 -> {
-            message = message.append(Component.text("認証コードを再生成する場合は、"));
-          }
-          case 15 -> {
-            message = message.append(regenerate)
-                .append(Component.text(" をクリックしてね！"))
-                .appendNewline();
-          }
-          case 13 -> {
-            message = message.append(TCUtils.BEDROCK_USER.get())
-                .append(bedrockUserGenerate)
-                .append(bedrockUserGenerate2)
-                .append(bedrockUserGenerate3);
-          }
-          case 10 -> {
-            message = message
-                .appendNewline()
-                .append(Component.text("それでは、楽しいマイクラライフを！"));
-          }
-          case 0 -> {
-            cancel();
-            return;
-          }
-        }
-        if (message != Component.empty()) {
-          audiences.player(player).sendMessage(message);
-        }
-        countdown--;
-      }
-    }.runTaskTimer(plugin, 0, 20);
+    audiences.player(player).sendMessage(fullMessage);
   }
 
-  private Component countGenerate(int countdown) {
-    return Component.text("生成中..." + countdown)
-        .color(NamedTextColor.GRAY)
-        .decorate(TextDecoration.ITALIC);
-  }
 
   private int checkExistConfirmMap(Connection conn, Object[] args) throws SQLException {
     String query = "SELECT * FROM images WHERE server=? AND confirm=? AND name=?";
@@ -285,6 +193,50 @@ public class Confirm {
       } else {
         return -1;
       }
+    }
+  }
+
+  /**
+   * 認証トークンを生成
+   */
+  private String generateAuthToken(Player player) {
+    return generateOTP(32) + "_" + System.currentTimeMillis();
+  }
+
+  private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  private static final SecureRandom random = new SecureRandom();
+
+  private static String generateOTP(int length) {
+    StringBuilder otp = new StringBuilder(length);
+    for (int i = 0; i < length; i++) {
+      int index = random.nextInt(CHARACTERS.length());
+      otp.append(CHARACTERS.charAt(index));
+    }
+    return otp.toString();
+  }
+
+
+  /**
+   * Velocity経由でWeb側に認証トークン情報を送信
+   */
+  private void sendAuthTokenToVelocity(Connection conn, Player player, String token, long expiresAt, String action) {
+    try {
+      Message msg = new Message();
+      msg.web = new Message.Web();
+      msg.web.authToken = new Message.Web.AuthToken();
+      msg.web.authToken.who = new Message.Minecraft.Who();
+      msg.web.authToken.who.name = player.getName();
+      msg.web.authToken.who.uuid = player.getUniqueId().toString();
+      msg.web.authToken.token = token;
+      msg.web.authToken.expiresAt = expiresAt;
+      msg.web.authToken.action = action;
+
+      SocketSwitch ssw = sswProvider.get();
+      ssw.sendVelocityServer(conn, msg);
+      
+      logger.info("Sent auth token info to Velocity for player: {}", player.getName());
+    } catch (Exception e) {
+      logger.error("Failed to send auth token info to Velocity: {}", e.getMessage());
     }
   }
 }

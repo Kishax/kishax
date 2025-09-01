@@ -3,11 +3,19 @@ package net.kishax.mc.velocity.socket;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Provider;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kishax.mc.common.socket.SqsMessageHandler;
+import net.kishax.mc.common.socket.SqsClient;
+import net.kishax.mc.common.socket.SocketSwitch;
+import net.kishax.mc.common.socket.message.Message;
+import net.kishax.mc.common.database.Database;
 import net.kishax.mc.velocity.socket.message.handlers.web.VelocityMinecraftWebConfirmHandler;
 import net.kishax.mc.velocity.socket.VelocityAuthResponseHandler;
 import org.slf4j.Logger;
+import java.sql.Connection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Velocity用SQSメッセージハンドラー
@@ -19,13 +27,19 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
     private final Injector injector;
     private final VelocityMinecraftWebConfirmHandler webConfirmHandler;
     private final VelocityAuthResponseHandler authResponseHandler;
+    private final Provider<SocketSwitch> sswProvider;
+    private final Database db;
+    private final SqsClient sqsClient;
 
     @Inject
-    public VelocitySqsMessageHandler(ProxyServer proxyServer, Injector injector) {
+    public VelocitySqsMessageHandler(ProxyServer proxyServer, Injector injector, Provider<SocketSwitch> sswProvider, Database db, SqsClient sqsClient) {
         this.proxyServer = proxyServer;
         this.injector = injector;
         this.webConfirmHandler = injector.getInstance(VelocityMinecraftWebConfirmHandler.class);
         this.authResponseHandler = injector.getInstance(VelocityAuthResponseHandler.class);
+        this.sswProvider = sswProvider;
+        this.db = db;
+        this.sqsClient = sqsClient;
     }
 
     @Override
@@ -91,16 +105,28 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
         }
     }
 
+    @Override
+    public void handleOtpToMinecraft(String mcid, String uuid, String otp) {
+        try {
+            logger.info("Web→MC OTP送信: {} ({}) OTP: {}", mcid, uuid, otp);
+            
+            // 既存のメッセージハンドラーシステムを使用してSpigotにOTPを送信
+            JsonNode otpMessage = createOtpMessage(mcid, uuid, otp);
+            forwardOtpToSpigot(otpMessage);
+            
+        } catch (Exception e) {
+            logger.error("OTP送信処理でエラーが発生しました: {} ({})", mcid, uuid, e);
+        }
+    }
+
     private JsonNode createConfirmMessage(String playerName, String playerUuid) {
-        // 既存のMinecraftWebConfirmHandler用のメッセージ形式を作成
+        // handleWebToMinecraft用のメッセージ形式を作成 (直接who構造を返す)
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             return mapper.createObjectNode()
-                    .put("web", mapper.createObjectNode()
-                            .set("confirm", mapper.createObjectNode()
-                                    .set("who", mapper.createObjectNode()
-                                            .put("name", playerName)
-                                            .put("uuid", playerUuid))));
+                    .set("who", mapper.createObjectNode()
+                            .put("name", playerName)
+                            .put("uuid", playerUuid));
         } catch (Exception e) {
             logger.error("確認メッセージ作成でエラーが発生しました", e);
             return null;
@@ -156,5 +182,81 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
         
         // サーバー詳細情報を収集してレスポンス
         // TODO: SqsClientを使ってレスポンスを送信
+    }
+
+    private JsonNode createOtpMessage(String mcid, String uuid, String otp) {
+        // MC側OTP送信用のメッセージ形式を作成
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            return mapper.createObjectNode()
+                    .set("minecraft", mapper.createObjectNode()
+                            .set("otp", mapper.createObjectNode()
+                                    .put("mcid", mcid)
+                                    .put("uuid", uuid)
+                                    .put("otp", otp)
+                                    .put("action", "send_otp")));
+        } catch (Exception e) {
+            logger.error("OTPメッセージ作成でエラーが発生しました", e);
+            return null;
+        }
+    }
+
+    private void forwardOtpToSpigot(JsonNode otpMessage) {
+        if (otpMessage == null) {
+            logger.warn("OTPメッセージがnullのためSpigotへの転送をスキップしました");
+            return;
+        }
+
+        try {
+            // Messageオブジェクトを作成してSpigotに転送
+            Message msg = new Message();
+            msg.minecraft = new Message.Minecraft();
+            msg.minecraft.otp = new Message.Minecraft.Otp();
+            
+            JsonNode otpData = otpMessage.path("minecraft").path("otp");
+            msg.minecraft.otp.mcid = otpData.path("mcid").asText();
+            msg.minecraft.otp.uuid = otpData.path("uuid").asText();
+            msg.minecraft.otp.otp = otpData.path("otp").asText();
+            msg.minecraft.otp.action = otpData.path("action").asText();
+            
+            // SocketSwitchを使用してSpigotに転送
+            try (Connection conn = db.getConnection()) {
+                SocketSwitch ssw = sswProvider.get();
+                ssw.sendSpigotServer(conn, msg);
+                logger.info("SpigotへOTPメッセージを転送しました: {} ({})", msg.minecraft.otp.mcid, msg.minecraft.otp.uuid);
+            }
+            
+        } catch (Exception e) {
+            logger.error("SpigotへのOTP転送でエラーが発生しました", e);
+        }
+    }
+
+    /**
+     * Web側にOTPレスポンスをSQS送信
+     */
+    public void sendOtpResponseToWeb(String mcid, String uuid, boolean success, String message) {
+        if (sqsClient == null) {
+            logger.warn("SQSクライアントが利用できません。OTPレスポンスを送信できません。");
+            return;
+        }
+
+        try {
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("mcid", mcid);
+            responseData.put("uuid", uuid);
+            responseData.put("success", success);
+            responseData.put("message", message);
+            responseData.put("timestamp", System.currentTimeMillis());
+
+            sqsClient.sendGenericMessage("mc_otp_response", responseData)
+                .thenRun(() -> logger.info("Web側にOTPレスポンスを送信しました: {} ({}), success={}", mcid, uuid, success))
+                .exceptionally(ex -> {
+                    logger.error("OTPレスポンス送信に失敗しました: {} ({})", mcid, uuid, ex);
+                    return null;
+                });
+
+        } catch (Exception e) {
+            logger.error("OTPレスポンス送信でエラーが発生しました: {} ({})", mcid, uuid, e);
+        }
     }
 }

@@ -17,6 +17,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 
 import net.kishax.mc.common.socket.message.Message;
+import net.kishax.mc.common.settings.Settings;
 
 public class SocketSwitch {
   private final Logger logger;
@@ -77,14 +78,21 @@ public class SocketSwitch {
   }
 
   public void startSocketClient(int port, Message msg) {
-    if (port == 0)
+    if (port == 0) {
+      logger.warn("DEBUG: Socket client not started - port is 0");
       return;
+    }
+    // logger.info("DEBUG: Starting socket client to port {} with message: {}", port, gson.toJson(msg));
     clientThread = new Thread(() -> {
       try (Socket socket = new Socket("localhost", port);
           BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));) {
-        writer.write(gson.toJson(msg) + "\n");
+        String jsonMessage = gson.toJson(msg) + "\n";
+        // logger.info("DEBUG: Sending message to port {}: {}", port, jsonMessage.trim());
+        writer.write(jsonMessage);
         writer.flush();
+        // logger.info("DEBUG: Message sent successfully to port {}", port);
       } catch (Exception e) {
+        // logger.error("DEBUG: Exception occurred while sending to port {}", port);
         logger.error("An Exception error occurred: {}", e.getMessage());
         for (StackTraceElement element : e.getStackTrace()) {
           logger.error(element.toString());
@@ -168,20 +176,31 @@ public class SocketSwitch {
 
   private void sendMessageToServer(Connection conn, String serverType, Message msg)
       throws SQLException, ClassNotFoundException {
+    // logger.info("DEBUG: Looking for servers with platform '{}' in database", serverType);
     try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
       try (ResultSet rs = ps.executeQuery()) {
+        boolean foundServer = false;
         while (rs.next()) {
           String platform = rs.getString("platform");
           int port = rs.getInt("socketport");
           boolean online = rs.getBoolean("online");
+          String name = rs.getString("name");
+          // logger.info("DEBUG: Found server - name: {}, platform: {}, port: {}, online: {}", name, platform, port, online);
+          
           if (port == 0) {
             continue;
           }
           if (online && platform.equalsIgnoreCase(serverType)) {
+            // logger.info("DEBUG: Matching server found, sending message to port {}", port);
+            foundServer = true;
             startSocketClient(port, msg);
           }
+        }
+        if (!foundServer) {
+          logger.warn("DEBUG: No online {} server found in database", serverType);
         }
       }
     }
   }
+
 }

@@ -110,7 +110,6 @@ CREATE TABLE `invalid_login` (
   `confirm` tinyint(1) DEFAULT 0,
   `member_id` int(11) DEFAULT NULL,
   `admin` tinyint(1) DEFAULT 0,
-  `secret2` int(11) DEFAULT NULL,
   `req` timestamp NULL DEFAULT NULL,
   `sst` timestamp NULL DEFAULT NULL,
   `st` timestamp NULL DEFAULT NULL,
@@ -289,7 +288,6 @@ CREATE TABLE `members` (
   `emid` varchar(255) DEFAULT NULL,
   `confirm` tinyint(1) DEFAULT 0,
   `member_id` int(11) DEFAULT NULL,
-  `secret2` int(11) DEFAULT NULL,
   `req` timestamp NULL DEFAULT NULL,
   `st` timestamp NULL DEFAULT NULL,
   `old_name` varchar(255) DEFAULT NULL,
@@ -298,6 +296,8 @@ CREATE TABLE `members` (
   `hubinv` tinyint(1) DEFAULT 1,
   `tptype` tinyint(1) DEFAULT 1,
   `silent` tinyint(1) DEFAULT 0,
+  `auth_token` varchar(255) DEFAULT NULL,
+  `auth_token_expires` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=234 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

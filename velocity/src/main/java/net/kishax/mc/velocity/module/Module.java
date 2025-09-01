@@ -17,6 +17,7 @@ import net.kishax.mc.common.database.interfaces.DatabaseInfo;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.ServerActionHandler;
+import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.OtpHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.commands.ForwardHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.commands.ImageMapHandler;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.commands.InputHandler;
@@ -44,7 +45,16 @@ import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.Velocity
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.VelocityTeleportPlayerHandler;
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.command.VelocityTeleportPointHandler;
 import net.kishax.mc.velocity.socket.message.handlers.minecraft.server.VelocityServerActionHandler;
+import net.kishax.mc.velocity.socket.message.handlers.minecraft.VelocityOtpHandler;
 import net.kishax.mc.velocity.socket.message.handlers.web.VelocityMinecraftWebConfirmHandler;
+import net.kishax.mc.velocity.socket.VelocitySocketSwitch;
+import net.kishax.mc.velocity.socket.VelocityMessageProcessor;
+import net.kishax.mc.velocity.socket.handlers.AuthTokenHandler;
+import net.kishax.mc.velocity.aws.AwsSqsService;
+import net.kishax.mc.common.socket.SqsClient;
+import net.kishax.mc.common.socket.SqsMessageProcessor;
+import net.kishax.mc.common.socket.SqsMessageHandler;
+import net.kishax.mc.velocity.socket.VelocitySqsMessageHandler;
 import net.kishax.mc.velocity.util.RomaToKanji;
 import net.kishax.mc.velocity.util.RomajiConversion;
 import net.kishax.mc.velocity.util.SettingsSyncService;
@@ -104,8 +114,17 @@ public class Module extends AbstractModule {
     bind(TeleportPointHandler.class).to(VelocityTeleportPointHandler.class);
 
     bind(ServerActionHandler.class).to(VelocityServerActionHandler.class);
+    bind(OtpHandler.class).to(VelocityOtpHandler.class);
 
     bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
+    
+    // Velocity専用のSocket処理とAWS統合
+    bind(VelocityMessageProcessor.class);
+    bind(AuthTokenHandler.class);
+    bind(AwsSqsService.class);
+    
+    // SQS関連のバインディング
+    bind(SqsMessageHandler.class).to(VelocitySqsMessageHandler.class);
   }
 
   // 一時的にコメントアウト（VelocityRequestがDiscord依存のため後で対応）
@@ -147,6 +166,20 @@ public class Module extends AbstractModule {
   @Provides
   @Singleton
   public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
-    return new SocketSwitch(logger, injector);
+    return new VelocitySocketSwitch(logger, injector);
+  }
+  
+  @Provides
+  @Singleton
+  public SqsClient provideSqsClient() {
+    // 遅延初期化用のダミーインスタンス
+    return new SqsClient();
+  }
+  
+  @Provides
+  @Singleton
+  public SqsMessageProcessor provideSqsMessageProcessor(SqsMessageHandler messageHandler) {
+    // WebToMcQueueUrlは後で設定されるので、ダミー値で初期化
+    return new SqsMessageProcessor(null, "", messageHandler);
   }
 }

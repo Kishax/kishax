@@ -19,12 +19,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SqsMessageProcessor {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(SqsMessageProcessor.class);
 
-    private final software.amazon.awssdk.services.sqs.SqsClient awsSqsClient;
-    private final String webToMcQueueUrl;
+    private software.amazon.awssdk.services.sqs.SqsClient awsSqsClient;
+    private String webToMcQueueUrl;
     private final ObjectMapper objectMapper;
     private final ScheduledExecutorService executor;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final SqsMessageHandler messageHandler;
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     @Inject
     public SqsMessageProcessor(software.amazon.awssdk.services.sqs.SqsClient awsSqsClient, String webToMcQueueUrl, SqsMessageHandler messageHandler) {
@@ -38,8 +39,21 @@ public class SqsMessageProcessor {
             return t;
         });
     }
+    
+    public void initialize(software.amazon.awssdk.services.sqs.SqsClient awsSqsClient, String webToMcQueueUrl) {
+        if (initialized.compareAndSet(false, true)) {
+            this.awsSqsClient = awsSqsClient;
+            this.webToMcQueueUrl = webToMcQueueUrl;
+            logger.info("SqsMessageProcessor が初期化されました");
+        }
+    }
 
     public void start() {
+        if (!initialized.get()) {
+            logger.warn("SqsMessageProcessor が初期化されていません。開始をスキップします。");
+            return;
+        }
+        
         if (running.compareAndSet(false, true)) {
             logger.info("MC-SQSメッセージプロセッサーを開始します");
             executor.scheduleWithFixedDelay(this::pollMessages, 0, 5, TimeUnit.SECONDS);
@@ -62,7 +76,7 @@ public class SqsMessageProcessor {
     }
 
     private void pollMessages() {
-        if (!running.get()) {
+        if (!running.get() || !initialized.get() || awsSqsClient == null || webToMcQueueUrl == null) {
             return;
         }
 
@@ -111,6 +125,8 @@ public class SqsMessageProcessor {
             case "web_mc_auth_confirm" -> processWebMcAuthConfirm(json);
             case "web_mc_command" -> processWebMcCommand(json);
             case "web_mc_player_request" -> processWebMcPlayerRequest(json);
+            case "web_mc_otp" -> processWebMcOtp(json);
+            case "mc_otp_response" -> processMcOtpResponse(json);
             default -> {
                 logger.warn("不明なメッセージタイプです: {}", messageType);
                 // 既存のSocketメッセージハンドラーに転送
@@ -149,6 +165,30 @@ public class SqsMessageProcessor {
         
         // リクエスト処理を実行
         messageHandler.handlePlayerRequest(requestType, playerName, data);
+    }
+
+    private void processWebMcOtp(JsonNode json) {
+        String playerName = json.path("playerName").asText();
+        String playerUuid = json.path("playerUuid").asText();
+        String otp = json.path("otp").asText();
+        
+        logger.info("Web→MC OTP受信: {} ({}) OTP: {}", playerName, playerUuid, otp);
+        
+        // OTP処理を実行
+        messageHandler.handleOtpToMinecraft(playerName, playerUuid, otp);
+    }
+
+    private void processMcOtpResponse(JsonNode json) {
+        String mcid = json.path("mcid").asText();
+        String uuid = json.path("uuid").asText();
+        boolean success = json.path("success").asBoolean();
+        String message = json.path("message").asText();
+        
+        logger.info("MC→Web OTPレスポンス受信: {} ({}) success: {} message: {}", mcid, uuid, success, message);
+        
+        // このメッセージはVelocityからMC→Webキューへのレスポンスなので、
+        // Velocityでは処理不要（Webが直接受信する）
+        logger.debug("MC→Web OTPレスポンスメッセージを受信しました。Web側で処理されます。");
     }
 
     private void deleteMessage(Message message) {

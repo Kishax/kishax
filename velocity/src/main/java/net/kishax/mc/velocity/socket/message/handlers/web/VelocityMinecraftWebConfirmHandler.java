@@ -55,8 +55,8 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
     if (!sqsClient.isInitialized()) {
       try {
         String region = config.getString("AWS.Region", "ap-northeast-1");
-        String accessKey = config.getString("AWS.Credentials.AccessKey", "");
-        String secretKey = config.getString("AWS.Credentials.SecretKey", "");
+        String accessKey = config.getString("AWS.Discord.Credentials.AccessKey", "");
+        String secretKey = config.getString("AWS.Discord.Credentials.SecretKey", "");
         String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
         String apiGatewayUrl = config.getString("AWS.ApiGateway.Endpoint", "");
         
