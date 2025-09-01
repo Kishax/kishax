@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   mysql:
     image: mysql:8.0
@@ -80,4 +78,3 @@ volumes:
   minecraft_data_the_end:
   velocity_data:
   server_images:
-
