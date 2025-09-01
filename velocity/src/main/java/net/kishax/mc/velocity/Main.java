@@ -154,10 +154,16 @@ public class Main {
       String accessKey = awsConfig.getSqsAccessKey();
       String secretKey = awsConfig.getSqsSecretKey();
       String webToMcQueueUrl = config.getString("AWS.SQS.WebToMcQueueUrl", "");
+      String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
       String apiGatewayUrl = awsConfig.getApiGatewayUrl();
       
       if (webToMcQueueUrl.isEmpty()) {
         logger.warn("WebToMcQueueUrl が設定されていません。SQS機能は無効になります。");
+        return;
+      }
+      
+      if (mcToWebQueueUrl.isEmpty()) {
+        logger.warn("McToWebQueueUrl が設定されていません。SQS送信機能は無効になります。");
         return;
       }
       
@@ -171,7 +177,7 @@ public class Main {
       
       // SqsClientの初期化
       SqsClient sqsClient = getInjector().getInstance(SqsClient.class);
-      sqsClient.initialize(region, accessKey, secretKey, webToMcQueueUrl, apiGatewayUrl);
+      sqsClient.initialize(region, accessKey, secretKey, mcToWebQueueUrl, apiGatewayUrl);
       logger.info("SQS クライアントが初期化されました");
       
       // SqsMessageProcessorの初期化と開始
