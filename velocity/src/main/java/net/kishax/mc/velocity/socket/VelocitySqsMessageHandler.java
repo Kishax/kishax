@@ -120,15 +120,13 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
     }
 
     private JsonNode createConfirmMessage(String playerName, String playerUuid) {
-        // 既存のMinecraftWebConfirmHandler用のメッセージ形式を作成
+        // handleWebToMinecraft用のメッセージ形式を作成 (直接who構造を返す)
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             return mapper.createObjectNode()
-                    .put("web", mapper.createObjectNode()
-                            .set("confirm", mapper.createObjectNode()
-                                    .set("who", mapper.createObjectNode()
-                                            .put("name", playerName)
-                                            .put("uuid", playerUuid))));
+                    .set("who", mapper.createObjectNode()
+                            .put("name", playerName)
+                            .put("uuid", playerUuid));
         } catch (Exception e) {
             logger.error("確認メッセージ作成でエラーが発生しました", e);
             return null;
