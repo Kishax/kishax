@@ -126,6 +126,7 @@ public class SqsMessageProcessor {
             case "web_mc_command" -> processWebMcCommand(json);
             case "web_mc_player_request" -> processWebMcPlayerRequest(json);
             case "web_mc_otp" -> processWebMcOtp(json);
+            case "mc_otp_response" -> processMcOtpResponse(json);
             default -> {
                 logger.warn("不明なメッセージタイプです: {}", messageType);
                 // 既存のSocketメッセージハンドラーに転送
@@ -175,6 +176,19 @@ public class SqsMessageProcessor {
         
         // OTP処理を実行
         messageHandler.handleOtpToMinecraft(playerName, playerUuid, otp);
+    }
+
+    private void processMcOtpResponse(JsonNode json) {
+        String mcid = json.path("mcid").asText();
+        String uuid = json.path("uuid").asText();
+        boolean success = json.path("success").asBoolean();
+        String message = json.path("message").asText();
+        
+        logger.info("MC→Web OTPレスポンス受信: {} ({}) success: {} message: {}", mcid, uuid, success, message);
+        
+        // このメッセージはVelocityからMC→Webキューへのレスポンスなので、
+        // Velocityでは処理不要（Webが直接受信する）
+        logger.debug("MC→Web OTPレスポンスメッセージを受信しました。Web側で処理されます。");
     }
 
     private void deleteMessage(Message message) {
