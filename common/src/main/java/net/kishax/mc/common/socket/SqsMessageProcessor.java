@@ -111,6 +111,7 @@ public class SqsMessageProcessor {
             case "web_mc_auth_confirm" -> processWebMcAuthConfirm(json);
             case "web_mc_command" -> processWebMcCommand(json);
             case "web_mc_player_request" -> processWebMcPlayerRequest(json);
+            case "web_mc_otp" -> processWebMcOtp(json);
             default -> {
                 logger.warn("不明なメッセージタイプです: {}", messageType);
                 // 既存のSocketメッセージハンドラーに転送
@@ -149,6 +150,17 @@ public class SqsMessageProcessor {
         
         // リクエスト処理を実行
         messageHandler.handlePlayerRequest(requestType, playerName, data);
+    }
+
+    private void processWebMcOtp(JsonNode json) {
+        String playerName = json.path("playerName").asText();
+        String playerUuid = json.path("playerUuid").asText();
+        String otp = json.path("otp").asText();
+        
+        logger.info("Web→MC OTP受信: {} ({}) OTP: {}", playerName, playerUuid, otp);
+        
+        // OTP処理を実行
+        messageHandler.handleOtpToMinecraft(playerName, playerUuid, otp);
     }
 
     private void deleteMessage(Message message) {
