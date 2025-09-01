@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mysql:
@@ -19,7 +19,17 @@ services:
       - "3306:3306"
     command: --default-authentication-plugin=mysql_native_password
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD:-password}"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_PASSWORD:-password}",
+        ]
       timeout: 10s
       retries: 5
       interval: 30s
@@ -56,8 +66,8 @@ services:
       - velocity_data:/mc/velocity
       - server_images:/mc/server/images
     ports:
-      - "25565:25565"  # Spigot server port
-      - "25577:25577"  # Velocity proxy port
+      - "25565:25565" # Spigot server port
+      - "25577:25577" # Velocity proxy port
     stdin_open: true
     tty: true
 
@@ -68,3 +78,4 @@ volumes:
   minecraft_data_the_end:
   velocity_data:
   server_images:
+
