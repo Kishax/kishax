@@ -173,10 +173,10 @@ public class Main {
       
       // kishax-aws統合のためのConfiguration作成
       System.setProperty("AWS_REGION", region);
-      System.setProperty("AWS_SQS_ACCESSKEYID", accessKey);
-      System.setProperty("AWS_SQS_SECRETACCESSKEY", secretKey);
-      System.setProperty("AWS_SQS_MCTOWEB_QUEUE_URL", mcToWebQueueUrl);
-      System.setProperty("AWS_SQS_WEBTOMCQUEUEURL", webToMcQueueUrl);
+      System.setProperty("MC_WEB_SQS_ACCESS_KEY_ID", accessKey);
+      System.setProperty("MC_WEB_SQS_SECRET_ACCESS_KEY", secretKey);
+      System.setProperty("MC_TO_WEB_QUEUE_URL", mcToWebQueueUrl);
+      System.setProperty("WEB_TO_MC_QUEUE_URL", webToMcQueueUrl);
       System.setProperty("REDIS_URL", redisUrl);
       
       net.kishax.aws.Configuration kishaxConfig = new net.kishax.aws.Configuration();
