@@ -148,7 +148,7 @@ public class Main {
     return injector;
   }
   
-  private void initializeSqsServices() {
+  private void initializeSqsServices() throws Exception {
     try {
       VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
       AwsConfig awsConfig = getInjector().getInstance(AwsConfig.class);
