@@ -24,12 +24,12 @@ dependencies {
   shadowImpl 'com.fasterxml.jackson.core:jackson-core:2.18.2'
   shadowImpl 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
   shadowImpl 'com.fasterxml.jackson.core:jackson-annotations:2.18.2'
-  
+
   // AWS SDK for Java v2 - explicit dependencies for compilation
   compileOnly 'software.amazon.awssdk:sqs:2.25.11'
   compileOnly 'software.amazon.awssdk:auth:2.25.11'
   compileOnly 'software.amazon.awssdk:regions:2.25.11'
-  
+
   //shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
   shadowImpl2 project(':common')
   shadowImpl2 'net.kishax.aws:kishax-aws:1.0.0'
