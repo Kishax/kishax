@@ -24,6 +24,8 @@ dependencies {
   shadowImpl 'com.fasterxml.jackson.core:jackson-core:2.18.2'
   shadowImpl 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
   shadowImpl 'com.fasterxml.jackson.core:jackson-annotations:2.18.2'
+  shadowImpl 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2'
+  shadowImpl 'io.lettuce:lettuce-core:6.3.0.RELEASE'
 
   // AWS SDK for Java v2 - explicit dependencies for compilation
   compileOnly 'software.amazon.awssdk:sqs:2.25.11'
