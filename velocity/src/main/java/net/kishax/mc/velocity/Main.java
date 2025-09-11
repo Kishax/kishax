@@ -52,7 +52,6 @@ public class Main {
   // kishax-aws components for shutdown
   private net.kishax.aws.SqsWorker kishaxSqsWorker;
   private net.kishax.aws.RedisClient kishaxRedisClient;
-  private net.kishax.aws.DatabaseClient kishaxDatabaseClient;
 
   @Inject
   public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory) {
@@ -161,7 +160,6 @@ public class Main {
       String webToMcQueueUrl = config.getString("AWS.SQS.WebToMcQueueUrl", "");
       String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
       String redisUrl = config.getString("Redis.URL", "redis://localhost:6379");
-      String webApiBaseUrl = config.getString("Web.API.BaseURL", "http://localhost:3000");
       
       if (webToMcQueueUrl.isEmpty()) {
         logger.warn("WebToMcQueueUrl が設定されていません。SQS機能は無効になります。");
@@ -180,7 +178,6 @@ public class Main {
       System.setProperty("AWS_SQS_MCTOWEB_QUEUE_URL", mcToWebQueueUrl);
       System.setProperty("AWS_SQS_WEBTOMCQUEUEURL", webToMcQueueUrl);
       System.setProperty("REDIS_URL", redisUrl);
-      System.setProperty("WEB_API_BASEURL", webApiBaseUrl);
       
       net.kishax.aws.Configuration kishaxConfig = new net.kishax.aws.Configuration();
       kishaxConfig.validate();
@@ -188,19 +185,17 @@ public class Main {
       // kishax-awsコンポーネントを初期化
       software.amazon.awssdk.services.sqs.SqsClient awsSqsClient = kishaxConfig.createSqsClient();
       net.kishax.aws.RedisClient redisClient = kishaxConfig.createRedisClient();
-      net.kishax.aws.DatabaseClient databaseClient = kishaxConfig.createDatabaseClient();
       net.kishax.aws.WebToMcMessageSender webToMcSender = new net.kishax.aws.WebToMcMessageSender(awsSqsClient, webToMcQueueUrl);
       
-      // SqsWorkerの初期化と開始
+      // SqsWorkerの初期化と開始（DatabaseClientなし）
       net.kishax.aws.SqsWorker sqsWorker = new net.kishax.aws.SqsWorker(
-          awsSqsClient, mcToWebQueueUrl, redisClient, databaseClient, webToMcSender);
+          awsSqsClient, mcToWebQueueUrl, redisClient, webToMcSender);
       sqsWorker.start();
-      logger.info("✅ kishax-aws SQSワーカーが開始されました");
+      logger.info("✅ kishax-aws SQSワーカーが開始されました（Redis通信のみ）");
       
       // グローバル参照のため静的フィールドに保存（後でシャットダウン時に使用）
       this.kishaxSqsWorker = sqsWorker;
       this.kishaxRedisClient = redisClient;
-      this.kishaxDatabaseClient = databaseClient;
       
     } catch (Exception e) {
       logger.error("kishax-aws SQS サービスの初期化に失敗しました: {}", e.getMessage());
@@ -223,11 +218,6 @@ public class Main {
       if (kishaxRedisClient != null) {
         kishaxRedisClient.close();
         logger.info("✅ kishax-aws Redis クライアントが停止しました");
-      }
-      
-      if (kishaxDatabaseClient != null) {
-        kishaxDatabaseClient.close();
-        logger.info("✅ kishax-aws Database クライアントが停止しました");
       }
     } catch (Exception ex) {
       logger.error("kishax-aws SQS サービスの停止中にエラーが発生しました: {}", ex.getMessage());

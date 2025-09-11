@@ -79,8 +79,6 @@ services:
       API_GATEWAY_URL: ${API_GATEWAY_URL}
       # Redis Configuration for kishax-aws
       REDIS_URL: redis://redis:6379
-      WEB_API_BASEURL: ${WEB_API_BASEURL:-http://host.docker.internal:3000}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
     volumes:
       - minecraft_data:/mc/spigot/world
       - minecraft_data_nether:/mc/spigot/world_nether
