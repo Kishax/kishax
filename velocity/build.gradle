@@ -32,7 +32,7 @@ dependencies {
   
   //shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
   shadowImpl2 project(':common')
-  shadowImpl2 'net.kishax:kishax-aws:1.0.0-SNAPSHOT'
+  shadowImpl2 'net.kishax.aws:kishax-aws:1.0.0'
 }
 
 build {
