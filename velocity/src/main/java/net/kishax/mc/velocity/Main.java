@@ -48,6 +48,11 @@ public class Main {
   private final Logger logger;
   private final Path dataDirectory;
   private boolean isEnable = false;
+  
+  // kishax-aws components for shutdown
+  private net.kishax.aws.SqsWorker kishaxSqsWorker;
+  private net.kishax.aws.RedisClient kishaxRedisClient;
+  private net.kishax.aws.DatabaseClient kishaxDatabaseClient;
 
   @Inject
   public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory) {
@@ -155,7 +160,8 @@ public class Main {
       String secretKey = awsConfig.getSqsSecretKey();
       String webToMcQueueUrl = config.getString("AWS.SQS.WebToMcQueueUrl", "");
       String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
-      String apiGatewayUrl = awsConfig.getApiGatewayUrl();
+      String redisUrl = config.getString("Redis.URL", "redis://localhost:6379");
+      String webApiBaseUrl = config.getString("Web.API.BaseURL", "http://localhost:3000");
       
       if (webToMcQueueUrl.isEmpty()) {
         logger.warn("WebToMcQueueUrl が設定されていません。SQS機能は無効になります。");
@@ -167,27 +173,37 @@ public class Main {
         return;
       }
       
-      // AWS SQS Clientを作成
-      software.amazon.awssdk.services.sqs.SqsClient awsSqsClient = software.amazon.awssdk.services.sqs.SqsClient.builder()
-          .region(software.amazon.awssdk.regions.Region.of(region))
-          .credentialsProvider(software.amazon.awssdk.auth.credentials.StaticCredentialsProvider.create(
-              software.amazon.awssdk.auth.credentials.AwsBasicCredentials.create(accessKey, secretKey)
-          ))
-          .build();
+      // kishax-aws統合のためのConfiguration作成
+      System.setProperty("AWS_REGION", region);
+      System.setProperty("AWS_SQS_ACCESSKEYID", accessKey);
+      System.setProperty("AWS_SQS_SECRETACCESSKEY", secretKey);
+      System.setProperty("AWS_SQS_MCTOWEB_QUEUE_URL", mcToWebQueueUrl);
+      System.setProperty("AWS_SQS_WEBTOMCQUEUEURL", webToMcQueueUrl);
+      System.setProperty("REDIS_URL", redisUrl);
+      System.setProperty("WEB_API_BASEURL", webApiBaseUrl);
       
-      // SqsClientの初期化
-      SqsClient sqsClient = getInjector().getInstance(SqsClient.class);
-      sqsClient.initialize(region, accessKey, secretKey, mcToWebQueueUrl, apiGatewayUrl);
-      logger.info("SQS クライアントが初期化されました");
+      net.kishax.aws.Configuration kishaxConfig = new net.kishax.aws.Configuration();
+      kishaxConfig.validate();
       
-      // SqsMessageProcessorの初期化と開始
-      SqsMessageProcessor sqsProcessor = getInjector().getInstance(SqsMessageProcessor.class);
-      sqsProcessor.initialize(awsSqsClient, webToMcQueueUrl);
-      sqsProcessor.start();
-      logger.info("SQS メッセージプロセッサーが開始されました");
+      // kishax-awsコンポーネントを初期化
+      software.amazon.awssdk.services.sqs.SqsClient awsSqsClient = kishaxConfig.createSqsClient();
+      net.kishax.aws.RedisClient redisClient = kishaxConfig.createRedisClient();
+      net.kishax.aws.DatabaseClient databaseClient = kishaxConfig.createDatabaseClient();
+      net.kishax.aws.WebToMcMessageSender webToMcSender = new net.kishax.aws.WebToMcMessageSender(awsSqsClient, webToMcQueueUrl);
+      
+      // SqsWorkerの初期化と開始
+      net.kishax.aws.SqsWorker sqsWorker = new net.kishax.aws.SqsWorker(
+          awsSqsClient, mcToWebQueueUrl, redisClient, databaseClient, webToMcSender);
+      sqsWorker.start();
+      logger.info("✅ kishax-aws SQSワーカーが開始されました");
+      
+      // グローバル参照のため静的フィールドに保存（後でシャットダウン時に使用）
+      this.kishaxSqsWorker = sqsWorker;
+      this.kishaxRedisClient = redisClient;
+      this.kishaxDatabaseClient = databaseClient;
       
     } catch (Exception e) {
-      logger.error("SQS サービスの初期化に失敗しました: {}", e.getMessage());
+      logger.error("kishax-aws SQS サービスの初期化に失敗しました: {}", e.getMessage());
       throw e;
     }
   }
@@ -197,17 +213,24 @@ public class Main {
     if (!isEnable)
       return;
     
-    // SQS関連サービスの停止
+    // kishax-aws SQS関連サービスの停止
     try {
-      SqsMessageProcessor sqsProcessor = getInjector().getInstance(SqsMessageProcessor.class);
-      sqsProcessor.stop();
-      logger.info("SQS メッセージプロセッサーが停止しました");
+      if (kishaxSqsWorker != null) {
+        kishaxSqsWorker.stop();
+        logger.info("✅ kishax-aws SQS ワーカーが停止しました");
+      }
       
-      SqsClient sqsClient = getInjector().getInstance(SqsClient.class);
-      sqsClient.close();
-      logger.info("SQS クライアントが停止しました");
+      if (kishaxRedisClient != null) {
+        kishaxRedisClient.close();
+        logger.info("✅ kishax-aws Redis クライアントが停止しました");
+      }
+      
+      if (kishaxDatabaseClient != null) {
+        kishaxDatabaseClient.close();
+        logger.info("✅ kishax-aws Database クライアントが停止しました");
+      }
     } catch (Exception ex) {
-      logger.error("SQS サービスの停止中にエラーが発生しました: {}", ex.getMessage());
+      logger.error("kishax-aws SQS サービスの停止中にエラーが発生しました: {}", ex.getMessage());
     }
     
     getInjector().getInstance(DoServerOffline.class).updateDatabase();
