@@ -182,20 +182,14 @@ public class Main {
       net.kishax.aws.Configuration kishaxConfig = new net.kishax.aws.Configuration();
       kishaxConfig.validate();
       
-      // kishax-awsコンポーネントを初期化
-      software.amazon.awssdk.services.sqs.SqsClient awsSqsClient = kishaxConfig.createSqsClient();
-      net.kishax.aws.RedisClient redisClient = kishaxConfig.createRedisClient();
-      net.kishax.aws.WebToMcMessageSender webToMcSender = new net.kishax.aws.WebToMcMessageSender(awsSqsClient, webToMcQueueUrl);
-      
-      // SqsWorkerの初期化と開始（DatabaseClientなし）
-      net.kishax.aws.SqsWorker sqsWorker = new net.kishax.aws.SqsWorker(
-          awsSqsClient, mcToWebQueueUrl, redisClient, webToMcSender);
+      // SqsWorkerをQUEUE_MODE対応で初期化（kishax-awsが自動でキューを選択）
+      net.kishax.aws.SqsWorker sqsWorker = net.kishax.aws.SqsWorker.createWithQueueMode(kishaxConfig);
       sqsWorker.start();
-      logger.info("✅ kishax-aws SQSワーカーが開始されました（Redis通信のみ）");
+      logger.info("✅ kishax-aws SQSワーカーが開始されました（QUEUE_MODE対応）");
       
       // グローバル参照のため静的フィールドに保存（後でシャットダウン時に使用）
       this.kishaxSqsWorker = sqsWorker;
-      this.kishaxRedisClient = redisClient;
+      this.kishaxRedisClient = kishaxConfig.createRedisClient();
       
     } catch (Exception e) {
       logger.error("kishax-aws SQS サービスの初期化に失敗しました: {}", e.getMessage());

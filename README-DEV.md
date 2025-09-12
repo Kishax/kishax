@@ -30,3 +30,6 @@ INSERT INTO users (name, email) VALUES
 - `docker/data/seeds/example.sql` はサンプルファイルです
 - 実際のシードファイルは `.gitignore` により Git 管理対象外となります
 - MySQLコンテナ初期化時に自動的に読み込まれます
+
+## 本番環境で忘れずに行うこと
+- 環境変数のQUEUE\_MODEをMCにする
