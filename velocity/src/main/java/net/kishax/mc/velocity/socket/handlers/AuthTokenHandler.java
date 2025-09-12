@@ -33,22 +33,15 @@ public class AuthTokenHandler {
           String mcid = authToken.who.name;
           String uuid = authToken.who.uuid;
           
-          // SqsWorkerのWebToMcMessageSenderを使用してメッセージ送信
-          net.kishax.aws.WebToMcMessageSender sender = sqsWorker.getWebToMcSender();
+          // SqsWorkerのMcToWebMessageSenderを使用してメッセージ送信
+          net.kishax.aws.McToWebMessageSender sender = sqsWorker.getMcToWebSender();
           if (sender != null) {
-            // auth_tokenメッセージを構築（ObjectNodeとして）
-            java.util.Map<String, Object> authData = new java.util.HashMap<>();
-            authData.put("mcid", mcid);
-            authData.put("uuid", uuid);
-            authData.put("authToken", authToken.token);
-            authData.put("expiresAt", authToken.expiresAt);
-            authData.put("action", authToken.action);
-            
-            sender.sendGenericMessage(messageType, authData);
-            logger.info("✅ Auth token sent to WEB via kishax-aws SqsWorker for player: {}", mcid);
+            // auth_tokenメッセージを送信（型安全な専用メソッドを使用）
+            sender.sendAuthToken(mcid, uuid, authToken.token, authToken.expiresAt, authToken.action);
+            logger.info("✅ Auth token sent to WEB via kishax-aws McToWebMessageSender for player: {}", mcid);
           } else {
-            logger.warn("WebToMcMessageSender is not available");
-            throw new RuntimeException("WebToMcMessageSender is not available");
+            logger.warn("McToWebMessageSender is not available");
+            throw new RuntimeException("McToWebMessageSender is not available");
           }
         } catch (Exception e) {
           logger.warn("kishax-aws sending failed: {}, falling back to legacy implementation", e.getMessage());
