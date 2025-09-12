@@ -50,7 +50,7 @@ public class Main {
   private boolean isEnable = false;
   
   // kishax-aws components for shutdown
-  private net.kishax.aws.SqsWorker kishaxSqsWorker;
+  private static net.kishax.aws.SqsWorker kishaxSqsWorker;
   private net.kishax.aws.RedisClient kishaxRedisClient;
 
   @Inject
@@ -148,6 +148,13 @@ public class Main {
     return injector;
   }
   
+  /**
+   * Get the kishax-aws SqsWorker instance
+   */
+  public static net.kishax.aws.SqsWorker getKishaxSqsWorker() {
+    return kishaxSqsWorker;
+  }
+  
   private void initializeSqsServices() throws Exception {
     try {
       VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
@@ -188,7 +195,7 @@ public class Main {
       logger.info("✅ kishax-aws SQSワーカーが開始されました（QUEUE_MODE対応）");
       
       // グローバル参照のため静的フィールドに保存（後でシャットダウン時に使用）
-      this.kishaxSqsWorker = sqsWorker;
+      Main.kishaxSqsWorker = sqsWorker;
       this.kishaxRedisClient = kishaxConfig.createRedisClient();
       
     } catch (Exception e) {
