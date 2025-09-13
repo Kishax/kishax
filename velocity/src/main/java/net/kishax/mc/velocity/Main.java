@@ -27,6 +27,7 @@ import net.kishax.mc.common.socket.SqsClient;
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.aws.AwsConfig;
+import net.kishax.mc.velocity.socket.VelocitySqsMessageHandler;
 // VPackageManager削除済み
 import net.kishax.mc.velocity.module.Module;
 import net.kishax.mc.velocity.server.DoServerOffline;
@@ -154,6 +155,38 @@ public class Main {
   public static net.kishax.aws.SqsWorker getKishaxSqsWorker() {
     return kishaxSqsWorker;
   }
+
+  /**
+   * Handle OTP display request from kishax-aws SqsWorker
+   */
+  public static void handleOtpDisplayRequest(String playerName, String playerUuid, String otp) {
+    if (injector != null) {
+      try {
+        VelocitySqsMessageHandler sqsHandler = injector.getInstance(VelocitySqsMessageHandler.class);
+        sqsHandler.handleOtpToMinecraft(playerName, playerUuid, otp);
+      } catch (Exception e) {
+        org.slf4j.LoggerFactory.getLogger(Main.class).error("Failed to handle OTP display request: {}", e.getMessage(), e);
+      }
+    }
+  }
+
+  /**
+   * Send OTP response to WEB using kishax-aws SqsWorker
+   */
+  public static void sendOtpResponseToWeb(String mcid, String uuid, boolean success, String message) {
+    if (kishaxSqsWorker != null) {
+      try {
+        // Use kishax-aws SqsWorker to send OTP response
+        long timestamp = System.currentTimeMillis();
+        kishaxSqsWorker.getMcToWebSender().sendOtpResponse(mcid, uuid, success, message, timestamp);
+        org.slf4j.LoggerFactory.getLogger(Main.class).info("✅ OTP response sent to WEB: {} ({}) success: {}", mcid, uuid, success);
+      } catch (Exception e) {
+        org.slf4j.LoggerFactory.getLogger(Main.class).error("Failed to send OTP response to WEB: {} ({})", mcid, uuid, e);
+      }
+    } else {
+      org.slf4j.LoggerFactory.getLogger(Main.class).warn("kishax-aws SqsWorker is not available, cannot send OTP response");
+    }
+  }
   
   private void initializeSqsServices() throws Exception {
     try {
@@ -191,6 +224,13 @@ public class Main {
       
       // SqsWorkerをQUEUE_MODE対応で初期化（kishax-awsが自動でキューを選択）
       net.kishax.aws.SqsWorker sqsWorker = net.kishax.aws.SqsWorker.createWithQueueMode(kishaxConfig);
+      
+      // Register OTP display callback
+      net.kishax.aws.SqsWorker.setOtpDisplayCallback((playerName, playerUuid, otp) -> {
+        logger.info("🔔 OTP display callback triggered: {} ({}) OTP: {}", playerName, playerUuid, otp);
+        handleOtpDisplayRequest(playerName, playerUuid, otp);
+      });
+      
       sqsWorker.start();
       logger.info("✅ kishax-aws SQSワーカーが開始されました（QUEUE_MODE対応）");
       
