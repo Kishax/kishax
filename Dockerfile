@@ -17,7 +17,11 @@ WORKDIR /app
 COPY . .
 
 # Build the Kishax plugins
-RUN ./gradlew build -x test
+RUN if [ ! -f "velocity/build/libs/Kishax-Velocity-3.4.0.jar" ] || [ ! -f "spigot/sv1_21_8/build/libs/Kishax-Spigot-1.21.8.jar" ]; then \
+        ./gradlew build -x test; \
+    else \
+        echo "Kishax plugins already built, skipping build step"; \
+    fi
 
 # Production stage
 FROM openjdk:21-jdk-slim

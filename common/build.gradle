@@ -11,16 +11,19 @@ dependencies {
   implementation 'com.mysql:mysql-connector-j:9.4.0'
   implementation 'org.json:json:20250517'
   implementation 'com.squareup.okhttp3:okhttp:5.1.0'
-  
+
   // AWS SDK for Java v2 - SQS support
   implementation 'software.amazon.awssdk:sqs:2.25.11'
   implementation 'software.amazon.awssdk:auth:2.25.11'
   implementation 'software.amazon.awssdk:regions:2.25.11'
-  
+
   // Jackson for JSON processing
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.3'
   implementation 'com.fasterxml.jackson.core:jackson-core:2.18.3'
   implementation 'com.fasterxml.jackson.core:jackson-annotations:2.18.3'
+
+  // Kishax AWS Integration - SQS and Redis communication
+  implementation 'net.kishax.aws:kishax-aws:1.0.2'
 }
 
 shadowJar {
