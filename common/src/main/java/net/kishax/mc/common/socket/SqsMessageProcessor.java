@@ -126,6 +126,7 @@ public class SqsMessageProcessor {
             case "web_mc_command" -> processWebMcCommand(json);
             case "web_mc_player_request" -> processWebMcPlayerRequest(json);
             case "web_mc_otp" -> processWebMcOtp(json);
+            case "web_mc_auth_completion" -> processWebMcAuthCompletion(json);
             case "mc_otp_response" -> processMcOtpResponse(json);
             default -> {
                 logger.warn("不明なメッセージタイプです: {}", messageType);
@@ -171,11 +172,22 @@ public class SqsMessageProcessor {
         String playerName = json.path("playerName").asText();
         String playerUuid = json.path("playerUuid").asText();
         String otp = json.path("otp").asText();
-        
+
         logger.info("Web→MC OTP受信: {} ({}) OTP: {}", playerName, playerUuid, otp);
-        
+
         // OTP処理を実行
         messageHandler.handleOtpToMinecraft(playerName, playerUuid, otp);
+    }
+
+    private void processWebMcAuthCompletion(JsonNode json) {
+        String playerName = json.path("playerName").asText();
+        String playerUuid = json.path("playerUuid").asText();
+        String message = json.path("message").asText();
+
+        logger.info("Web→MC 認証完了通知受信: {} ({}) - {}", playerName, playerUuid, message);
+
+        // 認証完了処理を実行
+        messageHandler.handleAuthCompletion(playerName, playerUuid, message);
     }
 
     private void processMcOtpResponse(JsonNode json) {

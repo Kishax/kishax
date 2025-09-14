@@ -40,8 +40,9 @@ services:
       TZ: Asia/Tokyo
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
+    # not portforwarded: default 6379 in only internal container network
+    # ports:
+    #   - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -65,7 +66,7 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
       SPIGOT_MEMORY: ${SPIGOT_MEMORY:-2G}
       VELOCITY_MEMORY: ${VELOCITY_MEMORY:-1G}
-      CONFIRM_URL: ${CONFIRM_URL:-https://your-confirm-url.com}
+      CONFIRM_URL: ${CONFIRM_URL:-http://localhost:3000/mc/auth}
       HOME_SERVER_NAME: ${HOME_SERVER_NAME:-spigot}
       HOME_SERVER_IP: ${HOME_SERVER_IP:-127.0.0.1}
       # AWS SQS Configuration
@@ -80,7 +81,7 @@ services:
       # Queue Mode Configuration for kishax-aws
       QUEUE_MODE: ${QUEUE_MODE:-MC}
       # Redis Configuration for kishax-aws
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     volumes:
       - minecraft_data:/mc/spigot/world
       - minecraft_data_nether:/mc/spigot/world_nether

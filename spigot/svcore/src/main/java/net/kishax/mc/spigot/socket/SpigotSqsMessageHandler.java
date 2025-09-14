@@ -100,6 +100,50 @@ public class SpigotSqsMessageHandler implements SqsMessageHandler {
     logger.warn("SpigotSqsMessageHandlerでのOTP処理は廃止されました。Velocity→Spigot socket通信を使用してください。");
   }
 
+  @Override
+  public void handleAuthCompletion(String playerName, String playerUuid, String message) {
+    try {
+      logger.info("🎉 認証完了通知: {} ({}) - {}", playerName, playerUuid, message);
+
+      // Bukkitスケジューラで同期実行
+      Bukkit.getScheduler().runTask(plugin, () -> {
+        Player player = Bukkit.getPlayer(playerName);
+        if (player != null) {
+          // プレイヤーに認証完了メッセージを送信
+          player.sendMessage("§a" + message);
+          logger.info("認証完了メッセージをプレイヤーに送信しました: {}", playerName);
+        } else {
+          logger.warn("認証完了通知対象プレイヤーがオンラインではありません: {}", playerName);
+        }
+      });
+
+      // 将来の拡張のための処理を呼び出し
+      onAuthCompletionExtension(playerName, playerUuid, message);
+
+    } catch (Exception e) {
+      logger.error("認証完了処理でエラーが発生しました: {} ({})", playerName, playerUuid, e);
+    }
+  }
+
+  /**
+   * 認証完了時の拡張処理（将来の機能追加用）
+   *
+   * このメソッドは将来的に追加される認証完了後の処理のために用意されています。
+   * 現在は空の実装ですが、後で具体的な処理を追加することができます。
+   *
+   * 例：
+   * - 特別なエフェクトの表示
+   * - サウンドの再生
+   * - カスタムアイテムの付与
+   * - 権限の確認と追加付与
+   * - イベント統計の記録
+   */
+  protected void onAuthCompletionExtension(String playerName, String playerUuid, String message) {
+    // 拡張性のための空メソッド
+    // 将来的にここに追加の処理を実装できます
+    logger.debug("認証完了拡張処理: {} ({}) - 現在は何も実行しません", playerName, playerUuid);
+  }
+
   /**
    * テレポートコマンド処理
    */
