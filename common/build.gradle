@@ -23,7 +23,7 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-annotations:2.18.3'
 
   // Kishax AWS Integration - SQS and Redis communication
-  implementation 'net.kishax.aws:kishax-aws:1.0.2'
+  implementation 'net.kishax.aws:kishax-aws:1.0.3'
 }
 
 shadowJar {
