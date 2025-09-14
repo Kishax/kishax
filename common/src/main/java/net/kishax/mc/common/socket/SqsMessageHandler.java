@@ -32,4 +32,11 @@ public interface SqsMessageHandler {
      * Web→MC OTP送信処理
      */
     void handleOtpToMinecraft(String mcid, String uuid, String otp);
+
+    /**
+     * 認証完了メッセージ処理
+     */
+    default void handleAuthCompletion(String playerName, String playerUuid, String message) {
+        // デフォルト実装は何もしない（拡張性のため）
+    }
 }

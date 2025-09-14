@@ -38,7 +38,7 @@ public class Command implements TabExecutor {
   private final JavaPlugin plugin;
   private final PortalsConfig psConfig;
   private final List<String> subcommands = new ArrayList<>(Arrays.asList("reload", "fv", "mcvc", "portal", "hideplayer",
-      "im", "image", "menu", "button", "check", "setpoint", "confirm", "back"));
+      "im", "image", "menu", "button", "check", "setpoint", "confirm", "back", "test"));
 
   @Inject
   public Command(JavaPlugin plugin, PortalsConfig psConfig) {
@@ -62,6 +62,14 @@ public class Command implements TabExecutor {
     switch (args[0].toLowerCase()) {
       case "back" -> Main.getInjector().getInstance(TeleportBack.class).onCommand(sender, cmd, label, args);
       case "confirm" -> Main.getInjector().getInstance(Confirm.class).execute(sender, cmd, label, args);
+      case "test" -> {
+        if (args.length > 1 && args[1].equalsIgnoreCase("kishax") && args.length > 2
+            && args[2].equalsIgnoreCase("confirm")) {
+          handleTestKishaxConfirm(sender, cmd, label, args);
+        } else {
+          sender.sendMessage(ChatColor.RED + "Usage: /kishax test kishax confirm [player_name] [player_uuid]");
+        }
+      }
       case "fv" -> Main.getInjector().getInstance(CommandForward.class).execute(sender, cmd, label, args);
       case "reload" -> Main.getInjector().getInstance(ReloadConfig.class).execute(sender, cmd, label, args);
       case "mcvc" -> Main.getInjector().getInstance(MCVC.class).execute(sender, cmd, label, args);
@@ -162,6 +170,10 @@ public class Command implements TabExecutor {
             }
             return StringUtil.copyPartialMatches(args[1].toLowerCase(), ret, new ArrayList<>());
           }
+          case "test" -> {
+            List<String> testArgs = new ArrayList<>(Arrays.asList("kishax"));
+            return StringUtil.copyPartialMatches(args[1].toLowerCase(), testArgs, new ArrayList<>());
+          }
         }
       }
       case 3 -> {
@@ -210,6 +222,12 @@ public class Command implements TabExecutor {
             List<String> actions = new ArrayList<>(Arrays.asList("hide", "show"));
             return StringUtil.copyPartialMatches(args[2].toLowerCase(), actions, new ArrayList<>());
           }
+          case "test" -> {
+            if (args[1].equalsIgnoreCase("kishax")) {
+              List<String> testKishaxArgs = new ArrayList<>(Arrays.asList("confirm"));
+              return StringUtil.copyPartialMatches(args[2].toLowerCase(), testKishaxArgs, new ArrayList<>());
+            }
+          }
         }
       }
       case 4 -> {
@@ -234,5 +252,49 @@ public class Command implements TabExecutor {
       }
     }
     return Collections.emptyList();
+  }
+
+  /**
+   * テスト用 kishax confirm コマンドを処理
+   * コンソールから実行可能で、テストプレイヤー情報を使用して認証フローをテストします
+   */
+  private void handleTestKishaxConfirm(CommandSender sender, org.bukkit.command.Command cmd, String label,
+      String[] args) {
+    // コンソールからのみ実行可能
+    if (sender instanceof Player) {
+      sender.sendMessage(ChatColor.RED + "このコマンドはコンソールからのみ実行可能です。");
+      return;
+    }
+
+    String testPlayerName;
+    String testPlayerUuid;
+
+    if (args.length >= 5) {
+      // 引数で指定された場合
+      testPlayerName = args[3];
+      testPlayerUuid = args[4];
+    } else {
+      // デフォルトのテストプレイヤー情報を使用
+      testPlayerName = "TestPlayer";
+      testPlayerUuid = "00000000-0000-0000-0000-000000000000";
+    }
+
+    sender.sendMessage(ChatColor.GREEN + "テスト用認証フローを開始します:");
+    sender.sendMessage(ChatColor.YELLOW + "プレイヤー名: " + testPlayerName);
+    sender.sendMessage(ChatColor.YELLOW + "プレイヤーUUID: " + testPlayerUuid);
+
+    try {
+      // Confirmクラスのテスト用メソッドを呼び出し
+      Confirm confirmHandler = Main.getInjector().getInstance(Confirm.class);
+      confirmHandler.executeTestFlow(testPlayerName, testPlayerUuid);
+
+      sender.sendMessage(ChatColor.GREEN + "✅ テスト認証フローが正常に実行されました。");
+      sender.sendMessage("詳細はサーバーログを確認してください。");
+      sender.sendMessage(ChatColor.YELLOW + "生成された認証URLを使用してWebページからの認証をテストできます。");
+
+    } catch (Exception e) {
+      sender.sendMessage(ChatColor.RED + "テスト実行中にエラーが発生しました: " + e.getMessage());
+      plugin.getLogger().severe("Test kishax confirm command failed: " + e.getMessage());
+    }
   }
 }

@@ -47,26 +47,49 @@ public class SpigotOtpHandler implements OtpHandler {
     try {
       logger.info("Velocity→Spigot OTP受信: {} ({}) OTP: {}", otp.mcid, otp.uuid, otp.otp);
 
+      // TEST_トークンの場合は追加のログ出力
+      boolean isTestMode = isTestToken(otp.mcid, otp.uuid);
+      if (isTestMode) {
+        logger.info("🧪 テストモードでのOTP処理を開始します");
+      }
+
       // メインスレッドで実行（Bukkit API呼び出しのため）
       Bukkit.getScheduler().runTask(plugin, () -> {
         Player player = Bukkit.getPlayer(otp.mcid);
         boolean success = false;
         String responseMessage;
-        
-        if (player != null && player.getUniqueId().toString().equals(otp.uuid)) {
-          // プレイヤーにOTPを送信
+
+        // テスト用プレイヤー（TestPlayer）とTEST_トークンの特別処理
+        if (otp.mcid.equals("TestPlayer") && otp.uuid.equals("00000000-0000-0000-0000-000000000000")) {
+          // テスト用プレイヤーの場合は常に成功として処理
+          success = true;
+          responseMessage = "テスト用プレイヤーのOTPを処理しました。";
+          logger.info("🧪 テスト用プレイヤー {} のOTPを処理しました: {}", otp.mcid, otp.otp);
+
+          // コンソールにOTP入力指示を表示
+          logger.info("=== テスト認証フロー ===");
+          logger.info("OTP: {} をWEBの方で入力してください！", otp.otp);
+          logger.info("======================");
+
+          // Bukkit コンソールにも出力
+          Bukkit.getConsoleSender().sendMessage("§a=== テスト認証フロー ===");
+          Bukkit.getConsoleSender().sendMessage("§eOTP: §b" + otp.otp + " §eをWEBの方で入力してください！");
+          Bukkit.getConsoleSender().sendMessage("§a======================");
+
+        } else if (player != null && player.getUniqueId().toString().equals(otp.uuid)) {
+          // 通常のプレイヤーにOTPを送信
           sendOtpToPlayer(player, otp.otp);
           success = true;
           responseMessage = "OTPをプレイヤーに送信しました。";
           logger.info("プレイヤー {} にOTPを送信しました: {}", player.getName(), otp.otp);
         } else {
-          String errorMessage = player == null 
+          String errorMessage = player == null
             ? "プレイヤーがオンラインではありません。"
             : "プレイヤーのUUIDが一致しません。";
           responseMessage = errorMessage;
           logger.warn("プレイヤーが見つからないかUUIDが一致しません: {} ({})", otp.mcid, otp.uuid);
         }
-        
+
         // Velocityにレスポンス送信
         sendOtpResponseToVelocity(otp.mcid, otp.uuid, success, responseMessage);
       });
@@ -132,5 +155,12 @@ public class SpigotOtpHandler implements OtpHandler {
     } catch (Exception e) {
       logger.error("VelocityへのOTPレスポンス送信でエラーが発生しました: {} ({})", mcid, uuid, e);
     }
+  }
+
+  /**
+   * テスト用トークンかどうかを判定
+   */
+  private boolean isTestToken(String mcid, String uuid) {
+    return mcid.equals("TestPlayer") && uuid.equals("00000000-0000-0000-0000-000000000000");
   }
 }

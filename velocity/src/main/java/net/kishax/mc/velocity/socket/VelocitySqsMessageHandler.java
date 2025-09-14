@@ -109,14 +109,59 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
     public void handleOtpToMinecraft(String mcid, String uuid, String otp) {
         try {
             logger.info("Web→MC OTP送信: {} ({}) OTP: {}", mcid, uuid, otp);
-            
+
             // 既存のメッセージハンドラーシステムを使用してSpigotにOTPを送信
             JsonNode otpMessage = createOtpMessage(mcid, uuid, otp);
             forwardOtpToSpigot(otpMessage);
-            
+
         } catch (Exception e) {
             logger.error("OTP送信処理でエラーが発生しました: {} ({})", mcid, uuid, e);
         }
+    }
+
+    /**
+     * 認証完了メッセージを処理
+     */
+    @Override
+    public void handleAuthCompletion(String playerName, String playerUuid, String message) {
+        try {
+            logger.info("🎉 認証完了通知: {} ({}) - {}", playerName, playerUuid, message);
+
+            // Velocityから直接プレイヤーに認証完了メッセージを送信
+            proxyServer.getPlayer(playerName).ifPresent(player -> {
+                player.sendMessage(net.kyori.adventure.text.Component.text(message)
+                    .color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                logger.info("認証完了メッセージをプレイヤーに送信しました: {}", playerName);
+            });
+
+            if (proxyServer.getPlayer(playerName).isEmpty()) {
+                logger.warn("認証完了通知対象プレイヤーがオンラインではありません: {}", playerName);
+            }
+
+            // 将来の拡張のための処理を呼び出し
+            onAuthCompletionExtension(playerName, playerUuid, message);
+
+        } catch (Exception e) {
+            logger.error("認証完了処理でエラーが発生しました: {} ({})", playerName, playerUuid, e);
+        }
+    }
+
+    /**
+     * 認証完了時の拡張処理（将来の機能追加用）
+     *
+     * このメソッドは将来的に追加される認証完了後の処理のために用意されています。
+     * 現在は空の実装ですが、後で具体的な処理を追加することができます。
+     *
+     * 例：
+     * - 特別なウェルカムメッセージの送信
+     * - イベント通知の送信
+     * - 統計データの更新
+     * - カスタムリワードの付与
+     */
+    protected void onAuthCompletionExtension(String playerName, String playerUuid, String message) {
+        // 拡張性のための空メソッド
+        // 将来的にここに追加の処理を実装できます
+        logger.debug("認証完了拡張処理: {} ({}) - 現在は何も実行しません", playerName, playerUuid);
     }
 
     private JsonNode createConfirmMessage(String playerName, String playerUuid) {

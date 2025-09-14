@@ -252,6 +252,32 @@ public class Database {
     return rowMap;
   }
 
+  /**
+   * テスト用メンバーをmembersテーブルに挿入
+   */
+  public int insertTestMember(Connection conn, String testPlayerName, String testPlayerUuid, String serverName) throws SQLException {
+    String insertQuery = """
+        INSERT INTO members (name, uuid, server, confirm, time, ban, member_id, hubinv, tptype, silent)
+        VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP, 0, NULL, 1, 1, 0)
+        """;
+
+    try (PreparedStatement ps = conn.prepareStatement(insertQuery, PreparedStatement.RETURN_GENERATED_KEYS)) {
+      ps.setString(1, testPlayerName);
+      ps.setString(2, testPlayerUuid);
+      ps.setString(3, serverName);
+
+      int affectedRows = ps.executeUpdate();
+      if (affectedRows > 0) {
+        try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+          if (generatedKeys.next()) {
+            return generatedKeys.getInt(1); // 生成されたIDを返す
+          }
+        }
+      }
+    }
+    return -1; // 挿入失敗
+  }
+
   public int getPlayerTime(Connection conn, String playerUUID, int logId) throws SQLException {
     // 現在の時刻と最後のログの時刻の差を計算するメソッド
     String query = "SELECT * FROM log WHERE uuid=? AND `join`=? AND `id`=? ORDER BY id DESC LIMIT 1;";

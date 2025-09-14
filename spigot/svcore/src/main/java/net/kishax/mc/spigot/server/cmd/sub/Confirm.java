@@ -117,6 +117,95 @@ public class Confirm {
     }
   }
 
+  /**
+   * テスト用の認証フロー実行メソッド
+   * コンソールから呼び出され、指定されたテストプレイヤー情報を使用して認証フローを実行します
+   */
+  public void executeTestFlow(String testPlayerName, String testPlayerUuid) {
+    try {
+      logger.info("テスト認証フローを開始: {} ({})", testPlayerName, testPlayerUuid);
+
+      try (Connection conn = db.getConnection()) {
+        // TestPlayerがmembersテーブルに存在するかチェック
+        Map<String, Object> memberMap = db.getMemberMap(conn, testPlayerName);
+
+        if (memberMap.isEmpty()) {
+          // テスト用プレイヤーが存在しない場合は自動作成
+          logger.info("🔨 テスト用プレイヤーがmembersテーブルに存在しないため、自動作成します");
+          int insertedId = db.insertTestMember(conn, testPlayerName, testPlayerUuid, thisServerName);
+
+          if (insertedId > 0) {
+            logger.info("✅ テスト用プレイヤーを作成しました - ID: {}", insertedId);
+          } else {
+            logger.error("❌ テスト用プレイヤーの作成に失敗しました");
+            throw new RuntimeException("テスト用プレイヤーの作成に失敗しました");
+          }
+        } else {
+          logger.info("📋 テスト用プレイヤーは既にmembersテーブルに存在します - ID: {}", memberMap.get("id"));
+        }
+
+        // トークンの生成と有効期限設定（10分間）
+        String authToken = generateTestAuthToken(testPlayerName, testPlayerUuid);
+        long expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
+
+        logger.info("テスト認証トークンを生成: {}", authToken);
+
+        // データベースにトークンを保存（テスト用プレイヤー情報で）
+        db.updateAuthToken(conn, testPlayerUuid, authToken, expiresAt);
+        logger.info("テスト認証トークンをデータベースに保存しました");
+
+        // 新形式のURL（トークンベース）を使用
+        String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
+
+        // Velocity経由でWeb側にテストプレイヤー情報とトークンを送信
+        sendTestAuthTokenToVelocity(conn, testPlayerName, testPlayerUuid, authToken, expiresAt, "test");
+
+        logger.info("✅ テスト認証フローが完了しました");
+        logger.info("🔗 テスト認証URL: {}", confirmUrl);
+        logger.info("📧 このURLを使用してWebページからの認証をテストできます");
+
+      } catch (SQLException | ClassNotFoundException e) {
+        logger.error("テスト認証フロー実行中にデータベースエラーが発生しました: {}", e.getMessage(), e);
+        throw new RuntimeException(e);
+      }
+
+    } catch (Exception e) {
+      logger.error("テスト認証フロー実行中にエラーが発生しました: {}", e.getMessage(), e);
+      throw e;
+    }
+  }
+
+  /**
+   * テスト用認証トークンを生成
+   */
+  private String generateTestAuthToken(String testPlayerName, String testPlayerUuid) {
+    return "TEST_" + generateOTP(24) + "_" + System.currentTimeMillis();
+  }
+
+  /**
+   * Velocity経由でWeb側にテスト用認証トークン情報を送信
+   */
+  private void sendTestAuthTokenToVelocity(Connection conn, String testPlayerName, String testPlayerUuid,
+                                          String token, long expiresAt, String action) {
+    try {
+      Message msg = new Message();
+      msg.web = new Message.Web();
+      msg.web.authToken = new Message.Web.AuthToken();
+      msg.web.authToken.who = new Message.Minecraft.Who();
+      msg.web.authToken.who.name = testPlayerName;
+      msg.web.authToken.who.uuid = testPlayerUuid;
+      msg.web.authToken.token = token;
+      msg.web.authToken.expiresAt = expiresAt;
+      msg.web.authToken.action = action;
+
+      SocketSwitch ssw = sswProvider.get();
+      ssw.sendVelocityServer(conn, msg);
+
+      logger.info("テスト認証トークン情報をVelocityに送信しました: {}", testPlayerName);
+    } catch (Exception e) {
+      logger.error("テスト認証トークン情報のVelocity送信に失敗しました: {}", e.getMessage(), e);
+    }
+  }
 
   private void sendConfirmationMessage(Player player, String confirmUrl) {
 
