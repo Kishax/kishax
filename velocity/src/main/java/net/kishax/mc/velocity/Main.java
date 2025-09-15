@@ -51,7 +51,7 @@ public class Main {
   private final Logger logger;
   private final Path dataDirectory;
   private boolean isEnable = false;
-  
+
   // kishax-aws components for shutdown
   private static net.kishax.aws.SqsWorker kishaxSqsWorker;
   private net.kishax.aws.RedisClient kishaxRedisClient;
@@ -67,7 +67,7 @@ public class Main {
   public void onProxyInitialization(ProxyInitializeEvent e) {
     logger.info("detected velocity platform.");
     TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
-    
+
     try {
       startApplication();
       isEnable = true;
@@ -107,7 +107,7 @@ public class Main {
     Database db = getInjector().getInstance(Database.class);
     try (Connection conn = db.getConnection()) {
       // この行は削除（上記の新しい実装で置き換え）
-      
+
       // Settings設定をMySQLに同期
       getInjector().getInstance(SettingsSyncService.class).syncSettingsToDatabase();
     } catch (SQLException | ClassNotFoundException e1) {
@@ -128,21 +128,21 @@ public class Main {
     if (port != 0) {
       getInjector().getProvider(SocketSwitch.class).get().startSocketServer(port);
     }
-    
+
     // データベース同期時にsocketPortを渡す
     try {
       getInjector().getInstance(DoServerOnline.class).updateAndSyncDatabase(false, port);
     } catch (Exception e) {
       logger.error("Failed to update database with socket port: {}", e.getMessage());
     }
-    
+
     // SQS関連サービスの初期化
     try {
       initializeSqsServices();
     } catch (Exception e) {
       logger.error("Failed to initialize SQS services: {}", e.getMessage());
     }
-    
+
     logger.info(FloodgateApi.getInstance().toString());
     logger.info("linking with Floodgate...");
   }
@@ -150,7 +150,7 @@ public class Main {
   public static Injector getInjector() {
     return injector;
   }
-  
+
   /**
    * Get the kishax-aws SqsWorker instance
    */
@@ -167,7 +167,8 @@ public class Main {
         VelocitySqsMessageHandler sqsHandler = injector.getInstance(VelocitySqsMessageHandler.class);
         sqsHandler.handleOtpToMinecraft(playerName, playerUuid, otp);
       } catch (Exception e) {
-        org.slf4j.LoggerFactory.getLogger(Main.class).error("Failed to handle OTP display request: {}", e.getMessage(), e);
+        org.slf4j.LoggerFactory.getLogger(Main.class).error("Failed to handle OTP display request: {}", e.getMessage(),
+            e);
       }
     }
   }
@@ -181,20 +182,23 @@ public class Main {
         // Use kishax-aws SqsWorker to send OTP response
         long timestamp = System.currentTimeMillis();
         kishaxSqsWorker.getMcToWebSender().sendOtpResponse(mcid, uuid, success, message, timestamp);
-        org.slf4j.LoggerFactory.getLogger(Main.class).info("✅ OTP response sent to WEB: {} ({}) success: {}", mcid, uuid, success);
+        org.slf4j.LoggerFactory.getLogger(Main.class).info("✅ OTP response sent to WEB: {} ({}) success: {}", mcid,
+            uuid, success);
       } catch (Exception e) {
-        org.slf4j.LoggerFactory.getLogger(Main.class).error("Failed to send OTP response to WEB: {} ({})", mcid, uuid, e);
+        org.slf4j.LoggerFactory.getLogger(Main.class).error("Failed to send OTP response to WEB: {} ({})", mcid, uuid,
+            e);
       }
     } else {
-      org.slf4j.LoggerFactory.getLogger(Main.class).warn("kishax-aws SqsWorker is not available, cannot send OTP response");
+      org.slf4j.LoggerFactory.getLogger(Main.class)
+          .warn("kishax-aws SqsWorker is not available, cannot send OTP response");
     }
   }
-  
+
   private void initializeSqsServices() throws Exception {
     try {
       VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
       AwsConfig awsConfig = getInjector().getInstance(AwsConfig.class);
-      
+
       // SQS設定を取得
       String region = awsConfig.getAwsRegion();
       String accessKey = awsConfig.getSqsAccessKey();
@@ -202,17 +206,17 @@ public class Main {
       String webToMcQueueUrl = config.getString("AWS.SQS.WebToMcQueueUrl", "");
       String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
       String redisUrl = config.getString("Redis.URL", "redis://localhost:6379");
-      
+
       if (webToMcQueueUrl.isEmpty()) {
         logger.warn("WebToMcQueueUrl が設定されていません。SQS機能は無効になります。");
         return;
       }
-      
+
       if (mcToWebQueueUrl.isEmpty()) {
         logger.warn("McToWebQueueUrl が設定されていません。SQS送信機能は無効になります。");
         return;
       }
-      
+
       // kishax-aws統合のためのConfiguration作成
       System.setProperty("AWS_REGION", region);
       System.setProperty("MC_WEB_SQS_ACCESS_KEY_ID", accessKey);
@@ -220,19 +224,18 @@ public class Main {
       System.setProperty("MC_TO_WEB_QUEUE_URL", mcToWebQueueUrl);
       System.setProperty("WEB_TO_MC_QUEUE_URL", webToMcQueueUrl);
       System.setProperty("REDIS_URL", redisUrl);
-      
+
       net.kishax.aws.Configuration kishaxConfig = new net.kishax.aws.Configuration();
       kishaxConfig.validate();
-      
+
       // SqsWorkerをQUEUE_MODE対応で初期化（kishax-awsが自動でキューを選択）
       net.kishax.aws.SqsWorker sqsWorker = net.kishax.aws.SqsWorker.createWithQueueMode(kishaxConfig);
-      
+
       // Register OTP display callback
       net.kishax.aws.SqsWorker.setOtpDisplayCallback((playerName, playerUuid, otp) -> {
         logger.info("🔔 OTP display callback triggered: {} ({}) OTP: {}", playerName, playerUuid, otp);
         handleOtpDisplayRequest(playerName, playerUuid, otp);
       });
-      
 
       // Register Auth Confirm callback to prevent SQS loop
       net.kishax.aws.SqsWorker.setAuthConfirmCallback((playerName, playerUuid) -> {
@@ -245,11 +248,11 @@ public class Main {
 
       sqsWorker.start();
       logger.info("✅ kishax-aws SQSワーカーが開始されました（QUEUE_MODE対応）");
-      
+
       // グローバル参照のため静的フィールドに保存（後でシャットダウン時に使用）
       Main.kishaxSqsWorker = sqsWorker;
       this.kishaxRedisClient = kishaxConfig.createRedisClient();
-      
+
     } catch (Exception e) {
       logger.error("kishax-aws SQS サービスの初期化に失敗しました: {}", e.getMessage());
       throw e;
@@ -260,14 +263,14 @@ public class Main {
   public void onProxyShutdown(ProxyShutdownEvent e) {
     if (!isEnable)
       return;
-    
+
     // kishax-aws SQS関連サービスの停止
     try {
       if (kishaxSqsWorker != null) {
         kishaxSqsWorker.stop();
         logger.info("✅ kishax-aws SQS ワーカーが停止しました");
       }
-      
+
       if (kishaxRedisClient != null) {
         kishaxRedisClient.close();
         logger.info("✅ kishax-aws Redis クライアントが停止しました");
@@ -275,7 +278,7 @@ public class Main {
     } catch (Exception ex) {
       logger.error("kishax-aws SQS サービスの停止中にエラーが発生しました: {}", ex.getMessage());
     }
-    
+
     getInjector().getInstance(DoServerOffline.class).updateDatabase();
     getInjector().getProvider(SocketSwitch.class).get().stopSocketClient();
     logger.info("Client Socket Stopping...");
