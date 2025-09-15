@@ -39,6 +39,8 @@ import net.kishax.mc.velocity.server.cmd.sub.ServerTeleport;
 import net.kishax.mc.velocity.server.events.EventListener;
 import net.kishax.mc.velocity.util.SettingsSyncService;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.luckperms.api.LuckPermsProvider;
 
 public class Main {
@@ -231,6 +233,16 @@ public class Main {
         handleOtpDisplayRequest(playerName, playerUuid, otp);
       });
       
+
+      // Register Auth Confirm callback to prevent SQS loop
+      net.kishax.aws.SqsWorker.setAuthConfirmCallback((playerName, playerUuid) -> {
+        logger.info("🔔 Auth confirm callback triggered for player: {} ({})", playerName, playerUuid);
+        this.server.getPlayer(playerName).ifPresent(player -> {
+          player.sendMessage(Component.text("Web authentication successful!", NamedTextColor.GREEN));
+          logger.info("Sent auth confirmation message to player {}", playerName);
+        });
+      });
+
       sqsWorker.start();
       logger.info("✅ kishax-aws SQSワーカーが開始されました（QUEUE_MODE対応）");
       
