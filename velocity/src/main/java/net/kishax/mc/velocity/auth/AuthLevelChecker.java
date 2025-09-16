@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * MC認証レベルチェック機能
- * 1分間隔でkishax-aws APIを呼び出し、プレイヤーの権限を更新
+ * 1分間隔でkishax-api APIを呼び出し、プレイヤーの権限を更新
  */
 public class AuthLevelChecker {
   private static final Logger logger = LoggerFactory.getLogger(AuthLevelChecker.class);
@@ -101,7 +101,7 @@ public class AuthLevelChecker {
   public CompletableFuture<Void> checkAndUpdatePlayerAuthLevel(Player player) {
     return CompletableFuture.runAsync(() -> {
       try {
-        // kishax-aws APIリクエスト作成
+        // kishax-api APIリクエスト作成
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("mcid", player.getUsername());
         requestBody.put("uuid", player.getUniqueId().toString());

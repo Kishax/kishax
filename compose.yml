@@ -78,9 +78,9 @@ services:
       WEB_TO_MC_QUEUE_URL: ${WEB_TO_MC_QUEUE_URL}
       MC_TO_WEB_QUEUE_URL: ${MC_TO_WEB_QUEUE_URL}
       API_GATEWAY_URL: ${API_GATEWAY_URL}
-      # Queue Mode Configuration for kishax-aws
+      # Queue Mode Configuration for kishax-api
       QUEUE_MODE: ${QUEUE_MODE:-MC}
-      # Redis Configuration for kishax-aws
+      # Redis Configuration for kishax-api
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     volumes:
       - minecraft_data:/mc/spigot/world

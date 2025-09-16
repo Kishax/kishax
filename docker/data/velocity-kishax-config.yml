@@ -28,7 +28,7 @@ AWS:
   ApiGateway:
     Endpoint: "${API_GATEWAY_URL}/discord"
 
-# Redis Configuration for kishax-aws integration
+# Redis Configuration for kishax-api integration
 Redis:
   URL: "${REDIS_URL}"
 
