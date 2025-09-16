@@ -2,6 +2,7 @@ package net.kishax.mc.velocity.auth;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import net.luckperms.api.LuckPerms;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,13 +37,16 @@ public class AuthLevelCheckerTest {
   @Mock
   private HttpResponse<String> mockHttpResponse;
 
+  @Mock
+  private LuckPerms mockLuckPerms;
+
   private AuthLevelChecker authLevelChecker;
   private final String testApiUrl = "http://test-api.example.com";
   private final String testApiKey = "test-key-123";
 
   @BeforeEach
   void setUp() {
-    authLevelChecker = new AuthLevelChecker(mockProxyServer, testApiUrl, testApiKey);
+    authLevelChecker = new AuthLevelChecker(mockProxyServer, testApiUrl, testApiKey, mockLuckPerms);
   }
 
   @Test
@@ -144,7 +148,8 @@ public class AuthLevelCheckerTest {
   @Test
   void testApiUrlAndKeyConfiguration() {
     // Test that constructor accepts configuration
-    AuthLevelChecker checker = new AuthLevelChecker(mockProxyServer, "http://api.test.com", "api-key-123");
+    AuthLevelChecker checker = new AuthLevelChecker(mockProxyServer, "http://api.test.com", "api-key-123",
+        mockLuckPerms);
     assertNotNull(checker);
 
     // Verify basic functionality

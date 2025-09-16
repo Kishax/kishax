@@ -47,6 +47,10 @@ public class AuthLevelChecker {
   private final LuckPerms luckPerms;
 
   public AuthLevelChecker(ProxyServer proxyServer, String authApiUrl, String apiKey) {
+    this(proxyServer, authApiUrl, apiKey, LuckPermsProvider.get());
+  }
+
+  public AuthLevelChecker(ProxyServer proxyServer, String authApiUrl, String apiKey, LuckPerms luckPerms) {
     this.proxyServer = proxyServer;
     this.authApiUrl = authApiUrl;
     this.apiKey = apiKey;
@@ -57,7 +61,7 @@ public class AuthLevelChecker {
     this.scheduler = Executors.newScheduledThreadPool(1);
     this.playerAuthLevels = new ConcurrentHashMap<>();
     this.playerProducts = new ConcurrentHashMap<>();
-    this.luckPerms = LuckPermsProvider.get();
+    this.luckPerms = luckPerms;
 
     logger.info("AuthLevelChecker initialized with API URL: {}", authApiUrl);
   }

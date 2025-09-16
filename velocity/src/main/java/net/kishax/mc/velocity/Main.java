@@ -53,9 +53,9 @@ public class Main {
   private final Path dataDirectory;
   private boolean isEnable = false;
 
-  // kishax-aws components for shutdown
-  private static net.kishax.aws.SqsWorker kishaxSqsWorker;
-  private net.kishax.aws.RedisClient kishaxRedisClient;
+  // kishax-api components for shutdown
+  private static net.kishax.api.SqsWorker kishaxSqsWorker;
+  private net.kishax.api.RedisClient kishaxRedisClient;
   private static AuthLevelChecker authLevelChecker;
 
   @Inject
@@ -161,14 +161,14 @@ public class Main {
   }
 
   /**
-   * Get the kishax-aws SqsWorker instance
+   * Get the kishax-api SqsWorker instance
    */
-  public static net.kishax.aws.SqsWorker getKishaxSqsWorker() {
+  public static net.kishax.api.SqsWorker getKishaxSqsWorker() {
     return kishaxSqsWorker;
   }
 
   /**
-   * Handle OTP display request from kishax-aws SqsWorker
+   * Handle OTP display request from kishax-api SqsWorker
    */
   public static void handleOtpDisplayRequest(String playerName, String playerUuid, String otp) {
     if (injector != null) {
@@ -183,12 +183,12 @@ public class Main {
   }
 
   /**
-   * Send OTP response to WEB using kishax-aws SqsWorker
+   * Send OTP response to WEB using kishax-api SqsWorker
    */
   public static void sendOtpResponseToWeb(String mcid, String uuid, boolean success, String message) {
     if (kishaxSqsWorker != null) {
       try {
-        // Use kishax-aws SqsWorker to send OTP response
+        // Use kishax-api SqsWorker to send OTP response
         long timestamp = System.currentTimeMillis();
         kishaxSqsWorker.getMcToWebSender().sendOtpResponse(mcid, uuid, success, message, timestamp);
         org.slf4j.LoggerFactory.getLogger(Main.class).info("✅ OTP response sent to WEB: {} ({}) success: {}", mcid,
@@ -199,7 +199,7 @@ public class Main {
       }
     } else {
       org.slf4j.LoggerFactory.getLogger(Main.class)
-          .warn("kishax-aws SqsWorker is not available, cannot send OTP response");
+          .warn("kishax-api SqsWorker is not available, cannot send OTP response");
     }
   }
 
@@ -226,7 +226,7 @@ public class Main {
         return;
       }
 
-      // kishax-aws統合のためのConfiguration作成
+      // kishax-api統合のためのConfiguration作成
       System.setProperty("AWS_REGION", region);
       System.setProperty("MC_WEB_SQS_ACCESS_KEY_ID", accessKey);
       System.setProperty("MC_WEB_SQS_SECRET_ACCESS_KEY", secretKey);
@@ -234,20 +234,20 @@ public class Main {
       System.setProperty("WEB_TO_MC_QUEUE_URL", webToMcQueueUrl);
       System.setProperty("REDIS_URL", redisUrl);
 
-      net.kishax.aws.Configuration kishaxConfig = new net.kishax.aws.Configuration();
+      net.kishax.api.Configuration kishaxConfig = new net.kishax.api.Configuration();
       kishaxConfig.validate();
 
-      // SqsWorkerをQUEUE_MODE対応で初期化（kishax-awsが自動でキューを選択）
-      net.kishax.aws.SqsWorker sqsWorker = net.kishax.aws.SqsWorker.createWithQueueMode(kishaxConfig);
+      // SqsWorkerをQUEUE_MODE対応で初期化（kishax-apiが自動でキューを選択）
+      net.kishax.api.SqsWorker sqsWorker = net.kishax.api.SqsWorker.createWithQueueMode(kishaxConfig);
 
       // Register OTP display callback
-      net.kishax.aws.SqsWorker.setOtpDisplayCallback((playerName, playerUuid, otp) -> {
+      net.kishax.api.SqsWorker.setOtpDisplayCallback((playerName, playerUuid, otp) -> {
         logger.info("🔔 OTP display callback triggered: {} ({}) OTP: {}", playerName, playerUuid, otp);
         handleOtpDisplayRequest(playerName, playerUuid, otp);
       });
 
       // Register Auth Confirm callback to prevent SQS loop
-      net.kishax.aws.SqsWorker.setAuthConfirmCallback((playerName, playerUuid) -> {
+      net.kishax.api.SqsWorker.setAuthConfirmCallback((playerName, playerUuid) -> {
         logger.info("🔔 Auth confirm callback triggered for player: {} ({})", playerName, playerUuid);
         this.server.getPlayer(playerName).ifPresent(player -> {
           player.sendMessage(Component.text("Web authentication successful!", NamedTextColor.GREEN));
@@ -256,14 +256,14 @@ public class Main {
       });
 
       sqsWorker.start();
-      logger.info("✅ kishax-aws SQSワーカーが開始されました（QUEUE_MODE対応）");
+      logger.info("✅ kishax-api SQSワーカーが開始されました（QUEUE_MODE対応）");
 
       // グローバル参照のため静的フィールドに保存（後でシャットダウン時に使用）
       Main.kishaxSqsWorker = sqsWorker;
       this.kishaxRedisClient = kishaxConfig.createRedisClient();
 
     } catch (Exception e) {
-      logger.error("kishax-aws SQS サービスの初期化に失敗しました: {}", e.getMessage());
+      logger.error("kishax-api SQS サービスの初期化に失敗しました: {}", e.getMessage());
       throw e;
     }
   }
@@ -313,19 +313,19 @@ public class Main {
       logger.error("AuthLevelChecker の停止中にエラーが発生しました: {}", ex.getMessage());
     }
 
-    // kishax-aws SQS関連サービスの停止
+    // kishax-api SQS関連サービスの停止
     try {
       if (kishaxSqsWorker != null) {
         kishaxSqsWorker.stop();
-        logger.info("✅ kishax-aws SQS ワーカーが停止しました");
+        logger.info("✅ kishax-api SQS ワーカーが停止しました");
       }
 
       if (kishaxRedisClient != null) {
         kishaxRedisClient.close();
-        logger.info("✅ kishax-aws Redis クライアントが停止しました");
+        logger.info("✅ kishax-api Redis クライアントが停止しました");
       }
     } catch (Exception ex) {
-      logger.error("kishax-aws SQS サービスの停止中にエラーが発生しました: {}", ex.getMessage());
+      logger.error("kishax-api SQS サービスの停止中にエラーが発生しました: {}", ex.getMessage());
     }
 
     getInjector().getInstance(DoServerOffline.class).updateDatabase();
