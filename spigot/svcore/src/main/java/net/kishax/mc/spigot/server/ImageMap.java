@@ -362,7 +362,6 @@ public class ImageMap {
   }
 
   @Deprecated
-  @SuppressWarnings("null")
   private void executeLargeImageMap(CommandSender sender, String[] args, Object[] dArgs, Object[] inputs,
       Object[] inputs2, Object[] inputs3) {
     if (!(sender instanceof Player)) {
@@ -1087,7 +1086,6 @@ public class ImageMap {
   }
 
   @Deprecated
-  @SuppressWarnings("null")
   private void executeImageMap(CommandSender sender, String[] args, Object[] dArgs, boolean confirm) {
     if (sender instanceof Player player) {
       if (args.length < 3) {
@@ -1269,7 +1267,6 @@ public class ImageMap {
     }
   }
 
-  @SuppressWarnings("null")
   private void executeQ(CommandSender sender, String[] args, boolean q, Object[] Args) {
     if (sender instanceof Player player) {
       String otp, title, comment, url, date;

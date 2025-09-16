@@ -22,14 +22,12 @@ public class SqsClient {
 
   private software.amazon.awssdk.services.sqs.SqsClient awsSqsClient;
   private String mcToWebQueueUrl;
-  private String apiGatewayUrl;
   private final ObjectMapper objectMapper;
 
   // Guice DI用のダミーコンストラクタ（初期化は遅延で行う）
   @Inject
   public SqsClient() {
     this.mcToWebQueueUrl = null;
-    this.apiGatewayUrl = null;
     this.objectMapper = new ObjectMapper();
     this.awsSqsClient = null; // 遅延初期化
   }
@@ -50,7 +48,6 @@ public class SqsClient {
     }
 
     this.mcToWebQueueUrl = mcToWebQueueUrl;
-    this.apiGatewayUrl = apiGatewayUrl;
     this.objectMapper = new ObjectMapper();
 
     // SQSクライアントを初期化
@@ -88,7 +85,6 @@ public class SqsClient {
     }
 
     this.mcToWebQueueUrl = mcToWebQueueUrl;
-    this.apiGatewayUrl = apiGatewayUrl;
 
     // SQSクライアントを初期化
     this.awsSqsClient = software.amazon.awssdk.services.sqs.SqsClient.builder()

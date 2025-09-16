@@ -51,22 +51,6 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
     this.sqsClient = sqsClient;
   }
 
-  private void ensureSqsClientInitialized() {
-    if (!sqsClient.isInitialized()) {
-      try {
-        String region = config.getString("AWS.Region", "ap-northeast-1");
-        String accessKey = config.getString("AWS.Discord.Credentials.AccessKey", "");
-        String secretKey = config.getString("AWS.Discord.Credentials.SecretKey", "");
-        String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
-        String apiGatewayUrl = config.getString("AWS.ApiGateway.Endpoint", "");
-
-        sqsClient.initialize(region, accessKey, secretKey, mcToWebQueueUrl, apiGatewayUrl);
-      } catch (Exception e) {
-        logger.error("SqsClient の初期化に失敗しました", e);
-      }
-    }
-  }
-
   @Override
   public void handle(Message.Web.MinecraftConfirm confirm) {
     String mineName = confirm.who.name;

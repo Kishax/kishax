@@ -566,7 +566,7 @@ public final class EventListener implements Listener {
         return;
       }
 
-      if (!(memberMap.get("id") instanceof Integer id)) {
+      if (!(memberMap.get("id") instanceof Integer)) {
         Component errorMessage = Component.text("プレイヤーIDの取得に失敗しました。")
             .color(NamedTextColor.RED);
         audiences.player(player).sendMessage(errorMessage);

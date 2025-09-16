@@ -31,7 +31,6 @@ import net.kishax.mc.velocity.aws.AwsApiClient;
 import net.kishax.mc.velocity.aws.AwsConfig;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
-import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.GeyserMC;
 import net.kishax.mc.velocity.server.MineStatus;
 import net.kishax.mc.velocity.server.PlayerDisconnect;

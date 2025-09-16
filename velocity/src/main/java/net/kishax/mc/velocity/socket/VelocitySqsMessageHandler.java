@@ -2,7 +2,6 @@ package net.kishax.mc.velocity.socket;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
-import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.kishax.mc.common.socket.SqsMessageHandler;
@@ -11,7 +10,6 @@ import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.velocity.socket.message.handlers.web.VelocityMinecraftWebConfirmHandler;
-import net.kishax.mc.velocity.socket.VelocityAuthResponseHandler;
 import org.slf4j.Logger;
 import java.sql.Connection;
 import java.util.HashMap;
@@ -24,20 +22,16 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
   private static final Logger logger = org.slf4j.LoggerFactory.getLogger(VelocitySqsMessageHandler.class);
 
   private final ProxyServer proxyServer;
-  private final Injector injector;
   private final VelocityMinecraftWebConfirmHandler webConfirmHandler;
-  private final VelocityAuthResponseHandler authResponseHandler;
   private final Provider<SocketSwitch> sswProvider;
   private final Database db;
   private final SqsClient sqsClient;
 
   @Inject
-  public VelocitySqsMessageHandler(ProxyServer proxyServer, Injector injector, Provider<SocketSwitch> sswProvider,
-      Database db, SqsClient sqsClient) {
+  public VelocitySqsMessageHandler(ProxyServer proxyServer, Provider<SocketSwitch> sswProvider, Database db,
+      SqsClient sqsClient, VelocityMinecraftWebConfirmHandler webConfirmHandler) {
     this.proxyServer = proxyServer;
-    this.injector = injector;
-    this.webConfirmHandler = injector.getInstance(VelocityMinecraftWebConfirmHandler.class);
-    this.authResponseHandler = injector.getInstance(VelocityAuthResponseHandler.class);
+    this.webConfirmHandler = webConfirmHandler;
     this.sswProvider = sswProvider;
     this.db = db;
     this.sqsClient = sqsClient;

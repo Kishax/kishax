@@ -31,10 +31,8 @@ import org.slf4j.Logger;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
-import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
-import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
@@ -272,11 +270,6 @@ public class EventListener {
   }
 
   @Subscribe
-  public void onPostLogin(PostLoginEvent event) {
-    Player player = event.getPlayer();
-  }
-
-  @Subscribe
   public void onServerPreConnectEvent(ServerPreConnectEvent event) {
     Player player = event.getPlayer();
     String playerName = player.getUsername();
@@ -445,11 +438,6 @@ public class EventListener {
       }
       return;
     }
-  }
-
-  @Subscribe
-  public void onServerPostConnect(ServerPostConnectEvent event) {
-    Player player = event.getPlayer();
   }
 
   @Subscribe

@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -32,11 +31,8 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
-import org.bukkit.plugin.java.JavaPlugin;
-
 public class Confirm {
   public static final Set<Player> confirmMap = new HashSet<>();
-  private final JavaPlugin plugin;
   private final BukkitAudiences audiences;
   private final Logger logger;
   private final Database db;
@@ -46,9 +42,8 @@ public class Confirm {
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
-  public Confirm(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im,
+  public Confirm(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im,
       ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
-    this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
     this.db = db;
@@ -69,7 +64,7 @@ public class Confirm {
             int ifMapId = checkExistConfirmMap(conn, new Object[] { thisServerName, true, playerName });
             Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
             if (!memberMap.isEmpty()) {
-              if (memberMap.get("id") instanceof Integer id) {
+              if (memberMap.get("id") instanceof Integer) {
                 // トークンの生成と有効期限設定（10分間）
                 String authToken = generateAuthToken(player);
                 long expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);

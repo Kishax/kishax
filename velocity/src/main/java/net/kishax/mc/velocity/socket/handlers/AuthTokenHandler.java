@@ -29,7 +29,7 @@ public class AuthTokenHandler {
       if (sqsWorker != null) {
         try {
           // AuthTokenをSqsWorker経由でWEBに送信
-          String messageType = "auth_token";
+          // String messageType = "auth_token";
           String mcid = authToken.who.name;
           String uuid = authToken.who.uuid;
 

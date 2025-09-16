@@ -22,8 +22,6 @@ import net.kishax.mc.common.database.Database;
 // リフレクション・動的ライブラリローディングは AWS移行により不要
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
-import net.kishax.mc.common.socket.SqsMessageProcessor;
-import net.kishax.mc.common.socket.SqsClient;
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.aws.AwsConfig;

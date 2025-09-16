@@ -17,7 +17,6 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 
 import net.kishax.mc.common.socket.message.Message;
-import net.kishax.mc.common.settings.Settings;
 
 public class SocketSwitch {
   private final Logger logger;
@@ -187,7 +186,6 @@ public class SocketSwitch {
           String platform = rs.getString("platform");
           int port = rs.getInt("socketport");
           boolean online = rs.getBoolean("online");
-          String name = rs.getString("name");
           // logger.info("DEBUG: Found server - name: {}, platform: {}, port: {}, online:
           // {}", name, platform, port, online);
 
