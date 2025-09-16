@@ -141,12 +141,12 @@ public class AwsApiClient {
         // HTTPリクエストを構築
         String baseUrl = apiGatewayUrl;
         if (apiGatewayUrl.endsWith("/")) {
-            baseUrl = apiGatewayUrl.substring(0, apiGatewayUrl.length() - 1);
+          baseUrl = apiGatewayUrl.substring(0, apiGatewayUrl.length() - 1);
         }
 
         String requestPath = path;
         if (path.startsWith("/")) {
-            requestPath = path.substring(1);
+          requestPath = path.substring(1);
         }
 
         String finalUrl;
@@ -155,15 +155,15 @@ public class AwsApiClient {
 
         // apiGatewayUrlのパス部分がリクエストパスで終わっているかチェック
         if (basePath != null && !basePath.isEmpty() && basePath.endsWith("/" + requestPath)) {
-            finalUrl = baseUrl;
+          finalUrl = baseUrl;
         } else {
-            finalUrl = baseUrl + "/" + requestPath;
+          finalUrl = baseUrl + "/" + requestPath;
         }
 
         URI uri = URI.create(finalUrl);
         String canonicalPath = uri.getPath();
         if (canonicalPath == null || canonicalPath.isEmpty()) {
-            canonicalPath = "/";
+          canonicalPath = "/";
         }
 
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()

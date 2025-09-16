@@ -35,12 +35,12 @@ public class SettingsSyncService {
 
     try (Connection conn = db.getConnection()) {
       String query = "INSERT INTO settings (name, value) VALUES (?, ?) " +
-                     "ON DUPLICATE KEY UPDATE value = VALUES(value)";
-      
+          "ON DUPLICATE KEY UPDATE value = VALUES(value)";
+
       for (Map.Entry<String, Object> entry : settingsMap.entrySet()) {
         String key = entry.getKey();
         String value = entry.getValue() != null ? entry.getValue().toString() : "";
-        
+
         try (PreparedStatement ps = conn.prepareStatement(query)) {
           ps.setString(1, key);
           ps.setString(2, value);
@@ -48,7 +48,7 @@ public class SettingsSyncService {
           logger.debug("Synced setting: {} = {}", key, value);
         }
       }
-      
+
       logger.info("Successfully synced {} settings to database", settingsMap.size());
     } catch (SQLException | ClassNotFoundException e) {
       logger.error("Failed to sync settings to database: {}", e.getMessage());

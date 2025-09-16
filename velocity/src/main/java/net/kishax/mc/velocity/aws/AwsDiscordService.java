@@ -27,7 +27,7 @@ public class AwsDiscordService {
     this.logger = logger;
     this.awsConfig = awsConfig;
     this.apiClientProvider = apiClientProvider;
-    
+
     logger.info("AWS Discord サービスを初期化しました（遅延初期化）");
   }
 
@@ -53,7 +53,7 @@ public class AwsDiscordService {
         String secretKey = awsConfig.getAwsSecretKey();
         String mcToWebQueueUrl = awsConfig.getMcToWebQueueUrl();
         String apiGatewayUrl = awsConfig.getApiGatewayUrl();
-        
+
         sqsClient = SqsClient.create(region, accessKey, secretKey, mcToWebQueueUrl, apiGatewayUrl);
         logger.info("SqsClient を遅延初期化しました");
       } catch (Exception e) {

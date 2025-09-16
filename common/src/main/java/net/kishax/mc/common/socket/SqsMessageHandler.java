@@ -7,36 +7,36 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Spigot/Velocityで実装される
  */
 public interface SqsMessageHandler {
-    
-    /**
-     * 汎用メッセージハンドラー（既存のSocket互換）
-     */
-    void handleMessage(JsonNode message);
-    
-    /**
-     * Web認証完了処理
-     */
-    void handleAuthConfirm(String playerName, String playerUuid);
-    
-    /**
-     * Webからのコマンド処理
-     */
-    void handleCommand(String commandType, String playerName, JsonNode data);
-    
-    /**
-     * Webからのプレイヤーリクエスト処理
-     */
-    void handlePlayerRequest(String requestType, String playerName, JsonNode data);
 
-    /**
-     * Web→MC OTP送信処理
-     */
-    void handleOtpToMinecraft(String mcid, String uuid, String otp);
+  /**
+   * 汎用メッセージハンドラー（既存のSocket互換）
+   */
+  void handleMessage(JsonNode message);
 
-    /**
-     * 認証完了メッセージ処理
-     */
-    default void handleAuthCompletion(String playerName, String playerUuid, String message) {
-        // デフォルト実装は何もしない（拡張性のため）
-    }
+  /**
+   * Web認証完了処理
+   */
+  void handleAuthConfirm(String playerName, String playerUuid);
+
+  /**
+   * Webからのコマンド処理
+   */
+  void handleCommand(String commandType, String playerName, JsonNode data);
+
+  /**
+   * Webからのプレイヤーリクエスト処理
+   */
+  void handlePlayerRequest(String requestType, String playerName, JsonNode data);
+
+  /**
+   * Web→MC OTP送信処理
+   */
+  void handleOtpToMinecraft(String mcid, String uuid, String otp);
+
+  /**
+   * 認証完了メッセージ処理
+   */
+  default void handleAuthCompletion(String playerName, String playerUuid, String message) {
+    // デフォルト実装は何もしない（拡張性のため）
+  }
 }

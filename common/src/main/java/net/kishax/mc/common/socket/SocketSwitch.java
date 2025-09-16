@@ -82,12 +82,14 @@ public class SocketSwitch {
       logger.warn("DEBUG: Socket client not started - port is 0");
       return;
     }
-    // logger.info("DEBUG: Starting socket client to port {} with message: {}", port, gson.toJson(msg));
+    // logger.info("DEBUG: Starting socket client to port {} with message: {}",
+    // port, gson.toJson(msg));
     clientThread = new Thread(() -> {
       try (Socket socket = new Socket("localhost", port);
           BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));) {
         String jsonMessage = gson.toJson(msg) + "\n";
-        // logger.info("DEBUG: Sending message to port {}: {}", port, jsonMessage.trim());
+        // logger.info("DEBUG: Sending message to port {}: {}", port,
+        // jsonMessage.trim());
         writer.write(jsonMessage);
         writer.flush();
         // logger.info("DEBUG: Message sent successfully to port {}", port);
@@ -176,7 +178,8 @@ public class SocketSwitch {
 
   private void sendMessageToServer(Connection conn, String serverType, Message msg)
       throws SQLException, ClassNotFoundException {
-    // logger.info("DEBUG: Looking for servers with platform '{}' in database", serverType);
+    // logger.info("DEBUG: Looking for servers with platform '{}' in database",
+    // serverType);
     try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM status;")) {
       try (ResultSet rs = ps.executeQuery()) {
         boolean foundServer = false;
@@ -185,13 +188,15 @@ public class SocketSwitch {
           int port = rs.getInt("socketport");
           boolean online = rs.getBoolean("online");
           String name = rs.getString("name");
-          // logger.info("DEBUG: Found server - name: {}, platform: {}, port: {}, online: {}", name, platform, port, online);
-          
+          // logger.info("DEBUG: Found server - name: {}, platform: {}, port: {}, online:
+          // {}", name, platform, port, online);
+
           if (port == 0) {
             continue;
           }
           if (online && platform.equalsIgnoreCase(serverType)) {
-            // logger.info("DEBUG: Matching server found, sending message to port {}", port);
+            // logger.info("DEBUG: Matching server found, sending message to port {}",
+            // port);
             foundServer = true;
             startSocketClient(port, msg);
           }

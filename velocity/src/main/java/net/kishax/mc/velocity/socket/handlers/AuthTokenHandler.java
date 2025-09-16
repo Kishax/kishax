@@ -21,7 +21,7 @@ public class AuthTokenHandler {
 
   public void handle(Message.Web.AuthToken authToken) {
     try {
-      logger.info("Received auth token from Spigot for player: {} (action: {})", 
+      logger.info("Received auth token from Spigot for player: {} (action: {})",
           authToken.who.name, authToken.action);
 
       // kishax-aws SQSワーカー経由で送信（推奨）
@@ -32,7 +32,7 @@ public class AuthTokenHandler {
           String messageType = "auth_token";
           String mcid = authToken.who.name;
           String uuid = authToken.who.uuid;
-          
+
           // SqsWorkerのMcToWebMessageSenderを使用してメッセージ送信
           net.kishax.aws.McToWebMessageSender sender = sqsWorker.getMcToWebSender();
           if (sender != null) {
@@ -45,7 +45,7 @@ public class AuthTokenHandler {
           }
         } catch (Exception e) {
           logger.warn("kishax-aws sending failed: {}, falling back to legacy implementation", e.getMessage());
-          
+
           // フォールバック: 既存のAwsSqsServiceを使用
           try {
             AwsSqsService awsSqsService = awsSqsServiceProvider.get();
@@ -57,7 +57,7 @@ public class AuthTokenHandler {
         }
       } else {
         logger.warn("kishax-aws SqsWorker not available, falling back to legacy implementation");
-        
+
         // フォールバック: 既存のAwsSqsServiceを使用
         try {
           AwsSqsService awsSqsService = awsSqsServiceProvider.get();

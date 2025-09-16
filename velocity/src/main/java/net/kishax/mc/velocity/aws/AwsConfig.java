@@ -131,7 +131,7 @@ public class AwsConfig {
    */
   public boolean isSqsConfigValid() {
     return !getMcToWebQueueUrl().isEmpty() && !getWebToMcQueueUrl().isEmpty() &&
-           !getSqsAccessKey().isEmpty() && !getSqsSecretKey().isEmpty();
+        !getSqsAccessKey().isEmpty() && !getSqsSecretKey().isEmpty();
   }
 
   /**

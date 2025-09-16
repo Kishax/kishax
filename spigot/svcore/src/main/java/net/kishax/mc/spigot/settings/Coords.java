@@ -88,7 +88,7 @@ public enum Coords {
   public void saveLocation(Location location) {
     try (Connection conn = db.getConnection()) {
       String query = "INSERT INTO coords (name, x, y, z, world, yaw, pitch, server) VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
-                     "ON DUPLICATE KEY UPDATE x=?, y=?, z=?, world=?, yaw=?, pitch=?, server=?";
+          "ON DUPLICATE KEY UPDATE x=?, y=?, z=?, world=?, yaw=?, pitch=?, server=?";
       PreparedStatement ps = conn.prepareStatement(query);
       String name = this.name().toLowerCase().replace("_point", "");
       ps.setString(1, name);

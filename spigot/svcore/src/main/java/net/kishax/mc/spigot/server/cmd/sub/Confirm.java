@@ -73,13 +73,13 @@ public class Confirm {
                 // トークンの生成と有効期限設定（10分間）
                 String authToken = generateAuthToken(player);
                 long expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
-                
+
                 // データベースにトークンを保存
                 db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
-                
+
                 // 新形式のURL（トークンベース）を使用
                 String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
-                
+
                 // QRコード生成・配布
                 String[] imageArgs = { "image", "createqr", confirmUrl };
                 if (ifMapId == -1) {
@@ -87,10 +87,10 @@ public class Confirm {
                 } else {
                   im.giveMapToPlayer(player, ifMapId);
                 }
-                
+
                 // Velocity経由でWeb側にプレイヤー情報とトークンを送信
                 sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
-                
+
                 sendConfirmationMessage(player, confirmUrl);
               }
             }
@@ -186,7 +186,7 @@ public class Confirm {
    * Velocity経由でWeb側にテスト用認証トークン情報を送信
    */
   private void sendTestAuthTokenToVelocity(Connection conn, String testPlayerName, String testPlayerUuid,
-                                          String token, long expiresAt, String action) {
+      String token, long expiresAt, String action) {
     try {
       Message msg = new Message();
       msg.web = new Message.Web();
@@ -251,7 +251,6 @@ public class Confirm {
         .appendNewline()
         .appendNewline();
 
-
     Component finalMessage = Component.text("それでは、楽しいマイクラライフを！")
         .color(NamedTextColor.GREEN);
 
@@ -268,7 +267,6 @@ public class Confirm {
 
     audiences.player(player).sendMessage(fullMessage);
   }
-
 
   private int checkExistConfirmMap(Connection conn, Object[] args) throws SQLException {
     String query = "SELECT * FROM images WHERE server=? AND confirm=? AND name=?";
@@ -304,7 +302,6 @@ public class Confirm {
     return otp.toString();
   }
 
-
   /**
    * Velocity経由でWeb側に認証トークン情報を送信
    */
@@ -322,7 +319,7 @@ public class Confirm {
 
       SocketSwitch ssw = sswProvider.get();
       ssw.sendVelocityServer(conn, msg);
-      
+
       logger.info("Sent auth token info to Velocity for player: {}", player.getName());
     } catch (Exception e) {
       logger.error("Failed to send auth token info to Velocity: {}", e.getMessage());

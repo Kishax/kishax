@@ -294,7 +294,6 @@ public class SpigotSqsMessageHandler implements SqsMessageHandler {
     });
   }
 
-
   /**
    * Web側に認証レスポンス送信
    */

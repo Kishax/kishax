@@ -348,7 +348,6 @@ public class Menu {
         }
         inv.setItem(11, settingItem);
 
-
         ItemStack anyItem = new ItemStack(Material.COOKIE);
         ItemMeta anyMeta = anyItem.getItemMeta();
         if (anyMeta != null) {

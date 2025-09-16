@@ -255,7 +255,8 @@ public class Database {
   /**
    * テスト用メンバーをmembersテーブルに挿入
    */
-  public int insertTestMember(Connection conn, String testPlayerName, String testPlayerUuid, String serverName) throws SQLException {
+  public int insertTestMember(Connection conn, String testPlayerName, String testPlayerUuid, String serverName)
+      throws SQLException {
     String insertQuery = """
         INSERT INTO members (name, uuid, server, confirm, time, ban, member_id, hubinv, tptype, silent)
         VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP, 0, NULL, 1, 1, 0)
@@ -315,7 +316,7 @@ public class Database {
   /**
    * プレイヤーの認証トークンを保存・更新
    */
-  public void updateAuthToken(Connection conn, String playerUUID, String token, long expiresAt) 
+  public void updateAuthToken(Connection conn, String playerUUID, String token, long expiresAt)
       throws SQLException {
     String query = "UPDATE members SET auth_token = ?, auth_token_expires = ? WHERE uuid = ?";
     try (PreparedStatement ps = conn.prepareStatement(query)) {
@@ -329,7 +330,7 @@ public class Database {
   /**
    * プレイヤーの認証トークン情報を取得
    */
-  public Map<String, Object> getAuthTokenInfo(Connection conn, String playerUUID) 
+  public Map<String, Object> getAuthTokenInfo(Connection conn, String playerUUID)
       throws SQLException {
     Map<String, Object> tokenInfo = new HashMap<>();
     String query = "SELECT auth_token, auth_token_expires FROM members WHERE uuid = ?";
@@ -348,7 +349,7 @@ public class Database {
   /**
    * トークンからプレイヤー情報を取得
    */
-  public Map<String, Object> getMemberByToken(Connection conn, String token) 
+  public Map<String, Object> getMemberByToken(Connection conn, String token)
       throws SQLException {
     Map<String, Object> memberInfo = new HashMap<>();
     String query = "SELECT * FROM members WHERE auth_token = ? AND auth_token_expires > NOW()";

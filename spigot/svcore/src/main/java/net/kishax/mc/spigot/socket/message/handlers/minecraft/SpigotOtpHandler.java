@@ -32,7 +32,8 @@ public class SpigotOtpHandler implements OtpHandler {
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
-  public SpigotOtpHandler(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Provider<SocketSwitch> sswProvider) {
+  public SpigotOtpHandler(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db,
+      Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -84,8 +85,8 @@ public class SpigotOtpHandler implements OtpHandler {
           logger.info("プレイヤー {} にOTPを送信しました: {}", player.getName(), otp.otp);
         } else {
           String errorMessage = player == null
-            ? "プレイヤーがオンラインではありません。"
-            : "プレイヤーのUUIDが一致しません。";
+              ? "プレイヤーがオンラインではありません。"
+              : "プレイヤーのUUIDが一致しません。";
           responseMessage = errorMessage;
           logger.warn("プレイヤーが見つからないかUUIDが一致しません: {} ({})", otp.mcid, otp.uuid);
         }
@@ -137,21 +138,21 @@ public class SpigotOtpHandler implements OtpHandler {
   private void sendOtpResponseToVelocity(String mcid, String uuid, boolean success, String responseMessage) {
     try {
       Message msg = new Message();
-      msg.mc = new Message.Minecraft(); 
+      msg.mc = new Message.Minecraft();
       msg.mc.otp = new Message.Minecraft.Otp();
       msg.mc.otp.mcid = mcid;
       msg.mc.otp.uuid = uuid;
       msg.mc.otp.otp = success ? "SUCCESS" : "ERROR";
       msg.mc.otp.action = success ? "otp_response_success" : "otp_response_error";
-      
+
       // レスポンスメッセージを追加のフィールドで送信（後で追加予定）
-      
+
       try (Connection conn = db.getConnection()) {
         SocketSwitch ssw = sswProvider.get();
         ssw.sendVelocityServer(conn, msg);
         logger.info("VelocityにOTPレスポンスを送信しました: {} ({}), success={}", mcid, uuid, success);
       }
-      
+
     } catch (Exception e) {
       logger.error("VelocityへのOTPレスポンス送信でエラーが発生しました: {} ({})", mcid, uuid, e);
     }

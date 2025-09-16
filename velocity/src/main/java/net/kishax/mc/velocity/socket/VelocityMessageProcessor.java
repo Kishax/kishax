@@ -23,7 +23,7 @@ public class VelocityMessageProcessor extends MessageProcessor {
   public void process(Message msg) throws ProvisionException {
     // 基本的なメッセージ処理を呼び出し
     super.process(msg);
-    
+
     // Velocity固有の処理を追加
     if (msg.web != null) {
       Optional.ofNullable(msg.web.authToken)
