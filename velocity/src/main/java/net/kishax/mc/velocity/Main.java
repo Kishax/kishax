@@ -39,6 +39,7 @@ import net.kishax.mc.velocity.server.cmd.sub.ServerTeleport;
 import net.kishax.mc.velocity.server.events.EventListener;
 import net.kishax.mc.velocity.util.SettingsSyncService;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
+import net.kishax.mc.velocity.auth.AuthLevelChecker;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.luckperms.api.LuckPermsProvider;
@@ -55,6 +56,7 @@ public class Main {
   // kishax-aws components for shutdown
   private static net.kishax.aws.SqsWorker kishaxSqsWorker;
   private net.kishax.aws.RedisClient kishaxRedisClient;
+  private static AuthLevelChecker authLevelChecker;
 
   @Inject
   public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory) {
@@ -141,6 +143,13 @@ public class Main {
       initializeSqsServices();
     } catch (Exception e) {
       logger.error("Failed to initialize SQS services: {}", e.getMessage());
+    }
+
+    // 認証レベルチェッカーの初期化
+    try {
+      initializeAuthLevelChecker();
+    } catch (Exception e) {
+      logger.error("Failed to initialize AuthLevelChecker: {}", e.getMessage());
     }
 
     logger.info(FloodgateApi.getInstance().toString());
@@ -259,10 +268,50 @@ public class Main {
     }
   }
 
+  private void initializeAuthLevelChecker() throws Exception {
+    try {
+      VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
+
+      // Auth API設定を取得
+      String authApiUrl = config.getString("Auth.API.URL", "");
+      String authApiKey = config.getString("Auth.API.KEY", "");
+
+      if (authApiUrl.isEmpty()) {
+        logger.warn("Auth.API.URL が設定されていません。認証レベルチェック機能は無効になります。");
+        return;
+      }
+
+      if (authApiKey.isEmpty()) {
+        logger.warn("Auth.API.KEY が設定されていません。認証レベルチェック機能は無効になります。");
+        return;
+      }
+
+      // AuthLevelChecker初期化
+      authLevelChecker = new AuthLevelChecker(server, authApiUrl, authApiKey);
+      authLevelChecker.startPeriodicCheck();
+
+      logger.info("✅ AuthLevelChecker が開始されました (API: {})", authApiUrl);
+
+    } catch (Exception e) {
+      logger.error("AuthLevelChecker の初期化に失敗しました: {}", e.getMessage());
+      throw e;
+    }
+  }
+
   @Subscribe
   public void onProxyShutdown(ProxyShutdownEvent e) {
     if (!isEnable)
       return;
+
+    // AuthLevelChecker の停止
+    try {
+      if (authLevelChecker != null) {
+        authLevelChecker.stopPeriodicCheck();
+        logger.info("✅ AuthLevelChecker が停止しました");
+      }
+    } catch (Exception ex) {
+      logger.error("AuthLevelChecker の停止中にエラーが発生しました: {}", ex.getMessage());
+    }
 
     // kishax-aws SQS関連サービスの停止
     try {
