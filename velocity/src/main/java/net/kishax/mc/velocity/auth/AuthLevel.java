@@ -6,7 +6,7 @@ package net.kishax.mc.velocity.auth;
  */
 public enum AuthLevel {
   MC_UNAUTHENTICATED("a", "MC未認証"),
-  MC_AUTHENTICATED_TEMP("b", "MC認証クリア（一時権限）"),
+  MC_AUTHENTICATED_TRYING("b", "MC認証中（確認待ち）"),
   MC_AUTHENTICATED_UNLINKED("c", "MC認証クリア＋Kishaxアカウント未連携"),
   MC_AUTHENTICATED_LINKED("d", "MC認証クリア＋Kishaxアカウント連携済み"),
   MC_AUTHENTICATED_PRODUCT("e", "MC認証クリア＋プロダクト購入済み");
@@ -46,7 +46,7 @@ public enum AuthLevel {
 
     return switch (authLevelStr) {
       case "MC_UNAUTHENTICATED" -> MC_UNAUTHENTICATED;
-      case "MC_AUTHENTICATED_TEMP" -> MC_AUTHENTICATED_TEMP;
+      case "MC_AUTHENTICATED_TRYING" -> MC_AUTHENTICATED_TRYING;
       case "MC_AUTHENTICATED_UNLINKED" -> MC_AUTHENTICATED_UNLINKED;
       case "MC_AUTHENTICATED_LINKED" -> MC_AUTHENTICATED_LINKED;
       case "MC_AUTHENTICATED_PRODUCT" -> MC_AUTHENTICATED_PRODUCT;

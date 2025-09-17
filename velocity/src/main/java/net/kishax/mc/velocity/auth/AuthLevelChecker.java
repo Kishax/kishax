@@ -178,7 +178,7 @@ public class AuthLevelChecker {
         applyNewPlayerPermissions(user);
         break;
 
-      case MC_AUTHENTICATED_TEMP:
+      case MC_AUTHENTICATED_TRYING:
         applyTempPermissions(user);
         break;
 

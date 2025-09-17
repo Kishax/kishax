@@ -51,14 +51,14 @@ public class AuthLevelCheckerTest {
   void testAuthLevelEnum() {
     // Test enum creation and string conversion
     assertEquals("a", AuthLevel.MC_UNAUTHENTICATED.getCode());
-    assertEquals("b", AuthLevel.MC_AUTHENTICATED_TEMP.getCode());
+    assertEquals("b", AuthLevel.MC_AUTHENTICATED_TRYING.getCode());
     assertEquals("c", AuthLevel.MC_AUTHENTICATED_UNLINKED.getCode());
     assertEquals("d", AuthLevel.MC_AUTHENTICATED_LINKED.getCode());
     assertEquals("e", AuthLevel.MC_AUTHENTICATED_PRODUCT.getCode());
 
     // Test fromString conversion
     assertEquals(AuthLevel.MC_UNAUTHENTICATED, AuthLevel.fromString("MC_UNAUTHENTICATED"));
-    assertEquals(AuthLevel.MC_AUTHENTICATED_TEMP, AuthLevel.fromString("MC_AUTHENTICATED_TEMP"));
+    assertEquals(AuthLevel.MC_AUTHENTICATED_TRYING, AuthLevel.fromString("MC_AUTHENTICATED_TRYING"));
     assertEquals(AuthLevel.MC_AUTHENTICATED_UNLINKED, AuthLevel.fromString("MC_AUTHENTICATED_UNLINKED"));
     assertEquals(AuthLevel.MC_AUTHENTICATED_LINKED, AuthLevel.fromString("MC_AUTHENTICATED_LINKED"));
     assertEquals(AuthLevel.MC_AUTHENTICATED_PRODUCT, AuthLevel.fromString("MC_AUTHENTICATED_PRODUCT"));
@@ -104,16 +104,16 @@ public class AuthLevelCheckerTest {
   @Test
   void testAuthLevelDescriptions() {
     assertEquals("MC未認証", AuthLevel.MC_UNAUTHENTICATED.getDescription());
-    assertEquals("MC認証クリア（一時権限）", AuthLevel.MC_AUTHENTICATED_TEMP.getDescription());
-    assertEquals("MC認証クリア＋Kishaxアカウント未連携", AuthLevel.MC_AUTHENTICATED_UNLINKED.getDescription());
-    assertEquals("MC認証クリア＋Kishaxアカウント連携済み", AuthLevel.MC_AUTHENTICATED_LINKED.getDescription());
-    assertEquals("MC認証クリア＋プロダクト購入済み", AuthLevel.MC_AUTHENTICATED_PRODUCT.getDescription());
+    assertEquals("MC認証中（確認待ち）", AuthLevel.MC_AUTHENTICATED_TRYING.getDescription());
+    assertEquals("MC認証済み＋Kishaxアカウント未連携", AuthLevel.MC_AUTHENTICATED_UNLINKED.getDescription());
+    assertEquals("MC認証済み＋Kishaxアカウント連携済み", AuthLevel.MC_AUTHENTICATED_LINKED.getDescription());
+    assertEquals("MC認証済み＋プロダクト購入済み", AuthLevel.MC_AUTHENTICATED_PRODUCT.getDescription());
   }
 
   @Test
   void testFromCodeMethod() {
     assertEquals(AuthLevel.MC_UNAUTHENTICATED, AuthLevel.fromCode("a"));
-    assertEquals(AuthLevel.MC_AUTHENTICATED_TEMP, AuthLevel.fromCode("b"));
+    assertEquals(AuthLevel.MC_AUTHENTICATED_TRYING, AuthLevel.fromCode("b"));
     assertEquals(AuthLevel.MC_AUTHENTICATED_UNLINKED, AuthLevel.fromCode("c"));
     assertEquals(AuthLevel.MC_AUTHENTICATED_LINKED, AuthLevel.fromCode("d"));
     assertEquals(AuthLevel.MC_AUTHENTICATED_PRODUCT, AuthLevel.fromCode("e"));
