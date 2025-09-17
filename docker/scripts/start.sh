@@ -76,6 +76,8 @@ find /mc -type f \( -name "*.yml" -o -name "*.toml" \) | while read file; do
   # AUTH_API_URL, AUTH_API_KEY replacements
   sed -i.bak "s|\${AUTH_API_URL}|${AUTH_API_URL:-http://localhost:8080}|g" "$file"
   sed -i.bak "s|\${AUTH_API_KEY}|${AUTH_API_KEY:-local-dev-api-key}|g" "$file"
+  # REDIS_URL replacement
+  sed -i.bak "s|\${REDIS_URL}|${REDIS_URL:-redis://redis:6379}|g" "$file"
   rm -f "$file.bak"
 
   # Show key replacements for critical files
