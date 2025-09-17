@@ -29,14 +29,14 @@ public class McAuthService {
 
   @Inject
   public McAuthService(VelocityConfig config) {
-    String apiUrl = config.getString("McAuth.ApiUrl");
-    String apiKey = config.getString("McAuth.ApiKey");
+    String apiUrl = config.getString("Auth.API.URL");
+    String apiKey = config.getString("Auth.API.KEY");
 
     if (apiUrl == null || apiUrl.trim().isEmpty()) {
-      throw new IllegalStateException("McAuth.ApiUrl is not configured in config.yml");
+      throw new IllegalStateException("Auth.API.URL is not configured in config.yml");
     }
     if (apiKey == null || apiKey.trim().isEmpty()) {
-      throw new IllegalStateException("McAuth.ApiKey is not configured in config.yml");
+      throw new IllegalStateException("Auth.API.KEY is not configured in config.yml");
     }
 
     McAuthClientConfig clientConfig = new McAuthClientConfig(apiUrl, apiKey);

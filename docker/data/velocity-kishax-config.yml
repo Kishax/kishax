@@ -33,9 +33,10 @@ Redis:
   URL: "${REDIS_URL}"
 
 # MC Auth API Configuration
-McAuth:
-  ApiUrl: "${AUTH_API_URL}"
-  ApiKey: "${AUTH_API_KEY}"
+Auth:
+  API:
+    URL: "${AUTH_API_URL}"
+    KEY: "${AUTH_API_KEY}"
 
 Debug:
   Mode: false
