@@ -28,6 +28,7 @@ import net.kishax.mc.velocity.server.cmd.sub.StartServer;
 import net.kishax.mc.velocity.server.cmd.sub.StopServer;
 import net.kishax.mc.velocity.server.cmd.sub.SwitchChatType;
 import net.kishax.mc.velocity.server.cmd.sub.SwitchRomajiConvType;
+import net.kishax.mc.velocity.server.cmd.sub.Test;
 import net.kishax.mc.velocity.server.cmd.sub.interfaces.Request;
 import net.kishax.mc.velocity.util.RomajiConversion;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
@@ -40,7 +41,7 @@ public class Command implements SimpleCommand {
   private final PlayerUtils pu;
   private final Luckperms lp;
   public List<String> subcommands = new ArrayList<>(Arrays.asList("debug", "hub", "reload", "req", "start", "stop",
-      "stp", "debug", "cancel", "perm", "maintenance", "translate", "chat", "cend", "silent"));
+      "stp", "debug", "perm", "maintenance", "translate", "chat", "cend", "silent", "test"));
   public List<String> bools = new ArrayList<>(Arrays.asList("true", "false"));
 
   @Inject
@@ -79,6 +80,7 @@ public class Command implements SimpleCommand {
       case "chat" -> Main.getInjector().getInstance(SwitchChatType.class).execute(source, args);
       case "cend" -> Main.getInjector().getInstance(CEnd.class).execute(invocation);
       case "silent" -> Main.getInjector().getInstance(Silent.class).execute(source, args);
+      case "test" -> Main.getInjector().getInstance(Test.class).execute(source, args);
       default -> source.sendMessage(Component.text("Unknown subcommand: " + subCommand));
     }
   }
@@ -98,7 +100,7 @@ public class Command implements SimpleCommand {
         return ret;
       }
       case 2 -> {
-        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
+        if (!args[0].toLowerCase().equals("test") && !source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
           return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "silent" -> {
@@ -150,13 +152,19 @@ public class Command implements SimpleCommand {
             }
             return ret;
           }
+          case "test" -> {
+            for (String args1 : Test.args1) {
+              ret.add(args1);
+            }
+            return ret;
+          }
           default -> {
             return Collections.emptyList();
           }
         }
       }
       case 3 -> {
-        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
+        if (!args[0].toLowerCase().equals("test") && !source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
           return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "silent" -> {
@@ -214,10 +222,22 @@ public class Command implements SimpleCommand {
               }
             }
           }
+          case "test" -> {
+            switch (args[1].toLowerCase()) {
+              case "getplayerlevel" -> {
+                // Return MCID list from members table for tab completion
+                try {
+                  return Main.getInjector().getInstance(Test.class).getMcidList().get();
+                } catch (Exception e) {
+                  return Collections.emptyList();
+                }
+              }
+            }
+          }
         }
       }
       case 4 -> {
-        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
+        if (!args[0].toLowerCase().equals("test") && !source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
           return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "translate" -> {
@@ -263,7 +283,7 @@ public class Command implements SimpleCommand {
         }
       }
       case 5 -> {
-        if (!source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
+        if (!args[0].toLowerCase().equals("test") && !source.hasPermission("kishax.proxy." + args[0].toLowerCase()))
           return Collections.emptyList();
         switch (args[0].toLowerCase()) {
           case "translate" -> {
