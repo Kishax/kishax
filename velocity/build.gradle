@@ -34,7 +34,9 @@ dependencies {
 
   //shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
   shadowImpl2 project(':common')
-  shadowImpl2 'net.kishax.api:kishax-api:1.0.4'
+  shadowImpl2 'net.kishax.api:common:1.0.4'
+  shadowImpl2 'net.kishax.api:sqs-redis-bridge:1.0.4'
+  shadowImpl2 'net.kishax.api:mc-auth:1.0.4'
 
   // Test dependencies
   testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'

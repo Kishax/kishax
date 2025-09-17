@@ -52,8 +52,8 @@ public class Main {
   private boolean isEnable = false;
 
   // kishax-api components for shutdown
-  private static net.kishax.api.SqsWorker kishaxSqsWorker;
-  private net.kishax.api.RedisClient kishaxRedisClient;
+  private static net.kishax.api.bridge.SqsWorker kishaxSqsWorker;
+  private net.kishax.api.bridge.RedisClient kishaxRedisClient;
   private static AuthLevelChecker authLevelChecker;
 
   @Inject
@@ -161,7 +161,7 @@ public class Main {
   /**
    * Get the kishax-api SqsWorker instance
    */
-  public static net.kishax.api.SqsWorker getKishaxSqsWorker() {
+  public static net.kishax.api.bridge.SqsWorker getKishaxSqsWorker() {
     return kishaxSqsWorker;
   }
 
@@ -232,20 +232,20 @@ public class Main {
       System.setProperty("WEB_TO_MC_QUEUE_URL", webToMcQueueUrl);
       System.setProperty("REDIS_URL", redisUrl);
 
-      net.kishax.api.Configuration kishaxConfig = new net.kishax.api.Configuration();
-      kishaxConfig.validate();
+      net.kishax.api.bridge.BridgeConfiguration sqsConfig = new net.kishax.api.bridge.BridgeConfiguration();
+      sqsConfig.validate();
 
       // SqsWorkerをQUEUE_MODE対応で初期化（kishax-apiが自動でキューを選択）
-      net.kishax.api.SqsWorker sqsWorker = net.kishax.api.SqsWorker.createWithQueueMode(kishaxConfig);
+      net.kishax.api.bridge.SqsWorker sqsWorker = net.kishax.api.bridge.SqsWorker.createWithQueueMode(sqsConfig);
 
       // Register OTP display callback
-      net.kishax.api.SqsWorker.setOtpDisplayCallback((playerName, playerUuid, otp) -> {
+      net.kishax.api.bridge.SqsWorker.setOtpDisplayCallback((playerName, playerUuid, otp) -> {
         logger.info("🔔 OTP display callback triggered: {} ({}) OTP: {}", playerName, playerUuid, otp);
         handleOtpDisplayRequest(playerName, playerUuid, otp);
       });
 
       // Register Auth Confirm callback to prevent SQS loop
-      net.kishax.api.SqsWorker.setAuthConfirmCallback((playerName, playerUuid) -> {
+      net.kishax.api.bridge.SqsWorker.setAuthConfirmCallback((playerName, playerUuid) -> {
         logger.info("🔔 Auth confirm callback triggered for player: {} ({})", playerName, playerUuid);
         this.server.getPlayer(playerName).ifPresent(player -> {
           player.sendMessage(Component.text("Web authentication successful!", NamedTextColor.GREEN));
@@ -258,7 +258,7 @@ public class Main {
 
       // グローバル参照のため静的フィールドに保存（後でシャットダウン時に使用）
       Main.kishaxSqsWorker = sqsWorker;
-      this.kishaxRedisClient = kishaxConfig.createRedisClient();
+      this.kishaxRedisClient = new net.kishax.api.bridge.RedisClient(redisUrl);
 
     } catch (Exception e) {
       logger.error("kishax-api SQS サービスの初期化に失敗しました: {}", e.getMessage());

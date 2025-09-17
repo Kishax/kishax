@@ -25,7 +25,7 @@ public class AuthTokenHandler {
           authToken.who.name, authToken.action);
 
       // kishax-api SQSワーカー経由で送信（推奨）
-      net.kishax.api.SqsWorker sqsWorker = Main.getKishaxSqsWorker();
+      net.kishax.api.bridge.SqsWorker sqsWorker = Main.getKishaxSqsWorker();
       if (sqsWorker != null) {
         try {
           // AuthTokenをSqsWorker経由でWEBに送信
@@ -34,7 +34,7 @@ public class AuthTokenHandler {
           String uuid = authToken.who.uuid;
 
           // SqsWorkerのMcToWebMessageSenderを使用してメッセージ送信
-          net.kishax.api.McToWebMessageSender sender = sqsWorker.getMcToWebSender();
+          net.kishax.api.bridge.McToWebMessageSender sender = sqsWorker.getMcToWebSender();
           if (sender != null) {
             // auth_tokenメッセージを送信（型安全な専用メソッドを使用）
             sender.sendAuthToken(mcid, uuid, authToken.token, authToken.expiresAt, authToken.action);

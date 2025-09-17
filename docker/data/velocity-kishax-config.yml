@@ -32,6 +32,11 @@ AWS:
 Redis:
   URL: "${REDIS_URL}"
 
+# MC Auth API Configuration
+McAuth:
+  ApiUrl: "${AUTH_API_URL}"
+  ApiKey: "${AUTH_API_KEY}"
+
 Debug:
   Mode: false
   Test: false
