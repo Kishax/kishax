@@ -24,7 +24,7 @@ subprojects {
   }
 
   repositories {
-    mavenLocal() // for net.kishax.aws:kishax-aws
+    mavenLocal()
     mavenCentral()
   }
 

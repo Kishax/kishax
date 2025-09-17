@@ -21,31 +21,31 @@ public class AuthTokenHandler {
 
   public void handle(Message.Web.AuthToken authToken) {
     try {
-      logger.info("Received auth token from Spigot for player: {} (action: {})", 
+      logger.info("Received auth token from Spigot for player: {} (action: {})",
           authToken.who.name, authToken.action);
 
-      // kishax-aws SQSワーカー経由で送信（推奨）
-      net.kishax.aws.SqsWorker sqsWorker = Main.getKishaxSqsWorker();
+      // kishax-api SQSワーカー経由で送信（推奨）
+      net.kishax.api.bridge.SqsWorker sqsWorker = Main.getKishaxSqsWorker();
       if (sqsWorker != null) {
         try {
           // AuthTokenをSqsWorker経由でWEBに送信
-          String messageType = "auth_token";
+          // String messageType = "auth_token";
           String mcid = authToken.who.name;
           String uuid = authToken.who.uuid;
-          
+
           // SqsWorkerのMcToWebMessageSenderを使用してメッセージ送信
-          net.kishax.aws.McToWebMessageSender sender = sqsWorker.getMcToWebSender();
+          net.kishax.api.bridge.McToWebMessageSender sender = sqsWorker.getMcToWebSender();
           if (sender != null) {
             // auth_tokenメッセージを送信（型安全な専用メソッドを使用）
             sender.sendAuthToken(mcid, uuid, authToken.token, authToken.expiresAt, authToken.action);
-            logger.info("✅ Auth token sent to WEB via kishax-aws McToWebMessageSender for player: {}", mcid);
+            logger.info("✅ Auth token sent to WEB via kishax-api McToWebMessageSender for player: {}", mcid);
           } else {
             logger.warn("McToWebMessageSender is not available");
             throw new RuntimeException("McToWebMessageSender is not available");
           }
         } catch (Exception e) {
-          logger.warn("kishax-aws sending failed: {}, falling back to legacy implementation", e.getMessage());
-          
+          logger.warn("kishax-api sending failed: {}, falling back to legacy implementation", e.getMessage());
+
           // フォールバック: 既存のAwsSqsServiceを使用
           try {
             AwsSqsService awsSqsService = awsSqsServiceProvider.get();
@@ -56,8 +56,8 @@ public class AuthTokenHandler {
           }
         }
       } else {
-        logger.warn("kishax-aws SqsWorker not available, falling back to legacy implementation");
-        
+        logger.warn("kishax-api SqsWorker not available, falling back to legacy implementation");
+
         // フォールバック: 既存のAwsSqsServiceを使用
         try {
           AwsSqsService awsSqsService = awsSqsServiceProvider.get();

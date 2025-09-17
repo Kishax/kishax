@@ -34,7 +34,19 @@ dependencies {
 
   //shadowImpl 'org.xerial:sqlite-jdbc:3.47.1.0'
   shadowImpl2 project(':common')
-  shadowImpl2 'net.kishax.aws:kishax-aws:1.0.4'
+  shadowImpl2 'net.kishax.api:common:1.0.5'
+  shadowImpl2 'net.kishax.api:sqs-redis-bridge:1.0.5'
+  shadowImpl2 'net.kishax.api:mc-auth:1.0.5'
+
+  // Test dependencies
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+  testImplementation 'org.mockito:mockito-core:5.5.0'
+  testImplementation 'org.mockito:mockito-junit-jupiter:5.5.0'
+  testImplementation 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
+  testImplementation 'com.fasterxml.jackson.core:jackson-core:2.18.2'
+  testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+  testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2'
+  testImplementation 'net.luckperms:api:5.4'
 }
 
 build {
@@ -59,6 +71,10 @@ shadowJar {
 
 tasks.build {
   dependsOn tasks.shadowJar
+}
+
+test {
+  useJUnitPlatform()
 }
 
 processResources {

@@ -29,7 +29,7 @@ public class VelocityOtpHandler implements OtpHandler {
 
       boolean success = "otp_response_success".equals(otp.action);
       String responseMessage;
-      
+
       if (success) {
         responseMessage = "プレイヤーにOTPを送信しました。";
       } else {
@@ -41,7 +41,7 @@ public class VelocityOtpHandler implements OtpHandler {
 
     } catch (Exception e) {
       logger.error("OTPレスポンス処理でエラーが発生しました: {} ({})", otp.mcid, otp.uuid, e);
-      
+
       // エラー時もWeb側に通知（kishax-aws経由）
       try {
         net.kishax.mc.velocity.Main.sendOtpResponseToWeb(otp.mcid, otp.uuid, false, "Velocity側でOTP処理エラーが発生しました。");

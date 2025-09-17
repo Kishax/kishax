@@ -31,7 +31,6 @@ import net.kishax.mc.velocity.aws.AwsApiClient;
 import net.kishax.mc.velocity.aws.AwsConfig;
 import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
-import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.GeyserMC;
 import net.kishax.mc.velocity.server.MineStatus;
 import net.kishax.mc.velocity.server.PlayerDisconnect;
@@ -117,12 +116,12 @@ public class Module extends AbstractModule {
     bind(OtpHandler.class).to(VelocityOtpHandler.class);
 
     bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
-    
+
     // Velocity専用のSocket処理とAWS統合
     bind(VelocityMessageProcessor.class);
     bind(AuthTokenHandler.class);
     bind(AwsSqsService.class);
-    
+
     // SQS関連のバインディング
     bind(SqsMessageHandler.class).to(VelocitySqsMessageHandler.class);
   }
@@ -168,14 +167,14 @@ public class Module extends AbstractModule {
   public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {
     return new VelocitySocketSwitch(logger, injector);
   }
-  
+
   @Provides
   @Singleton
   public SqsClient provideSqsClient() {
     // 遅延初期化用のダミーインスタンス
     return new SqsClient();
   }
-  
+
   @Provides
   @Singleton
   public SqsMessageProcessor provideSqsMessageProcessor(SqsMessageHandler messageHandler) {

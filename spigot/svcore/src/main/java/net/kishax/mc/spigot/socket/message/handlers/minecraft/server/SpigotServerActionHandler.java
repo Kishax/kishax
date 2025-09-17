@@ -19,7 +19,6 @@ import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.socket.message.handlers.interfaces.minecraft.ServerActionHandler;
 import net.kishax.mc.spigot.server.AutoShutdown;
 import net.kishax.mc.spigot.server.BroadCast;
-import net.kishax.mc.spigot.server.InventoryCheck;
 import net.kishax.mc.spigot.server.events.EventListener;
 import net.kishax.mc.spigot.server.menu.Menu;
 import net.kishax.mc.spigot.server.textcomponent.TCUtils;

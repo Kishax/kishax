@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
-import net.kishax.mc.common.socket.SqsClient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,14 +19,13 @@ public class AwsDiscordService {
   private final AwsConfig awsConfig;
   private final Provider<AwsApiClient> apiClientProvider;
   private AwsApiClient apiClient;
-  private SqsClient sqsClient;
 
   @Inject
   public AwsDiscordService(Logger logger, AwsConfig awsConfig, Provider<AwsApiClient> apiClientProvider) {
     this.logger = logger;
     this.awsConfig = awsConfig;
     this.apiClientProvider = apiClientProvider;
-    
+
     logger.info("AWS Discord サービスを初期化しました（遅延初期化）");
   }
 
@@ -42,26 +40,6 @@ public class AwsDiscordService {
       }
     }
     return apiClient;
-  }
-
-  private SqsClient getSqsClient() {
-    if (sqsClient == null && awsConfig.isSqsConfigValid()) {
-      try {
-        // 手動でSqsClientを初期化
-        String region = awsConfig.getAwsRegion();
-        String accessKey = awsConfig.getAwsAccessKey();
-        String secretKey = awsConfig.getAwsSecretKey();
-        String mcToWebQueueUrl = awsConfig.getMcToWebQueueUrl();
-        String apiGatewayUrl = awsConfig.getApiGatewayUrl();
-        
-        sqsClient = SqsClient.create(region, accessKey, secretKey, mcToWebQueueUrl, apiGatewayUrl);
-        logger.info("SqsClient を遅延初期化しました");
-      } catch (Exception e) {
-        logger.error("SqsClient の初期化に失敗しました", e);
-        return null;
-      }
-    }
-    return sqsClient;
   }
 
   /**

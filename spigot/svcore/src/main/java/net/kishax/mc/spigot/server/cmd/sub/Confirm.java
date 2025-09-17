@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.slf4j.Logger;
 
 import com.google.inject.Inject;
@@ -32,11 +31,8 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
-import org.bukkit.plugin.java.JavaPlugin;
-
 public class Confirm {
   public static final Set<Player> confirmMap = new HashSet<>();
-  private final JavaPlugin plugin;
   private final BukkitAudiences audiences;
   private final Logger logger;
   private final Database db;
@@ -46,9 +42,8 @@ public class Confirm {
   private final Provider<SocketSwitch> sswProvider;
 
   @Inject
-  public Confirm(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im,
+  public Confirm(BukkitAudiences audiences, Logger logger, Database db, Luckperms lp, ImageMap im,
       ServerHomeDir shd, Provider<SocketSwitch> sswProvider) {
-    this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
     this.db = db;
@@ -69,17 +64,17 @@ public class Confirm {
             int ifMapId = checkExistConfirmMap(conn, new Object[] { thisServerName, true, playerName });
             Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
             if (!memberMap.isEmpty()) {
-              if (memberMap.get("id") instanceof Integer id) {
+              if (memberMap.get("id") instanceof Integer) {
                 // トークンの生成と有効期限設定（10分間）
                 String authToken = generateAuthToken(player);
                 long expiresAt = System.currentTimeMillis() + (10 * 60 * 1000);
-                
+
                 // データベースにトークンを保存
                 db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
-                
+
                 // 新形式のURL（トークンベース）を使用
                 String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
-                
+
                 // QRコード生成・配布
                 String[] imageArgs = { "image", "createqr", confirmUrl };
                 if (ifMapId == -1) {
@@ -87,10 +82,10 @@ public class Confirm {
                 } else {
                   im.giveMapToPlayer(player, ifMapId);
                 }
-                
+
                 // Velocity経由でWeb側にプレイヤー情報とトークンを送信
                 sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
-                
+
                 sendConfirmationMessage(player, confirmUrl);
               }
             }
@@ -186,7 +181,7 @@ public class Confirm {
    * Velocity経由でWeb側にテスト用認証トークン情報を送信
    */
   private void sendTestAuthTokenToVelocity(Connection conn, String testPlayerName, String testPlayerUuid,
-                                          String token, long expiresAt, String action) {
+      String token, long expiresAt, String action) {
     try {
       Message msg = new Message();
       msg.web = new Message.Web();
@@ -251,7 +246,6 @@ public class Confirm {
         .appendNewline()
         .appendNewline();
 
-
     Component finalMessage = Component.text("それでは、楽しいマイクラライフを！")
         .color(NamedTextColor.GREEN);
 
@@ -268,7 +262,6 @@ public class Confirm {
 
     audiences.player(player).sendMessage(fullMessage);
   }
-
 
   private int checkExistConfirmMap(Connection conn, Object[] args) throws SQLException {
     String query = "SELECT * FROM images WHERE server=? AND confirm=? AND name=?";
@@ -304,7 +297,6 @@ public class Confirm {
     return otp.toString();
   }
 
-
   /**
    * Velocity経由でWeb側に認証トークン情報を送信
    */
@@ -322,7 +314,7 @@ public class Confirm {
 
       SocketSwitch ssw = sswProvider.get();
       ssw.sendVelocityServer(conn, msg);
-      
+
       logger.info("Sent auth token info to Velocity for player: {}", player.getName());
     } catch (Exception e) {
       logger.error("Failed to send auth token info to Velocity: {}", e.getMessage());

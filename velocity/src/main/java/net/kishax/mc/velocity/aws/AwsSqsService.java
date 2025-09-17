@@ -1,6 +1,5 @@
 package net.kishax.mc.velocity.aws;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 

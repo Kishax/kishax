@@ -69,19 +69,32 @@ services:
       CONFIRM_URL: ${CONFIRM_URL:-http://localhost:3000/mc/auth}
       HOME_SERVER_NAME: ${HOME_SERVER_NAME:-spigot}
       HOME_SERVER_IP: ${HOME_SERVER_IP:-127.0.0.1}
-      # AWS SQS Configuration
+      # AWS Configuration
       AWS_REGION: ${AWS_REGION:-ap-northeast-1}
       MC_WEB_SQS_ACCESS_KEY_ID: ${MC_WEB_SQS_ACCESS_KEY_ID}
       MC_WEB_SQS_SECRET_ACCESS_KEY: ${MC_WEB_SQS_SECRET_ACCESS_KEY}
+      MC_TO_WEB_QUEUE_URL: ${MC_TO_WEB_QUEUE_URL}
+      WEB_TO_MC_QUEUE_URL: ${WEB_TO_MC_QUEUE_URL}
+      # Redis Configuration
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REDIS_CONNECTION_TIMEOUT: ${REDIS_CONNECTION_TIMEOUT:-5000}
+      REDIS_COMMAND_TIMEOUT: ${REDIS_COMMAND_TIMEOUT:-3000}
+      # Queue Configuration
+      QUEUE_MODE: ${QUEUE_MODE:-MC}
+      SQS_WORKER_ENABLED: ${SQS_WORKER_ENABLED:-true}
+      SQS_WORKER_POLLING_INTERVAL_SECONDS: ${SQS_WORKER_POLLING_INTERVAL_SECONDS:-5}
+      SQS_WORKER_MAX_MESSAGES: ${SQS_WORKER_MAX_MESSAGES:-10}
+      SQS_WORKER_WAIT_TIME_SECONDS: ${SQS_WORKER_WAIT_TIME_SECONDS:-20}
+      SQS_WORKER_VISIBILITY_TIMEOUT_SECONDS: ${SQS_WORKER_VISIBILITY_TIMEOUT_SECONDS:-30}
+      AUTH_API_URL: ${AUTH_API_URL:-http://host.docker.internal:8080}
+      AUTH_API_KEY: ${AUTH_API_KEY:-local-dev-api-key}
+      # Logging Configuration
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Discord Bot Configuration
       DISCORD_API_ACCESS_KEY_ID: ${DISCORD_API_ACCESS_KEY_ID}
       DISCORD_API_SECRET_ACCESS_KEY: ${DISCORD_API_SECRET_ACCESS_KEY}
-      WEB_TO_MC_QUEUE_URL: ${WEB_TO_MC_QUEUE_URL}
-      MC_TO_WEB_QUEUE_URL: ${MC_TO_WEB_QUEUE_URL}
       API_GATEWAY_URL: ${API_GATEWAY_URL}
-      # Queue Mode Configuration for kishax-aws
-      QUEUE_MODE: ${QUEUE_MODE:-MC}
-      # Redis Configuration for kishax-aws
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+
     volumes:
       - minecraft_data:/mc/spigot/world
       - minecraft_data_nether:/mc/spigot/world_nether

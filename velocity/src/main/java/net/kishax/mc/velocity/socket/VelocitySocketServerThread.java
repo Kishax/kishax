@@ -26,7 +26,8 @@ public class VelocitySocketServerThread extends Thread {
 
   @Override
   public void run() {
-    // logger.info("DEBUG: New socket connection established from: {}", socket.getRemoteSocketAddress());
+    // logger.info("DEBUG: New socket connection established from: {}",
+    // socket.getRemoteSocketAddress());
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));) {
       String line;
       while (Objects.nonNull(line = reader.readLine())) {

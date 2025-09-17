@@ -99,14 +99,15 @@ public final class EventListener implements Listener {
   private final ItemFrames fif;
   private final Provider<SocketSwitch> sswProvider;
   private final Set<Player> playersInPortal = new HashSet<>();
-  
+
   // QRコード右クリック制限用マップ（プレイヤー -> 最後のクリック時間）
   private final Map<Player, Long> qrClickCooldowns = new HashMap<>();
   private static final long QR_CLICK_COOLDOWN_MS = 30000; // 30秒のクールダウン
 
   @Inject
   public EventListener(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, PortalsConfig psConfig,
-      Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, ItemFrames fif, Provider<SocketSwitch> sswProvider) {
+      Menu menu, ServerStatusCache ssc, Luckperms lp, InventoryCheck inv, ItemFrames fif,
+      Provider<SocketSwitch> sswProvider) {
     this.plugin = plugin;
     this.audiences = audiences;
     this.logger = logger;
@@ -543,7 +544,7 @@ public final class EventListener implements Listener {
     // クールダウンチェック
     long currentTime = System.currentTimeMillis();
     Long lastClickTime = qrClickCooldowns.get(player);
-    
+
     if (lastClickTime != null && (currentTime - lastClickTime) < QR_CLICK_COOLDOWN_MS) {
       long remainingSeconds = (QR_CLICK_COOLDOWN_MS - (currentTime - lastClickTime)) / 1000;
       Component cooldownMessage = Component.text("QRコードは" + remainingSeconds + "秒後に再度右クリックできます。")
@@ -551,10 +552,10 @@ public final class EventListener implements Listener {
       audiences.player(player).sendMessage(cooldownMessage);
       return;
     }
-    
+
     // クリック時間を記録
     qrClickCooldowns.put(player, currentTime);
-    
+
     try (Connection conn = db.getConnection()) {
       // プレイヤーの認証情報を取得
       Map<String, Object> memberMap = db.getMemberMap(conn, player.getName());
@@ -565,7 +566,7 @@ public final class EventListener implements Listener {
         return;
       }
 
-      if (!(memberMap.get("id") instanceof Integer id)) {
+      if (!(memberMap.get("id") instanceof Integer)) {
         Component errorMessage = Component.text("プレイヤーIDの取得に失敗しました。")
             .color(NamedTextColor.RED);
         audiences.player(player).sendMessage(errorMessage);
@@ -576,13 +577,13 @@ public final class EventListener implements Listener {
       String authToken;
       String action;
       long expiresAt;
-      
+
       // 既存のトークンを確認
       Map<String, Object> tokenInfo = db.getAuthTokenInfo(conn, playerUUID);
       if (!tokenInfo.isEmpty() && tokenInfo.get("token") != null) {
         String existingToken = (String) tokenInfo.get("token");
         java.sql.Timestamp expires = (java.sql.Timestamp) tokenInfo.get("expires");
-        
+
         // トークンが有効かチェック
         if (expires != null && expires.getTime() > System.currentTimeMillis()) {
           // 既存の有効なトークンを使用
@@ -607,7 +608,7 @@ public final class EventListener implements Listener {
       // 認証URLを生成
       String authUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
 
-      // Velocity経由でWeb側にプレイヤー情報とトークンを送信  
+      // Velocity経由でWeb側にプレイヤー情報とトークンを送信
       sendAuthTokenToVelocity(conn, player, authToken, expiresAt, action);
 
       // 認証URLをプレイヤーに送信
@@ -642,8 +643,6 @@ public final class EventListener implements Listener {
     }
     return otp.toString();
   }
-
-
 
   /**
    * 認証情報をプレイヤーに送信
@@ -695,7 +694,7 @@ public final class EventListener implements Listener {
 
       SocketSwitch ssw = sswProvider.get();
       ssw.sendVelocityServer(conn, msg);
-      
+
       logger.info("Sent auth token info to Velocity for player: {} (action: {})", player.getName(), action);
     } catch (Exception e) {
       logger.error("Failed to send auth token info to Velocity: {}", e.getMessage());

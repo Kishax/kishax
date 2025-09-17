@@ -25,8 +25,7 @@ public class VelocitySocketSwitch extends SocketSwitch {
   @Override
   public void startSocketServer(int port) {
     Thread socketThread = new Thread(() -> {
-      try {
-        ServerSocket serverSocket = new ServerSocket(port);
+      try (ServerSocket serverSocket = new ServerSocket(port)) {
         logger.info("Velocity Socket Server is listening on port {}", port);
         boolean running = true;
         while (running) {

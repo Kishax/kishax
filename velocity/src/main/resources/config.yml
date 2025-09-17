@@ -28,9 +28,15 @@ AWS:
   ApiGateway:
     Endpoint: "YOUR_AWS_API_GATEWAY_ENDPOINT"
 
-# Redis Configuration for kishax-aws integration
+# Redis Configuration for kishax-api integration
 Redis:
   URL: "redis://localhost:6379"
+
+# MC Auth API Configuration
+Auth:
+  API:
+    URL: "http://localhost:8080"
+    KEY: "local-dev-api-key"
 
 Debug:
   Mode: false
