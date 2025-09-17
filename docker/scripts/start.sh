@@ -74,7 +74,7 @@ find /mc -type f \( -name "*.yml" -o -name "*.toml" \) | while read file; do
   sed -i.bak "s|\${MC_TO_WEB_QUEUE_URL}|${MC_TO_WEB_QUEUE_URL}|g" "$file"
   sed -i.bak "s|\${API_GATEWAY_URL}|${API_GATEWAY_URL}|g" "$file"
   # AUTH_API_URL, AUTH_API_KEY replacements
-  sed -i.bak "s|\${AUTH_API_URL}|${AUTH_API_URL:-http://localhost:8080}|g" "$file"
+  sed -i.bak "s|\${AUTH_API_URL}|${AUTH_API_URL:-http://host.docker.internal:8080}|g" "$file"
   sed -i.bak "s|\${AUTH_API_KEY}|${AUTH_API_KEY:-local-dev-api-key}|g" "$file"
   # REDIS_URL replacement
   sed -i.bak "s|\${REDIS_URL}|${REDIS_URL:-redis://redis:6379}|g" "$file"
