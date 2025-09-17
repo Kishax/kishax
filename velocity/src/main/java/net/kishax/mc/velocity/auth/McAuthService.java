@@ -39,7 +39,7 @@ public class McAuthService {
       throw new IllegalStateException("Auth.API.KEY is not configured in config.yml");
     }
 
-    McAuthClientConfig clientConfig = new McAuthClientConfig(apiUrl, apiKey);
+    McAuthClientConfig clientConfig = McAuthClientConfig.fromParameters(apiUrl, apiKey);
     this.client = new McAuthClient(clientConfig.getApiUrl(), clientConfig.getApiKey());
     this.executor = Executors.newCachedThreadPool(r -> {
       Thread t = new Thread(r, "McAuthService-Thread");
