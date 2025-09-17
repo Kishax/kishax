@@ -2,7 +2,7 @@ package net.kishax.mc.velocity.auth;
 
 /**
  * MC認証レベルを表すenum
- * kishax-awsのAuthLevelと対応
+ * kishax-apiのAuthLevelと対応
  */
 public enum AuthLevel {
   MC_UNAUTHENTICATED("a", "MC未認証"),
