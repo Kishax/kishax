@@ -5,7 +5,6 @@ import com.google.inject.Singleton;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.kishax.api.auth.AuthLevel;
-import net.kishax.api.auth.AuthLevelResponse;
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.velocity.auth.McAuthService;
 import net.kishax.mc.velocity.server.cmd.sub.interfaces.Request;
