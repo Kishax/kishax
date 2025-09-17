@@ -7,9 +7,9 @@ package net.kishax.mc.velocity.auth;
 public enum AuthLevel {
   MC_UNAUTHENTICATED("a", "MC未認証"),
   MC_AUTHENTICATED_TRYING("b", "MC認証中（確認待ち）"),
-  MC_AUTHENTICATED_UNLINKED("c", "MC認証クリア＋Kishaxアカウント未連携"),
-  MC_AUTHENTICATED_LINKED("d", "MC認証クリア＋Kishaxアカウント連携済み"),
-  MC_AUTHENTICATED_PRODUCT("e", "MC認証クリア＋プロダクト購入済み");
+  MC_AUTHENTICATED_UNLINKED("c", "MC認証済み＋Kishaxアカウント未連携"),
+  MC_AUTHENTICATED_LINKED("d", "MC認証済み＋Kishaxアカウント連携済み"),
+  MC_AUTHENTICATED_PRODUCT("e", "MC認証済み＋プロダクト購入済み");
 
   private final String code;
   private final String description;
