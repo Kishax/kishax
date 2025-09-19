@@ -39,15 +39,6 @@ fi
 
 # Replace placeholders in config files
 echo "Configuring server files..."
-echo "DEBUG: AWS Environment Variables:"
-echo "AWS_REGION=${AWS_REGION}"
-echo "MC_WEB_SQS_ACCESS_KEY_ID=${MC_WEB_SQS_ACCESS_KEY_ID:0:10}..."           # 最初の10文字のみ表示
-echo "MC_WEB_SQS_SECRET_ACCESS_KEY=${MC_WEB_SQS_SECRET_ACCESS_KEY:0:10}..."   # 最初の10文字のみ表示
-echo "DISCORD_API_ACCESS_KEY_ID=${DISCORD_API_ACCESS_KEY_ID:0:10}..."         # 最初の10文字のみ表示
-echo "DISCORD_API_SECRET_ACCESS_KEY=${DISCORD_API_SECRET_ACCESS_KEY:0:10}..." # 最初の10文字のみ表示
-echo "WEB_TO_MC_QUEUE_URL=${WEB_TO_MC_QUEUE_URL}"
-echo "MC_TO_WEB_QUEUE_URL=${MC_TO_WEB_QUEUE_URL}"
-echo "API_GATEWAY_URL=${API_GATEWAY_URL}"
 find /mc -type f \( -name "*.yml" -o -name "*.toml" \) | while read file; do
   echo "Processing: $file"
 
