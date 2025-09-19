@@ -57,13 +57,10 @@ find /mc -type f \( -name "*.yml" -o -name "*.toml" \) | while read file; do
   # MC-Web SQS Configuration replacements
   sed -i.bak "s|\${MC_WEB_SQS_ACCESS_KEY_ID}|${MC_WEB_SQS_ACCESS_KEY_ID}|g" "$file"
   sed -i.bak "s|\${MC_WEB_SQS_SECRET_ACCESS_KEY}|${MC_WEB_SQS_SECRET_ACCESS_KEY}|g" "$file"
-  # Discord API Configuration replacements
-  sed -i.bak "s|\${DISCORD_API_ACCESS_KEY_ID}|${DISCORD_API_ACCESS_KEY_ID}|g" "$file"
-  sed -i.bak "s|\${DISCORD_API_SECRET_ACCESS_KEY}|${DISCORD_API_SECRET_ACCESS_KEY}|g" "$file"
-  # Queue URLs and API Gateway
-  sed -i.bak "s|\${WEB_TO_MC_QUEUE_URL}|${WEB_TO_MC_QUEUE_URL}|g" "$file"
-  sed -i.bak "s|\${MC_TO_WEB_QUEUE_URL}|${MC_TO_WEB_QUEUE_URL}|g" "$file"
-  sed -i.bak "s|\${API_GATEWAY_URL}|${API_GATEWAY_URL}|g" "$file"
+  # SQS Queue URLs (New naming)
+  sed -i.bak "s|\${TO_MC_QUEUE_URL}|${TO_MC_QUEUE_URL}|g" "$file"
+  sed -i.bak "s|\${TO_WEB_QUEUE_URL}|${TO_WEB_QUEUE_URL}|g" "$file"
+  sed -i.bak "s|\${TO_DISCORD_QUEUE_URL}|${TO_DISCORD_QUEUE_URL}|g" "$file"
   # AUTH_API_URL, AUTH_API_KEY replacements
   sed -i.bak "s|\${AUTH_API_URL}|${AUTH_API_URL:-http://host.docker.internal:8080}|g" "$file"
   sed -i.bak "s|\${AUTH_API_KEY}|${AUTH_API_KEY:-local-dev-api-key}|g" "$file"

@@ -223,8 +223,8 @@ public class Main {
       System.setProperty("AWS_REGION", region);
       System.setProperty("MC_WEB_SQS_ACCESS_KEY_ID", accessKey);
       System.setProperty("MC_WEB_SQS_SECRET_ACCESS_KEY", secretKey);
-      System.setProperty("MC_TO_WEB_QUEUE_URL", mcToWebQueueUrl);
-      System.setProperty("WEB_TO_MC_QUEUE_URL", webToMcQueueUrl);
+      System.setProperty("TO_WEB_QUEUE_URL", mcToWebQueueUrl);
+      System.setProperty("TO_MC_QUEUE_URL", webToMcQueueUrl);
       System.setProperty("REDIS_URL", redisUrl);
 
       net.kishax.api.bridge.BridgeConfiguration sqsConfig = new net.kishax.api.bridge.BridgeConfiguration();

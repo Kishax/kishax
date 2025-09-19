@@ -12,21 +12,16 @@ MySQL:
 Socket:
   Server_Port: 6000
 
-# AWS SQS Communication Configuration
+# AWS SQS Communication Configuration (New naming)
 AWS:
   Region: "ap-northeast-1"
   SQS:
-    WebToMcQueueUrl: "YOUR_WEB_TO_MC_QUEUE_URL"
-    McToWebQueueUrl: "YOUR_MC_TO_WEB_QUEUE_URL"
+    ToMcQueueUrl: "YOUR_TO_MC_QUEUE_URL"
+    ToWebQueueUrl: "YOUR_TO_WEB_QUEUE_URL"
+    ToDiscordQueueUrl: "YOUR_TO_DISCORD_QUEUE_URL"
     Credentials:
       AccessKey: "YOUR_MC_WEB_SQS_ACCESS_KEY"
       SecretKey: "YOUR_MC_WEB_SQS_SECRET_KEY"
-  Discord:
-    Credentials:
-      AccessKey: "YOUR_DISCORD_API_ACCESS_KEY"
-      SecretKey: "YOUR_DISCORD_API_SECRET_KEY"
-  ApiGateway:
-    Endpoint: "YOUR_AWS_API_GATEWAY_ENDPOINT"
 
 # Redis Configuration for kishax-api integration
 Redis:
