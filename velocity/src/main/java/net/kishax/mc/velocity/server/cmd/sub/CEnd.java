@@ -16,7 +16,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.settings.PermSettings;
 import net.kishax.mc.velocity.Main;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -24,16 +23,14 @@ public class CEnd implements SimpleCommand {
   private final Main plugin;
   private final ProxyServer server;
   private final Logger logger;
-  private final AwsDiscordService awsDiscordService;
   private final Luckperms lp;
   private final String[] subcommands = { "cend" };
 
   @Inject
-  public CEnd(Main plugin, ProxyServer server, Logger logger, AwsDiscordService awsDiscordService, Luckperms lp) {
+  public CEnd(Main plugin, ProxyServer server, Logger logger, Luckperms lp) {
     this.plugin = plugin;
     this.server = server;
     this.logger = logger;
-    this.awsDiscordService = awsDiscordService;
     this.lp = lp;
   }
 
@@ -50,12 +47,19 @@ public class CEnd implements SimpleCommand {
     Main.isVelocity = false; // フラグをfalseに
 
     // 非同期処理を実行
-    // discordME.AddEmbedSomeMessage("End");
     CompletableFuture<Void> addEmbedFuture = CompletableFuture.runAsync(() -> {
       try {
-        awsDiscordService.sendBotMessage("プロキシサーバーが停止しました。", 0xFF0000);
+        net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
+        if (redisClient != null) {
+          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
+              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+          discordHandler.sendEmbedMessage("プロキシサーバーが停止しました。", 0xFF0000, "");
+          logger.info("✅ Discordプロキシ停止通知をRedis経由で送信しました");
+        } else {
+          logger.warn("⚠️ RedisClient not available, Discord message not sent");
+        }
       } catch (Exception e) {
-        logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+        logger.error("❌ Discordプロキシ停止通知送信でエラーが発生しました: {}", e.getMessage());
         for (StackTraceElement ste : e.getStackTrace()) {
           logger.error(ste.toString());
         }

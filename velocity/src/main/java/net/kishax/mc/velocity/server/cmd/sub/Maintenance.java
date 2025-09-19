@@ -15,7 +15,6 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandSource;
 
 import net.kishax.mc.common.database.Database;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.PlayerDisconnect;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -27,16 +26,14 @@ public class Maintenance {
   public static List<String> args3 = new ArrayList<>(Arrays.asList("true", "false"));
   private final Database db;
   private final PlayerDisconnect pd;
-  private final AwsDiscordService awsDiscordService;
   private final Logger logger;
   private Component component = null;
 
   @Inject
-  public Maintenance(Logger logger, Database db, PlayerDisconnect pd, AwsDiscordService awsDiscordService) {
+  public Maintenance(Logger logger, Database db, PlayerDisconnect pd) {
     this.logger = logger;
     this.db = db;
     this.pd = pd;
-    this.awsDiscordService = awsDiscordService;
   }
 
   public void execute(@NotNull CommandSource source, String[] args) {
@@ -167,12 +164,20 @@ public class Maintenance {
                 if (ismente.next()) {
                   if (ismente.getBoolean("online")) {
                     Maintenance.isMente = false; // フラグをtrueに
-                    if (isDiscord && awsDiscordService.isAvailable()) {
-                      awsDiscordService.sendBotMessage("メンテナンスモードが無効になりました。\nまだまだ遊べるドン！", 0x00FF00)
-                          .exceptionally(ex -> {
-                            logger.error("メンテナンス終了通知の送信に失敗しました", ex);
-                            return null;
-                          });
+                    if (isDiscord) {
+                      try {
+                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                        if (redisClient != null) {
+                          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
+                              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+                          discordHandler.sendEmbedMessage("メンテナンスモードが無効になりました。\nまだまだ遊べるドン！", 0x00FF00, "");
+                          logger.info("✅ Discordメンテナンス終了通知をRedis経由で送信しました");
+                        } else {
+                          logger.warn("⚠️ RedisClient not available, Discord message not sent");
+                        }
+                      } catch (Exception ex) {
+                        logger.error("❌ Discordメンテナンス終了通知の送信に失敗しました", ex);
+                      }
                     }
                     // メンテナンスモードが有効の場合
                     String query3 = "UPDATE status SET online=? WHERE name=?;";
@@ -186,12 +191,20 @@ public class Maintenance {
                     }
                   } else {
                     Maintenance.isMente = true; // フラグをtrueに
-                    if (isDiscord && awsDiscordService.isAvailable()) {
-                      awsDiscordService.sendBotMessage("メンテナンスモードが有効になりました。\nいまは遊べないカッ...", 0xFF0000)
-                          .exceptionally(ex -> {
-                            logger.error("メンテナンス開始通知の送信に失敗しました", ex);
-                            return null;
-                          });
+                    if (isDiscord) {
+                      try {
+                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                        if (redisClient != null) {
+                          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
+                              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+                          discordHandler.sendEmbedMessage("メンテナンスモードが有効になりました。\nいまは遊べないカッ...", 0xFF0000, "");
+                          logger.info("✅ Discordメンテナンス開始通知をRedis経由で送信しました");
+                        } else {
+                          logger.warn("⚠️ RedisClient not available, Discord message not sent");
+                        }
+                      } catch (Exception ex) {
+                        logger.error("❌ Discordメンテナンス開始通知の送信に失敗しました", ex);
+                      }
                     }
                     // メンテナンスモードが無効の場合
                     String query3 = "UPDATE status SET online=? WHERE name=?;";

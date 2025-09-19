@@ -25,7 +25,6 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.util.PlayerUtils;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.PlayerDisconnect;
@@ -42,7 +41,6 @@ public class VelocityRequest implements Request {
   private final Logger logger;
   private final Database db;
   private final BroadCast bc;
-  private final AwsDiscordService awsDiscordService;
   private final Luckperms lp;
   private final PlayerUtils pu;
   private final DoServerOnline dso;
@@ -51,14 +49,13 @@ public class VelocityRequest implements Request {
 
   @Inject
   public VelocityRequest(ProxyServer server, Logger logger, VelocityConfig config, Database db, BroadCast bc,
-      AwsDiscordService awsDiscordService, Luckperms lp, PlayerUtils pu, DoServerOnline dso,
+      Luckperms lp, PlayerUtils pu, DoServerOnline dso,
       PlayerDisconnect pd) {
     this.server = server;
     this.logger = logger;
     this.config = config;
     this.db = db;
     this.bc = bc;
-    this.awsDiscordService = awsDiscordService;
     this.lp = lp;
     this.pu = pu;
     this.dso = dso;
@@ -171,11 +168,17 @@ public class VelocityRequest implements Request {
 
                       bc.sendExceptPlayerMessage(notifyComponent, playerName);
                       try {
-                        awsDiscordService.sendBotMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。",
-                            0x00FF00);
+                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                        if (redisClient != null) {
+                          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
+                              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+                          discordHandler.sendEmbedMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。", 0x00FF00, "");
+                          logger.info("✅ Discordサーバー起動リクエスト通知をRedis経由で送信しました: {}", targetServerName);
+                        } else {
+                          logger.warn("⚠️ RedisClient not available, Discord message not sent");
+                        }
                       } catch (Exception e) {
-                        logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                            e.getMessage());
+                        logger.error("❌ Discordサーバー起動リクエスト通知送信でエラーが発生しました: {}", e.getMessage());
                         for (StackTraceElement ste : e.getStackTrace()) {
                           logger.error(ste.toString());
                         }
@@ -299,11 +302,17 @@ public class VelocityRequest implements Request {
                               .build());
 
                       try {
-                        awsDiscordService.sendBotMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。",
-                            0x00FF00);
+                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                        if (redisClient != null) {
+                          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
+                              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+                          discordHandler.sendEmbedMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。", 0x00FF00, "");
+                          logger.info("✅ Discordサーバー起動リクエスト通知をRedis経由で送信しました: {}", targetServerName);
+                        } else {
+                          logger.warn("⚠️ RedisClient not available, Discord message not sent");
+                        }
                       } catch (Exception e) {
-                        logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                            e.getMessage());
+                        logger.error("❌ Discordサーバー起動リクエスト通知送信でエラーが発生しました: {}", e.getMessage());
                         for (StackTraceElement ste : e.getStackTrace()) {
                           logger.error(ste.toString());
                         }

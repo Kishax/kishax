@@ -27,9 +27,6 @@ import net.kishax.mc.common.socket.message.handlers.interfaces.web.MinecraftWebC
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.Main;
 import net.kishax.mc.velocity.database.VelocityDatabaseInfo;
-import net.kishax.mc.velocity.aws.AwsApiClient;
-import net.kishax.mc.velocity.aws.AwsConfig;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.GeyserMC;
 import net.kishax.mc.velocity.server.MineStatus;
@@ -49,7 +46,6 @@ import net.kishax.mc.velocity.socket.message.handlers.web.VelocityMinecraftWebCo
 import net.kishax.mc.velocity.socket.VelocitySocketSwitch;
 import net.kishax.mc.velocity.socket.VelocityMessageProcessor;
 import net.kishax.mc.velocity.socket.handlers.AuthTokenHandler;
-import net.kishax.mc.velocity.aws.AwsSqsService;
 import net.kishax.mc.common.socket.SqsClient;
 import net.kishax.mc.common.socket.SqsMessageProcessor;
 import net.kishax.mc.common.socket.SqsMessageHandler;
@@ -89,9 +85,6 @@ public class Module extends AbstractModule {
     bind(PlayerDisconnect.class);
     bind(RomajiConversion.class);
     bind(SettingsSyncService.class);
-    // AWS Discord サービス関連
-    bind(AwsConfig.class);
-    bind(AwsDiscordService.class);
     // Discord関連は無効化
     // bind(Discord.class);
     // bind(DiscordEventListener.class);
@@ -117,10 +110,9 @@ public class Module extends AbstractModule {
 
     bind(MinecraftWebConfirmHandler.class).to(VelocityMinecraftWebConfirmHandler.class);
 
-    // Velocity専用のSocket処理とAWS統合
+    // Velocity専用のSocket処理
     bind(VelocityMessageProcessor.class);
     bind(AuthTokenHandler.class);
-    bind(AwsSqsService.class);
 
     // SQS関連のバインディング
     bind(SqsMessageHandler.class).to(VelocitySqsMessageHandler.class);
@@ -148,19 +140,6 @@ public class Module extends AbstractModule {
    * }
    */
 
-  @Provides
-  @Singleton
-  public AwsApiClient provideAwsApiClient(AwsConfig awsConfig) {
-    if (awsConfig.isAwsConfigValid()) {
-      return new AwsApiClient(
-          awsConfig.getAwsRegion(),
-          awsConfig.getApiGatewayServiceName(),
-          awsConfig.getAwsAccessKey(),
-          awsConfig.getAwsSecretKey(),
-          awsConfig.getApiGatewayUrl());
-    }
-    throw new RuntimeException("AWS設定が無効です");
-  }
 
   @Provides
   @Singleton
