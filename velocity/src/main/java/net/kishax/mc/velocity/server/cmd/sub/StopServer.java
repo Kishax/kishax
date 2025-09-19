@@ -114,9 +114,10 @@ public class StopServer {
                 try {
                   net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
                   if (redisClient != null) {
-                    net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-                        new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
-                    discordHandler.sendEmbedMessage(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。", 0xFF0000, "");
+                    net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                        redisClient);
+                    discordHandler.sendEmbedMessage(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。",
+                        0xFF0000, "");
                     logger.info("✅ Discordサーバー停止通知をRedis経由で送信しました: {}", targetServerName);
                   } else {
                     logger.warn("⚠️ RedisClient not available, Discord message not sent");

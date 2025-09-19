@@ -116,8 +116,8 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
     try {
       net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
       if (redisClient != null) {
-        net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-            new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
         discordHandler.sendEmbedMessage(mineName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB, "");
         logger.info("✅ Discord新規メンバー通知をRedis経由で送信しました: {}", mineName);
       } else {
@@ -180,8 +180,8 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
       try {
         net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
         if (redisClient != null) {
-          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+          net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+              redisClient);
           discordHandler.sendEmbedMessage(playerName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB, "");
           logger.info("✅ Discord新規メンバー通知をRedis経由で送信しました: {}", playerName);
         } else {

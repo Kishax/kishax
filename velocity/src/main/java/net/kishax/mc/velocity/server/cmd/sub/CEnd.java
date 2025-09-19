@@ -51,8 +51,8 @@ public class CEnd implements SimpleCommand {
       try {
         net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
         if (redisClient != null) {
-          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+          net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+              redisClient);
           discordHandler.sendEmbedMessage("プロキシサーバーが停止しました。", 0xFF0000, "");
           logger.info("✅ Discordプロキシ停止通知をRedis経由で送信しました");
         } else {

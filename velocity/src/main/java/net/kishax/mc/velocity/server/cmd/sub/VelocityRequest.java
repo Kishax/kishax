@@ -168,11 +168,13 @@ public class VelocityRequest implements Request {
 
                       bc.sendExceptPlayerMessage(notifyComponent, playerName);
                       try {
-                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main
+                            .getKishaxRedisClient();
                         if (redisClient != null) {
-                          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-                              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
-                          discordHandler.sendEmbedMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。", 0x00FF00, "");
+                          net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                              redisClient);
+                          discordHandler.sendEmbedMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。",
+                              0x00FF00, "");
                           logger.info("✅ Discordサーバー起動リクエスト通知をRedis経由で送信しました: {}", targetServerName);
                         } else {
                           logger.warn("⚠️ RedisClient not available, Discord message not sent");
@@ -302,11 +304,13 @@ public class VelocityRequest implements Request {
                               .build());
 
                       try {
-                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main
+                            .getKishaxRedisClient();
                         if (redisClient != null) {
-                          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-                              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
-                          discordHandler.sendEmbedMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。", 0x00FF00, "");
+                          net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                              redisClient);
+                          discordHandler.sendEmbedMessage(playerName + "が" + targetServerName + "サーバーの起動リクエストを送りました。",
+                              0x00FF00, "");
                           logger.info("✅ Discordサーバー起動リクエスト通知をRedis経由で送信しました: {}", targetServerName);
                         } else {
                           logger.warn("⚠️ RedisClient not available, Discord message not sent");

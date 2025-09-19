@@ -862,8 +862,8 @@ public class EventListener {
     try {
       net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
       if (redisClient != null) {
-        net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-            new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
         discordHandler.sendPlayerEvent("chat", playerName, playerUuid, message);
         logger.debug("✅ DiscordチャットメッセージをRedis経由で送信しました: {}", playerName);
       } else {
@@ -878,8 +878,8 @@ public class EventListener {
     try {
       net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
       if (redisClient != null) {
-        net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-            new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
         discordHandler.sendPlayerEvent("join", playerName, playerUuid, serverName);
         logger.debug("✅ Discordプレイヤー参加イベントをRedis経由で送信しました: {}", playerName);
       } else {
@@ -894,8 +894,8 @@ public class EventListener {
     try {
       net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
       if (redisClient != null) {
-        net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-            new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
         discordHandler.sendPlayerEvent("leave", playerName, playerUuid, serverName);
         logger.debug("✅ Discordプレイヤー退出イベントをRedis経由で送信しました: {}", playerName);
       } else {
@@ -910,8 +910,8 @@ public class EventListener {
     try {
       net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
       if (redisClient != null) {
-        net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-            new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
         discordHandler.sendPlayerEvent("move", playerName, playerUuid, serverName);
         logger.debug("✅ Discordプレイヤー移動イベントをRedis経由で送信しました: {}", playerName);
       } else {

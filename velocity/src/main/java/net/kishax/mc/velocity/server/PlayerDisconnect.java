@@ -24,6 +24,7 @@ public class PlayerDisconnect {
   private final Logger logger;
   private final Database db;
   private final ConsoleCommandSource console;
+
   @Inject
   public PlayerDisconnect(Logger logger, ProxyServer server, Database db, BroadCast bc, ConsoleCommandSource console,
       RomaToKanji conv) {
@@ -79,8 +80,8 @@ public class PlayerDisconnect {
           // Redis経由でDiscord Bot にメッセージ送信
           net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
           if (redisClient != null) {
-            net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-                new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+            net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                redisClient);
             discordHandler.sendEmbedMessage("侵入者が現れました。プレイヤー: " + player.getUsername(), 0xFF0000, "");
             logger.info("✅ Discord侵入者警告メッセージをRedis経由で送信しました: {}", player.getUsername());
           } else {

@@ -165,10 +165,11 @@ public class StartServer {
                                 }
                               }
                               try {
-                                net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                                net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main
+                                    .getKishaxRedisClient();
                                 if (redisClient != null) {
-                                  net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-                                      new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+                                  net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                                      redisClient);
                                   discordHandler.sendEmbedMessage(
                                       player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00, "");
                                   logger.info("✅ Discordサーバー起動通知をRedis経由で送信しました: {}", targetServerName);
@@ -323,10 +324,11 @@ public class StartServer {
                                 }
                               }
                               try {
-                                net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                                net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main
+                                    .getKishaxRedisClient();
                                 if (redisClient != null) {
-                                  net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-                                      new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+                                  net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                                      redisClient);
                                   discordHandler.sendEmbedMessage(
                                       player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00, "");
                                   logger.info("✅ Discordサーバー起動通知をRedis経由で送信しました: {}", targetServerName);

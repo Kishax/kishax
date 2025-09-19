@@ -166,10 +166,11 @@ public class Maintenance {
                     Maintenance.isMente = false; // フラグをtrueに
                     if (isDiscord) {
                       try {
-                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main
+                            .getKishaxRedisClient();
                         if (redisClient != null) {
-                          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-                              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+                          net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                              redisClient);
                           discordHandler.sendEmbedMessage("メンテナンスモードが無効になりました。\nまだまだ遊べるドン！", 0x00FF00, "");
                           logger.info("✅ Discordメンテナンス終了通知をRedis経由で送信しました");
                         } else {
@@ -193,10 +194,11 @@ public class Maintenance {
                     Maintenance.isMente = true; // フラグをtrueに
                     if (isDiscord) {
                       try {
-                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main
+                            .getKishaxRedisClient();
                         if (redisClient != null) {
-                          net.kishax.api.bridge.DiscordMessageHandler discordHandler =
-                              new net.kishax.api.bridge.DiscordMessageHandler(redisClient);
+                          net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                              redisClient);
                           discordHandler.sendEmbedMessage("メンテナンスモードが有効になりました。\nいまは遊べないカッ...", 0xFF0000, "");
                           logger.info("✅ Discordメンテナンス開始通知をRedis経由で送信しました");
                         } else {

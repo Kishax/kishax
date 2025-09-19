@@ -140,7 +140,6 @@ public class Module extends AbstractModule {
    * }
    */
 
-
   @Provides
   @Singleton
   public SocketSwitch provideSocketSwitch(Logger logger, Injector injector) {

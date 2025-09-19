@@ -153,7 +153,8 @@ public class Main {
         Main mainInstance = injector.getInstance(Main.class);
         return mainInstance.kishaxRedisClient;
       } catch (Exception e) {
-        org.slf4j.LoggerFactory.getLogger(Main.class).warn("Failed to get RedisClient from injector: {}", e.getMessage());
+        org.slf4j.LoggerFactory.getLogger(Main.class).warn("Failed to get RedisClient from injector: {}",
+            e.getMessage());
         return null;
       }
     }
