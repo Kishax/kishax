@@ -17,7 +17,8 @@ WORKDIR /app
 COPY . .
 
 # Build the Kishax plugins
-RUN if [ ! -f "velocity/build/libs/Kishax-Velocity-3.4.0.jar" ] || [ ! -f "spigot/sv1_21_8/build/libs/Kishax-Spigot-1.21.8.jar" ]; then \
+RUN if [ ! -f velocity/build/libs/Kishax-Velocity-*.jar ] || [ ! -f spigot/sv1_21_8/build/libs/Kishax-Spigot-*.jar ]; then \
+        echo "JARs not found, building from source..."; \
         ./gradlew build -x test; \
     else \
         echo "Kishax plugins already built, skipping build step"; \
