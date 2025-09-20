@@ -73,8 +73,9 @@ services:
       AWS_REGION: ${AWS_REGION:-ap-northeast-1}
       MC_WEB_SQS_ACCESS_KEY_ID: ${MC_WEB_SQS_ACCESS_KEY_ID}
       MC_WEB_SQS_SECRET_ACCESS_KEY: ${MC_WEB_SQS_SECRET_ACCESS_KEY}
-      MC_TO_WEB_QUEUE_URL: ${MC_TO_WEB_QUEUE_URL}
-      WEB_TO_MC_QUEUE_URL: ${WEB_TO_MC_QUEUE_URL}
+      TO_WEB_QUEUE_URL: ${TO_WEB_QUEUE_URL}
+      TO_MC_QUEUE_URL: ${TO_MC_QUEUE_URL}
+      TO_DISCORD_QUEUE_URL: ${TO_DISCORD_QUEUE_URL}
       # Redis Configuration
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       REDIS_CONNECTION_TIMEOUT: ${REDIS_CONNECTION_TIMEOUT:-5000}
@@ -90,10 +91,6 @@ services:
       AUTH_API_KEY: ${AUTH_API_KEY:-local-dev-api-key}
       # Logging Configuration
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      # Discord Bot Configuration
-      DISCORD_API_ACCESS_KEY_ID: ${DISCORD_API_ACCESS_KEY_ID}
-      DISCORD_API_SECRET_ACCESS_KEY: ${DISCORD_API_SECRET_ACCESS_KEY}
-      API_GATEWAY_URL: ${API_GATEWAY_URL}
 
     volumes:
       - minecraft_data:/mc/spigot/world

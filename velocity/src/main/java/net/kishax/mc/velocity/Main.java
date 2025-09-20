@@ -23,8 +23,6 @@ import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.util.PlayerUtils;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
-import net.kishax.mc.velocity.aws.AwsConfig;
 import net.kishax.mc.velocity.socket.VelocitySqsMessageHandler;
 // VPackageManager削除済み
 import net.kishax.mc.velocity.module.Module;
@@ -84,26 +82,6 @@ public class Main {
   private void startApplication() {
     injector = Guice.createInjector(new Module(this, server, logger, dataDirectory));
 
-    // AWS設定の検証
-    AwsConfig awsConfig = getInjector().getInstance(AwsConfig.class);
-    awsConfig.validateConfig();
-
-    // AWS Discord サービスへの接続
-    getInjector().getInstance(AwsDiscordService.class)
-        .loginDiscordBotAsync().thenAccept(success -> {
-          if (success) {
-            logger.info("✅ AWS Discord Bot への接続が完了しました");
-            // 必要に応じて追加の初期化処理をここに追加
-          } else {
-            logger.warn("⚠️ AWS Discord Bot への接続に失敗しました。Discord機能は無効になります。");
-          }
-        }).exceptionally(e -> {
-          logger.error("AWS Discord サービスの初期化中にエラーが発生しました: {}", e.getMessage());
-          for (StackTraceElement ste : e.getStackTrace()) {
-            logger.error(ste.toString());
-          }
-          return null;
-        });
     Database db = getInjector().getInstance(Database.class);
     try (Connection conn = db.getConnection()) {
       // この行は削除（上記の新しい実装で置き換え）
@@ -123,6 +101,7 @@ public class Main {
     commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
     commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
     commandManager.register(commandManager.metaBuilder("stp").build(), getInjector().getInstance(ServerTeleport.class));
+    commandManager.register(commandManager.metaBuilder("kishax").build(), getInjector().getInstance(net.kishax.mc.velocity.server.cmd.sub.Test.class));
     VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
     int port = config.getInt("Socket.Server_Port", 0);
     if (port != 0) {
@@ -166,6 +145,24 @@ public class Main {
   }
 
   /**
+   * Get the kishax-api RedisClient instance
+   */
+  public static net.kishax.api.bridge.RedisClient getKishaxRedisClient() {
+    // injectorから現在のMainインスタンスを取得してRedisClientにアクセス
+    if (injector != null) {
+      try {
+        Main mainInstance = injector.getInstance(Main.class);
+        return mainInstance.kishaxRedisClient;
+      } catch (Exception e) {
+        org.slf4j.LoggerFactory.getLogger(Main.class).warn("Failed to get RedisClient from injector: {}",
+            e.getMessage());
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Handle OTP display request from kishax-api SqsWorker
    */
   public static void handleOtpDisplayRequest(String playerName, String playerUuid, String otp) {
@@ -204,23 +201,22 @@ public class Main {
   private void initializeSqsServices() throws Exception {
     try {
       VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
-      AwsConfig awsConfig = getInjector().getInstance(AwsConfig.class);
 
       // SQS設定を取得
-      String region = awsConfig.getAwsRegion();
-      String accessKey = awsConfig.getSqsAccessKey();
-      String secretKey = awsConfig.getSqsSecretKey();
-      String webToMcQueueUrl = config.getString("AWS.SQS.WebToMcQueueUrl", "");
-      String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
+      String region = config.getString("AWS.Region", "ap-northeast-1");
+      String accessKey = config.getString("AWS.SQS.Credentials.AccessKey", "");
+      String secretKey = config.getString("AWS.SQS.Credentials.SecretKey", "");
+      String webToMcQueueUrl = config.getString("AWS.SQS.ToMcQueueUrl", "");
+      String mcToWebQueueUrl = config.getString("AWS.SQS.ToWebQueueUrl", "");
       String redisUrl = config.getString("Redis.URL", "redis://localhost:6379");
 
       if (webToMcQueueUrl.isEmpty()) {
-        logger.warn("WebToMcQueueUrl が設定されていません。SQS機能は無効になります。");
+        logger.warn("ToMcQueueUrl が設定されていません。SQS機能は無効になります。");
         return;
       }
 
       if (mcToWebQueueUrl.isEmpty()) {
-        logger.warn("McToWebQueueUrl が設定されていません。SQS送信機能は無効になります。");
+        logger.warn("ToWebQueueUrl が設定されていません。SQS送信機能は無効になります。");
         return;
       }
 
@@ -228,8 +224,8 @@ public class Main {
       System.setProperty("AWS_REGION", region);
       System.setProperty("MC_WEB_SQS_ACCESS_KEY_ID", accessKey);
       System.setProperty("MC_WEB_SQS_SECRET_ACCESS_KEY", secretKey);
-      System.setProperty("MC_TO_WEB_QUEUE_URL", mcToWebQueueUrl);
-      System.setProperty("WEB_TO_MC_QUEUE_URL", webToMcQueueUrl);
+      System.setProperty("TO_WEB_QUEUE_URL", mcToWebQueueUrl);
+      System.setProperty("TO_MC_QUEUE_URL", webToMcQueueUrl);
       System.setProperty("REDIS_URL", redisUrl);
 
       net.kishax.api.bridge.BridgeConfiguration sqsConfig = new net.kishax.api.bridge.BridgeConfiguration();

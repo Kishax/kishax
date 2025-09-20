@@ -46,7 +46,6 @@ import net.kishax.mc.common.settings.PermSettings;
 import net.kishax.mc.common.settings.Settings;
 import net.kishax.mc.common.util.PlayerUtils;
 import net.kishax.mc.velocity.Main;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.GeyserMC;
 import net.kishax.mc.velocity.server.MineStatus;
@@ -84,7 +83,6 @@ public class EventListener {
   private final PlayerUtils pu;
   private final PlayerDisconnect pd;
   private final RomajiConversion rc;
-  private final AwsDiscordService awsDiscordService;
   private final MineStatus ms;
   private final GeyserMC gm;
   private final Maintenance mt;
@@ -95,7 +93,7 @@ public class EventListener {
   @Inject
   public EventListener(Main plugin, Logger logger, ProxyServer server, VelocityConfig config, Database db, BroadCast bc,
       ConsoleCommandSource console, RomaToKanji conv, PlayerUtils pu, PlayerDisconnect pd, RomajiConversion rc,
-      AwsDiscordService awsDiscordService, MineStatus ms, GeyserMC gm, Maintenance mt, Luckperms lp) {
+      MineStatus ms, GeyserMC gm, Maintenance mt, Luckperms lp) {
     this.plugin = plugin;
     this.logger = logger;
     this.server = server;
@@ -107,7 +105,6 @@ public class EventListener {
     this.pu = pu;
     this.pd = pd;
     this.rc = rc;
-    this.awsDiscordService = awsDiscordService;
     this.ms = ms;
     this.gm = gm;
     this.mt = mt;
@@ -180,21 +177,21 @@ public class EventListener {
           String katakanaPattern = "[\\u30A0-\\u30FF]+";
           if (detectMatches(originalMessage, kanjiPattern) || detectMatches(originalMessage, hiraganaPattern)
               || detectMatches(originalMessage, katakanaPattern) || isEnglish) {
-            awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), originalMessage);
+            sendDiscordChatMessage(playerName, player.getUniqueId().toString(), originalMessage);
             return;
           }
           if (config.getBoolean("Translate.romaji")) {
             // Map方式
             String kanaMessage = conv.ConvRomaToKana(originalMessage);
             String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-            awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), kanjiMessage);
+            sendDiscordChatMessage(playerName, player.getUniqueId().toString(), kanjiMessage);
             component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
             bc.sendSpecificServerMessage(component, chatServerName);
           } else {
             // pde方式
             String kanaMessage = rc.Romaji(originalMessage);
             String kanjiMessage = conv.ConvRomaToKanji(kanaMessage);
-            awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), kanjiMessage);
+            sendDiscordChatMessage(playerName, player.getUniqueId().toString(), kanjiMessage);
             component = component.append(Component.text(kanjiMessage + ")").color(NamedTextColor.GOLD));
             bc.sendSpecificServerMessage(component, chatServerName);
           }
@@ -252,14 +249,7 @@ public class EventListener {
           bc.sendSpecificServerMessage(component, chatServerName);
         }
 
-        awsDiscordService.sendChatMessage(playerName, player.getUniqueId().toString(), mixtext)
-            .exceptionally(ex -> {
-              logger.error("An Exception error occurred: " + ex.getMessage());
-              for (StackTraceElement element : ex.getStackTrace()) {
-                logger.error(element.toString());
-              }
-              return null;
-            });
+        sendDiscordChatMessage(playerName, player.getUniqueId().toString(), mixtext);
       } catch (Exception ex) {
         logger.error("An onChat error occurred: " + ex.getMessage());
         for (StackTraceElement element : ex.getStackTrace()) {
@@ -552,15 +542,7 @@ public class EventListener {
                       db.insertLog(conn, "INSERT INTO `log` (name, uuid, server, `join`) VALUES (?, ?, ?, ?);",
                           new Object[] { playerName, playerUUID, currentServerName, true });
                       ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
-                      try {
-                        awsDiscordService.sendPlayerMoveEvent(playerName, playerUUID, currentServerName);
-                      } catch (Exception ex) {
-                        logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                            ex.getMessage());
-                        for (StackTraceElement ste : ex.getStackTrace()) {
-                          logger.error(ste.toString());
-                        }
-                      }
+                      sendDiscordPlayerMoveEvent(playerName, playerUUID, currentServerName);
                     } else {
                       if (beforejoin_sa_minute >= config.getInt("Interval.Login", 0)) {
                         if (previousServerInfo.isPresent()) {
@@ -571,15 +553,7 @@ public class EventListener {
                           ServerInfo beforeServerInfo = previousServer.getServerInfo();
                           String beforeServerName = beforeServerInfo.getName();
                           ms.updateMovePlayers(playerName, beforeServerName, currentServerName);
-                          try {
-                            awsDiscordService.sendPlayerMoveEvent(playerName, playerUUID, currentServerName);
-                          } catch (Exception ex) {
-                            logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                                ex.getMessage());
-                            for (StackTraceElement ste : ex.getStackTrace()) {
-                              logger.error(ste.toString());
-                            }
-                          }
+                          sendDiscordPlayerMoveEvent(playerName, playerUUID, currentServerName);
                         } else {
                           // 1回目のどこかのサーバーに上陸したとき
                           Object insertedId = db.insertLogAndGetColumnValue(1, conn,
@@ -587,15 +561,7 @@ public class EventListener {
                               new Object[] { playerName, playerUUID, currentServerName, true });
                           putJoinLogIdToMap(insertedId, player);
                           ms.updateJoinPlayers(playerName, currentServerName);
-                          try {
-                            awsDiscordService.sendPlayerJoinEvent(playerName, playerUUID, currentServerName);
-                          } catch (Exception ex) {
-                            logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                                ex.getMessage());
-                            for (StackTraceElement ste : ex.getStackTrace()) {
-                              logger.error(ste.toString());
-                            }
-                          }
+                          sendDiscordPlayerJoinEvent(playerName, playerUUID, currentServerName);
                         }
                       }
                     }
@@ -699,15 +665,7 @@ public class EventListener {
                     player.sendMessage(component);
                   }
                   ms.updateJoinPlayers(playerName, currentServerName);
-                  try {
-                    awsDiscordService.sendPlayerJoinEvent(playerName, playerUUID, currentServerName);
-                  } catch (Exception ex) {
-                    logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                        ex.getMessage());
-                    for (StackTraceElement ste : ex.getStackTrace()) {
-                      logger.error(ste.toString());
-                    }
-                  }
+                  sendDiscordPlayerJoinEvent(playerName, playerUUID, currentServerName);
                   if (config.getBoolean("Servers." + currentServerName + ".hub")) {
                     component = Component.text(playerName + "がhomeサーバーに初めてやってきました！").color(NamedTextColor.AQUA);
                     bc.sendExceptServerMessage(component, currentServerName);
@@ -764,14 +722,7 @@ public class EventListener {
           console
               .sendMessage(Component.text("Player " + playerName + " disconnected from server: " + serverInfo.getName())
                   .color(NamedTextColor.GREEN));
-          try {
-            awsDiscordService.sendPlayerLeaveEvent(playerName, player.getUniqueId().toString(), serverInfo.getName());
-          } catch (Exception ex) {
-            logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", ex.getMessage());
-            for (StackTraceElement ste : ex.getStackTrace()) {
-              logger.error(ste.toString());
-            }
-          }
+          sendDiscordPlayerLeaveEvent(playerName, player.getUniqueId().toString(), serverInfo.getName());
         });
       }).schedule();
     };
@@ -904,5 +855,70 @@ public class EventListener {
       isBedrock.set(false);
     }
     return isBedrock;
+  }
+
+  // Redis経由のDiscord通信ヘルパーメソッド
+  private void sendDiscordChatMessage(String playerName, String playerUuid, String message) {
+    try {
+      net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
+      if (redisClient != null) {
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
+        discordHandler.sendPlayerEvent("chat", playerName, playerUuid, message);
+        logger.debug("✅ DiscordチャットメッセージをRedis経由で送信しました: {}", playerName);
+      } else {
+        logger.warn("⚠️ RedisClient not available, Discord chat message not sent");
+      }
+    } catch (Exception e) {
+      logger.error("❌ Discordチャットメッセージ送信でエラーが発生しました: {}", e.getMessage());
+    }
+  }
+
+  private void sendDiscordPlayerJoinEvent(String playerName, String playerUuid, String serverName) {
+    try {
+      net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
+      if (redisClient != null) {
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
+        discordHandler.sendPlayerEvent("join", playerName, playerUuid, serverName);
+        logger.debug("✅ Discordプレイヤー参加イベントをRedis経由で送信しました: {}", playerName);
+      } else {
+        logger.warn("⚠️ RedisClient not available, Discord join event not sent");
+      }
+    } catch (Exception e) {
+      logger.error("❌ Discordプレイヤー参加イベント送信でエラーが発生しました: {}", e.getMessage());
+    }
+  }
+
+  private void sendDiscordPlayerLeaveEvent(String playerName, String playerUuid, String serverName) {
+    try {
+      net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
+      if (redisClient != null) {
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
+        discordHandler.sendPlayerEvent("leave", playerName, playerUuid, serverName);
+        logger.debug("✅ Discordプレイヤー退出イベントをRedis経由で送信しました: {}", playerName);
+      } else {
+        logger.warn("⚠️ RedisClient not available, Discord leave event not sent");
+      }
+    } catch (Exception e) {
+      logger.error("❌ Discordプレイヤー退出イベント送信でエラーが発生しました: {}", e.getMessage());
+    }
+  }
+
+  private void sendDiscordPlayerMoveEvent(String playerName, String playerUuid, String serverName) {
+    try {
+      net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
+      if (redisClient != null) {
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
+        discordHandler.sendPlayerEvent("move", playerName, playerUuid, serverName);
+        logger.debug("✅ Discordプレイヤー移動イベントをRedis経由で送信しました: {}", playerName);
+      } else {
+        logger.warn("⚠️ RedisClient not available, Discord move event not sent");
+      }
+    } catch (Exception e) {
+      logger.error("❌ Discordプレイヤー移動イベント送信でエラーが発生しました: {}", e.getMessage());
+    }
   }
 }

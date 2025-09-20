@@ -13,7 +13,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import net.kishax.mc.common.database.Database;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
+import net.kishax.mc.velocity.Main;
 import net.kishax.mc.velocity.util.RomaToKanji;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -24,16 +24,14 @@ public class PlayerDisconnect {
   private final Logger logger;
   private final Database db;
   private final ConsoleCommandSource console;
-  private final AwsDiscordService awsDiscordService;
 
   @Inject
   public PlayerDisconnect(Logger logger, ProxyServer server, Database db, BroadCast bc, ConsoleCommandSource console,
-      RomaToKanji conv, AwsDiscordService awsDiscordService) {
+      RomaToKanji conv) {
     this.logger = logger;
     this.server = server;
     this.db = db;
     this.console = console;
-    this.awsDiscordService = awsDiscordService;
   }
 
   public void menteDisconnect(List<String> UUIDs) {
@@ -79,9 +77,18 @@ public class PlayerDisconnect {
       int rsAffected = ps.executeUpdate();
       if (rsAffected > 0) {
         try {
-          awsDiscordService.sendBotMessage("侵入者が現れました。プレイヤー: " + player.getUsername(), 0xFF0000);
+          // Redis経由でDiscord Bot にメッセージ送信
+          net.kishax.api.bridge.RedisClient redisClient = Main.getKishaxRedisClient();
+          if (redisClient != null) {
+            net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                redisClient);
+            discordHandler.sendEmbedMessage("侵入者が現れました。プレイヤー: " + player.getUsername(), 0xFF0000, "");
+            logger.info("✅ Discord侵入者警告メッセージをRedis経由で送信しました: {}", player.getUsername());
+          } else {
+            logger.warn("⚠️ RedisClient not available, Discord message not sent");
+          }
         } catch (Exception e) {
-          logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+          logger.error("❌ Discord侵入者警告メッセージ送信でエラーが発生しました: {}", e.getMessage());
           for (StackTraceElement ste : e.getStackTrace()) {
             logger.error(ste.toString());
           }

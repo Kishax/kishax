@@ -17,7 +17,6 @@ import net.kishax.mc.common.settings.PermSettings;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.Message;
 import net.kishax.mc.common.socket.message.handlers.interfaces.web.MinecraftWebConfirmHandler;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
 import net.kishax.mc.common.socket.SqsClient;
 import net.kyori.adventure.text.Component;
@@ -34,19 +33,17 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
   private final Database db;
   private final VelocityConfig config;
   private final Luckperms lp;
-  private final AwsDiscordService awsDiscordService;
   private final Provider<SocketSwitch> sswProvider;
   private final SqsClient sqsClient;
 
   @Inject
   public VelocityMinecraftWebConfirmHandler(Logger logger, ProxyServer server, Database db, VelocityConfig config,
-      Luckperms lp, AwsDiscordService awsDiscordService, Provider<SocketSwitch> sswProvider, SqsClient sqsClient) {
+      Luckperms lp, Provider<SocketSwitch> sswProvider, SqsClient sqsClient) {
     this.logger = logger;
     this.server = server;
     this.db = db;
     this.config = config;
     this.lp = lp;
-    this.awsDiscordService = awsDiscordService;
     this.sswProvider = sswProvider;
     this.sqsClient = sqsClient;
   }
@@ -117,9 +114,17 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
 
     // Discord通知送信
     try {
-      awsDiscordService.sendBotMessage(mineName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB);
+      net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+      if (redisClient != null) {
+        net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+            redisClient);
+        discordHandler.sendEmbedMessage(mineName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB, "");
+        logger.info("✅ Discord新規メンバー通知をRedis経由で送信しました: {}", mineName);
+      } else {
+        logger.warn("⚠️ RedisClient not available, Discord message not sent");
+      }
     } catch (Exception e) {
-      logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}", e.getMessage());
+      logger.error("❌ Discord新規メンバー通知送信でエラーが発生しました: {}", e.getMessage());
       for (StackTraceElement ste : e.getStackTrace()) {
         logger.error(ste.toString());
       }
@@ -173,9 +178,17 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
 
       // Discord通知送信
       try {
-        awsDiscordService.sendBotMessage(playerName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB);
+        net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+        if (redisClient != null) {
+          net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+              redisClient);
+          discordHandler.sendEmbedMessage(playerName + "が新規メンバーになりました！:congratulations:", 0xFFC0CB, "");
+          logger.info("✅ Discord新規メンバー通知をRedis経由で送信しました: {}", playerName);
+        } else {
+          logger.warn("⚠️ RedisClient not available, Discord message not sent");
+        }
       } catch (Exception e) {
-        logger.error("Discord通知送信エラー", e);
+        logger.error("❌ Discord通知送信エラー", e);
       }
 
       logger.info("SQS経由での認証確認処理が完了しました: {} ({})", playerName, playerUuid);

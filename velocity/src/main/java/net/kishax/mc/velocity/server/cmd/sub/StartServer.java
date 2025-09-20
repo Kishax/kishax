@@ -21,7 +21,6 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kishax.mc.velocity.server.PlayerDisconnect;
@@ -38,14 +37,13 @@ public class StartServer {
   private final ConsoleCommandSource console;
   private final BroadCast bc;
   private final DoServerOnline dso;
-  private final AwsDiscordService awsDiscordService;
   private final Luckperms lp;
   private final PlayerDisconnect pd;
   private String currentServerName = null;
 
   @Inject
   public StartServer(ProxyServer server, Logger logger, VelocityConfig config, Database db,
-      ConsoleCommandSource console, AwsDiscordService awsDiscordService, BroadCast bc, DoServerOnline dso, Luckperms lp,
+      ConsoleCommandSource console, BroadCast bc, DoServerOnline dso, Luckperms lp,
       PlayerDisconnect pd) {
     this.server = server;
     this.logger = logger;
@@ -53,7 +51,6 @@ public class StartServer {
     this.db = db;
     this.console = console;
     this.bc = bc;
-    this.awsDiscordService = awsDiscordService;
     this.dso = dso;
     this.lp = lp;
     this.pd = pd;
@@ -168,11 +165,19 @@ public class StartServer {
                                 }
                               }
                               try {
-                                awsDiscordService.sendBotMessage(
-                                    player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00);
+                                net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main
+                                    .getKishaxRedisClient();
+                                if (redisClient != null) {
+                                  net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                                      redisClient);
+                                  discordHandler.sendEmbedMessage(
+                                      player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00, "");
+                                  logger.info("✅ Discordサーバー起動通知をRedis経由で送信しました: {}", targetServerName);
+                                } else {
+                                  logger.warn("⚠️ RedisClient not available, Discord message not sent");
+                                }
                               } catch (Exception e) {
-                                logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                                    e.getMessage());
+                                logger.error("❌ Discordサーバー起動通知送信でエラーが発生しました: {}", e.getMessage());
                                 for (StackTraceElement ste : e.getStackTrace()) {
                                   logger.error(ste.toString());
                                 }
@@ -319,11 +324,19 @@ public class StartServer {
                                 }
                               }
                               try {
-                                awsDiscordService.sendBotMessage(
-                                    player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00);
+                                net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main
+                                    .getKishaxRedisClient();
+                                if (redisClient != null) {
+                                  net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                                      redisClient);
+                                  discordHandler.sendEmbedMessage(
+                                      player.getUsername() + "が" + targetServerName + "サーバーを起動させました。", 0x00FF00, "");
+                                  logger.info("✅ Discordサーバー起動通知をRedis経由で送信しました: {}", targetServerName);
+                                } else {
+                                  logger.warn("⚠️ RedisClient not available, Discord message not sent");
+                                }
                               } catch (Exception e) {
-                                logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                                    e.getMessage());
+                                logger.error("❌ Discordサーバー起動通知送信でエラーが発生しました: {}", e.getMessage());
                                 for (StackTraceElement ste : e.getStackTrace()) {
                                   logger.error(ste.toString());
                                 }

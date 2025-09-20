@@ -19,7 +19,6 @@ import net.kishax.mc.common.database.Database;
 import net.kishax.mc.common.server.Luckperms;
 import net.kishax.mc.common.socket.SocketSwitch;
 import net.kishax.mc.common.socket.message.Message;
-import net.kishax.mc.velocity.aws.AwsDiscordService;
 import net.kishax.mc.velocity.server.BroadCast;
 import net.kishax.mc.velocity.server.DoServerOnline;
 import net.kyori.adventure.text.Component;
@@ -33,21 +32,19 @@ public class StopServer {
   private final ConsoleCommandSource console;
   private final BroadCast bc;
   private final DoServerOnline dso;
-  private final AwsDiscordService awsDiscordService;
   private final Luckperms lp;
   private final Provider<SocketSwitch> sswProvider;
   private String currentServerName = null;
 
   @Inject
   public StopServer(ProxyServer server, Logger logger, Database db, ConsoleCommandSource console,
-      AwsDiscordService awsDiscordService, BroadCast bc, DoServerOnline dso, Luckperms lp,
+      BroadCast bc, DoServerOnline dso, Luckperms lp,
       Provider<SocketSwitch> sswProvider) {
     this.server = server;
     this.logger = logger;
     this.db = db;
     this.console = console;
     this.bc = bc;
-    this.awsDiscordService = awsDiscordService;
     this.dso = dso;
     this.lp = lp;
     this.sswProvider = sswProvider;
@@ -115,11 +112,18 @@ public class StopServer {
                 db.insertLog(connection, "INSERT INTO log (name, uuid, server, sss, status) VALUES (?, ?, ?, ?, ?);",
                     new Object[] { playerName, playerUUID, currentServerName, true, "stop" });
                 try {
-                  awsDiscordService.sendBotMessage(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。",
-                      0xFF0000);
+                  net.kishax.api.bridge.RedisClient redisClient = net.kishax.mc.velocity.Main.getKishaxRedisClient();
+                  if (redisClient != null) {
+                    net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
+                        redisClient);
+                    discordHandler.sendEmbedMessage(player.getUsername() + "が" + targetServerName + "サーバーを停止させました。",
+                        0xFF0000, "");
+                    logger.info("✅ Discordサーバー停止通知をRedis経由で送信しました: {}", targetServerName);
+                  } else {
+                    logger.warn("⚠️ RedisClient not available, Discord message not sent");
+                  }
                 } catch (Exception e) {
-                  logger.error("An exception occurred while executing the AddEmbedSomeMessage method: {}",
-                      e.getMessage());
+                  logger.error("❌ Discordサーバー停止通知送信でエラーが発生しました: {}", e.getMessage());
                   for (StackTraceElement ste : e.getStackTrace()) {
                     logger.error(ste.toString());
                   }
