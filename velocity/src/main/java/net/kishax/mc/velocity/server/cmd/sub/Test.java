@@ -3,9 +3,11 @@ package net.kishax.mc.velocity.server.cmd.sub;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import net.kishax.api.auth.AuthLevel;
 import net.kishax.mc.common.database.Database;
+import net.kishax.mc.velocity.Main;
 import net.kishax.mc.velocity.auth.McAuthService;
 import net.kishax.mc.velocity.server.cmd.sub.interfaces.Request;
 import net.kyori.adventure.text.Component;
@@ -24,10 +26,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Singleton
-public class Test implements Request {
+public class Test implements SimpleCommand, Request {
   private static final Logger logger = LoggerFactory.getLogger(Test.class);
 
-  public static final List<String> args1 = new ArrayList<>(List.of("getPlayerLevel"));
+  public static final List<String> args1 = new ArrayList<>(List.of("getPlayerLevel", "discord"));
 
   private final McAuthService mcAuthService;
   private final Database database;
@@ -39,10 +41,16 @@ public class Test implements Request {
   }
 
   @Override
+  public void execute(Invocation invocation) {
+    CommandSource source = invocation.source();
+    String[] args = invocation.arguments();
+    execute(source, args);
+  }
+
   public void execute(CommandSource source, String[] args) {
     if (args.length < 2) {
       source.sendMessage(Component.text("Usage: /kishax test <subcommand> [args...]", NamedTextColor.RED));
-      source.sendMessage(Component.text("Available subcommands: getPlayerLevel", NamedTextColor.YELLOW));
+      source.sendMessage(Component.text("Available subcommands: getPlayerLevel, discord", NamedTextColor.YELLOW));
       return;
     }
 
@@ -50,6 +58,7 @@ public class Test implements Request {
 
     switch (subCommand) {
       case "getplayerlevel" -> handleGetPlayerLevel(source, args);
+      case "discord" -> handleDiscordTest(source, args);
       default -> source.sendMessage(Component.text("Unknown test subcommand: " + subCommand, NamedTextColor.RED));
     }
   }
@@ -100,6 +109,54 @@ public class Test implements Request {
       source.sendMessage(Component.text("Error checking auth level: " + throwable.getMessage(), NamedTextColor.RED));
       return null;
     });
+  }
+
+  private void handleDiscordTest(CommandSource source, String[] args) {
+    source.sendMessage(Component.text("=== Discord Connection Test ===", NamedTextColor.GREEN));
+    source.sendMessage(Component.text("Testing MC → SQS → sqs-redis-bridge → Redis → discord-bot → Discord", NamedTextColor.YELLOW));
+
+    String playerName = "TestPlayer";
+    String playerUuid = "test-uuid-12345";
+    String serverName = "test-server";
+
+    if (source instanceof Player player) {
+      playerName = player.getUsername();
+      playerUuid = player.getUniqueId().toString();
+      if (player.getCurrentServer().isPresent()) {
+        serverName = player.getCurrentServer().get().getServerInfo().getName();
+      }
+    }
+
+    try {
+      net.kishax.api.bridge.SqsWorker kishaxSqsWorker = Main.getKishaxSqsWorker();
+      if (kishaxSqsWorker == null) {
+        source.sendMessage(Component.text("❌ Error: SQS Worker not available", NamedTextColor.RED));
+        return;
+      }
+
+      // Discord向けにプレイヤーイベントをSQS経由で送信
+      // 正しいフロー: MC → SQS → sqs-redis-bridge → Redis → discord-bot
+      // Discord専用送信機能を使用
+      net.kishax.api.bridge.DiscordMessageSender discordSender = kishaxSqsWorker.getDiscordSender();
+      if (discordSender == null) {
+        source.sendMessage(Component.text("❌ Error: Discord Sender not available", NamedTextColor.RED));
+        return;
+      }
+
+      // テストメッセージを送信
+      source.sendMessage(Component.text("📤 Sending test message to Discord via SQS...", NamedTextColor.AQUA));
+
+      // Discord専用のプレイヤーイベントメッセージをSQSに送信
+      discordSender.sendPlayerEvent("test_join", playerName, playerUuid, serverName);
+
+      source.sendMessage(Component.text("✅ Test message sent successfully!", NamedTextColor.GREEN));
+      source.sendMessage(Component.text("Check Discord channel for the test message.", NamedTextColor.YELLOW));
+      source.sendMessage(Component.text("Player: " + playerName + " | Server: " + serverName, NamedTextColor.GRAY));
+
+    } catch (Exception e) {
+      logger.error("Error sending Discord test message", e);
+      source.sendMessage(Component.text("❌ Error sending Discord test: " + e.getMessage(), NamedTextColor.RED));
+    }
   }
 
   private CompletableFuture<String> getPlayerUuid(String mcid) {

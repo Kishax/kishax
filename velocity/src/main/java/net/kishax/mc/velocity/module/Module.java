@@ -97,6 +97,7 @@ public class Module extends AbstractModule {
     bind(GeyserMC.class);
     bind(Maintenance.class);
     bind(CommandForwarder.class);
+    bind(net.kishax.mc.velocity.server.cmd.sub.Test.class);
     bind(Luckperms.class);
 
     bind(ForwardHandler.class).to(VelocityForwardHandler.class);

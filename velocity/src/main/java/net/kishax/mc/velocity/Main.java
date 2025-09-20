@@ -101,6 +101,7 @@ public class Main {
     commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
     commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
     commandManager.register(commandManager.metaBuilder("stp").build(), getInjector().getInstance(ServerTeleport.class));
+    commandManager.register(commandManager.metaBuilder("kishax").build(), getInjector().getInstance(net.kishax.mc.velocity.server.cmd.sub.Test.class));
     VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
     int port = config.getInt("Socket.Server_Port", 0);
     if (port != 0) {
@@ -203,19 +204,19 @@ public class Main {
 
       // SQS設定を取得
       String region = config.getString("AWS.Region", "ap-northeast-1");
-      String accessKey = config.getString("AWS.SQS.AccessKey", "");
-      String secretKey = config.getString("AWS.SQS.SecretKey", "");
-      String webToMcQueueUrl = config.getString("AWS.SQS.WebToMcQueueUrl", "");
-      String mcToWebQueueUrl = config.getString("AWS.SQS.McToWebQueueUrl", "");
+      String accessKey = config.getString("AWS.SQS.Credentials.AccessKey", "");
+      String secretKey = config.getString("AWS.SQS.Credentials.SecretKey", "");
+      String webToMcQueueUrl = config.getString("AWS.SQS.ToMcQueueUrl", "");
+      String mcToWebQueueUrl = config.getString("AWS.SQS.ToWebQueueUrl", "");
       String redisUrl = config.getString("Redis.URL", "redis://localhost:6379");
 
       if (webToMcQueueUrl.isEmpty()) {
-        logger.warn("WebToMcQueueUrl が設定されていません。SQS機能は無効になります。");
+        logger.warn("ToMcQueueUrl が設定されていません。SQS機能は無効になります。");
         return;
       }
 
       if (mcToWebQueueUrl.isEmpty()) {
-        logger.warn("McToWebQueueUrl が設定されていません。SQS送信機能は無効になります。");
+        logger.warn("ToWebQueueUrl が設定されていません。SQS送信機能は無効になります。");
         return;
       }
 
