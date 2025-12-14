@@ -50,7 +50,7 @@ RUN mkdir -p /mc/spigot/plugins \
 WORKDIR /mc
 
 # Copy servers configuration
-COPY docker/data/servers.json /mc/config/servers.json
+COPY docker/config/servers.json /mc/config/servers.json
 
 # Download Paper server
 RUN PAPER_URL=$(jq -r '.spigots[0].url' /mc/config/servers.json) && \
@@ -101,16 +101,15 @@ COPY --from=builder /app/velocity/build/libs/ /mc/build/velocity/
 RUN ls -la /mc/build/spigot/ && ls -la /mc/build/velocity/
 
 # Copy template directories (will be copied to actual locations at runtime)
-COPY docker/mc/template/spigot /mc/template/spigot
-COPY docker/mc/template/velocity /mc/template/velocity
+COPY docker/templates/spigot /mc/templates/spigot
+COPY docker/templates/velocity /mc/templates/velocity
 
-# Copy LuckPerms plugin configs to template directories
-COPY docker/mc/template/spigot/plugins/LuckPerms/config.yml /mc/template/spigot/plugins/LuckPerms/config.yml
-COPY docker/mc/template/velocity/plugins/luckperms/config.yml /mc/template/velocity/plugins/luckperms/config.yml
+# Copy LuckPerms plugin configs are already in templates
+# Copy Kishax plugin configs are already in templates
 
-# Copy Kishax plugin config templates
-COPY docker/data/spigot-kishax-config.yml /mc/template/spigot/plugins/Kishax/config.yml
-COPY docker/data/velocity-kishax-config.yml /mc/template/velocity/plugins/kishax/config.yml
+# MySQL initialization files
+COPY docker/database/schema/TABLES.sql /mc/mysql/init/
+COPY docker/database/seeds/ /mc/mysql/seeds/
 
 
 # MySQL initialization is handled by docker-compose volume mount

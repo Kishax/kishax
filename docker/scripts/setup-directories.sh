@@ -4,7 +4,7 @@ set -e
 # servers.jsonから動的にSpigot/Velocityディレクトリを生成する
 
 CONFIG_FILE="/mc/config/servers.json"
-TEMPLATE_DIR="/mc/template"
+TEMPLATE_DIR="/mc/templates"
 OUTPUT_BASE="/mc"
 
 echo "=== Dynamic Directory Generation System ==="
