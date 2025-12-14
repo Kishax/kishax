@@ -22,6 +22,90 @@ for sql_file in /mc/mysql/init/*.sql; do
   fi
 done
 
+# Setup directories from templates
+echo "Setting up server directories from templates..."
+/mc/scripts/setup-directories.sh
+
+# Register servers to database from servers.json
+echo "Registering servers to database..."
+/mc/scripts/register-servers-to-db.sh
+
+# Deploy plugins based on servers.json
+echo "Deploying plugins..."
+/mc/scripts/deploy-plugins.sh
+
+# Calculate memory allocation from servers.json
+echo "Calculating memory allocation..."
+/mc/scripts/calculate-memory.sh
+
+# Generate Velocity configuration files
+echo "Generating Velocity configuration..."
+/mc/scripts/generate-velocity-config.sh
+
+# Load calculated configurations
+source /mc/runtime/proxies.env
+source /mc/runtime/spigots.env
+source /mc/runtime/velocity-config.env
+
+# Export HOME_SERVER variables for use in config files
+export HOME_SERVER_NAME
+export HOME_SERVER_IP="127.0.0.1"
+
+echo "Active Proxies: $ACTIVE_PROXY_COUNT"
+echo "Active Spigots: $ACTIVE_SPIGOT_COUNT"
+echo "Home Server: $HOME_SERVER_NAME at $HOME_SERVER_IP"
+
+# velocity.tomlの[servers]セクションを置き換え
+echo "Updating velocity.toml with dynamic server configuration..."
+VELOCITY_TOML="/mc/velocity/velocity.toml"
+
+# より安全な方法: awk を使用して[servers]から[forced-hosts]までを置換
+awk -v servers="$VELOCITY_SERVERS_SECTION" -v try_list="$VELOCITY_TRY_LIST" '
+/^\[servers\]/ {
+    print $0
+    print "# ================================================================"
+    print "# This section is dynamically generated from servers.json at startup"
+    print "# Do not edit manually - it will be overwritten"
+    print "# ================================================================"
+    print "# Configure your servers here. Each key represents the server'"'"'s name, and the value"
+    print "# represents the IP address of the server to connect to."
+    printf "%s", servers
+    print ""
+    print "# In what order we should try servers when a player logs in or is kicked from a server."
+    print "try = ["
+    print "    " try_list
+    print "]"
+    print ""
+    skip=1
+    next
+}
+/^\[forced-hosts\]/ {
+    skip=0
+}
+!skip
+' "$VELOCITY_TOML" > "$VELOCITY_TOML.tmp" && mv "$VELOCITY_TOML.tmp" "$VELOCITY_TOML"
+
+echo "velocity.toml updated successfully"
+
+# velocity-kishax-config.ymlのServersセクションを置き換え
+echo "Updating velocity-kishax-config.yml with dynamic server configuration..."
+VELOCITY_KISHAX_CONFIG="/mc/velocity/plugins/kishax/config.yml"
+
+# まだコピーされていない場合は、テンプレートからコピー
+if [ ! -f "$VELOCITY_KISHAX_CONFIG" ]; then
+    mkdir -p /mc/velocity/plugins/kishax
+    cp /mc/docker/data/velocity-kishax-config.yml "$VELOCITY_KISHAX_CONFIG" || true
+fi
+
+# Serversセクションを動的に置き換え
+if [ -f "$VELOCITY_KISHAX_CONFIG" ]; then
+    # Servers:以降を削除
+    sed -i '/^Servers:/,$d' "$VELOCITY_KISHAX_CONFIG"
+    # 動的に生成したServersセクションを追加
+    cat /mc/runtime/kishax-servers.yml >> "$VELOCITY_KISHAX_CONFIG"
+    echo "velocity-kishax-config.yml updated successfully"
+fi
+
 # Check if forwarding.secret already exists
 if [ -f "/mc/velocity/forwarding.secret" ]; then
   # Use existing secret
@@ -112,26 +196,50 @@ done
 echo "Configuration completed!"
 echo "Starting servers..."
 
-# Start Velocity proxy in screen session
-echo "Starting Velocity proxy in screen session 'velocity'..."
-cd /mc/velocity
-screen -dmS velocity java -Xmx${VELOCITY_MEMORY:-1G} -jar velocity-*.jar
+# Start Proxies
+for ((i=0; i<$ACTIVE_PROXY_COUNT; i++)); do
+  PROXY_NAME_VAR="PROXY_${i}_NAME"
+  PROXY_MEMORY_VAR="PROXY_${i}_MEMORY"
+  PROXY_FILENAME_VAR="PROXY_${i}_FILENAME"
+  
+  PROXY_NAME="${!PROXY_NAME_VAR}"
+  PROXY_MEMORY="${!PROXY_MEMORY_VAR}"
+  PROXY_FILENAME="${!PROXY_FILENAME_VAR}"
+  
+  echo "Starting Proxy: $PROXY_NAME (Memory: $PROXY_MEMORY) in screen session '$PROXY_NAME'..."
+  cd /mc/velocity
+  screen -dmS "$PROXY_NAME" java -Xmx"$PROXY_MEMORY" -jar "$PROXY_FILENAME"
+  sleep 5
+done
 
-# Wait a moment for Velocity to start
-echo "Waiting for Velocity to initialize..."
+# Wait for proxies to initialize
+echo "Waiting for proxies to initialize..."
 sleep 10
 
-# Start Paper server in screen session
-echo "Starting Paper server in screen session 'spigot'..."
-cd /mc/spigot
-screen -dmS spigot java -Xmx${SPIGOT_MEMORY:-2G} -jar paper-*.jar --nogui
+# Start Spigots
+for ((i=0; i<$ACTIVE_SPIGOT_COUNT; i++)); do
+  SPIGOT_NAME_VAR="SPIGOT_${i}_NAME"
+  SPIGOT_MEMORY_VAR="SPIGOT_${i}_MEMORY"
+  SPIGOT_FILENAME_VAR="SPIGOT_${i}_FILENAME"
+  SPIGOT_PORT_VAR="SPIGOT_${i}_PORT"
+  
+  SPIGOT_NAME="${!SPIGOT_NAME_VAR}"
+  SPIGOT_MEMORY="${!SPIGOT_MEMORY_VAR}"
+  SPIGOT_FILENAME="${!SPIGOT_FILENAME_VAR}"
+  SPIGOT_PORT="${!SPIGOT_PORT_VAR}"
+  
+  echo "Starting Spigot: $SPIGOT_NAME (Memory: $SPIGOT_MEMORY, Port: $SPIGOT_PORT) in screen session '$SPIGOT_NAME'..."
+  cd /mc/spigot
+  screen -dmS "$SPIGOT_NAME" java -Xmx"$SPIGOT_MEMORY" -jar "$SPIGOT_FILENAME" --nogui
+  sleep 3
+done
 
 # Keep container running by attaching to spigot screen
-echo "Servers started! Use 'make mc-spigot' or 'make mc-velocity' to access server consoles."
+echo "Servers started! Use 'docker exec -it kishax-minecraft screen -r <session-name>' to access server consoles."
 echo "Available screen sessions:"
 screen -list
 
 # Keep container alive by waiting for screen sessions
-while screen -list | grep -q "spigot\|velocity"; do
+while screen -list | grep -qE "(spigot|velocity|proxy)"; do
   sleep 30
 done

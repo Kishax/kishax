@@ -2,8 +2,16 @@
 
 # シードファイルの初期化スクリプト
 # docker/data/seeds/ ディレクトリ内のすべての*.sqlファイルを実行
+# 環境変数 SEED_ENV で実行を制御
 
 echo "=== シードデータの初期化を開始 ==="
+echo "環境: ${SEED_ENV:-development}"
+
+# production環境ではシードをスキップ
+if [ "${SEED_ENV}" = "production" ]; then
+  echo "⚠️  本番環境 (SEED_ENV=production) のため、シードデータの投入をスキップします"
+  exit 0
+fi
 
 # seeds ディレクトリが存在し、SQLファイルがある場合のみ実行
 if [ -d "/docker-entrypoint-initdb.d/seeds" ] && [ "$(ls -A /docker-entrypoint-initdb.d/seeds/*.sql 2>/dev/null)" ]; then

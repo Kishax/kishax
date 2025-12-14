@@ -70,6 +70,10 @@ ping-passthrough = "disabled"
 enable-player-address-logging = true
 
 [servers]
+# ===================================================================
+# This section is dynamically generated from servers.json at startup
+# Do not edit manually - it will be overwritten
+# ===================================================================
 # Configure your servers here. Each key represents the server's name, and the value
 # represents the IP address of the server to connect to.
 spigot = "127.0.0.1:25564"

@@ -4,19 +4,16 @@ services:
     container_name: kishax-minecraft
     restart: unless-stopped
     environment:
+      # Overall Memory Configuration
+      OVERALL_MEMORY: ${OVERALL_MEMORY:-8.0}
+      
       # MySQL Configuration (RDS MySQL)
       MYSQL_HOST: ${MYSQL_HOST}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-mc}
       MYSQL_PORT: 3306
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      
-      # Spigot/Velocity Configuration
-      SPIGOT_MEMORY: ${SPIGOT_MEMORY:-6G}
-      VELOCITY_MEMORY: ${VELOCITY_MEMORY:-1G}
-      CONFIRM_URL: ${CONFIRM_URL:-http://10.0.36.61:8080/mc/auth}
-      HOME_SERVER_NAME: ${HOME_SERVER_NAME:-spigot}
-      HOME_SERVER_IP: ${HOME_SERVER_IP:-127.0.0.1}
+      SEED_ENV: ${SEED_ENV:-development}
       
       # AWS Configuration
       AWS_REGION: ${AWS_REGION:-ap-northeast-1}
@@ -27,7 +24,7 @@ services:
       TO_DISCORD_QUEUE_URL: ${TO_DISCORD_QUEUE_URL}
       
       # Redis Configuration (i-b host Redis #1)
-      REDIS_URL: ${REDIS_URL:-redis://10.0.36.61:6379}
+      REDIS_URL: ${REDIS_URL}
       REDIS_CONNECTION_TIMEOUT: ${REDIS_CONNECTION_TIMEOUT:-5000}
       REDIS_COMMAND_TIMEOUT: ${REDIS_COMMAND_TIMEOUT:-3000}
       
@@ -39,8 +36,9 @@ services:
       SQS_WORKER_WAIT_TIME_SECONDS: ${SQS_WORKER_WAIT_TIME_SECONDS:-20}
       SQS_WORKER_VISIBILITY_TIMEOUT_SECONDS: ${SQS_WORKER_VISIBILITY_TIMEOUT_SECONDS:-30}
       
-      # Auth API Configuration
-      AUTH_API_URL: ${AUTH_API_URL:-http://10.0.36.61:8080}
+      # Auth API Configuration (CONFIRM_URL is deprecated, use AUTH_API_URL)
+      CONFIRM_URL: ${AUTH_API_URL}/mc/auth
+      AUTH_API_URL: ${AUTH_API_URL}
       AUTH_API_KEY: ${AUTH_API_KEY}
       
       # Logging Configuration
