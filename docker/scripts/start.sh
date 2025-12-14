@@ -26,17 +26,63 @@ done
 echo "Calculating memory allocation..."
 /mc/scripts/calculate-memory.sh
 
+# Generate Velocity configuration files
+echo "Generating Velocity configuration..."
+/mc/scripts/generate-velocity-config.sh
+
 # Load calculated configurations
 source /mc/runtime/proxies.env
 source /mc/runtime/spigots.env
+source /mc/runtime/velocity-config.env
 
 # Export HOME_SERVER variables for use in config files
 export HOME_SERVER_NAME
-export HOME_SERVER_IP
+export HOME_SERVER_IP="127.0.0.1"
 
 echo "Active Proxies: $ACTIVE_PROXY_COUNT"
 echo "Active Spigots: $ACTIVE_SPIGOT_COUNT"
 echo "Home Server: $HOME_SERVER_NAME at $HOME_SERVER_IP"
+
+# velocity.tomlの[servers]セクションを置き換え
+echo "Updating velocity.toml with dynamic server configuration..."
+VELOCITY_TOML="/mc/velocity/velocity.toml"
+
+# [servers]セクションを動的に置き換え
+# 既存の[servers]セクションを削除し、新しいものを挿入
+sed -i '/^\[servers\]/,/^\[forced-hosts\]/{ /^\[servers\]/!{ /^\[forced-hosts\]/!d; }; }' "$VELOCITY_TOML"
+
+# 新しい[servers]セクションを挿入
+sed -i "/^\[servers\]/a\\
+# Configure your servers here. Each key represents the server's name, and the value\\
+# represents the IP address of the server to connect to.\\
+$(echo -e "$VELOCITY_SERVERS_SECTION")\\
+\\
+# In what order we should try servers when a player logs in or is kicked from a server.\\
+try = [\\
+    $VELOCITY_TRY_LIST\\
+]\\
+" "$VELOCITY_TOML"
+
+echo "velocity.toml updated successfully"
+
+# velocity-kishax-config.ymlのServersセクションを置き換え
+echo "Updating velocity-kishax-config.yml with dynamic server configuration..."
+VELOCITY_KISHAX_CONFIG="/mc/velocity/plugins/kishax/config.yml"
+
+# まだコピーされていない場合は、テンプレートからコピー
+if [ ! -f "$VELOCITY_KISHAX_CONFIG" ]; then
+    mkdir -p /mc/velocity/plugins/kishax
+    cp /mc/docker/data/velocity-kishax-config.yml "$VELOCITY_KISHAX_CONFIG" || true
+fi
+
+# Serversセクションを動的に置き換え
+if [ -f "$VELOCITY_KISHAX_CONFIG" ]; then
+    # Servers:以降を削除
+    sed -i '/^Servers:/,$d' "$VELOCITY_KISHAX_CONFIG"
+    # 動的に生成したServersセクションを追加
+    cat /mc/runtime/kishax-servers.yml >> "$VELOCITY_KISHAX_CONFIG"
+    echo "velocity-kishax-config.yml updated successfully"
+fi
 
 # Check if forwarding.secret already exists
 if [ -f "/mc/velocity/forwarding.secret" ]; then
