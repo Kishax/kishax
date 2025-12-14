@@ -5,6 +5,11 @@ set -e
 
 CONFIG_FILE="/mc/config/servers.json"
 
+# MySQLエスケープ関数
+mysql_escape() {
+    echo "$1" | sed "s/'/''/g"
+}
+
 echo "=== Plugin Deployment System ==="
 
 # Spigot毎にプラグインを配置
@@ -15,6 +20,8 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
     MEMORY_RATIO=$(jq -r ".spigots[$i].memory_ratio" "$CONFIG_FILE")
     PLUGIN_PRESET=$(jq -r ".spigots[$i].plugin_preset // \"\"" "$CONFIG_FILE")
     CUSTOM_PLUGINS=$(jq -r ".spigots[$i].custom_plugins // [] | @json" "$CONFIG_FILE")
+    MINECRAFT_VERSION=$(jq -r ".spigots[$i].minecraft_version // \"1.21.8\"" "$CONFIG_FILE")
+    KISHAX_JAR=$(jq -r ".spigots[$i].kishax_spigot_jar // \"\"" "$CONFIG_FILE")
     
     # memory_ratio が 0 の場合はスキップ
     if (( $(echo "$MEMORY_RATIO == 0" | bc -l) )); then
@@ -22,12 +29,11 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
         continue
     fi
     
-    # プラグインディレクトリ作成（将来的に複数Spigot対応）
-    # 現在は単一spigotディレクトリだが、将来的には/mc/spigots/${NAME}/plugins/にする
+    # プラグインディレクトリ（現在は単一spigotディレクトリ）
     PLUGINS_DIR="/mc/spigot/plugins"
     mkdir -p "$PLUGINS_DIR"
     
-    echo "Deploying plugins for Spigot: $NAME"
+    echo "Deploying plugins for Spigot: $NAME (Minecraft $MINECRAFT_VERSION)"
     
     # custom_pluginsが指定されている場合はそれを使用、なければpreset使用
     if [ "$CUSTOM_PLUGINS" != "[]" ] && [ "$CUSTOM_PLUGINS" != "null" ]; then
@@ -54,14 +60,42 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
         fi
         
         # Bukkitプラグインの情報を取得
-        PLUGIN_URL=$(jq -r ".plugins[\"$plugin_name\"].bukkit.url // null" "$CONFIG_FILE")
-        PLUGIN_FILENAME=$(jq -r ".plugins[\"$plugin_name\"].bukkit.filename // null" "$CONFIG_FILE")
         PLUGIN_SOURCE=$(jq -r ".plugins[\"$plugin_name\"].bukkit.source // \"download\"" "$CONFIG_FILE")
         
         if [ "$PLUGIN_SOURCE" = "build" ]; then
-            echo "      Plugin is built from source (already handled by Dockerfile)"
+            echo "      Plugin is built from source: $plugin_name"
+            
+            # Kishaxプラグインの場合、バージョンマッピングから取得
+            if [ "$plugin_name" = "kishax" ]; then
+                if [ -n "$KISHAX_JAR" ]; then
+                    # spigots配列で指定されたjar名を使用
+                    SOURCE_JAR="/mc/build/spigot/$KISHAX_JAR"
+                else
+                    # version_mappingsから自動検出
+                    GRADLE_MODULE=$(jq -r ".plugins.kishax.bukkit.version_mappings[\"$MINECRAFT_VERSION\"].gradle_module // null" "$CONFIG_FILE")
+                    JAR_FILENAME=$(jq -r ".plugins.kishax.bukkit.version_mappings[\"$MINECRAFT_VERSION\"].jar_filename // null" "$CONFIG_FILE")
+                    
+                    if [ "$GRADLE_MODULE" = "null" ] || [ "$JAR_FILENAME" = "null" ]; then
+                        echo "      ERROR: No version mapping for Minecraft $MINECRAFT_VERSION"
+                        echo "      Available versions: $(jq -r '.plugins.kishax.bukkit.version_mappings | keys[]' "$CONFIG_FILE")"
+                        continue
+                    fi
+                    
+                    SOURCE_JAR="/mc/build/spigot/$GRADLE_MODULE/build/libs/$JAR_FILENAME"
+                fi
+                
+                if [ -f "$SOURCE_JAR" ]; then
+                    echo "      Copying Kishax plugin: $SOURCE_JAR"
+                    cp "$SOURCE_JAR" "$PLUGINS_DIR/"
+                else
+                    echo "      ERROR: Kishax jar not found: $SOURCE_JAR"
+                fi
+            fi
             continue
         fi
+        
+        PLUGIN_URL=$(jq -r ".plugins[\"$plugin_name\"].bukkit.url // null" "$CONFIG_FILE")
+        PLUGIN_FILENAME=$(jq -r ".plugins[\"$plugin_name\"].bukkit.filename // null" "$CONFIG_FILE")
         
         if [ "$PLUGIN_URL" = "null" ] || [ "$PLUGIN_FILENAME" = "null" ]; then
             echo "      WARNING: Plugin '$plugin_name' missing URL or filename, skipping"
@@ -109,6 +143,25 @@ if [ $PROXY_COUNT -gt 0 ]; then
         
         if [ "$PLUGIN_EXISTS" = "null" ]; then
             echo "    WARNING: Plugin '$plugin_name' not found in servers.json, skipping"
+            continue
+        fi
+        
+        # ソースからビルド
+        PLUGIN_SOURCE=$(jq -r ".plugins[\"$plugin_name\"].source // \"download\"" "$CONFIG_FILE")
+        if [ "$PLUGIN_SOURCE" = "build" ]; then
+            echo "    Plugin is built from source: $plugin_name"
+            
+            if [ "$plugin_name" = "kishax" ]; then
+                JAR_FILENAME=$(jq -r ".plugins.kishax.velocity.jar_filename // \"Kishax-Velocity-3.4.0.jar\"" "$CONFIG_FILE")
+                SOURCE_JAR="/mc/build/velocity/$JAR_FILENAME"
+                
+                if [ -f "$SOURCE_JAR" ]; then
+                    echo "    Copying Kishax Velocity plugin: $SOURCE_JAR"
+                    cp "$SOURCE_JAR" "$VELOCITY_PLUGINS_DIR/"
+                else
+                    echo "    ERROR: Kishax Velocity jar not found: $SOURCE_JAR"
+                fi
+            fi
             continue
         fi
         

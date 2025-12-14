@@ -5,6 +5,11 @@ set -e
 
 CONFIG_FILE="/mc/config/servers.json"
 
+# MySQLエスケープ関数
+mysql_escape() {
+    echo "$1" | sed "s/'/''/g"
+}
+
 echo "=== Database Server Registration ==="
 
 # MySQL接続確認
@@ -30,6 +35,10 @@ for ((i=0; i<$PROXY_COUNT; i++)); do
     NAME=$(jq -r ".proxies[$i].name" "$CONFIG_FILE")
     TYPE=$(jq -r ".proxies[$i].type" "$CONFIG_FILE")
     
+    # エスケープ処理
+    NAME_ESCAPED=$(mysql_escape "$NAME")
+    TYPE_ESCAPED=$(mysql_escape "$TYPE")
+    
     echo "  Registering Proxy: $NAME (type: $TYPE)"
     
     mysql -h"${MYSQL_HOST}" -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${MYSQL_DATABASE}" <<EOF
@@ -43,10 +52,10 @@ INSERT INTO status (
     hub,
     allow_prestart
 ) VALUES (
-    '$NAME',
+    '$NAME_ESCAPED',
     0,
     0,
-    '$TYPE',
+    '$TYPE_ESCAPED',
     0,
     1,
     0,
@@ -63,7 +72,7 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
     NAME=$(jq -r ".spigots[$i].name" "$CONFIG_FILE")
     TYPE=$(jq -r ".spigots[$i].type" "$CONFIG_FILE")
     MEMORY_RATIO=$(jq -r ".spigots[$i].memory_ratio" "$CONFIG_FILE")
-    PORT=$(jq -r ".spigots[$i].port" "$CONFIG_FILE")
+    INTERNAL_PORT=$(jq -r ".spigots[$i].internal_port // 25564" "$CONFIG_FILE")
     IS_HOME=$(jq -r ".spigots[$i].is_home // false" "$CONFIG_FILE")
     
     # memory_ratio が 0 の場合はスキップ
@@ -79,8 +88,8 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
         HUB=0
     fi
     
-    # 内部ポート（Velocityから見たポート）
-    INTERNAL_PORT=$((PORT - 1))
+    # エスケープ処理
+    NAME_ESCAPED=$(mysql_escape "$NAME")
     
     echo "  Registering Spigot: $NAME (port: $INTERNAL_PORT, hub: $HUB)"
     
@@ -96,7 +105,7 @@ INSERT INTO status (
     allow_prestart,
     \`exec\`
 ) VALUES (
-    '$NAME',
+    '$NAME_ESCAPED',
     $INTERNAL_PORT,
     0,
     'spigot',
@@ -104,7 +113,7 @@ INSERT INTO status (
     1,
     $HUB,
     1,
-    '/mc/server/home/${NAME}.sh'
+    '/mc/server/home/${NAME_ESCAPED}.sh'
 );
 EOF
 done

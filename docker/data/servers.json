@@ -32,14 +32,17 @@
       "name": "spigot-main",
       "type": "paper",
       "version": "1.21.8-60",
+      "minecraft_version": "1.21.8",
       "url": "https://fill-data.papermc.io/v1/objects/8de7c52c3b02403503d16fac58003f1efef7dd7a0256786843927fa92ee57f1e/paper-1.21.8-60.jar",
       "filename": "paper-1.21.8-60.jar",
       "memory_ratio": 0.9,
       "plugin_preset": "full",
       "custom_plugins": [],
       "port": 25565,
+      "internal_port": 25564,
       "is_home": true,
-      "comment": "memory_ratio: Portion of MC memory allocated to this spigot. 0 = disabled. is_home: If true, this is the default server (HOME_SERVER_NAME). HOME_SERVER_IP is always 127.0.0.1"
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.8.jar",
+      "comment": "memory_ratio: Portion of MC memory allocated to this spigot. 0 = disabled. is_home: If true, this is the default server. internal_port: Port for Velocity to connect (usually port-1)"
     }
   ],
   "plugins": {
@@ -74,7 +77,26 @@
       "bukkit": {
         "version": "custom",
         "source": "build",
-        "comment": "Built from source during Docker build"
+        "comment": "Built from source during Docker build",
+        "version_mappings": {
+          "1.21.8": {
+            "gradle_module": "sv1_21_8",
+            "jar_filename": "Kishax-Spigot-1.21.8.jar"
+          },
+          "1.21": {
+            "gradle_module": "sv1_21",
+            "jar_filename": "Kishax-Spigot-1.21.jar"
+          },
+          "1.20.4": {
+            "gradle_module": "sv1_20_4",
+            "jar_filename": "Kishax-Spigot-1.20.4.jar"
+          }
+        }
+      },
+      "velocity": {
+        "version": "custom",
+        "source": "build",
+        "jar_filename": "Kishax-Velocity-3.4.0.jar"
       }
     }
   }

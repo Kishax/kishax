@@ -18,7 +18,7 @@ SPIGOT_COUNT=$(jq -r '.spigots | length' "$CONFIG_FILE")
 for ((i=0; i<$SPIGOT_COUNT; i++)); do
     NAME=$(jq -r ".spigots[$i].name" "$CONFIG_FILE")
     MEMORY_RATIO=$(jq -r ".spigots[$i].memory_ratio" "$CONFIG_FILE")
-    PORT=$(jq -r ".spigots[$i].port" "$CONFIG_FILE")
+    INTERNAL_PORT=$(jq -r ".spigots[$i].internal_port // 25564" "$CONFIG_FILE")
     IS_HOME=$(jq -r ".spigots[$i].is_home // false" "$CONFIG_FILE")
     
     # memory_ratio が 0 の場合はスキップ
@@ -26,9 +26,7 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
         continue
     fi
     
-    # Spigotは常に127.0.0.1で、ポートはPaper内部ポート（Velocityから見たポート）
-    # Velocityがホストのポートにバインドし、Spigotは内部ポートで待機
-    INTERNAL_PORT=$((PORT - 1))  # 例: 25565 → 25564
+    # Velocityから見たポート設定
     SERVERS_SECTION="${SERVERS_SECTION}${NAME} = \"127.0.0.1:${INTERNAL_PORT}\"\n"
     
     # is_homeがtrueの場合、tryリストの先頭に

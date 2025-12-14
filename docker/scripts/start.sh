@@ -22,6 +22,10 @@ for sql_file in /mc/mysql/init/*.sql; do
   fi
 done
 
+# Setup directories from templates
+echo "Setting up server directories from templates..."
+/mc/scripts/setup-directories.sh
+
 # Register servers to database from servers.json
 echo "Registering servers to database..."
 /mc/scripts/register-servers-to-db.sh
@@ -55,21 +59,31 @@ echo "Home Server: $HOME_SERVER_NAME at $HOME_SERVER_IP"
 echo "Updating velocity.toml with dynamic server configuration..."
 VELOCITY_TOML="/mc/velocity/velocity.toml"
 
-# [servers]セクションを動的に置き換え
-# 既存の[servers]セクションを削除し、新しいものを挿入
-sed -i '/^\[servers\]/,/^\[forced-hosts\]/{ /^\[servers\]/!{ /^\[forced-hosts\]/!d; }; }' "$VELOCITY_TOML"
-
-# 新しい[servers]セクションを挿入
-sed -i "/^\[servers\]/a\\
-# Configure your servers here. Each key represents the server's name, and the value\\
-# represents the IP address of the server to connect to.\\
-$(echo -e "$VELOCITY_SERVERS_SECTION")\\
-\\
-# In what order we should try servers when a player logs in or is kicked from a server.\\
-try = [\\
-    $VELOCITY_TRY_LIST\\
-]\\
-" "$VELOCITY_TOML"
+# より安全な方法: awk を使用して[servers]から[forced-hosts]までを置換
+awk -v servers="$VELOCITY_SERVERS_SECTION" -v try_list="$VELOCITY_TRY_LIST" '
+/^\[servers\]/ {
+    print $0
+    print "# ================================================================"
+    print "# This section is dynamically generated from servers.json at startup"
+    print "# Do not edit manually - it will be overwritten"
+    print "# ================================================================"
+    print "# Configure your servers here. Each key represents the server'"'"'s name, and the value"
+    print "# represents the IP address of the server to connect to."
+    printf "%s", servers
+    print ""
+    print "# In what order we should try servers when a player logs in or is kicked from a server."
+    print "try = ["
+    print "    " try_list
+    print "]"
+    print ""
+    skip=1
+    next
+}
+/^\[forced-hosts\]/ {
+    skip=0
+}
+!skip
+' "$VELOCITY_TOML" > "$VELOCITY_TOML.tmp" && mv "$VELOCITY_TOML.tmp" "$VELOCITY_TOML"
 
 echo "velocity.toml updated successfully"
 
