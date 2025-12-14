@@ -22,6 +22,14 @@ for sql_file in /mc/mysql/init/*.sql; do
   fi
 done
 
+# Register servers to database from servers.json
+echo "Registering servers to database..."
+/mc/scripts/register-servers-to-db.sh
+
+# Deploy plugins based on servers.json
+echo "Deploying plugins..."
+/mc/scripts/deploy-plugins.sh
+
 # Calculate memory allocation from servers.json
 echo "Calculating memory allocation..."
 /mc/scripts/calculate-memory.sh

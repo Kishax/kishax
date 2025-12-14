@@ -132,7 +132,9 @@ RUN if [ -f "velocity/plugins/kishax/velocity-kishax-config.yml" ]; then \
 COPY docker/scripts/start.sh /mc/start.sh
 COPY docker/scripts/calculate-memory.sh /mc/scripts/calculate-memory.sh
 COPY docker/scripts/generate-velocity-config.sh /mc/scripts/generate-velocity-config.sh
-RUN chmod +x /mc/start.sh /mc/scripts/calculate-memory.sh /mc/scripts/generate-velocity-config.sh
+COPY docker/scripts/deploy-plugins.sh /mc/scripts/deploy-plugins.sh
+COPY docker/scripts/register-servers-to-db.sh /mc/scripts/register-servers-to-db.sh
+RUN chmod +x /mc/start.sh /mc/scripts/*.sh
 
 # Accept Minecraft EULA
 RUN echo "eula=true" > spigot/eula.txt
