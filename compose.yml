@@ -10,11 +10,12 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      SEED_ENV: ${SEED_ENV:-development}
       
       # Spigot/Velocity Configuration
       SPIGOT_MEMORY: ${SPIGOT_MEMORY:-6G}
       VELOCITY_MEMORY: ${VELOCITY_MEMORY:-1G}
-      CONFIRM_URL: ${CONFIRM_URL:-http://10.0.36.61:8080/mc/auth}
+      CONFIRM_URL: ${CONFIRM_URL}
       HOME_SERVER_NAME: ${HOME_SERVER_NAME:-spigot}
       HOME_SERVER_IP: ${HOME_SERVER_IP:-127.0.0.1}
       
@@ -27,7 +28,7 @@ services:
       TO_DISCORD_QUEUE_URL: ${TO_DISCORD_QUEUE_URL}
       
       # Redis Configuration (i-b host Redis #1)
-      REDIS_URL: ${REDIS_URL:-redis://10.0.36.61:6379}
+      REDIS_URL: ${REDIS_URL}
       REDIS_CONNECTION_TIMEOUT: ${REDIS_CONNECTION_TIMEOUT:-5000}
       REDIS_COMMAND_TIMEOUT: ${REDIS_COMMAND_TIMEOUT:-3000}
       
@@ -40,7 +41,7 @@ services:
       SQS_WORKER_VISIBILITY_TIMEOUT_SECONDS: ${SQS_WORKER_VISIBILITY_TIMEOUT_SECONDS:-30}
       
       # Auth API Configuration
-      AUTH_API_URL: ${AUTH_API_URL:-http://10.0.36.61:8080}
+      AUTH_API_URL: ${AUTH_API_URL}
       AUTH_API_KEY: ${AUTH_API_KEY}
       
       # Logging Configuration
