@@ -42,8 +42,10 @@ done
 TRY_LIST=$(echo "$TRY_LIST" | sed 's/, $//')
 
 # velocity.toml生成用の変数を保存
+# 引用符をエスケープして保存
+ESCAPED_SERVERS_SECTION=$(echo -e "$SERVERS_SECTION" | sed 's/"/\\"/g')
 {
-    echo "VELOCITY_SERVERS_SECTION=\"$(echo -e "$SERVERS_SECTION")\""
+    echo "VELOCITY_SERVERS_SECTION=\"${ESCAPED_SERVERS_SECTION}\""
     echo "VELOCITY_TRY_LIST=\"$TRY_LIST\""
     echo "HOME_SERVER_NAME=\"$HOME_SERVER_NAME\""
 } > "$OUTPUT_DIR/velocity-config.env"
