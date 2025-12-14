@@ -277,6 +277,24 @@ for ((i=0; i<$ACTIVE_SPIGOT_COUNT; i++)); do
   SPIGOT_FILENAME="${!SPIGOT_FILENAME_VAR}"
   SPIGOT_PORT="${!SPIGOT_PORT_VAR}"
   
+  # Check if this server needs S3 world data import
+  S3IMPORT=$(jq -r ".spigots[$i].s3import // false" "$CONFIG_FILE")
+  AUTO_START=$(jq -r ".spigots[$i].auto_start // true" "$CONFIG_FILE")
+  
+  # Skip auto_start=false servers
+  if [ "$AUTO_START" = "false" ]; then
+    echo "⏭️  Skipping $SPIGOT_NAME (auto_start=false)"
+    continue
+  fi
+  
+  # Import world data from S3 if enabled
+  if [ "$S3IMPORT" = "true" ]; then
+    echo ""
+    echo "🌍 S3 import enabled for $SPIGOT_NAME, checking for world data..."
+    /mc/scripts/import-world-from-s3.sh "$SPIGOT_NAME" || true
+    echo ""
+  fi
+  
   echo "Starting Spigot: $SPIGOT_NAME (Memory: $SPIGOT_MEMORY, Port: $SPIGOT_PORT) in screen session '$SPIGOT_NAME'..."
   cd /mc/spigot
   screen -dmS "$SPIGOT_NAME" java -Xmx"$SPIGOT_MEMORY" -jar "$SPIGOT_FILENAME" --nogui

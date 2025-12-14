@@ -26,7 +26,7 @@
       "plugins": ["luckperms", "geyser-velocity", "floodgate-velocity", "kishax"],
       "comment": "memory_ratio: Portion of MC memory allocated to this proxy (sum of all proxies + spigots must be <= 1.0)"
     }
-  },
+  ],
   "spigots": [
     {
       "name": "home",
@@ -61,7 +61,7 @@
       "s3import": true,
       "auto_start": false,
       "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
-      "comment": "Latest server: Dynamically started from home server, imports world data from S3. auto_start: false = don't start on container boot"
+      "comment": "Latest server: Dynamically started from home server, imports world data from S3. auto_start: false = dont start on container boot"
     },
     {
       "name": "darumasan",
