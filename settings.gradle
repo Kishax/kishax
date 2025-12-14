@@ -30,5 +30,6 @@ include (
   'common',
   'velocity',
   'spigot:svcore',
+  'spigot:sv1_21_11',
   'spigot:sv1_21_8',
 )

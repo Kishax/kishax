@@ -74,8 +74,8 @@ RUN LUCKPERMS_BUKKIT_URL=$(jq -r '.plugins.luckperms.bukkit.url' /mc/config/serv
     echo "LuckPerms Bukkit download completed"
 
 # Download LuckPerms Velocity
-RUN LUCKPERMS_VELOCITY_URL=$(jq -r '.plugins["luckperms-velocity"].url' /mc/config/servers.json) && \
-    LUCKPERMS_VELOCITY_FILENAME=$(jq -r '.plugins["luckperms-velocity"].filename' /mc/config/servers.json) && \
+RUN LUCKPERMS_VELOCITY_URL=$(jq -r '.plugins.luckperms.velocity.url' /mc/config/servers.json) && \
+    LUCKPERMS_VELOCITY_FILENAME=$(jq -r '.plugins.luckperms.velocity.filename' /mc/config/servers.json) && \
     echo "Downloading LuckPerms Velocity: $LUCKPERMS_VELOCITY_FILENAME from $LUCKPERMS_VELOCITY_URL" && \
     wget -O "velocity/plugins/$LUCKPERMS_VELOCITY_FILENAME" "$LUCKPERMS_VELOCITY_URL" && \
     echo "LuckPerms Velocity download completed"
@@ -96,7 +96,8 @@ RUN FLOODGATE_VELOCITY_URL=$(jq -r '.plugins["floodgate-velocity"].url' /mc/conf
 
 # Copy built Kishax plugins from builder stage to temporary build directory
 RUN mkdir -p /mc/build/spigot /mc/build/velocity
-COPY --from=builder /app/spigot/sv1_21_8/build/libs/Kishax-Spigot-1.21.8.jar /mc/build/spigot/
+COPY --from=builder /app/spigot/sv1_21_11/build/libs/Kishax-Spigot-1.21.11.jar /mc/build/spigot/ 2>/dev/null || echo "sv1_21_11 not built"
+COPY --from=builder /app/spigot/sv1_21_8/build/libs/Kishax-Spigot-1.21.8.jar /mc/build/spigot/ 2>/dev/null || echo "sv1_21_8 not built"
 COPY --from=builder /app/velocity/build/libs/ /mc/build/velocity/
 RUN ls -la /mc/build/spigot/ && ls -la /mc/build/velocity/
 

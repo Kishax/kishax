@@ -19,11 +19,11 @@
     {
       "name": "velocity-main",
       "type": "velocity",
-      "version": "3.4.0-SNAPSHOT-534",
-      "url": "https://fill-data.papermc.io/v1/objects/0c8327f15976c00d97e9db9f387f3b9923403d158a2ade35dfbdfc40e5be8876/velocity-3.4.0-SNAPSHOT-534.jar",
-      "filename": "velocity-3.4.0-SNAPSHOT-534.jar",
+      "version": "3.4.0-SNAPSHOT-558",
+      "url": "https://fill-data.papermc.io/v1/objects/ef1a852bfae7397e84907837925e7ad21c6312066290edaae401b77f6f423ac3/velocity-3.4.0-SNAPSHOT-558.jar",
+      "filename": "velocity-3.4.0-SNAPSHOT-558.jar",
       "memory_ratio": 0.1,
-      "plugins": ["luckperms-velocity", "geyser-velocity", "floodgate-velocity"],
+      "plugins": ["luckperms", "geyser-velocity", "floodgate-velocity"],
       "comment": "memory_ratio: Portion of MC memory allocated to this proxy (sum of all proxies + spigots must be <= 1.0)"
     }
   ],
@@ -31,46 +31,41 @@
     {
       "name": "spigot-main",
       "type": "paper",
-      "version": "1.21.8-60",
-      "minecraft_version": "1.21.8",
-      "url": "https://fill-data.papermc.io/v1/objects/8de7c52c3b02403503d16fac58003f1efef7dd7a0256786843927fa92ee57f1e/paper-1.21.8-60.jar",
-      "filename": "paper-1.21.8-60.jar",
+      "version": "1.21.11-39",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
+      "filename": "paper-1.21.11-39.jar",
       "memory_ratio": 0.9,
       "plugin_preset": "full",
       "custom_plugins": [],
       "port": 25565,
       "internal_port": 25564,
       "is_home": true,
-      "kishax_spigot_jar": "Kishax-Spigot-1.21.8.jar",
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
       "comment": "memory_ratio: Portion of MC memory allocated to this spigot. 0 = disabled. is_home: If true, this is the default server. internal_port: Port for Velocity to connect (usually port-1)"
     }
   ],
   "plugins": {
     "luckperms": {
       "bukkit": {
-        "version": "5.5.10",
-        "url": "https://download.luckperms.net/1595/bukkit/loader/LuckPerms-Bukkit-5.5.10.jar",
-        "filename": "LuckPerms-Bukkit-5.5.10.jar"
+        "version": "5.5.21",
+        "url": "https://download.luckperms.net/1610/bukkit/loader/LuckPerms-Bukkit-5.5.21.jar",
+        "filename": "LuckPerms-Bukkit-5.5.21.jar"
       },
       "velocity": {
-        "version": "5.5.10",
-        "url": "https://download.luckperms.net/1595/velocity/LuckPerms-Velocity-5.5.10.jar",
-        "filename": "LuckPerms-Velocity-5.5.10.jar"
+        "version": "5.5.21",
+        "url": "https://download.luckperms.net/1610/velocity/LuckPerms-Velocity-5.5.21.jar",
+        "filename": "LuckPerms-Velocity-5.5.21.jar"
       }
     },
-    "luckperms-velocity": {
-      "version": "5.5.10",
-      "url": "https://download.luckperms.net/1595/velocity/LuckPerms-Velocity-5.5.10.jar",
-      "filename": "LuckPerms-Velocity-5.5.10.jar"
-    },
     "geyser-velocity": {
-      "version": "2.8.3",
-      "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.8.3/builds/908/downloads/velocity",
+      "version": "x.x.x",
+      "url": "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/velocity",
       "filename": "geyser-velocity.jar"
     },
     "floodgate-velocity": {
-      "version": "2.2.4",
-      "url": "https://download.geysermc.org/v2/projects/floodgate/versions/2.2.4/builds/118/downloads/velocity",
+      "version": "x.x.x",
+      "url": "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/velocity",
       "filename": "floodgate-velocity.jar"
     },
     "kishax": {
@@ -79,6 +74,10 @@
         "source": "build",
         "comment": "Built from source during Docker build",
         "version_mappings": {
+          "1.21.11": {
+            "gradle_module": "sv1_21_11",
+            "jar_filename": "Kishax-Spigot-1.21.11.jar"
+          },
           "1.21.8": {
             "gradle_module": "sv1_21_8",
             "jar_filename": "Kishax-Spigot-1.21.8.jar"
