@@ -18,8 +18,9 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# JSONから値を読み取る
-OVERALL_MEMORY=$(jq -r '.memory.overall' "$CONFIG_FILE" | envsubst)
+# JSONから値を読み取る（環境変数から上書き可能）
+OVERALL_MEMORY_FROM_JSON=$(jq -r '.memory.overall' "$CONFIG_FILE")
+OVERALL_MEMORY=${OVERALL_MEMORY:-$OVERALL_MEMORY_FROM_JSON}
 BUFFER_MEMORY=$(jq -r '.memory.buffer' "$CONFIG_FILE")
 MC_WANTAGE=$(jq -r '.memory.mc_wantage' "$CONFIG_FILE")
 

@@ -42,9 +42,11 @@ done
 TRY_LIST=$(echo "$TRY_LIST" | sed 's/, $//')
 
 # velocity.toml生成用の変数を保存
-echo "VELOCITY_SERVERS_SECTION=$(echo -e "$SERVERS_SECTION")" > "$OUTPUT_DIR/velocity-config.env"
-echo "VELOCITY_TRY_LIST=$TRY_LIST" >> "$OUTPUT_DIR/velocity-config.env"
-echo "HOME_SERVER_NAME=$HOME_SERVER_NAME" >> "$OUTPUT_DIR/velocity-config.env"
+{
+    echo "VELOCITY_SERVERS_SECTION=\"$(echo -e "$SERVERS_SECTION")\""
+    echo "VELOCITY_TRY_LIST=\"$TRY_LIST\""
+    echo "HOME_SERVER_NAME=\"$HOME_SERVER_NAME\""
+} > "$OUTPUT_DIR/velocity-config.env"
 
 echo "Generated Velocity configuration:"
 echo "  Servers: $(echo -e "$SERVERS_SECTION" | wc -l) active"

@@ -165,9 +165,10 @@ if [ $PROXY_COUNT -gt 0 ]; then
             continue
         fi
         
-        # Velocityプラグインの情報を取得（直接定義の場合）
-        PLUGIN_URL=$(jq -r ".plugins[\"$plugin_name\"].url // null" "$CONFIG_FILE")
-        PLUGIN_FILENAME=$(jq -r ".plugins[\"$plugin_name\"].filename // null" "$CONFIG_FILE")
+        # Velocityプラグインの情報を取得
+        # まずは直接定義（geyser-velocity等）、次にluckpermsのようなネスト構造を試す
+        PLUGIN_URL=$(jq -r ".plugins[\"$plugin_name\"].url // .plugins[\"$plugin_name\"].velocity.url // null" "$CONFIG_FILE")
+        PLUGIN_FILENAME=$(jq -r ".plugins[\"$plugin_name\"].filename // .plugins[\"$plugin_name\"].velocity.filename // null" "$CONFIG_FILE")
         
         if [ "$PLUGIN_URL" = "null" ] || [ "$PLUGIN_FILENAME" = "null" ]; then
             echo "    WARNING: Plugin '$plugin_name' missing URL or filename, skipping"
