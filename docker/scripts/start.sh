@@ -169,6 +169,32 @@ find /mc -type f \( -name "*.yml" -o -name "*.toml" \) | while read file; do
   fi
 done
 
+# Copy processed template files to actual server directories
+echo "Copying processed templates to server directories..."
+
+# Copy Spigot config files
+if [ -f "/mc/templates/spigot/config/paper-global.yml" ]; then
+    mkdir -p /mc/spigot/config
+    cp /mc/templates/spigot/config/paper-global.yml /mc/spigot/config/paper-global.yml
+    echo "  Copied paper-global.yml to /mc/spigot/config/"
+fi
+
+# Copy Spigot plugin configs
+if [ -d "/mc/templates/spigot/plugins" ]; then
+    mkdir -p /mc/spigot/plugins
+    cp -r /mc/templates/spigot/plugins/Kishax /mc/spigot/plugins/ 2>/dev/null || true
+    cp -r /mc/templates/spigot/plugins/LuckPerms /mc/spigot/plugins/ 2>/dev/null || true
+    echo "  Copied plugin configs to /mc/spigot/plugins/"
+fi
+
+# Copy Velocity plugin configs (already done earlier, but ensure consistency)
+if [ -d "/mc/templates/velocity/plugins" ]; then
+    mkdir -p /mc/velocity/plugins
+    cp -r /mc/templates/velocity/plugins/kishax /mc/velocity/plugins/ 2>/dev/null || true
+    cp -r /mc/templates/velocity/plugins/luckperms /mc/velocity/plugins/ 2>/dev/null || true
+    echo "  Copied Velocity plugin configs to /mc/velocity/plugins/"
+fi
+
 # Final verification
 VELOCITY_SECRET=$(cat /mc/velocity/forwarding.secret)
 if [ -f "/mc/spigot/config/paper-global.yml" ]; then
