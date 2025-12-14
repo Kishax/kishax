@@ -93,7 +93,7 @@ awk -v servers="$VELOCITY_SERVERS_SECTION" -v try_list="$VELOCITY_TRY_LIST" -v h
     print "# ================================================================"
     print "#Configure your forced hosts here."
     if (home_server != "") {
-        print "\"" home_server ".kishax.net\" = [\"" home_server "\"]"
+        print "\"mc.kishax.net\" = [\"" home_server "\"]"
     }
     skip=1
     next
