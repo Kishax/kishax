@@ -1,5 +1,5 @@
 # Multi-stage build for Kishax Minecraft Server Environment
-FROM openjdk:21-jdk-slim AS builder
+FROM eclipse-temurin:21-jdk AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -25,7 +25,7 @@ RUN if [ ! -f velocity/build/libs/Kishax-Velocity-*.jar ] || [ ! -f spigot/sv1_2
     fi
 
 # Production stage
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jdk
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
