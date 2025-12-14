@@ -22,6 +22,22 @@ for sql_file in /mc/mysql/init/*.sql; do
   fi
 done
 
+# Calculate memory allocation from servers.json
+echo "Calculating memory allocation..."
+/mc/scripts/calculate-memory.sh
+
+# Load calculated configurations
+source /mc/runtime/proxies.env
+source /mc/runtime/spigots.env
+
+# Export HOME_SERVER variables for use in config files
+export HOME_SERVER_NAME
+export HOME_SERVER_IP
+
+echo "Active Proxies: $ACTIVE_PROXY_COUNT"
+echo "Active Spigots: $ACTIVE_SPIGOT_COUNT"
+echo "Home Server: $HOME_SERVER_NAME at $HOME_SERVER_IP"
+
 # Check if forwarding.secret already exists
 if [ -f "/mc/velocity/forwarding.secret" ]; then
   # Use existing secret
@@ -112,26 +128,50 @@ done
 echo "Configuration completed!"
 echo "Starting servers..."
 
-# Start Velocity proxy in screen session
-echo "Starting Velocity proxy in screen session 'velocity'..."
-cd /mc/velocity
-screen -dmS velocity java -Xmx${VELOCITY_MEMORY:-1G} -jar velocity-*.jar
+# Start Proxies
+for ((i=0; i<$ACTIVE_PROXY_COUNT; i++)); do
+  PROXY_NAME_VAR="PROXY_${i}_NAME"
+  PROXY_MEMORY_VAR="PROXY_${i}_MEMORY"
+  PROXY_FILENAME_VAR="PROXY_${i}_FILENAME"
+  
+  PROXY_NAME="${!PROXY_NAME_VAR}"
+  PROXY_MEMORY="${!PROXY_MEMORY_VAR}"
+  PROXY_FILENAME="${!PROXY_FILENAME_VAR}"
+  
+  echo "Starting Proxy: $PROXY_NAME (Memory: $PROXY_MEMORY) in screen session '$PROXY_NAME'..."
+  cd /mc/velocity
+  screen -dmS "$PROXY_NAME" java -Xmx"$PROXY_MEMORY" -jar "$PROXY_FILENAME"
+  sleep 5
+done
 
-# Wait a moment for Velocity to start
-echo "Waiting for Velocity to initialize..."
+# Wait for proxies to initialize
+echo "Waiting for proxies to initialize..."
 sleep 10
 
-# Start Paper server in screen session
-echo "Starting Paper server in screen session 'spigot'..."
-cd /mc/spigot
-screen -dmS spigot java -Xmx${SPIGOT_MEMORY:-2G} -jar paper-*.jar --nogui
+# Start Spigots
+for ((i=0; i<$ACTIVE_SPIGOT_COUNT; i++)); do
+  SPIGOT_NAME_VAR="SPIGOT_${i}_NAME"
+  SPIGOT_MEMORY_VAR="SPIGOT_${i}_MEMORY"
+  SPIGOT_FILENAME_VAR="SPIGOT_${i}_FILENAME"
+  SPIGOT_PORT_VAR="SPIGOT_${i}_PORT"
+  
+  SPIGOT_NAME="${!SPIGOT_NAME_VAR}"
+  SPIGOT_MEMORY="${!SPIGOT_MEMORY_VAR}"
+  SPIGOT_FILENAME="${!SPIGOT_FILENAME_VAR}"
+  SPIGOT_PORT="${!SPIGOT_PORT_VAR}"
+  
+  echo "Starting Spigot: $SPIGOT_NAME (Memory: $SPIGOT_MEMORY, Port: $SPIGOT_PORT) in screen session '$SPIGOT_NAME'..."
+  cd /mc/spigot
+  screen -dmS "$SPIGOT_NAME" java -Xmx"$SPIGOT_MEMORY" -jar "$SPIGOT_FILENAME" --nogui
+  sleep 3
+done
 
 # Keep container running by attaching to spigot screen
-echo "Servers started! Use 'make mc-spigot' or 'make mc-velocity' to access server consoles."
+echo "Servers started! Use 'docker exec -it kishax-minecraft screen -r <session-name>' to access server consoles."
 echo "Available screen sessions:"
 screen -list
 
 # Keep container alive by waiting for screen sessions
-while screen -list | grep -q "spigot\|velocity"; do
+while screen -list | grep -qE "(spigot|velocity|proxy)"; do
   sleep 30
 done

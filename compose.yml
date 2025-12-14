@@ -4,6 +4,9 @@ services:
     container_name: kishax-minecraft
     restart: unless-stopped
     environment:
+      # Overall Memory Configuration
+      OVERALL_MEMORY: ${OVERALL_MEMORY:-8.0}
+      
       # MySQL Configuration (RDS MySQL)
       MYSQL_HOST: ${MYSQL_HOST}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-mc}
@@ -11,13 +14,6 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       SEED_ENV: ${SEED_ENV:-development}
-      
-      # Spigot/Velocity Configuration
-      SPIGOT_MEMORY: ${SPIGOT_MEMORY:-6G}
-      VELOCITY_MEMORY: ${VELOCITY_MEMORY:-1G}
-      CONFIRM_URL: ${CONFIRM_URL}
-      HOME_SERVER_NAME: ${HOME_SERVER_NAME:-spigot}
-      HOME_SERVER_IP: ${HOME_SERVER_IP:-127.0.0.1}
       
       # AWS Configuration
       AWS_REGION: ${AWS_REGION:-ap-northeast-1}
@@ -40,7 +36,8 @@ services:
       SQS_WORKER_WAIT_TIME_SECONDS: ${SQS_WORKER_WAIT_TIME_SECONDS:-20}
       SQS_WORKER_VISIBILITY_TIMEOUT_SECONDS: ${SQS_WORKER_VISIBILITY_TIMEOUT_SECONDS:-30}
       
-      # Auth API Configuration
+      # Auth API Configuration (CONFIRM_URL is deprecated, use AUTH_API_URL)
+      CONFIRM_URL: ${AUTH_API_URL}/mc/auth
       AUTH_API_URL: ${AUTH_API_URL}
       AUTH_API_KEY: ${AUTH_API_KEY}
       
