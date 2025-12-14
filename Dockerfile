@@ -96,10 +96,11 @@ RUN FLOODGATE_VELOCITY_URL=$(jq -r '.plugins["floodgate-velocity"].url' /mc/conf
 
 # Copy built Kishax plugins from builder stage to temporary build directory
 RUN mkdir -p /mc/build/spigot /mc/build/velocity
-COPY --from=builder /app/spigot/sv1_21_11/build/libs/Kishax-Spigot-1.21.11.jar /mc/build/spigot/ 2>/dev/null || echo "sv1_21_11 not built"
-COPY --from=builder /app/spigot/sv1_21_8/build/libs/Kishax-Spigot-1.21.8.jar /mc/build/spigot/ 2>/dev/null || echo "sv1_21_8 not built"
+COPY --from=builder /app/spigot/sv1_21_11/build/libs/ /mc/build/spigot/sv1_21_11/
+COPY --from=builder /app/spigot/sv1_21_8/build/libs/ /mc/build/spigot/sv1_21_8/
 COPY --from=builder /app/velocity/build/libs/ /mc/build/velocity/
-RUN ls -la /mc/build/spigot/ && ls -la /mc/build/velocity/
+RUN find /mc/build/spigot -name "*.jar" -exec cp {} /mc/build/spigot/ \; && \
+    ls -la /mc/build/spigot/ && ls -la /mc/build/velocity/
 
 # Copy template directories (will be copied to actual locations at runtime)
 COPY docker/templates/spigot /mc/templates/spigot
