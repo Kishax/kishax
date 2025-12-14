@@ -59,6 +59,12 @@ echo "Home Server: $HOME_SERVER_NAME at $HOME_SERVER_IP"
 echo "Updating velocity.toml with dynamic server configuration..."
 VELOCITY_TOML="/mc/velocity/velocity.toml"
 
+# velocity.tomlが存在しない場合、テンプレートからコピー
+if [ ! -f "$VELOCITY_TOML" ]; then
+    echo "velocity.toml not found, copying from template..."
+    cp /mc/templates/velocity/velocity.toml "$VELOCITY_TOML"
+fi
+
 # より安全な方法: awk を使用して[servers]から[forced-hosts]までを置換
 awk -v servers="$VELOCITY_SERVERS_SECTION" -v try_list="$VELOCITY_TRY_LIST" '
 /^\[servers\]/ {
@@ -94,7 +100,7 @@ VELOCITY_KISHAX_CONFIG="/mc/velocity/plugins/kishax/config.yml"
 # まだコピーされていない場合は、テンプレートからコピー
 if [ ! -f "$VELOCITY_KISHAX_CONFIG" ]; then
     mkdir -p /mc/velocity/plugins/kishax
-    cp /mc/docker/data/velocity-kishax-config.yml "$VELOCITY_KISHAX_CONFIG" || true
+    cp /mc/templates/velocity/plugins/kishax/config.yml "$VELOCITY_KISHAX_CONFIG" || true
 fi
 
 # Serversセクションを動的に置き換え
@@ -165,12 +171,16 @@ done
 
 # Final verification
 VELOCITY_SECRET=$(cat /mc/velocity/forwarding.secret)
-PAPER_SECRET=$(grep "secret:" /mc/spigot/config/paper-global.yml | head -1 | awk '{print $2}')
-echo "Final check - Velocity: $VELOCITY_SECRET, Paper: $PAPER_SECRET"
-if [ "$VELOCITY_SECRET" = "$PAPER_SECRET" ]; then
-  echo "✅ Forwarding secrets match!"
+if [ -f "/mc/spigot/config/paper-global.yml" ]; then
+    PAPER_SECRET=$(grep "secret:" /mc/spigot/config/paper-global.yml | head -1 | awk '{print $2}')
+    echo "Final check - Velocity: $VELOCITY_SECRET, Paper: $PAPER_SECRET"
+    if [ "$VELOCITY_SECRET" = "$PAPER_SECRET" ]; then
+      echo "✅ Forwarding secrets match!"
+    else
+      echo "❌ Forwarding secrets do NOT match!"
+    fi
 else
-  echo "❌ Forwarding secrets do NOT match!"
+    echo "⚠️  paper-global.yml not found yet, will be created on first run"
 fi
 
 # Ensure plugins directories exist
