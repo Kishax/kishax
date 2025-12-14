@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-spigot mc-velocity mc-list logs-velocity logs-spigot
 
 .DEFAULT_GOAL := help
 
@@ -64,3 +64,23 @@ mc-list: ## Minecraft画面セッション一覧を表示
 		exit 1; \
 	fi
 	docker exec -it kishax-minecraft screen -list
+
+logs-velocity: ## Velocityログを表示
+	@if [ "$(MAKECMDGOALS)" = "logs-velocity" ]; then \
+		echo "実行コマンド: docker exec -it kishax-minecraft cat /mc/velocity/logs/latest.log"; \
+	fi
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	docker exec -it kishax-minecraft cat /mc/velocity/logs/latest.log
+
+logs-spigot: ## Spigotログを表示
+	@if [ "$(MAKECMDGOALS)" = "logs-spigot" ]; then \
+		echo "実行コマンド: docker exec -it kishax-minecraft cat /mc/spigot/logs/latest.log"; \
+	fi
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	docker exec -it kishax-minecraft cat /mc/spigot/logs/latest.log
