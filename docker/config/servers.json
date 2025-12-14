@@ -3,7 +3,7 @@
     "overall": "8.0",
     "buffer": 0.1,
     "mc_wantage": 1.0,
-    "comment": "overall: Total available memory (GB), buffer: Reserved buffer (GB), mc_wantage: Percentage allocated to MC (0.0-1.0)"
+    "comment": "overall: Total available memory (GB), buffer: Reserved buffer ratio (0.1 = 10% of overall), mc_wantage: Percentage allocated to MC (0.0-1.0)"
   },
   "plugin_presets": {
     "essential": {

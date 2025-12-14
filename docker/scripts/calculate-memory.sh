@@ -21,11 +21,14 @@ fi
 # JSONから値を読み取る（環境変数から上書き可能）
 OVERALL_MEMORY_FROM_JSON=$(jq -r '.memory.overall' "$CONFIG_FILE")
 OVERALL_MEMORY=${OVERALL_MEMORY:-$OVERALL_MEMORY_FROM_JSON}
-BUFFER_MEMORY=$(jq -r '.memory.buffer' "$CONFIG_FILE")
+BUFFER_RATIO=$(jq -r '.memory.buffer' "$CONFIG_FILE")
 MC_WANTAGE=$(jq -r '.memory.mc_wantage' "$CONFIG_FILE")
 
+# Buffer Memoryを計算（パーセンテージとして扱う）
+BUFFER_MEMORY=$(echo "scale=2; $OVERALL_MEMORY * $BUFFER_RATIO" | bc)
+
 echo "Overall Memory: ${OVERALL_MEMORY} GB"
-echo "Buffer Memory: ${BUFFER_MEMORY} GB"
+echo "Buffer Ratio: ${BUFFER_RATIO} (${BUFFER_MEMORY} GB)"
 echo "MC Wantage: ${MC_WANTAGE}"
 
 # MC全体メモリ計算: O-MC = (O-M - B-M) × O-MC-WANTAGE
