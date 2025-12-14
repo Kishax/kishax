@@ -66,7 +66,7 @@ if [ ! -f "$VELOCITY_TOML" ]; then
 fi
 
 # より安全な方法: awk を使用して[servers]から[forced-hosts]までを置換
-awk -v servers="$VELOCITY_SERVERS_SECTION" -v try_list="$VELOCITY_TRY_LIST" '
+awk -v servers="$VELOCITY_SERVERS_SECTION" -v try_list="$VELOCITY_TRY_LIST" -v home_server="$HOME_SERVER_NAME" '
 /^\[servers\]/ {
     print $0
     print "# ================================================================"
@@ -86,6 +86,19 @@ awk -v servers="$VELOCITY_SERVERS_SECTION" -v try_list="$VELOCITY_TRY_LIST" '
     next
 }
 /^\[forced-hosts\]/ {
+    print $0
+    print "# ================================================================"
+    print "# This section is dynamically generated from servers.json at startup"
+    print "# Do not edit manually - it will be overwritten"
+    print "# ================================================================"
+    print "#Configure your forced hosts here."
+    if (home_server != "") {
+        print "\"" home_server ".kishax.net\" = [\"" home_server "\"]"
+    }
+    skip=1
+    next
+}
+/^\[advanced\]/ {
     skip=0
 }
 !skip
