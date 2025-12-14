@@ -146,8 +146,8 @@ if [ $PROXY_COUNT -gt 0 ]; then
             continue
         fi
         
-        # ソースからビルド
-        PLUGIN_SOURCE=$(jq -r ".plugins[\"$plugin_name\"].source // \"download\"" "$CONFIG_FILE")
+        # ソースからビルド（Velocity用の定義を確認）
+        PLUGIN_SOURCE=$(jq -r ".plugins[\"$plugin_name\"].velocity.source // .plugins[\"$plugin_name\"].source // \"download\"" "$CONFIG_FILE")
         if [ "$PLUGIN_SOURCE" = "build" ]; then
             echo "    Plugin is built from source: $plugin_name"
             
