@@ -41,7 +41,7 @@
       "port": 25565,
       "internal_port": 25564,
       "is_home": true,
-      "s3import": false,
+      "s3import": true,
       "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
       "comment": "Home server: Always running, default entry point. s3import: If true, import world data from S3 on first startup"
     },
