@@ -144,3 +144,5 @@ aws iam get-role --role-name kishax-production-ec2-role
 - [ ] インポート進捗をログに出力
 - [ ] インポート完了後にSlack/Discord通知
 - [ ] ワールドデータの自動バックアップ（逆方向のS3アップロード）
+
+

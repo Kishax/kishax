@@ -4,6 +4,21 @@
 
 Minecraftサーバーで生成された画像マップをS3バケットに保存・取得する機能。ローカルストレージの容量制約を解消し、複数サーバー間でのマップ共有を可能にする。
 
+## ✅ 実装ステータス
+
+| コンポーネント | ステータス | ファイルパス |
+|--------------|----------|------------|
+| インターフェース定義 | ✅ 完了 | `apps/mc/spigot/svcore/src/main/java/net/kishax/mc/spigot/server/imagemap/ImageStorage.java` |
+| ローカルストレージ実装 | ✅ 完了 | `apps/mc/spigot/svcore/src/main/java/net/kishax/mc/spigot/server/imagemap/LocalImageStorage.java` |
+| S3ストレージ実装 | ✅ 完了 | `apps/mc/spigot/svcore/src/main/java/net/kishax/mc/spigot/server/imagemap/S3ImageStorage.java` |
+| ストレージ管理クラス | ✅ 完了 | `apps/mc/spigot/svcore/src/main/java/net/kishax/mc/spigot/server/imagemap/ImageStorageManager.java` |
+| ImageMap.java統合 | ✅ 完了 | `apps/mc/spigot/svcore/src/main/java/net/kishax/mc/spigot/server/ImageMap.java` |
+| Settings.java更新 | ✅ 完了 | `apps/mc/common/src/main/java/net/kishax/mc/common/settings/Settings.java` |
+| Gradle依存関係 | ✅ 完了 | `apps/mc/spigot/svcore/build.gradle` (AWS SDK v2追加) |
+| MySQL設定SQL | ✅ 完了 | `.bak/db/mc/s3_image_storage_settings.sql` |
+| IAM権限 | ✅ 完了 | `terraform/modules/iam/main.tf` (既に設定済み) |
+| デプロイドキュメント | ✅ 完了 | `docs/infrastructure/ec2/deployment.md` (3-6節) |
+
 ## 要件
 
 ### 機能要件
@@ -507,3 +522,5 @@ aws s3 rm s3://kishax-docker-images/images/202411 --recursive
 6. **IAM権限設定（Terraform）**
 7. **統合テスト**
 8. **本番デプロイ**
+
+

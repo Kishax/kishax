@@ -111,3 +111,5 @@ echo -e "$KISHAX_SERVERS_YAML" > "$OUTPUT_DIR/kishax-servers.yml"
 
 echo "Generated Kishax Velocity plugin Servers section"
 echo "=== Configuration Generation Complete ==="
+
+

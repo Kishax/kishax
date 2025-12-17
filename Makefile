@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-spigot mc-velocity mc-list logs-velocity logs-spigot
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-spigot mc-velocity mc-list logs-velocity logs-spigot env-load
 
 .DEFAULT_GOAL := help
 
@@ -9,6 +9,12 @@ help: ## ヘルプを表示
 	@echo ""
 	@echo "利用可能なコマンド:"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+env-load: ## 環境変数を読み込み (.env と .env.auto)
+	@echo "以下のコマンドを実行して環境変数を読み込んでください:"
+	@echo ""
+	@echo "  source .env && source .env.auto"
+	@echo ""
 
 deploy-plugin:
 	./gradlew build -x test

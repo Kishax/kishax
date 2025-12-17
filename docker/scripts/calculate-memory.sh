@@ -138,3 +138,5 @@ echo "=== Configuration Complete ==="
 echo "Generated files:"
 echo "  - $OUTPUT_DIR/proxies.env"
 echo "  - $OUTPUT_DIR/spigots.env"
+
+
