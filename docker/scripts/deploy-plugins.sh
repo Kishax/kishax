@@ -29,8 +29,8 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
         continue
     fi
     
-    # プラグインディレクトリ（現在は単一spigotディレクトリ）
-    PLUGINS_DIR="/mc/spigot/plugins"
+    # 各サーバー固有のプラグインディレクトリ
+    PLUGINS_DIR="/mc/spigot/$NAME/plugins"
     mkdir -p "$PLUGINS_DIR"
     
     echo "Deploying plugins for Spigot: $NAME (Minecraft $MINECRAFT_VERSION)"
