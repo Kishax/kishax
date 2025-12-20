@@ -310,6 +310,8 @@ echo "Available screen sessions:"
 screen -list
 
 # Keep container alive by waiting for screen sessions
-while screen -list | grep -qE "(spigot|velocity|proxy)"; do
+while screen -list | grep -qE "(home|latest|proxy|\.\.)" 2>/dev/null; do
   sleep 30
 done
+
+echo "All screen sessions have ended. Container will exit."
