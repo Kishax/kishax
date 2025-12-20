@@ -306,8 +306,8 @@ for ((i=0; i<$ACTIVE_SPIGOT_COUNT; i++)); do
   fi
   
   echo "Starting Spigot: $SPIGOT_NAME (Memory: $SPIGOT_MEMORY, Port: $SPIGOT_PORT) in screen session '$SPIGOT_NAME'..."
-  cd /mc/spigot
-  screen -dmS "$SPIGOT_NAME" java -Xmx"$SPIGOT_MEMORY" -jar "$SPIGOT_FILENAME" --nogui
+  cd /mc/spigot/$SPIGOT_NAME
+  screen -dmS "$SPIGOT_NAME" java -Xmx"$SPIGOT_MEMORY" -jar /mc/spigot/"$SPIGOT_FILENAME" --nogui
   sleep 3
 done
 
