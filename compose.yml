@@ -45,9 +45,15 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     
     volumes:
-      - minecraft_data:/mc/spigot/world
-      - minecraft_data_nether:/mc/spigot/world_nether
-      - minecraft_data_the_end:/mc/spigot/world_the_end
+      # Home server volumes
+      - minecraft_data_home:/mc/spigot/home/world
+      - minecraft_data_home_nether:/mc/spigot/home/world_nether
+      - minecraft_data_home_the_end:/mc/spigot/home/world_the_end
+      # Latest server volumes
+      - minecraft_data_latest:/mc/spigot/latest/world
+      - minecraft_data_latest_nether:/mc/spigot/latest/world_nether
+      - minecraft_data_latest_the_end:/mc/spigot/latest/world_the_end
+      # Shared volumes
       - velocity_data:/mc/velocity
       - server_images:/mc/server/images
     ports:
@@ -57,8 +63,14 @@ services:
     tty: true
 
 volumes:
-  minecraft_data:
-  minecraft_data_nether:
-  minecraft_data_the_end:
+  # Home server volumes
+  minecraft_data_home:
+  minecraft_data_home_nether:
+  minecraft_data_home_the_end:
+  # Latest server volumes
+  minecraft_data_latest:
+  minecraft_data_latest_nether:
+  minecraft_data_latest_the_end:
+  # Shared volumes
   velocity_data:
   server_images:
