@@ -146,3 +146,5 @@ aws iam get-role --role-name kishax-production-ec2-role
 - [ ] ワールドデータの自動バックアップ（逆方向のS3アップロード）
 
 
+
+
