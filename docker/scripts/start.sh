@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Configuration file path
+CONFIG_FILE="/mc/config/servers.json"
+
 echo "Starting Kishax Minecraft Server Environment..."
 
 # Wait for MySQL to be ready
