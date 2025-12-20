@@ -17,13 +17,20 @@ done
 echo "Initializing database..."
 mysql -h${MYSQL_HOST:-mysql} -u${MYSQL_USER:-root} -p${MYSQL_PASSWORD:-password} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE:-mc};"
 
-# Import SQL files
-for sql_file in /mc/mysql/init/*.sql; do
-  if [ -f "$sql_file" ]; then
-    echo "Importing $(basename $sql_file)..."
-    mysql -h${MYSQL_HOST:-mysql} -u${MYSQL_USER:-root} -p${MYSQL_PASSWORD:-password} ${MYSQL_DATABASE:-mc} <"$sql_file"
-  fi
-done
+# Import SQL files only if tables don't exist
+TABLE_COUNT=$(mysql -h${MYSQL_HOST:-mysql} -u${MYSQL_USER:-root} -p${MYSQL_PASSWORD:-password} -e "SELECT COUNT(*) as cnt FROM information_schema.tables WHERE table_schema = '${MYSQL_DATABASE:-mc}';" | tail -n 1)
+
+if [ "$TABLE_COUNT" -eq 0 ]; then
+  echo "No tables found, importing schema..."
+  for sql_file in /mc/mysql/init/*.sql; do
+    if [ -f "$sql_file" ]; then
+      echo "Importing $(basename $sql_file)..."
+      mysql -h${MYSQL_HOST:-mysql} -u${MYSQL_USER:-root} -p${MYSQL_PASSWORD:-password} ${MYSQL_DATABASE:-mc} <"$sql_file"
+    fi
+  done
+else
+  echo "Tables already exist, skipping schema import"
+fi
 
 # Setup directories from templates
 echo "Setting up server directories from templates..."
