@@ -35,7 +35,7 @@
       "minecraft_version": "1.21.11",
       "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
       "filename": "paper-1.21.11-39.jar",
-      "memory_ratio": 0.85,
+      "memory_ratio": 0.35,
       "plugin_preset": "full",
       "custom_plugins": [],
       "port": 25565,
@@ -52,7 +52,7 @@
       "minecraft_version": "1.21.11",
       "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
       "filename": "paper-1.21.11-39.jar",
-      "memory_ratio": 0,
+      "memory_ratio": 0.5,
       "plugin_preset": "full",
       "custom_plugins": [],
       "port": 25578,
@@ -61,7 +61,7 @@
       "s3import": true,
       "auto_start": false,
       "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
-      "comment": "Latest server: Dynamically started from home server via Kishax plugin, imports world data from S3. memory_ratio: 0 = disabled by default, started on-demand"
+      "comment": "Latest server: Dynamically started from home server, imports world data from S3. auto_start: false = dont start on container boot"
     },
     {
       "name": "darumasan",
