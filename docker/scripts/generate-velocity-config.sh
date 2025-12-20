@@ -44,7 +44,8 @@ TRY_LIST=$(echo "$TRY_LIST" | sed 's/, $//')
 # velocity.toml生成用の変数を保存
 # 引用符をエスケープして保存
 ESCAPED_SERVERS_SECTION=$(echo -e "$SERVERS_SECTION" | sed 's/"/\\"/g')
-ESCAPED_TRY_LIST=$(echo "$TRY_LIST" | sed 's/\([^,]*\)/\\"\1\\"/g' | sed 's/, /, /g')
+# カンマ区切りのリストを引用符で囲む (余分なスペースを削除)
+ESCAPED_TRY_LIST=$(echo "$TRY_LIST" | sed 's/[[:space:]]*,[[:space:]]*/", "/g' | sed 's/^/"/' | sed 's/$/"/')
 {
     echo "VELOCITY_SERVERS_SECTION=\"${ESCAPED_SERVERS_SECTION}\""
     echo "VELOCITY_TRY_LIST=\"${ESCAPED_TRY_LIST}\""
