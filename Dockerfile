@@ -37,6 +37,7 @@ RUN apt-get update && apt-get install -y \
     screen \
     bc \
     gettext-base \
+    awscli \
     && rm -rf /var/lib/apt/lists/*
 
 # Create directories
