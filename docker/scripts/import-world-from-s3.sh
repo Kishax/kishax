@@ -19,8 +19,8 @@ if [ -z "$SERVER_NAME" ]; then
 fi
 
 # Configuration
-S3_BUCKET="${S3_BUCKET:-kishax-docker-images}"
-S3_WORLDS_PREFIX="${S3_WORLDS_PREFIX:-worlds/}"
+S3_BUCKET="${S3_BUCKET:-kishax-production-world-backups}"
+S3_WORLDS_PREFIX="${S3_WORLDS_PREFIX:-deployment/}"
 AWS_REGION="${AWS_REGION:-ap-northeast-1}"
 SERVER_DIR="/mc/spigot/${SERVER_NAME}"
 VOLUME_DIR="/mc/volumes/${SERVER_NAME}"

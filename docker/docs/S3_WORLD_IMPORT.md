@@ -7,7 +7,7 @@ S3に保存されたワールドデータを、サーバー初回起動時に自
 ## S3ディレクトリ構造
 
 ```
-s3://kishax-docker-images/worlds/
+s3://kishax-production-world-backups/deployment/
 ├── 202506/                          # YYYYMM形式のディレクトリ
 │   └── 1/                           # バージョン番号
 │       └── latest/                  # サーバー名
@@ -40,7 +40,7 @@ s3://kishax-docker-images/worlds/
 ### 2. S3での許可フラグ
 - `__IMPORT_ENABLED__`ファイルが存在すること
 - 最新の`YYYYMM`ディレクトリ内を検索
-- 例: `s3://bucket/worlds/202512/1/latest/__IMPORT_ENABLED__`
+- 例: `s3://kishax-production-world-backups/deployment/202512/1/latest/__IMPORT_ENABLED__`
 
 ### 3. ローカルボリュームでの初回確認
 - `/mc/volumes/{server_name}/.import_completed`が**存在しない**こと
@@ -68,8 +68,8 @@ graph TD
 
 ```bash
 # .env に追加
-S3_BUCKET=kishax-docker-images
-S3_WORLDS_PREFIX=worlds/
+S3_BUCKET=kishax-production-world-backups
+S3_WORLDS_PREFIX=deployment/
 AWS_REGION=ap-northeast-1
 ```
 
@@ -87,13 +87,13 @@ AWS_REGION=ap-northeast-1
 
 ```bash
 # 最新のYYYYMMディレクトリを取得
-aws s3 ls s3://kishax-docker-images/worlds/ \
+aws s3 ls s3://kishax-production-world-backups/deployment/ \
   --recursive | grep '__IMPORT_ENABLED__' | grep '/latest/' | sort -r | head -1
 
 # ワールドデータをダウンロード
-aws s3 sync s3://kishax-docker-images/worlds/202512/1/latest/world/ /mc/spigot/latest/world/
-aws s3 sync s3://kishax-docker-images/worlds/202512/1/latest/world_nether/ /mc/spigot/latest/world_nether/
-aws s3 sync s3://kishax-docker-images/worlds/202512/1/latest/world_the_end/ /mc/spigot/latest/world_the_end/
+aws s3 sync s3://kishax-production-world-backups/deployment/202512/1/latest/world/ /mc/spigot/latest/world/
+aws s3 sync s3://kishax-production-world-backups/deployment/202512/1/latest/world_nether/ /mc/spigot/latest/world_nether/
+aws s3 sync s3://kishax-production-world-backups/deployment/202512/1/latest/world_the_end/ /mc/spigot/latest/world_the_end/
 ```
 
 ## セキュリティ考慮事項
@@ -117,7 +117,7 @@ aws s3 sync s3://kishax-docker-images/worlds/202512/1/latest/world_the_end/ /mc/
 docker exec kishax-minecraft ls -la /mc/volumes/latest/.import_completed
 
 # S3のフラグを確認
-aws s3 ls s3://kishax-docker-images/worlds/ --recursive | grep '__IMPORT_ENABLED__'
+aws s3 ls s3://kishax-production-world-backups/deployment/ --recursive | grep '__IMPORT_ENABLED__'
 ```
 
 ### 強制再インポート
@@ -132,7 +132,7 @@ docker compose restart
 ### S3アクセスエラー
 ```bash
 # IAM権限確認
-aws s3 ls s3://kishax-docker-images/worlds/ --profile AdministratorAccess-126112056177
+aws s3 ls s3://kishax-production-world-backups/deployment/ --profile AdministratorAccess-126112056177
 
 # EC2インスタンスのIAMロール確認（本番環境）
 aws iam get-role --role-name kishax-production-ec2-role
