@@ -24,8 +24,8 @@ S3_WORLDS_PREFIX="${S3_WORLDS_PREFIX:-deployment/}"
 AWS_REGION="${AWS_REGION:-ap-northeast-1}"
 SERVER_DIR="/mc/spigot/${SERVER_NAME}"
 VOLUME_DIR="/mc/volumes/${SERVER_NAME}"
-# Store flag in server directory (persisted in volume mount)
-IMPORT_COMPLETED_FLAG="$SERVER_DIR/.import_completed"
+# Store flag in world directory (persisted in volume mount)
+IMPORT_COMPLETED_FLAG="$SERVER_DIR/world/.import_completed"
 
 echo "=== S3 World Data Import ==="
 echo "Server: $SERVER_NAME"
@@ -109,14 +109,16 @@ for WORLD_TYPE in "world" "world_nether" "world_the_end"; do
     DEST_PATH="$SERVER_DIR/$WORLD_TYPE"
     
     if [ -d "$SOURCE_PATH" ]; then
-        # Remove existing world if present
+        # Remove existing world if present (delete contents, not directory itself for volume mounts)
         if [ -d "$DEST_PATH" ]; then
-            echo "  Removing existing $WORLD_TYPE..."
-            rm -rf "$DEST_PATH"
+            echo "  Removing existing $WORLD_TYPE contents..."
+            rm -rf "$DEST_PATH"/*
         fi
         
-        # Move new world data
-        mv "$SOURCE_PATH" "$DEST_PATH"
+        # Move new world data contents (not the directory itself)
+        mkdir -p "$DEST_PATH"
+        mv "$SOURCE_PATH"/* "$DEST_PATH"/
+        rm -rf "$SOURCE_PATH"
         echo "  ✅ Installed $WORLD_TYPE"
     fi
 done
