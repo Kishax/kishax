@@ -45,7 +45,8 @@ TRY_LIST=$(echo "$TRY_LIST" | sed 's/, $//')
 # 引用符をエスケープして保存
 ESCAPED_SERVERS_SECTION=$(echo -e "$SERVERS_SECTION" | sed 's/"/\\"/g')
 # カンマ区切りのリストを引用符で囲む (余分なスペースを削除)
-ESCAPED_TRY_LIST=$(echo "$TRY_LIST" | sed 's/[[:space:]]*,[[:space:]]*/", "/g' | sed 's/^/"/' | sed 's/$/"/')
+# awkに正しく渡すために、引用符をバックスラッシュでエスケープ
+ESCAPED_TRY_LIST=$(echo "$TRY_LIST" | sed 's/[[:space:]]*,[[:space:]]*/\\", \\"/g' | sed 's/^/\\"/' | sed 's/$/\\"/')
 {
     echo "VELOCITY_SERVERS_SECTION=\"${ESCAPED_SERVERS_SECTION}\""
     echo "VELOCITY_TRY_LIST=\"${ESCAPED_TRY_LIST}\""
