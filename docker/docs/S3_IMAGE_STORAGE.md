@@ -35,7 +35,7 @@ Minecraftサーバーで生成された画像マップをS3バケットに保存
 ## S3ディレクトリ構造
 
 ```
-s3://kishax-docker-images/images/
+s3://kishax-production-image-maps/images/
 ├── 20241201/
 │   ├── a1b2c3d4-e5f6-7890-abcd-ef1234567890.png
 │   ├── b2c3d4e5-f6g7-8901-bcde-f12345678901.png
@@ -75,7 +75,7 @@ image_storage:
   # S3 storage settings
   s3:
     enabled: true
-    bucket: "kishax-docker-images"
+    bucket: "kishax-production-image-maps"
     prefix: "images/"
     region: "ap-northeast-1"
     
@@ -104,7 +104,7 @@ image_storage:
   # Velocityでは画像を直接扱わないが、設定を共有
   mode: "s3"
   s3:
-    bucket: "kishax-docker-images"
+    bucket: "kishax-production-image-maps"
     prefix: "images/"
     region: "ap-northeast-1"
 ```
@@ -394,14 +394,14 @@ imageStorageManager.getStorage()
         "s3:DeleteObject",
         "s3:HeadObject"
       ],
-      "Resource": "arn:aws:s3:::kishax-docker-images/images/*"
+      "Resource": "arn:aws:s3:::kishax-production-image-maps/images/*"
     },
     {
       "Effect": "Allow",
       "Action": [
         "s3:ListBucket"
       ],
-      "Resource": "arn:aws:s3:::kishax-docker-images",
+      "Resource": "arn:aws:s3:::kishax-production-image-maps",
       "Condition": {
         "StringLike": {
           "s3:prefix": "images/*"
@@ -421,7 +421,7 @@ imageStorageManager.getStorage()
 
 ### ログ出力
 ```
-[INFO] [Kishax] Image storage initialized: S3 (bucket=kishax-docker-images)
+[INFO] [Kishax] Image storage initialized: S3 (bucket=kishax-production-image-maps)
 [INFO] [Kishax] Image saved to S3: 20241215/a1b2c3d4-e5f6-7890-abcd-ef1234567890.png
 [WARN] [Kishax] S3 upload failed for UUID a1b2c3d4, falling back to local storage
 [ERROR] [Kishax] Failed to load image from S3: UUID b2c3d4e5 (NoSuchKey)
@@ -468,16 +468,16 @@ imageStorageManager.getStorage()
 ### バックアップ
 ```bash
 # S3の画像を全てダウンロード
-aws s3 sync s3://kishax-docker-images/images/ ./backup/images/
+aws s3 sync s3://kishax-production-image-maps/images/ ./backup/images/
 
 # 特定日付の画像のみダウンロード
-aws s3 sync s3://kishax-docker-images/images/20241215/ ./backup/images/20241215/
+aws s3 sync s3://kishax-production-image-maps/images/20241215/ ./backup/images/20241215/
 ```
 
 ### 古い画像の削除
 ```bash
 # 30日以前の画像を削除
-aws s3 rm s3://kishax-docker-images/images/202411 --recursive
+aws s3 rm s3://kishax-production-image-maps/images/202411 --recursive
 ```
 
 ### S3ライフサイクルポリシー（推奨）
