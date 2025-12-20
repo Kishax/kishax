@@ -49,8 +49,8 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
         continue
     fi
     
-    # 現在は単一Spigotディレクトリ（将来的に複数対応）
-    SPIGOT_DIR="$OUTPUT_BASE/spigot"
+    # 各サーバー固有のディレクトリ
+    SPIGOT_DIR="$OUTPUT_BASE/spigot/$NAME"
     
     if [ ! -d "$SPIGOT_DIR" ]; then
         echo "  Creating Spigot directory: $SPIGOT_DIR"
@@ -65,6 +65,11 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
         cp -r "$TEMPLATE_DIR/spigot/config" "$SPIGOT_DIR/" 2>/dev/null || true
         cp -r "$TEMPLATE_DIR/spigot/plugins" "$SPIGOT_DIR/" 2>/dev/null || true
         cp "$TEMPLATE_DIR/spigot/server.properties" "$SPIGOT_DIR/" 2>/dev/null || true
+        cp "$TEMPLATE_DIR/spigot/bukkit.yml" "$SPIGOT_DIR/" 2>/dev/null || true
+        cp "$TEMPLATE_DIR/spigot/spigot.yml" "$SPIGOT_DIR/" 2>/dev/null || true
+        cp "$TEMPLATE_DIR/spigot/commands.yml" "$SPIGOT_DIR/" 2>/dev/null || true
+        # eula.txtをコピー
+        echo "eula=true" > "$SPIGOT_DIR/eula.txt"
         
         # server.propertiesのポート設定を動的に変更
         if [ -f "$SPIGOT_DIR/server.properties" ]; then
