@@ -24,7 +24,8 @@ S3_WORLDS_PREFIX="${S3_WORLDS_PREFIX:-deployment/}"
 AWS_REGION="${AWS_REGION:-ap-northeast-1}"
 SERVER_DIR="/mc/spigot/${SERVER_NAME}"
 VOLUME_DIR="/mc/volumes/${SERVER_NAME}"
-IMPORT_COMPLETED_FLAG="${VOLUME_DIR}/.import_completed"
+# Store flag in server directory (persisted in volume mount)
+IMPORT_COMPLETED_FLAG="$SERVER_DIR/.import_completed"
 
 echo "=== S3 World Data Import ==="
 echo "Server: $SERVER_NAME"
@@ -123,7 +124,7 @@ done
 # Cleanup temp directory
 rm -rf "$TEMP_DOWNLOAD_DIR"
 
-# Create import completed flag
+# Create import completed flag in the server directory (persisted in volume)
 echo ""
 echo "Creating import completed flag..."
 echo "Imported at: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" > "$IMPORT_COMPLETED_FLAG"
