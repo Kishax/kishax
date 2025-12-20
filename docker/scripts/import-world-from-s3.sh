@@ -46,7 +46,7 @@ fi
 echo ""
 echo "Searching for latest import-enabled world data in S3..."
 LATEST_S3_PATH=$(aws s3 ls "s3://$S3_BUCKET/$S3_WORLDS_PREFIX" --recursive --region "$AWS_REGION" 2>/dev/null | \
-    grep "$SERVER_NAME/__IMPORT_ENABLED__" | \
+    grep "/$SERVER_NAME/__IMPORT_ENABLED__" | \
     sort -r | \
     head -1 | \
     awk '{print $4}')
