@@ -128,6 +128,7 @@ public class SqsMessageProcessor {
       case "web_mc_player_request" -> processWebMcPlayerRequest(json);
       case "web_mc_otp" -> processWebMcOtp(json);
       case "web_mc_auth_completion" -> processWebMcAuthCompletion(json);
+      case "mc_auth_token_saved" -> processMcAuthTokenSaved(json);
       case "mc_otp_response" -> processMcOtpResponse(json);
       default -> {
         logger.warn("不明なメッセージタイプです: {}", messageType);
@@ -189,6 +190,17 @@ public class SqsMessageProcessor {
 
     // 認証完了処理を実行
     messageHandler.handleAuthCompletion(playerName, playerUuid, message);
+  }
+
+  private void processMcAuthTokenSaved(JsonNode json) {
+    String playerName = json.path("playerName").asText();
+    String playerUuid = json.path("playerUuid").asText();
+    String authToken = json.path("authToken").asText();
+
+    logger.info("認証トークン保存完了通知受信: {} ({}) Token: {}", playerName, playerUuid, authToken);
+
+    // 認証トークン保存完了処理を実行
+    messageHandler.handleAuthTokenSaved(playerName, playerUuid, authToken);
   }
 
   private void processMcOtpResponse(JsonNode json) {

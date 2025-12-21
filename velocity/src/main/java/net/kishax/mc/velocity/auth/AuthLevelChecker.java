@@ -1,5 +1,6 @@
 package net.kishax.mc.velocity.auth;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.velocitypowered.api.proxy.Player;
@@ -272,6 +273,7 @@ public class AuthLevelChecker {
   /**
    * API レスポンス用クラス
    */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class AuthLevelResponse {
     private String authLevel;
     private List<String> activeProducts;
