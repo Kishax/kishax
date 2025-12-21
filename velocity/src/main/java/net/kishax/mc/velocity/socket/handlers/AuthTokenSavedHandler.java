@@ -2,17 +2,19 @@ package net.kishax.mc.velocity.socket.handlers;
 
 import org.slf4j.Logger;
 import com.google.inject.Inject;
-import net.kishax.mc.velocity.Main;
+import net.kishax.mc.velocity.socket.VelocitySqsMessageHandler;
 
 /**
  * Web側から認証トークンが保存されたことを通知するハンドラー
  */
 public class AuthTokenSavedHandler {
   private final Logger logger;
+  private final VelocitySqsMessageHandler sqsMessageHandler;
 
   @Inject
-  public AuthTokenSavedHandler(Logger logger) {
+  public AuthTokenSavedHandler(Logger logger, VelocitySqsMessageHandler sqsMessageHandler) {
     this.logger = logger;
+    this.sqsMessageHandler = sqsMessageHandler;
   }
 
   /**
@@ -26,13 +28,9 @@ public class AuthTokenSavedHandler {
     try {
       logger.info("✅ Received auth token saved notification from WEB for player: {} ({})", mcid, uuid);
       
-      // Spigotに通知を転送（コールバック機能を使用）
-      if (Main.getAuthTokenSavedCallback() != null) {
-        Main.getAuthTokenSavedCallback().onAuthTokenSaved(mcid, uuid, authToken);
-        logger.info("📤 Auth token saved notification forwarded to Spigot for player: {}", mcid);
-      } else {
-        logger.warn("⚠️ Auth token saved callback is not registered");
-      }
+      // VelocitySqsMessageHandlerを使用してSpigotに通知を転送
+      sqsMessageHandler.handleAuthTokenSaved(mcid, uuid, authToken);
+      logger.info("📤 Auth token saved notification forwarded to Spigot for player: {}", mcid);
     } catch (Exception e) {
       logger.error("❌ Error handling auth token saved notification: {}", e.getMessage(), e);
     }

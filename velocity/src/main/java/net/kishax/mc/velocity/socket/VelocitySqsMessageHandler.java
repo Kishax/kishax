@@ -212,7 +212,7 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
         socketMsg.web.authTokenSaved.token = authToken;
 
         SocketSwitch ssw = sswProvider.get();
-        ssw.sendSpigotServers(conn, socketMsg);
+        ssw.sendSpigotServer(conn, socketMsg);
         logger.info("📤 Auth token saved notification forwarded to Spigot: {}", mcid);
       }
     } catch (Exception e) {
