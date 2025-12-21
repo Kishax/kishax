@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc
 
 .DEFAULT_GOAL := help
 
@@ -299,3 +299,105 @@ check-diff: ## servers.jsonの変更差分を確認
 	else \
 		echo "gitコマンドが見つかりません"; \
 	fi
+
+## =============================================================================
+## プラグインビルド・S3アップロード (ローカル側で実行)
+## =============================================================================
+
+.PHONY: build-mc-plugins
+build-mc-plugins: ## MCプラグインをビルド (ローカル側で実行)
+	@echo "🔨 Minecraftプラグインをビルド中..."
+	@./gradlew build -x test
+	@echo "✅ ビルド完了"
+
+.PHONY: deploy-mc-to-s3
+deploy-mc-to-s3: build-mc-plugins ## MCプラグインをビルド→S3アップロード (ローカル側で実行)
+	@echo "📤 プラグインをS3にアップロード中..."
+	@if [ ! -f ../../.env.auto ]; then \
+		echo "❌ .env.autoが見つかりません。'make env-load'を実行してください"; \
+		exit 1; \
+	fi
+	@source ../../.env && source ../../.env.auto; \
+	if [ -z "$$S3_BUCKET" ]; then \
+		echo "❌ S3_BUCKETが設定されていません"; \
+		exit 1; \
+	fi; \
+	AWS_PROFILE=$${AWS_PROFILE:-AdministratorAccess-126112056177}; \
+	echo "📦 S3 Bucket: $$S3_BUCKET"; \
+	echo ""; \
+	echo "📤 Spigot 1.21.8..."; \
+	aws s3 cp spigot/sv1_21_8/build/libs/Kishax-Spigot-1.21.8.jar \
+		s3://$$S3_BUCKET/mc-plugins/Kishax-Spigot-1.21.8.jar \
+		--profile $$AWS_PROFILE; \
+	echo "📤 Spigot 1.21.11..."; \
+	aws s3 cp spigot/sv1_21_11/build/libs/Kishax-Spigot-1.21.11.jar \
+		s3://$$S3_BUCKET/mc-plugins/Kishax-Spigot-1.21.11.jar \
+		--profile $$AWS_PROFILE; \
+	echo "📤 Velocity..."; \
+	aws s3 cp velocity/build/libs/Kishax-Velocity-3.4.0.jar \
+		s3://$$S3_BUCKET/mc-plugins/Kishax-Velocity-3.4.0.jar \
+		--profile $$AWS_PROFILE; \
+	echo ""; \
+	echo "✅ アップロード完了"; \
+	echo ""; \
+	echo "📋 アップロード確認:"; \
+	aws s3 ls s3://$$S3_BUCKET/mc-plugins/ --profile $$AWS_PROFILE; \
+	echo ""; \
+	echo "🎯 次のステップ:"; \
+	echo "   1. EC2に接続: cd ../../ && make ssh-mc"; \
+	echo "   2. デプロイ実行: cd /home/ubuntu/infrastructure/apps/mc && make deploy-mc"
+
+## =============================================================================
+## プラグインデプロイ (EC2 i-a用)
+## =============================================================================
+
+.PHONY: deploy-mc
+deploy-mc: ## S3からプラグインをダウンロード→Dockerコンテナにデプロイ→再起動 (EC2 i-a側で実行)
+	@echo "🚀 Minecraftプラグインをデプロイ中..."
+	@echo ""
+	@echo "📥 S3からプラグインをダウンロード中..."
+	@mkdir -p ~/mc-plugins-temp
+	@cd ~/mc-plugins-temp && \
+	S3_BUCKET=$$(aws s3 ls | grep kishax-production-docker-images | awk '{print $$3}'); \
+	if [ -z "$$S3_BUCKET" ]; then \
+		echo "❌ S3バケットが見つかりません"; \
+		exit 1; \
+	fi; \
+	echo "📦 S3 Bucket: $$S3_BUCKET"; \
+	echo ""; \
+	echo "📥 Velocity..."; \
+	aws s3 cp s3://$$S3_BUCKET/mc-plugins/Kishax-Velocity-3.4.0.jar .; \
+	echo "📥 Spigot 1.21.8..."; \
+	aws s3 cp s3://$$S3_BUCKET/mc-plugins/Kishax-Spigot-1.21.8.jar .; \
+	echo "📥 Spigot 1.21.11..."; \
+	aws s3 cp s3://$$S3_BUCKET/mc-plugins/Kishax-Spigot-1.21.11.jar .; \
+	echo ""; \
+	echo "✅ ダウンロード完了"; \
+	ls -lh *.jar
+	@echo ""
+	@echo "📦 Dockerコンテナにプラグインをコピー中..."
+	@cd ~/mc-plugins-temp && \
+	docker cp Kishax-Velocity-3.4.0.jar kishax-minecraft:/mc/velocity/plugins/ && \
+	docker cp Kishax-Spigot-1.21.11.jar kishax-minecraft:/mc/spigot/home/plugins/ && \
+	docker cp Kishax-Spigot-1.21.11.jar kishax-minecraft:/mc/spigot/latest/plugins/ && \
+	echo "✅ コピー完了"
+	@echo ""
+	@echo "🔄 サーバーを再起動中..."
+	@docker exec -it kishax-minecraft screen -S home -X stuff "stop$$(printf \\r)" || true
+	@docker exec -it kishax-minecraft screen -S latest -X stuff "stop$$(printf \\r)" || true
+	@docker exec -it kishax-minecraft screen -S proxy -X stuff "end$$(printf \\r)" || true
+	@echo "⏳ サーバー停止を待機中（45秒）..."
+	@sleep 45
+	@docker exec -it kishax-minecraft screen -wipe || true
+	@docker restart kishax-minecraft
+	@echo "⏳ サーバー起動を待機中（30秒）..."
+	@sleep 30
+	@echo ""
+	@echo "✅ プラグインデプロイ完了"
+	@echo ""
+	@echo "📊 サーバーステータス確認中..."
+	@docker exec -it kishax-minecraft screen -list || true
+	@echo ""
+	@rm -rf ~/mc-plugins-temp
+	@echo "🧹 一時ファイルを削除しました"
+
