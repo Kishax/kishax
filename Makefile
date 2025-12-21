@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-spigot mc-velocity mc-list logs-velocity logs-spigot env-load
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status env-load
 
 .DEFAULT_GOAL := help
 
@@ -41,25 +41,36 @@ mysql: ## MySQLコンテナに接続
 	fi
 	docker exec -it kishax-mysql mysql -h 127.0.0.1 -u $(MYSQL_USER) -p'$(MYSQL_PASSWORD)'
 
-mc-spigot: ## Spigotサーバーコンソールに接続
-	@if [ "$(MAKECMDGOALS)" = "mc-spigot" ]; then \
-		echo "実行コマンド: docker exec -it kishax-minecraft screen -rx spigot"; \
-	fi
+mc-proxy: ## Proxyサーバーコンソールに接続
 	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
 		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
 		exit 1; \
 	fi
-	docker exec -it kishax-minecraft screen -rx spigot
+	@echo "📡 Proxy (Velocity) コンソールに接続します..."
+	@echo "終了するには Ctrl+A → D を押してください"
+	docker exec -it kishax-minecraft screen -rx proxy
 
-mc-velocity: ## Velocityサーバーコンソールに接続
-	@if [ "$(MAKECMDGOALS)" = "mc-velocity" ]; then \
-		echo "実行コマンド: docker exec -it kishax-minecraft screen -rx velocity"; \
-	fi
+mc-home: ## Homeサーバーコンソールに接続
 	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
 		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
 		exit 1; \
 	fi
-	docker exec -it kishax-minecraft screen -rx velocity
+	@echo "🏠 Home (Spigot) コンソールに接続します..."
+	@echo "終了するには Ctrl+A → D を押してください"
+	docker exec -it kishax-minecraft screen -rx home
+
+mc-latest: ## Latestサーバーコンソールに接続
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@echo "🚀 Latest (Spigot) コンソールに接続します..."
+	@echo "終了するには Ctrl+A → D を押してください"
+	docker exec -it kishax-minecraft screen -rx latest
+
+mc-spigot: mc-home ## Spigotサーバーコンソールに接続 (エイリアス: mc-home)
+
+mc-velocity: mc-proxy ## Velocityサーバーコンソールに接続 (エイリアス: mc-proxy)
 
 mc-list: ## Minecraft画面セッション一覧を表示
 	@if [ "$(MAKECMDGOALS)" = "mc-list" ]; then \
@@ -71,22 +82,115 @@ mc-list: ## Minecraft画面セッション一覧を表示
 	fi
 	docker exec -it kishax-minecraft screen -list
 
-logs-velocity: ## Velocityログを表示
-	@if [ "$(MAKECMDGOALS)" = "logs-velocity" ]; then \
-		echo "実行コマンド: docker exec -it kishax-minecraft cat /mc/velocity/logs/latest.log"; \
-	fi
+logs-proxy: ## Proxyログを表示
 	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
 		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
 		exit 1; \
 	fi
 	docker exec -it kishax-minecraft cat /mc/velocity/logs/latest.log
 
-logs-spigot: ## Spigotログを表示
-	@if [ "$(MAKECMDGOALS)" = "logs-spigot" ]; then \
-		echo "実行コマンド: docker exec -it kishax-minecraft cat /mc/spigot/logs/latest.log"; \
-	fi
+logs-home: ## Homeサーバーログを表示
 	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
 		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
 		exit 1; \
 	fi
-	docker exec -it kishax-minecraft cat /mc/spigot/logs/latest.log
+	docker exec -it kishax-minecraft cat /mc/spigot/home/logs/latest.log
+
+logs-latest: ## Latestサーバーログを表示
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	docker exec -it kishax-minecraft cat /mc/spigot/latest/logs/latest.log
+
+logs-velocity: logs-proxy ## Velocityログを表示 (エイリアス: logs-proxy)
+
+logs-spigot: logs-home ## Spigotログを表示 (エイリアス: logs-home)
+
+restart-proxy: ## Proxyサーバーを再起動
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@echo "🔄 Proxyサーバーを再起動します..."
+	docker exec -it kishax-minecraft sh -c "screen -S proxy -X quit; sleep 2; cd /mc/velocity && screen -dmS proxy java -Xmx\$$(grep 'proxy' /mc/runtime/proxies.env | cut -d'=' -f2) -jar velocity.jar"
+	@echo "✅ Proxyサーバーを再起動しました"
+
+restart-home: ## Homeサーバーを再起動
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@echo "🔄 Homeサーバーを再起動します..."
+	docker exec -it kishax-minecraft sh -c "screen -S home -X quit; sleep 2; source /mc/runtime/spigots.env && cd /mc/spigot/home && screen -dmS home java -Xmx\$$SPIGOT_0_MEMORY -jar /mc/spigot/\$$SPIGOT_0_FILENAME --nogui"
+	@echo "✅ Homeサーバーを再起動しました"
+
+restart-latest: ## Latestサーバーを再起動
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@echo "🔄 Latestサーバーを再起動します..."
+	docker exec -it kishax-minecraft sh -c "screen -S latest -X quit; sleep 2; source /mc/runtime/spigots.env && cd /mc/spigot/latest && screen -dmS latest java -Xmx\$$SPIGOT_1_MEMORY -jar /mc/spigot/\$$SPIGOT_1_FILENAME --nogui"
+	@echo "✅ Latestサーバーを再起動しました"
+
+restart-all: ## 全サーバーを再起動
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@echo "🔄 全サーバーを再起動します..."
+	@$(MAKE) restart-proxy
+	@sleep 5
+	@$(MAKE) restart-home
+	@$(MAKE) restart-latest
+	@echo "✅ 全サーバーを再起動しました"
+
+servers-status: ## サーバー状態を表示
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@echo "📊 サーバー状態:"
+	@echo ""
+	docker exec -it kishax-minecraft screen -list
+
+update-servers: ## servers.jsonの変更を適用（JARダウンロード＆再起動）
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@echo "📥 servers.jsonの変更を適用します..."
+	@echo ""
+	@echo "⚠️  この操作は以下を実行します:"
+	@echo "  1. 新しいPaper JARファイルをダウンロード"
+	@echo "  2. プラグインを再配置"
+	@echo "  3. 設定を更新"
+	@echo "  4. 全サーバーを再起動"
+	@echo ""
+	@read -p "続行しますか？ (y/N): " answer; \
+	if [ "$$answer" != "y" ] && [ "$$answer" != "Y" ]; then \
+		echo "キャンセルしました"; \
+		exit 0; \
+	fi; \
+	echo ""; \
+	echo "🔧 セットアップスクリプトを実行中..."; \
+	docker exec -it kishax-minecraft /mc/scripts/setup-directories.sh; \
+	docker exec -it kishax-minecraft /mc/scripts/deploy-plugins.sh; \
+	docker exec -it kishax-minecraft /mc/scripts/calculate-memory.sh; \
+	docker exec -it kishax-minecraft /mc/scripts/generate-velocity-config.sh; \
+	docker exec -it kishax-minecraft /mc/scripts/configure-server-files.sh; \
+	echo ""; \
+	echo "🔄 全サーバーを再起動中..."; \
+	$(MAKE) restart-all; \
+	echo ""; \
+	echo "✅ 更新が完了しました！"
+
+check-diff: ## servers.jsonの変更差分を確認
+	@echo "📋 servers.jsonの変更内容:"
+	@echo ""
+	@if command -v git >/dev/null 2>&1; then \
+		git diff docker/config/servers.json || echo "変更なし"; \
+	else \
+		echo "gitコマンドが見つかりません"; \
+	fi
