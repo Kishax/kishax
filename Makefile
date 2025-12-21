@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status env-load
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars update-servers check-diff env-load
 
 .DEFAULT_GOAL := help
 
@@ -161,6 +161,48 @@ servers-status: ## サーバー状態を表示
 	@echo ""
 	docker exec -it kishax-minecraft screen -list
 
+download-jars: ## Paper/Velocity JARファイルをダウンロード
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@echo "📥 JARファイルをダウンロード中..."
+	@echo ""
+	@docker exec -it kishax-minecraft bash -c ' \
+		cd /mc/spigot && \
+		echo "🔍 servers.jsonから設定を読み込み中..." && \
+		SPIGOT_COUNT=$$(jq -r ".spigots | length" /mc/config/servers.json) && \
+		for ((i=0; i<$$SPIGOT_COUNT; i++)); do \
+			NAME=$$(jq -r ".spigots[$$i].name" /mc/config/servers.json); \
+			URL=$$(jq -r ".spigots[$$i].url" /mc/config/servers.json); \
+			FILENAME=$$(jq -r ".spigots[$$i].filename" /mc/config/servers.json); \
+			MEMORY_RATIO=$$(jq -r ".spigots[$$i].memory_ratio" /mc/config/servers.json); \
+			if (( $$(echo "$$MEMORY_RATIO == 0" | bc -l) )); then \
+				echo "  ⏭️  $$NAME: スキップ (無効)"; \
+				continue; \
+			fi; \
+			if [ -f "$$FILENAME" ]; then \
+				echo "  ✅ $$NAME: $$FILENAME (既に存在)"; \
+			else \
+				echo "  📥 $$NAME: $$FILENAME をダウンロード中..."; \
+				wget -q "$$URL" -O "$$FILENAME" && echo "     ✅ ダウンロード完了" || echo "     ❌ ダウンロード失敗"; \
+			fi; \
+		done && \
+		echo "" && \
+		echo "🔍 Velocity JARを確認中..." && \
+		cd /mc/velocity && \
+		VELOCITY_URL=$$(jq -r ".proxies[0].url" /mc/config/servers.json) && \
+		VELOCITY_FILENAME=$$(jq -r ".proxies[0].filename" /mc/config/servers.json) && \
+		if [ -f "$$VELOCITY_FILENAME" ]; then \
+			echo "  ✅ Velocity: $$VELOCITY_FILENAME (既に存在)"; \
+		else \
+			echo "  📥 Velocity: $$VELOCITY_FILENAME をダウンロード中..."; \
+			wget -q "$$VELOCITY_URL" -O "$$VELOCITY_FILENAME" && echo "     ✅ ダウンロード完了" || echo "     ❌ ダウンロード失敗"; \
+		fi && \
+		echo "" && \
+		echo "✅ JARファイルのダウンロードが完了しました" \
+	'
+
 update-servers: ## servers.jsonの変更を適用（JARダウンロード＆再起動）
 	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
 		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
@@ -169,7 +211,7 @@ update-servers: ## servers.jsonの変更を適用（JARダウンロード＆再�
 	@echo "📥 servers.jsonの変更を適用します..."
 	@echo ""
 	@echo "⚠️  この操作は以下を実行します:"
-	@echo "  1. 新しいPaper JARファイルをダウンロード"
+	@echo "  1. 新しいPaper/Velocity JARファイルをダウンロード"
 	@echo "  2. プラグインを再配置"
 	@echo "  3. 設定を更新"
 	@echo "  4. 全サーバーを再起動"
@@ -179,6 +221,9 @@ update-servers: ## servers.jsonの変更を適用（JARダウンロード＆再�
 		echo "キャンセルしました"; \
 		exit 0; \
 	fi; \
+	echo ""; \
+	echo "📥 JARファイルをダウンロード中..."; \
+	$(MAKE) download-jars; \
 	echo ""; \
 	echo "🔧 セットアップスクリプトを実行中..."; \
 	docker exec -it kishax-minecraft /mc/scripts/setup-directories.sh; \
