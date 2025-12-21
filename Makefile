@@ -113,7 +113,9 @@ restart-proxy: ## Proxyサーバーを再起動
 		exit 1; \
 	fi
 	@echo "🔄 Proxyサーバーを再起動します..."
-	docker exec -it kishax-minecraft sh -c "screen -S proxy -X quit; sleep 2; cd /mc/velocity && screen -dmS proxy java -Xmx\$$(grep 'proxy' /mc/runtime/proxies.env | cut -d'=' -f2) -jar velocity.jar"
+	@docker exec -it kishax-minecraft screen -wipe || true
+	docker exec -it kishax-minecraft bash -c "screen -S proxy -X quit 2>/dev/null || true; sleep 2; cd /mc/velocity && screen -dmS proxy java -Xmx\$$(grep 'PROXY_MEMORY=' /mc/runtime/proxies.env | cut -d'=' -f2) -jar velocity.jar"
+	@sleep 3
 	@echo "✅ Proxyサーバーを再起動しました"
 
 restart-home: ## Homeサーバーを再起動
@@ -122,7 +124,9 @@ restart-home: ## Homeサーバーを再起動
 		exit 1; \
 	fi
 	@echo "🔄 Homeサーバーを再起動します..."
-	docker exec -it kishax-minecraft sh -c "screen -S home -X quit; sleep 2; source /mc/runtime/spigots.env && cd /mc/spigot/home && screen -dmS home java -Xmx\$$SPIGOT_0_MEMORY -jar /mc/spigot/\$$SPIGOT_0_FILENAME --nogui"
+	@docker exec -it kishax-minecraft screen -wipe || true
+	docker exec -it kishax-minecraft bash -c "screen -S home -X quit 2>/dev/null || true; sleep 2; . /mc/runtime/spigots.env && cd /mc/spigot/home && screen -dmS home java -Xmx\$$SPIGOT_0_MEMORY -jar /mc/spigot/\$$SPIGOT_0_FILENAME --nogui"
+	@sleep 3
 	@echo "✅ Homeサーバーを再起動しました"
 
 restart-latest: ## Latestサーバーを再起動
@@ -131,7 +135,9 @@ restart-latest: ## Latestサーバーを再起動
 		exit 1; \
 	fi
 	@echo "🔄 Latestサーバーを再起動します..."
-	docker exec -it kishax-minecraft sh -c "screen -S latest -X quit; sleep 2; source /mc/runtime/spigots.env && cd /mc/spigot/latest && screen -dmS latest java -Xmx\$$SPIGOT_1_MEMORY -jar /mc/spigot/\$$SPIGOT_1_FILENAME --nogui"
+	@docker exec -it kishax-minecraft screen -wipe || true
+	docker exec -it kishax-minecraft bash -c "screen -S latest -X quit 2>/dev/null || true; sleep 2; . /mc/runtime/spigots.env && cd /mc/spigot/latest && screen -dmS latest java -Xmx\$$SPIGOT_1_MEMORY -jar /mc/spigot/\$$SPIGOT_1_FILENAME --nogui"
+	@sleep 3
 	@echo "✅ Latestサーバーを再起動しました"
 
 restart-all: ## 全サーバーを再起動
@@ -179,7 +185,6 @@ update-servers: ## servers.jsonの変更を適用（JARダウンロード＆再�
 	docker exec -it kishax-minecraft /mc/scripts/deploy-plugins.sh; \
 	docker exec -it kishax-minecraft /mc/scripts/calculate-memory.sh; \
 	docker exec -it kishax-minecraft /mc/scripts/generate-velocity-config.sh; \
-	docker exec -it kishax-minecraft /mc/scripts/configure-server-files.sh; \
 	echo ""; \
 	echo "🔄 全サーバーを再起動中..."; \
 	$(MAKE) restart-all; \
