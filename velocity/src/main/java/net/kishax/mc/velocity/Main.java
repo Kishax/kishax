@@ -63,6 +63,35 @@ public class Main {
 
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent e) {
+    // プラグインビルド情報を表示
+    String buildTime = java.time.Instant.now().toString(); // デフォルト値
+    try {
+      // ビルド時にgradle.propertiesから取得
+      java.io.InputStream is = getClass().getResourceAsStream("/build-info.properties");
+      if (is != null) {
+        java.util.Properties props = new java.util.Properties();
+        props.load(is);
+        buildTime = props.getProperty("build.time", buildTime);
+        is.close();
+      }
+    } catch (Exception ex) {
+      // プロパティファイルがない場合はJARのタイムスタンプを使用
+      try {
+        java.net.URL jarUrl = getClass().getProtectionDomain().getCodeSource().getLocation();
+        java.nio.file.Path jarPath = java.nio.file.Paths.get(jarUrl.toURI());
+        if (java.nio.file.Files.exists(jarPath)) {
+          java.time.Instant instant = java.nio.file.Files.getLastModifiedTime(jarPath).toInstant();
+          buildTime = instant.toString();
+        }
+      } catch (Exception ex2) {
+        // フォールバック: クラスのロードタイムスタンプ
+      }
+    }
+    
+    logger.info("===================================");
+    logger.info("Kishax Velocity Plugin");
+    logger.info("Build Time: {}", buildTime);
+    logger.info("===================================");
     logger.info("detected velocity platform.");
     TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 

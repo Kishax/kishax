@@ -41,6 +41,24 @@ public class Main extends JavaPlugin {
 
   @Override
   public void onEnable() {
+    // プラグインビルド情報を表示
+    String buildTime = java.time.Instant.now().toString(); // デフォルト値
+    try {
+      // JARのタイムスタンプを使用
+      java.net.URL jarUrl = getClass().getProtectionDomain().getCodeSource().getLocation();
+      java.nio.file.Path jarPath = java.nio.file.Paths.get(jarUrl.toURI());
+      if (java.nio.file.Files.exists(jarPath)) {
+        java.time.Instant instant = java.nio.file.Files.getLastModifiedTime(jarPath).toInstant();
+        buildTime = instant.toString();
+      }
+    } catch (Exception ex) {
+      // フォールバック
+    }
+    
+    logger.info("===================================");
+    logger.info("Kishax Spigot Plugin");
+    logger.info("Build Time: {}", buildTime);
+    logger.info("===================================");
     logger.info("detected spigot platform.");
     this.audiences = BukkitAudiences.create(this);
     injector = Guice.createInjector(new Module(this, logger, audiences));
