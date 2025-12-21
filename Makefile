@@ -313,15 +313,7 @@ build-mc-plugins: ## MCプラグインをビルド (ローカル側で実行)
 .PHONY: deploy-mc-to-s3
 deploy-mc-to-s3: build-mc-plugins ## MCプラグインをビルド→S3アップロード (ローカル側で実行)
 	@echo "📤 プラグインをS3にアップロード中..."
-	@if [ ! -f ../../.env.auto ]; then \
-		echo "❌ .env.autoが見つかりません。'make env-load'を実行してください"; \
-		exit 1; \
-	fi
-	@source ../../.env && source ../../.env.auto; \
-	if [ -z "$$S3_BUCKET" ]; then \
-		echo "❌ S3_BUCKETが設定されていません"; \
-		exit 1; \
-	fi; \
+	@S3_BUCKET=kishax-production-docker-images; \
 	AWS_PROFILE=$${AWS_PROFILE:-AdministratorAccess-126112056177}; \
 	echo "📦 S3 Bucket: $$S3_BUCKET"; \
 	echo ""; \
@@ -358,11 +350,7 @@ deploy-mc: ## S3からプラグインをダウンロード→Dockerコンテナ�
 	@echo "📥 S3からプラグインをダウンロード中..."
 	@mkdir -p ~/mc-plugins-temp
 	@cd ~/mc-plugins-temp && \
-	S3_BUCKET=$$(aws s3 ls | grep kishax-production-docker-images | awk '{print $$3}'); \
-	if [ -z "$$S3_BUCKET" ]; then \
-		echo "❌ S3バケットが見つかりません"; \
-		exit 1; \
-	fi; \
+	S3_BUCKET=kishax-production-docker-images; \
 	echo "📦 S3 Bucket: $$S3_BUCKET"; \
 	echo ""; \
 	echo "📥 Velocity..."; \
