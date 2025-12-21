@@ -218,8 +218,11 @@ clean-old-jars: ## 古いバージョンのJARファイルを削除
 		SPIGOT_COUNT=$$(jq ".spigots | length" /mc/config/servers.json) && \
 		CURRENT_JARS=() && \
 		for ((i=0; i<$$SPIGOT_COUNT; i++)); do \
-			FILENAME=$$(jq -r ".spigots[$$i].filename" /mc/config/servers.json); \
-			CURRENT_JARS+=("$$FILENAME"); \
+			MEMORY_RATIO=$$(jq -r ".spigots[$$i].memory_ratio" /mc/config/servers.json); \
+			if (( $$(echo "$$MEMORY_RATIO > 0" | bc -l) )); then \
+				FILENAME=$$(jq -r ".spigots[$$i].filename" /mc/config/servers.json); \
+				CURRENT_JARS+=("$$FILENAME"); \
+			fi; \
 		done && \
 		for jar in *.jar; do \
 			[ -f "$$jar" ] || continue; \
@@ -233,10 +236,18 @@ clean-old-jars: ## 古いバージョンのJARファイルを削除
 		echo "" && \
 		echo "🔍 Velocity JARをクリーンアップ中..." && \
 		cd /mc/velocity && \
-		VELOCITY_FILENAME=$$(jq -r ".proxies[0].filename" /mc/config/servers.json) && \
+		PROXY_COUNT=$$(jq ".proxies | length" /mc/config/servers.json) && \
+		CURRENT_VELOCITY_JARS=() && \
+		for ((i=0; i<$$PROXY_COUNT; i++)); do \
+			MEMORY_RATIO=$$(jq -r ".proxies[$$i].memory_ratio" /mc/config/servers.json); \
+			if (( $$(echo "$$MEMORY_RATIO > 0" | bc -l) )); then \
+				FILENAME=$$(jq -r ".proxies[$$i].filename" /mc/config/servers.json); \
+				CURRENT_VELOCITY_JARS+=("$$FILENAME"); \
+			fi; \
+		done && \
 		for jar in velocity*.jar; do \
 			[ -f "$$jar" ] || continue; \
-			if [ "$$jar" = "$$VELOCITY_FILENAME" ]; then \
+			if [[ " $${CURRENT_VELOCITY_JARS[@]} " =~ " $$jar " ]]; then \
 				echo "  ✅ $$jar: 現在使用中（保持）"; \
 			else \
 				echo "  🗑️  $$jar: 削除中..."; \
