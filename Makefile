@@ -383,6 +383,9 @@ deploy-mc: ## S3からプラグインをダウンロード→Dockerコンテナ�
 	@echo ""
 	@echo "✅ プラグインデプロイ完了"
 	@echo ""
+	@echo "🧹 Deadセッションをクリーンアップ中..."
+	@docker exec -it kishax-minecraft screen -wipe || true
+	@echo ""
 	@echo "📊 サーバーステータス確認中..."
 	@docker exec -it kishax-minecraft screen -list || true
 	@echo ""

@@ -43,3 +43,4 @@ public class AuthTokenSavedHandler {
     void onAuthTokenSaved(String mcid, String uuid, String authToken);
   }
 }
+

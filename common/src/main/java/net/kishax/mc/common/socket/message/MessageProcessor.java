@@ -24,6 +24,10 @@ public class MessageProcessor {
         .map(web -> web.confirm)
         .ifPresent(confirm -> injector.getInstance(MinecraftWebConfirmHandler.class).handle(confirm));
 
+    Optional.ofNullable(msg.web)
+        .map(web -> web.authTokenSaved)
+        .ifPresent(authTokenSaved -> injector.getInstance(AuthTokenSavedHandler.class).handle(authTokenSaved));
+
     Optional.ofNullable(msg.discord)
         .map(discord -> discord.rulebook)
         .ifPresent(rulebook -> injector.getInstance(RuleBookSyncHandler.class).handle(rulebook));

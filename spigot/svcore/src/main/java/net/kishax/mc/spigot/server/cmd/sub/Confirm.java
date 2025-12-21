@@ -86,7 +86,8 @@ public class Confirm {
                 // Velocity経由でWeb側にプレイヤー情報とトークンを送信
                 sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
 
-                sendConfirmationMessage(player, confirmUrl);
+                // Web側でDB保存完了後にURLが表示されるようにする
+                sendProcessingMessage(player);
               }
             }
           } catch (SQLException | ClassNotFoundException e2) {
@@ -261,6 +262,20 @@ public class Confirm {
         .append(finalMessage);
 
     audiences.player(player).sendMessage(fullMessage);
+  }
+
+  /**
+   * 認証URL発行処理中メッセージを送信
+   */
+  private void sendProcessingMessage(Player player) {
+    Component processingMessage = Component.text()
+        .append(Component.text("⏳ ").color(NamedTextColor.YELLOW))
+        .append(Component.text("認証URLを発行中です...").color(NamedTextColor.WHITE))
+        .appendNewline()
+        .append(Component.text("少々お待ちください。").color(NamedTextColor.GRAY))
+        .build();
+
+    audiences.player(player).sendMessage(processingMessage);
   }
 
   private int checkExistConfirmMap(Connection conn, Object[] args) throws SQLException {
