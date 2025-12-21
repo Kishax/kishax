@@ -142,6 +142,23 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
   }
 
   /**
+   * 認証トークン保存完了通知処理
+   */
+  @Override
+  public void handleAuthTokenSaved(String mcid, String uuid, String authToken) {
+    try {
+      logger.info("✅ 認証トークン保存完了通知: {} ({}) Token: {}", mcid, uuid, authToken);
+
+      // SpigotにOTP通知として転送
+      JsonNode tokenSavedMessage = createAuthTokenSavedMessage(mcid, uuid, authToken);
+      forwardAuthTokenSavedToSpigot(tokenSavedMessage);
+
+    } catch (Exception e) {
+      logger.error("認証トークン保存完了処理でエラーが発生しました: {} ({})", mcid, uuid, e);
+    }
+  }
+
+  /**
    * 認証完了時の拡張処理（将来の機能追加用）
    *
    * このメソッドは将来的に追加される認証完了後の処理のために用意されています。
@@ -157,6 +174,50 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
     // 拡張性のための空メソッド
     // 将来的にここに追加の処理を実装できます
     logger.debug("認証完了拡張処理: {} ({}) - 現在は何も実行しません", playerName, playerUuid);
+  }
+
+  private JsonNode createAuthTokenSavedMessage(String mcid, String uuid, String authToken) {
+    try {
+      com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+      return mapper.createObjectNode()
+          .put("type", "mc_auth_token_saved")
+          .put("mcid", mcid)
+          .put("uuid", uuid)
+          .put("authToken", authToken);
+    } catch (Exception e) {
+      logger.error("認証トークン保存メッセージ作成でエラーが発生しました", e);
+      return null;
+    }
+  }
+
+  private void forwardAuthTokenSavedToSpigot(JsonNode message) {
+    if (message == null) {
+      logger.error("認証トークン保存メッセージがnullです");
+      return;
+    }
+
+    try {
+      String mcid = message.path("mcid").asText();
+      String uuid = message.path("uuid").asText();
+      String authToken = message.path("authToken").asText();
+
+      // Spigotに転送
+      try (Connection conn = db.getConnection()) {
+        Message socketMsg = new Message();
+        socketMsg.web = new Message.Web();
+        socketMsg.web.authTokenSaved = new Message.Web.AuthTokenSaved();
+        socketMsg.web.authTokenSaved.who = new Message.Minecraft.Who();
+        socketMsg.web.authTokenSaved.who.name = mcid;
+        socketMsg.web.authTokenSaved.who.uuid = uuid;
+        socketMsg.web.authTokenSaved.token = authToken;
+
+        SocketSwitch ssw = sswProvider.get();
+        ssw.sendSpigotServers(conn, socketMsg);
+        logger.info("📤 Auth token saved notification forwarded to Spigot: {}", mcid);
+      }
+    } catch (Exception e) {
+      logger.error("認証トークン保存通知のSpigot転送でエラーが発生しました", e);
+    }
   }
 
   private JsonNode createConfirmMessage(String playerName, String playerUuid) {

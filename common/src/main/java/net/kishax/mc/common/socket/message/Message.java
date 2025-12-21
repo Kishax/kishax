@@ -9,6 +9,7 @@ public class Message {
   public static class Web {
     public MinecraftConfirm confirm;
     public AuthToken authToken;
+    public AuthTokenSaved authTokenSaved;
 
     public static class MinecraftConfirm {
       public Message.Minecraft.Who who;
@@ -19,6 +20,11 @@ public class Message {
       public String token;
       public Long expiresAt;
       public String action; // "create", "update", "refresh"
+    }
+
+    public static class AuthTokenSaved {
+      public Message.Minecraft.Who who;
+      public String token;
     }
   }
 
