@@ -265,6 +265,14 @@ for ((i=0; i<$ACTIVE_PROXY_COUNT; i++)); do
   PROXY_MEMORY="${!PROXY_MEMORY_VAR}"
   PROXY_FILENAME="${!PROXY_FILENAME_VAR}"
   
+  # Download Velocity JAR if not exists
+  if [ ! -f "/mc/velocity/$PROXY_FILENAME" ]; then
+    PROXY_URL=$(jq -r ".proxies[$i].url" "$CONFIG_FILE")
+    echo "📥 Downloading $PROXY_FILENAME from $PROXY_URL..."
+    wget -q "$PROXY_URL" -O "/mc/velocity/$PROXY_FILENAME"
+    echo "  ✅ Downloaded $PROXY_FILENAME"
+  fi
+  
   echo "Starting Proxy: $PROXY_NAME (Memory: $PROXY_MEMORY) in screen session '$PROXY_NAME'..."
   cd /mc/velocity
   screen -dmS "$PROXY_NAME" java -Xmx"$PROXY_MEMORY" -jar "$PROXY_FILENAME"
@@ -286,6 +294,14 @@ for ((i=0; i<$ACTIVE_SPIGOT_COUNT; i++)); do
   SPIGOT_MEMORY="${!SPIGOT_MEMORY_VAR}"
   SPIGOT_FILENAME="${!SPIGOT_FILENAME_VAR}"
   SPIGOT_PORT="${!SPIGOT_PORT_VAR}"
+  
+  # Download Spigot JAR if not exists
+  if [ ! -f "/mc/spigot/$SPIGOT_FILENAME" ]; then
+    SPIGOT_URL=$(jq -r ".spigots[$i].url" "$CONFIG_FILE")
+    echo "📥 Downloading $SPIGOT_FILENAME from $SPIGOT_URL..."
+    wget -q "$SPIGOT_URL" -O "/mc/spigot/$SPIGOT_FILENAME"
+    echo "  ✅ Downloaded $SPIGOT_FILENAME"
+  fi
   
   # Check if this server needs S3 world data import
   S3IMPORT=$(jq -r ".spigots[$i].s3import // false" "$CONFIG_FILE")
