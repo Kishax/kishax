@@ -276,6 +276,7 @@ public class AuthLevelChecker {
     private String authLevel;
     private List<String> activeProducts;
     private String kishaxUserId;
+    private String lastUpdated;  // Auth APIが返すタイムスタンプ（無視しても良い）
 
     // getters and setters
     public String getAuthLevel() {
@@ -300,6 +301,14 @@ public class AuthLevelChecker {
 
     public void setKishaxUserId(String kishaxUserId) {
       this.kishaxUserId = kishaxUserId;
+    }
+
+    public String getLastUpdated() {
+      return lastUpdated;
+    }
+
+    public void setLastUpdated(String lastUpdated) {
+      this.lastUpdated = lastUpdated;
     }
   }
 }
