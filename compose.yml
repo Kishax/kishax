@@ -45,6 +45,8 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     
     volumes:
+      # Configuration files (read-only mounts for hot-reload)
+      - ./docker/config/servers.json:/mc/config/servers.json:ro
       # Home server volumes
       - minecraft_data_home:/mc/spigot/home/world
       - minecraft_data_home_nether:/mc/spigot/home/world_nether
