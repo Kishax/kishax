@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars update-servers check-diff env-load
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load
 
 .DEFAULT_GOAL := help
 
@@ -204,6 +204,47 @@ download-jars: ## Paper/Velocity JARファイルをダウンロード
 		fi && \
 		echo "" && \
 		echo "✅ JARファイルのダウンロードが完了しました" \
+	'
+
+clean-old-jars: ## 古いバージョンのJARファイルを削除
+	@echo "🗑️  古いJARファイルを削除しています..."
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "⚠️  kishax-minecraftコンテナが動作していません。docker compose up -d で起動してください。"; \
+		exit 1; \
+	fi
+	@docker exec kishax-minecraft bash -c ' \
+		echo "🔍 Spigot (Paper) JARをクリーンアップ中..." && \
+		cd /mc/spigot && \
+		SPIGOT_COUNT=$$(jq ".spigots | length" /mc/config/servers.json) && \
+		CURRENT_JARS=() && \
+		for ((i=0; i<$$SPIGOT_COUNT; i++)); do \
+			FILENAME=$$(jq -r ".spigots[$$i].filename" /mc/config/servers.json); \
+			CURRENT_JARS+=("$$FILENAME"); \
+		done && \
+		for jar in *.jar; do \
+			[ -f "$$jar" ] || continue; \
+			if [[ " $${CURRENT_JARS[@]} " =~ " $$jar " ]]; then \
+				echo "  ✅ $$jar: 現在使用中（保持）"; \
+			else \
+				echo "  🗑️  $$jar: 削除中..."; \
+				rm -f "$$jar" && echo "     ✅ 削除完了"; \
+			fi; \
+		done && \
+		echo "" && \
+		echo "🔍 Velocity JARをクリーンアップ中..." && \
+		cd /mc/velocity && \
+		VELOCITY_FILENAME=$$(jq -r ".proxies[0].filename" /mc/config/servers.json) && \
+		for jar in velocity*.jar; do \
+			[ -f "$$jar" ] || continue; \
+			if [ "$$jar" = "$$VELOCITY_FILENAME" ]; then \
+				echo "  ✅ $$jar: 現在使用中（保持）"; \
+			else \
+				echo "  🗑️  $$jar: 削除中..."; \
+				rm -f "$$jar" && echo "     ✅ 削除完了"; \
+			fi; \
+		done && \
+		echo "" && \
+		echo "✅ クリーンアップが完了しました" \
 	'
 
 update-servers: ## servers.jsonの変更を適用（JARダウンロード＆再起動）
