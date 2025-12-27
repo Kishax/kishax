@@ -202,16 +202,20 @@ public class AuthLevelChecker {
 
   /**
    * 新規プレイヤー権限設定
+   * MC_UNAUTHENTICATED: WEB認証未実施
+   * 権限なし（認証を促すメッセージのみ表示）
    */
   private void applyNewPlayerPermissions(User user) {
-    user.data().add(Node.builder("group.new-user").build());
+    // 権限なし - WEB認証を促す
   }
 
   /**
    * 一時権限設定
+   * MC_AUTHENTICATED_TRYING: 認証トークン発行済み、WEB認証待ち
+   * 権限なし（認証URL表示済み、WEB認証完了待ち）
    */
   private void applyTempPermissions(User user) {
-    user.data().add(Node.builder("group.new-user").build());
+    // 権限なし - WEB認証完了待ち
     // 一時的な追加権限があればここに追加
   }
 
