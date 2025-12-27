@@ -363,6 +363,14 @@ deploy-mc: ## S3からプラグインをダウンロード→Dockerコンテナ�
 	echo "✅ ダウンロード完了"; \
 	ls -lh *.jar
 	@echo ""
+	@echo "📦 /mc/build/ にプラグインをコピー中（Docker起動時の配布元）..."
+	@cd ~/mc-plugins-temp && \
+	docker cp Kishax-Velocity-3.4.0.jar kishax-minecraft:/mc/build/velocity/ && \
+	docker cp Kishax-Spigot-1.21.11.jar kishax-minecraft:/mc/build/spigot/ && \
+	docker cp Kishax-Spigot-1.21.11.jar kishax-minecraft:/mc/build/spigot/sv1_21_11/ && \
+	docker cp Kishax-Spigot-1.21.8.jar kishax-minecraft:/mc/build/spigot/sv1_21_8/ && \
+	echo "✅ /mc/build/ へのコピー完了"
+	@echo ""
 	@echo "🔄 サーバーを再起動中..."
 	@docker exec -it kishax-minecraft screen -S home -X stuff "stop$$(printf \\r)" || true
 	@docker exec -it kishax-minecraft screen -S latest -X stuff "stop$$(printf \\r)" || true
@@ -371,23 +379,24 @@ deploy-mc: ## S3からプラグインをダウンロード→Dockerコンテナ�
 	@sleep 45
 	@docker exec -it kishax-minecraft screen -wipe || true
 	@docker restart kishax-minecraft
-	@echo "⏳ Docker起動完了待機中（60秒）..."
-	@sleep 60
+	@echo "⏳ Docker起動完了待機中（90秒）..."
+	@sleep 90
 	@echo ""
-	@echo "📦 Dockerコンテナにプラグインをコピー中（起動後）..."
-	@cd ~/mc-plugins-temp && \
-	docker cp Kishax-Velocity-3.4.0.jar kishax-minecraft:/mc/velocity/plugins/ && \
-	docker cp Kishax-Spigot-1.21.11.jar kishax-minecraft:/mc/spigot/home/plugins/ && \
-	docker cp Kishax-Spigot-1.21.11.jar kishax-minecraft:/mc/spigot/latest/plugins/ && \
-	echo "✅ コピー完了"
+	@echo "📦 ビルド識別子を確認中..."
+	@docker exec kishax-minecraft unzip -p /mc/build/velocity/Kishax-Velocity-3.4.0.jar net/kishax/mc/velocity/Main.class | strings | grep -E "(v1.0.0|Build:)" | head -3 || echo "⚠️ Velocity JAR確認失敗"
+	@docker exec kishax-minecraft unzip -p /mc/build/spigot/Kishax-Spigot-1.21.11.jar net/kishax/mc/spigot/Main.class | strings | grep -E "(v1.0.0|Build:)" | head -3 || echo "⚠️ Spigot JAR確認失敗"
 	@echo ""
 	@echo "🔄 Spigotサーバーをリロード中..."
 	@docker exec -it kishax-minecraft screen -S home -X stuff "reload confirm$$(printf \\r)" || true
 	@docker exec -it kishax-minecraft screen -S latest -X stuff "reload confirm$$(printf \\r)" || true
-	@echo "⏳ リロード待機中（10秒）..."
-	@sleep 10
+	@echo "⏳ リロード待機中（15秒）..."
+	@sleep 15
 	@echo ""
 	@echo "✅ プラグインデプロイ完了"
+	@echo ""
+	@echo "📊 ログでビルド情報を確認中..."
+	@docker logs kishax-minecraft 2>&1 | grep -A 3 "Kishax Velocity Plugin" | tail -5 || echo "⚠️ Velocityログに表示なし"
+	@docker logs kishax-minecraft 2>&1 | grep -A 3 "Kishax Spigot Plugin" | tail -5 || echo "⚠️ Spigotログに表示なし"
 	@echo ""
 	@echo "🧹 Deadセッションをクリーンアップ中..."
 	@docker exec -it kishax-minecraft screen -wipe || true
