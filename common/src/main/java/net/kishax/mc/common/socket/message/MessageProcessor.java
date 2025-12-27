@@ -71,17 +71,5 @@ public class MessageProcessor {
             }
           });
     }
-
-    // minecraftフィールドの処理（ソケット通信用）
-    if (msg.minecraft != null) {
-      Optional.ofNullable(msg.minecraft.otp)
-          .ifPresent(otp -> {
-            try {
-              injector.getInstance(OtpHandler.class).handle(otp);
-            } catch (ProvisionException e) {
-              // OtpHandlerが存在しない場合はスキップ
-            }
-          });
-    }
   }
 }
