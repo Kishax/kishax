@@ -5,3 +5,4 @@ import net.kishax.mc.common.socket.message.Message;
 public interface AuthTokenSavedHandler {
   void handle(Message.Web.AuthTokenSaved authTokenSaved);
 }
+

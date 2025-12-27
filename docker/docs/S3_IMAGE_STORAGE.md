@@ -527,3 +527,4 @@ aws s3 rm s3://kishax-production-image-maps/images/202411 --recursive
 
 
 
+
