@@ -72,22 +72,23 @@ public class Confirm {
                 // データベースにトークンを保存
                 db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
 
-                // 新形式のURL（トークンベース）を使用
-                String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
-
-                // QRコード生成・配布
-                String[] imageArgs = { "image", "createqr", confirmUrl };
-                if (ifMapId == -1) {
-                  im.executeImageMapForConfirm(player, imageArgs);
-                } else {
-                  im.giveMapToPlayer(player, ifMapId);
-                }
+                // 先に処理中メッセージを表示
+                sendProcessingMessage(player);
 
                 // Velocity経由でWeb側にプレイヤー情報とトークンを送信
+                // Web側でDB保存後、mc_auth_token_savedメッセージが返ってきて
+                // SpigotAuthTokenSavedHandlerがURLを表示する
                 sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
 
-                // Web側でDB保存完了後にURLが表示されるようにする
-                sendProcessingMessage(player);
+                // QRコード生成・配布（URL表示後に行う予定だったが、ここでは行わない）
+                // URL表示とQRコード配布はSpigotAuthTokenSavedHandlerに移譲
+                // String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
+                // String[] imageArgs = { "image", "createqr", confirmUrl };
+                // if (ifMapId == -1) {
+                //   im.executeImageMapForConfirm(player, imageArgs);
+                // } else {
+                //   im.giveMapToPlayer(player, ifMapId);
+                // }
               }
             }
           } catch (SQLException | ClassNotFoundException e2) {
