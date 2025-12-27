@@ -257,6 +257,14 @@ public class Main {
         });
       });
 
+      // Register Auth Token Saved callback to prevent SQS loop
+      net.kishax.api.bridge.SqsWorker.setAuthTokenSavedCallback((mcid, uuid, authToken) -> {
+        logger.info("🔔 Auth token saved callback triggered for player: {} ({})", mcid, uuid);
+        // VelocitySqsMessageHandlerに転送してSpigotに送信
+        VelocitySqsMessageHandler handler = getInjector().getInstance(VelocitySqsMessageHandler.class);
+        handler.handleAuthTokenSaved(mcid, uuid, authToken);
+      });
+
       sqsWorker.start();
       logger.info("✅ kishax-api SQSワーカーが開始されました（QUEUE_MODE対応）");
 
