@@ -77,9 +77,9 @@ public class AuthLevelChecker {
       } catch (Exception e) {
         logger.error("Error during periodic auth level check", e);
       }
-    }, 0, 1, TimeUnit.MINUTES);
+    }, 0, 10, TimeUnit.SECONDS);  // 1分 → 10秒に短縮
 
-    logger.info("Started periodic auth level checks (every 1 minute)");
+    logger.info("Started periodic auth level checks (every 10 seconds)");
   }
 
   /**
