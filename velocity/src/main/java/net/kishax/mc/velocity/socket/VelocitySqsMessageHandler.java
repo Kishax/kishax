@@ -311,20 +311,20 @@ public class VelocitySqsMessageHandler implements SqsMessageHandler {
     try {
       // Messageオブジェクトを作成してSpigotに転送
       Message msg = new Message();
-      msg.minecraft = new Message.Minecraft();
-      msg.minecraft.otp = new Message.Minecraft.Otp();
+      msg.mc = new Message.Minecraft();  // minecraft → mc に変更
+      msg.mc.otp = new Message.Minecraft.Otp();
 
       JsonNode otpData = otpMessage.path("minecraft").path("otp");
-      msg.minecraft.otp.mcid = otpData.path("mcid").asText();
-      msg.minecraft.otp.uuid = otpData.path("uuid").asText();
-      msg.minecraft.otp.otp = otpData.path("otp").asText();
-      msg.minecraft.otp.action = otpData.path("action").asText();
+      msg.mc.otp.mcid = otpData.path("mcid").asText();
+      msg.mc.otp.uuid = otpData.path("uuid").asText();
+      msg.mc.otp.otp = otpData.path("otp").asText();
+      msg.mc.otp.action = otpData.path("action").asText();
 
       // SocketSwitchを使用してSpigotに転送
       try (Connection conn = db.getConnection()) {
         SocketSwitch ssw = sswProvider.get();
         ssw.sendSpigotServer(conn, msg);
-        logger.info("SpigotへOTPメッセージを転送しました: {} ({})", msg.minecraft.otp.mcid, msg.minecraft.otp.uuid);
+        logger.info("SpigotへOTPメッセージを転送しました: {} ({})", msg.mc.otp.mcid, msg.mc.otp.uuid);
       }
 
     } catch (Exception e) {
