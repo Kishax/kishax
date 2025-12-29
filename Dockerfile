@@ -23,7 +23,7 @@ RUN echo "📦 Cloning kishax-api from GitHub..." && \
     git clone --branch ${KISHAX_API_BRANCH} https://github.com/Kishax/kishax-api.git /tmp/kishax-api &&\
     cd /tmp/kishax-api && \
     echo "🔨 Building kishax-api with Maven..." && \
-    mvn clean install -DskipTests && \
+    mvn clean install -DskipTests -Dgpg.skip && \
     echo "✅ kishax-api installed to local Maven repository" && \
     cd /app
 
@@ -32,10 +32,10 @@ COPY . .
 
 # Build the Kishax plugins
 RUN if [ ! -f velocity/build/libs/Kishax-Velocity-*.jar ] || [ ! -f spigot/sv1_21_8/build/libs/Kishax-Spigot-*.jar ]; then \
-        echo "JARs not found, building from source..."; \
-        ./gradlew build -x test; \
+    echo "JARs not found, building from source..."; \
+    ./gradlew build -x test; \
     else \
-        echo "Kishax plugins already built, skipping build step"; \
+    echo "Kishax plugins already built, skipping build step"; \
     fi
 
 # Production stage
