@@ -74,6 +74,7 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
     MEMORY_RATIO=$(jq -r ".spigots[$i].memory_ratio" "$CONFIG_FILE")
     INTERNAL_PORT=$(jq -r ".spigots[$i].internal_port // 25564" "$CONFIG_FILE")
     IS_HOME=$(jq -r ".spigots[$i].is_home // false" "$CONFIG_FILE")
+    SERVER_TYPE=$(jq -r ".spigots[$i].server_type // \"survival\"" "$CONFIG_FILE")
     
     # memory_ratio が 0 の場合はスキップ
     if (( $(echo "$MEMORY_RATIO == 0" | bc -l) )); then
@@ -90,8 +91,9 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
     
     # エスケープ処理
     NAME_ESCAPED=$(mysql_escape "$NAME")
+    SERVER_TYPE_ESCAPED=$(mysql_escape "$SERVER_TYPE")
     
-    echo "  Registering Spigot: $NAME (port: $INTERNAL_PORT, hub: $HUB)"
+    echo "  Registering Spigot: $NAME (port: $INTERNAL_PORT, hub: $HUB, type: $SERVER_TYPE)"
     
     mysql -h"${MYSQL_HOST}" -u"${MYSQL_USER}" -p"${MYSQL_PASSWORD}" "${MYSQL_DATABASE}" <<EOF
 INSERT INTO status (
@@ -103,6 +105,7 @@ INSERT INTO status (
     memory,
     hub,
     allow_prestart,
+    \`type\`,
     \`exec\`
 ) VALUES (
     '$NAME_ESCAPED',
@@ -113,6 +116,7 @@ INSERT INTO status (
     1,
     $HUB,
     1,
+    '$SERVER_TYPE_ESCAPED',
     '/mc/server/home/${NAME_ESCAPED}.sh'
 );
 EOF

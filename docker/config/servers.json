@@ -8,11 +8,16 @@
   "plugin_presets": {
     "essential": {
       "description": "Essential plugins for all servers",
-      "plugins": ["luckperms"]
+      "plugins": [
+        "luckperms"
+      ]
     },
     "full": {
       "description": "All available plugins",
-      "plugins": ["luckperms", "kishax"]
+      "plugins": [
+        "luckperms",
+        "kishax"
+      ]
     }
   },
   "proxies": [
@@ -23,7 +28,12 @@
       "url": "https://fill-data.papermc.io/v1/objects/ef1a852bfae7397e84907837925e7ad21c6312066290edaae401b77f6f423ac3/velocity-3.4.0-SNAPSHOT-558.jar",
       "filename": "velocity-3.4.0-SNAPSHOT-558.jar",
       "memory_ratio": 0.15,
-      "plugins": ["luckperms", "geyser-velocity", "floodgate-velocity", "kishax"],
+      "plugins": [
+        "luckperms",
+        "geyser-velocity",
+        "floodgate-velocity",
+        "kishax"
+      ],
       "comment": "memory_ratio: Portion of MC memory allocated to this proxy (sum of all proxies + spigots must be <= 1.0)"
     }
   ],
@@ -42,6 +52,7 @@
       "internal_port": 25564,
       "is_home": true,
       "s3import": true,
+      "server_type": "survival",
       "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
       "comment": "Home server: Always running, default entry point. s3import: If true, import world data from S3 on first startup"
     },
@@ -60,6 +71,7 @@
       "is_home": false,
       "s3import": true,
       "auto_start": false,
+      "server_type": "survival",
       "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
       "comment": "Latest server: Dynamically started from home server, imports world data from S3. auto_start: false = dont start on container boot"
     },
