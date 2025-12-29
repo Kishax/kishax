@@ -223,14 +223,14 @@ public class AuthLevelChecker {
    * 未連携プレイヤー権限設定
    */
   private void applyUnlinkedPermissions(User user) {
-    user.data().add(Node.builder("group.verified").build());
+    user.data().add(Node.builder("group.new-user").build());
   }
 
   /**
    * 連携済みプレイヤー権限設定
    */
   private void applyLinkedPermissions(User user) {
-    user.data().add(Node.builder("group.verified").build());
+    user.data().add(Node.builder("group.new-user").build());
     // Kishaxアカウント連携ユーザー向け基本権限
   }
 
@@ -239,7 +239,7 @@ public class AuthLevelChecker {
    */
   private void applyProductPermissions(User user, List<String> activeProducts) {
     // 基本権限
-    user.data().add(Node.builder("group.verified").build());
+    user.data().add(Node.builder("group.new-user").build());
 
     // プロダクト別権限追加
     for (String product : activeProducts) {
