@@ -1,8 +1,12 @@
 # Multi-stage build for Kishax Minecraft Server Environment
 FROM eclipse-temurin:21-jdk AS builder
 
+# Build arguments for kishax-api
+ARG KISHAX_API_BRANCH=master
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
+    maven \
     gradle \
     git \
     wget \
@@ -12,6 +16,16 @@ RUN apt-get update && apt-get install -y \
 
 # Set working directory for build
 WORKDIR /app
+
+
+# Clone and build kishax-api first (required dependency)
+RUN echo "📦 Cloning kishax-api from GitHub..." && \
+    git clone --branch ${KISHAX_API_BRANCH} https://github.com/Kishax/kishax-api.git /tmp/kishax-api &&\
+    cd /tmp/kishax-api && \
+    echo "🔨 Building kishax-api with Maven..." && \
+    mvn clean install -DskipTests && \
+    echo "✅ kishax-api installed to local Maven repository" && \
+    cd /app
 
 # Copy project files
 COPY . .

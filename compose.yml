@@ -1,6 +1,9 @@
 services:
   kishax-server:
-    build: .
+    build:
+      context: .
+      args:
+        KISHAX_API_BRANCH: ${KISHAX_API_BRANCH:-main}
     container_name: kishax-minecraft
     restart: unless-stopped
     environment:
