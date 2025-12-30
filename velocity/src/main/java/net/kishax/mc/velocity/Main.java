@@ -109,7 +109,6 @@ public class Main {
     commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
     commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
     commandManager.register(commandManager.metaBuilder("stp").build(), getInjector().getInstance(ServerTeleport.class));
-    commandManager.register(commandManager.metaBuilder("kishax").build(), getInjector().getInstance(net.kishax.mc.velocity.server.cmd.sub.Test.class));
     VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
     int port = config.getInt("Socket.Server_Port", 0);
     if (port != 0) {
