@@ -19,6 +19,16 @@ dependencies {
   shadowImpl 'com.google.zxing:javase:3.5.3'
   shadowImpl 'net.kyori:adventure-api:4.24.0'
   shadowImpl 'net.kyori:adventure-platform-bukkit:4.4.1'
+  
+  // AWS SDK & Jackson (Package with plugin)
+  shadowImpl platform('software.amazon.awssdk:bom:2.21.0')
+  shadowImpl 'software.amazon.awssdk:s3'
+  shadowImpl 'software.amazon.awssdk:auth'
+  shadowImpl 'software.amazon.awssdk:url-connection-client'
+  shadowImpl 'com.fasterxml.jackson.core:jackson-databind:2.18.3'
+  shadowImpl 'com.fasterxml.jackson.core:jackson-core:2.18.3'
+  shadowImpl 'com.fasterxml.jackson.core:jackson-annotations:2.18.3'
+
   compileOnly project(':spigot:svcore')
   shadowImpl2 project(':common')
 }
@@ -35,6 +45,13 @@ shadowJar {
   archiveVersion.set('1.21.11')
   from(project(':spigot:svcore').sourceSets.main.output)
   exclude('META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+  
+  mergeServiceFiles()
+
+  // Relocate dependencies to avoid conflicts
+  relocate 'software.amazon.awssdk', 'net.kishax.libs.aws'
+  relocate 'com.fasterxml.jackson', 'net.kishax.libs.jackson'
+  relocate 'org.reactivestreams', 'net.kishax.libs.reactivestreams'
 }
 
 processResources {
