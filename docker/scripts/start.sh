@@ -195,19 +195,25 @@ done
 # Copy processed template files to actual server directories
 echo "Copying processed templates to server directories..."
 
-# Copy Spigot config files
-if [ -f "/mc/templates/spigot/config/paper-global.yml" ]; then
+# Copy common Spigot config files
+if [ -f "/mc/templates/spigot/common/config/paper-global.yml" ]; then
     mkdir -p /mc/spigot/config
-    cp /mc/templates/spigot/config/paper-global.yml /mc/spigot/config/paper-global.yml
+    cp /mc/templates/spigot/common/config/paper-global.yml /mc/spigot/config/paper-global.yml
     echo "  Copied paper-global.yml to /mc/spigot/config/"
 fi
 
-# Copy Spigot plugin configs
-if [ -d "/mc/templates/spigot/plugins" ]; then
+# Copy common server.properties
+if [ -f "/mc/templates/spigot/common/server.properties" ]; then
+    cp /mc/templates/spigot/common/server.properties /mc/spigot/server.properties
+    echo "  Copied server.properties to /mc/spigot/"
+fi
+
+# Copy common Spigot plugin configs
+if [ -d "/mc/templates/spigot/common/plugins" ]; then
     mkdir -p /mc/spigot/plugins
-    cp -r /mc/templates/spigot/plugins/Kishax /mc/spigot/plugins/ 2>/dev/null || true
-    cp -r /mc/templates/spigot/plugins/LuckPerms /mc/spigot/plugins/ 2>/dev/null || true
-    echo "  Copied plugin configs to /mc/spigot/plugins/"
+    cp -r /mc/templates/spigot/common/plugins/Kishax /mc/spigot/plugins/ 2>/dev/null || true
+    cp -r /mc/templates/spigot/common/plugins/LuckPerms /mc/spigot/plugins/ 2>/dev/null || true
+    echo "  Copied common plugin configs to /mc/spigot/plugins/"
 fi
 
 # Copy Velocity plugin configs (already done earlier, but ensure consistency)
@@ -320,7 +326,31 @@ for ((i=0; i<$ACTIVE_SPIGOT_COUNT; i++)); do
     /mc/scripts/import-world-from-s3.sh "$SPIGOT_NAME" || true
     echo ""
   fi
-  
+
+  # Copy server-specific configuration files
+  SERVER_SPECIFIC_DIR="/mc/templates/spigot/server-specific/$SPIGOT_NAME"
+  if [ -d "$SERVER_SPECIFIC_DIR" ]; then
+    echo "📁 Copying server-specific files for $SPIGOT_NAME..."
+
+    # Copy server-specific plugin configs (overwrite common configs if exists)
+    if [ -d "$SERVER_SPECIFIC_DIR/plugins" ]; then
+      mkdir -p "/mc/spigot/$SPIGOT_NAME/plugins"
+      cp -r "$SERVER_SPECIFIC_DIR/plugins/"* "/mc/spigot/$SPIGOT_NAME/plugins/" 2>/dev/null || true
+      echo "  ✅ Copied server-specific plugin configs"
+    fi
+
+    # Copy server-specific config files if any
+    if [ -d "$SERVER_SPECIFIC_DIR/config" ]; then
+      mkdir -p "/mc/spigot/$SPIGOT_NAME/config"
+      cp -r "$SERVER_SPECIFIC_DIR/config/"* "/mc/spigot/$SPIGOT_NAME/config/" 2>/dev/null || true
+      echo "  ✅ Copied server-specific config files"
+    fi
+
+    echo ""
+  else
+    echo "ℹ️  No server-specific files for $SPIGOT_NAME (using common configs only)"
+  fi
+
   echo "Starting Spigot: $SPIGOT_NAME (Memory: $SPIGOT_MEMORY, Port: $SPIGOT_PORT) in screen session '$SPIGOT_NAME'..."
   cd /mc/spigot/$SPIGOT_NAME
   screen -dmS "$SPIGOT_NAME" java -Xmx"$SPIGOT_MEMORY" -jar /mc/spigot/"$SPIGOT_FILENAME" --nogui
