@@ -11,6 +11,9 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPubSub;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Discord→MC ブロードキャストメッセージをRedisから受信し、全プレイヤーに配信するリスナー
  */
@@ -59,9 +62,18 @@ public class RedisBroadcastListener {
               if ("discord_broadcast".equals(type)) {
                 String author = messageJson.get("author").asText();
                 String content = messageJson.get("content").asText();
+                boolean hasImages = messageJson.has("hasImages") && messageJson.get("hasImages").asBoolean();
+
+                List<String> imageUrls = new ArrayList<>();
+                if (hasImages && messageJson.has("imageUrls")) {
+                  JsonNode urlsArray = messageJson.get("imageUrls");
+                  for (JsonNode urlNode : urlsArray) {
+                    imageUrls.add(urlNode.asText());
+                  }
+                }
 
                 // 全プレイヤーにブロードキャスト
-                broadcastToAllPlayers(author, content);
+                broadcastToAllPlayers(author, content, hasImages, imageUrls);
               }
             } catch (Exception e) {
               logger.error("Failed to process Redis broadcast message", e);
@@ -118,20 +130,45 @@ public class RedisBroadcastListener {
   /**
    * 全プレイヤーにDiscordメッセージをブロードキャスト
    *
-   * @param author  Discordメッセージの送信者名
-   * @param content メッセージ内容
+   * @param author    Discordメッセージの送信者名
+   * @param content   メッセージ内容
+   * @param hasImages 画像が含まれているか
+   * @param imageUrls 画像URLのリスト
    */
-  private void broadcastToAllPlayers(String author, String content) {
-    Component message = Component.text()
-        .append(Component.text("[Discord] ", NamedTextColor.BLUE))
-        .append(Component.text("<", NamedTextColor.GRAY))
-        .append(Component.text(author, NamedTextColor.AQUA))
-        .append(Component.text("> ", NamedTextColor.GRAY))
-        .append(Component.text(content, NamedTextColor.WHITE))
-        .build();
+  private void broadcastToAllPlayers(String author, String content, boolean hasImages, List<String> imageUrls) {
+    // テキストメッセージ部分
+    if (!content.isEmpty() || !hasImages) {
+      String displayContent = content.isEmpty() && hasImages ? "画像をアップロードしています！" : content;
 
-    server.getAllPlayers().forEach(player -> player.sendMessage(message));
+      Component message = Component.text()
+          .append(Component.text("[Discord] ", NamedTextColor.BLUE))
+          .append(Component.text("<", NamedTextColor.GRAY))
+          .append(Component.text(author, NamedTextColor.AQUA))
+          .append(Component.text("> ", NamedTextColor.GRAY))
+          .append(Component.text(displayContent, NamedTextColor.WHITE))
+          .build();
 
-    logger.info("Broadcasted Discord message from {} to {} players", author, server.getAllPlayers().size());
+      server.getAllPlayers().forEach(player -> player.sendMessage(message));
+    }
+
+    // 画像URL部分（複数対応）
+    if (hasImages && !imageUrls.isEmpty()) {
+      for (String imageUrl : imageUrls) {
+        Component imageMessage = Component.text()
+            .append(Component.text("[Discord] ", NamedTextColor.BLUE))
+            .append(Component.text("画像は", NamedTextColor.WHITE))
+            .append(Component.text("[ココ]", NamedTextColor.AQUA))
+            .append(Component.text("(", NamedTextColor.GRAY))
+            .append(Component.text(imageUrl, NamedTextColor.YELLOW))
+            .append(Component.text(")", NamedTextColor.GRAY))
+            .append(Component.text("から", NamedTextColor.WHITE))
+            .build();
+
+        server.getAllPlayers().forEach(player -> player.sendMessage(imageMessage));
+      }
+    }
+
+    logger.info("Broadcasted Discord message from {} to {} players (images: {})",
+                author, server.getAllPlayers().size(), imageUrls.size());
   }
 }
