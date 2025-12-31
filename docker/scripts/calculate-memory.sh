@@ -98,7 +98,7 @@ for ((i=0; i<$SPIGOT_COUNT; i++)); do
     TYPE=$(jq -r ".spigots[$i].type" "$CONFIG_FILE")
     MEMORY_RATIO=$(jq -r ".spigots[$i].memory_ratio" "$CONFIG_FILE")
     FILENAME=$(jq -r ".spigots[$i].filename" "$CONFIG_FILE")
-    PORT=$(jq -r ".spigots[$i].port" "$CONFIG_FILE")
+    PORT=$(jq -r ".spigots[$i].internal_port" "$CONFIG_FILE")
     IS_HOME=$(jq -r ".spigots[$i].is_home // false" "$CONFIG_FILE")
     
     # memory_ratio が 0 の場合はスキップ
