@@ -221,9 +221,11 @@ public class AuthLevelChecker {
 
   /**
    * 未連携プレイヤー権限設定
+   * MC_AUTHENTICATED_UNLINKED: WEB認証完了済み、Kishaxアカウント未連携
+   * 権限なし（Kishaxアカウント連携を促す）
    */
   private void applyUnlinkedPermissions(User user) {
-    user.data().add(Node.builder("group.new-user").build());
+    // 権限なし - Kishaxアカウント連携を促す
   }
 
   /**
