@@ -78,16 +78,17 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
       if (!DiscordInviteUrl.isEmpty()) {
         component = Component.text()
             .appendNewline()
-            .append(Component.text("WEB認証")
-                .color(NamedTextColor.LIGHT_PURPLE)
-                .decorate(
-                    TextDecoration.BOLD,
-                    TextDecoration.UNDERLINED))
-            .append(Component.text("が完了しました。")
-                .color(NamedTextColor.AQUA))
+            .append(Component.text("WEB認証が完了しました！")
+                .color(NamedTextColor.GREEN)
+                .decorate(TextDecoration.BOLD))
             .appendNewline()
-            .append(Component.text("池に飛び込もう！")
-                .color(NamedTextColor.AQUA))
+            .appendNewline()
+            .append(Component.text("次のステップ: ")
+                .color(NamedTextColor.YELLOW)
+                .decorate(TextDecoration.BOLD))
+            .append(Component.text("湖に飛び込もう！")
+                .color(NamedTextColor.AQUA)
+                .decorate(TextDecoration.BOLD))
             .appendNewline()
             .appendNewline()
             .append(Component.text("Kishaxサーバーの")
@@ -172,6 +173,51 @@ public class VelocityMinecraftWebConfirmHandler implements MinecraftWebConfirmHa
 
       // 直接認証処理を実行（既存のhandleロジックを簡略化）
       lp.addPermission(playerName, PermSettings.NEW_USER.get());
+
+      // プレイヤーにメッセージを送信
+      Optional<Player> playerOptional = server.getAllPlayers().stream()
+          .filter(player -> player.getUsername().equalsIgnoreCase(playerName))
+          .findFirst();
+      if (playerOptional.isPresent()) {
+        Player player = playerOptional.get();
+        String DiscordInviteUrl = config.getString("Discord.InviteUrl", "");
+        if (!DiscordInviteUrl.isEmpty()) {
+          TextComponent component = Component.text()
+              .appendNewline()
+              .append(Component.text("WEB認証が完了しました！")
+                  .color(NamedTextColor.GREEN)
+                  .decorate(TextDecoration.BOLD))
+              .appendNewline()
+              .appendNewline()
+              .append(Component.text("次のステップ: ")
+                  .color(NamedTextColor.YELLOW)
+                  .decorate(TextDecoration.BOLD))
+              .append(Component.text("湖に飛び込もう！")
+                  .color(NamedTextColor.AQUA)
+                  .decorate(TextDecoration.BOLD))
+              .appendNewline()
+              .appendNewline()
+              .append(Component.text("Kishaxサーバーの")
+                  .color(NamedTextColor.AQUA))
+              .append(Component.text("Discord")
+                  .color(NamedTextColor.BLUE)
+                  .decorate(
+                      TextDecoration.BOLD,
+                      TextDecoration.UNDERLINED)
+                  .clickEvent(ClickEvent.openUrl(DiscordInviteUrl))
+                  .hoverEvent(HoverEvent.showText(Component.text("KishaxサーバーのDiscordへいこう！"))))
+              .append(Component.text("には参加しましたか？")
+                  .color(NamedTextColor.AQUA))
+              .appendNewline()
+              .append(Component.text("ここでは、個性豊かな色々なメンバーと交流ができます！")
+                  .color(NamedTextColor.AQUA))
+              .appendNewline()
+              .append(Component.text("ぜひ、参加してみてください！")
+                  .color(NamedTextColor.AQUA))
+              .build();
+          player.sendMessage(component);
+        }
+      }
 
       // Web側に認証完了レスポンス送信
       sendAuthResponseToWeb(playerName, playerUuid, true, "WEB認証が完了しました。");
