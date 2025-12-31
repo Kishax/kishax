@@ -435,16 +435,21 @@ public class EventListener {
     Player player = e.getPlayer();
     String playerName = player.getUsername(),
         playerUUID = player.getUniqueId().toString();
+    RegisteredServer serverConnection = e.getServer();
+    serverInfo = serverConnection.getServerInfo();
+    String currentServerName = serverInfo.getName();
+
     if (!disconnectTasks.isEmpty()) {
       for (Player disconnectPlayer : disconnectTasks.keySet()) {
         if (disconnectPlayer.getUniqueId().equals(player.getUniqueId())) {
           disconnectTasks.remove(disconnectPlayer);
+          // 10秒以内に再Join → Moveイベントとして送信
+          logger.info("Player {} reconnected within 10 seconds, sending Move event to Discord", playerName);
+          sendDiscordPlayerMoveEvent(playerName, playerUUID, currentServerName);
+          break;
         }
       }
     }
-    RegisteredServer serverConnection = e.getServer();
-    serverInfo = serverConnection.getServerInfo();
-    String currentServerName = serverInfo.getName();
     Optional<RegisteredServer> previousServerInfo = e.getPreviousServer();
     if (Objects.isNull(serverInfo)) {
       pd.playerDisconnect(
