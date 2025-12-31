@@ -864,7 +864,7 @@ public class EventListener {
       if (redisClient != null) {
         net.kishax.api.bridge.DiscordMessageHandler discordHandler = new net.kishax.api.bridge.DiscordMessageHandler(
             redisClient);
-        discordHandler.sendPlayerEvent("chat", playerName, playerUuid, message);
+        discordHandler.sendPlayerChatEvent(playerName, playerUuid, message);
         logger.debug("✅ DiscordチャットメッセージをRedis経由で送信しました: {}", playerName);
       } else {
         logger.warn("⚠️ RedisClient not available, Discord chat message not sent");
