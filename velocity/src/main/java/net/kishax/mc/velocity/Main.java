@@ -251,7 +251,7 @@ public class Main {
       net.kishax.api.bridge.SqsWorker.setAuthConfirmCallback((playerName, playerUuid) -> {
         logger.info("🔔 Auth confirm callback triggered for player: {} ({})", playerName, playerUuid);
         this.server.getPlayer(playerName).ifPresent(player -> {
-          player.sendMessage(Component.text("Web authentication successful!", NamedTextColor.GREEN));
+          player.sendMessage(Component.text("WEB認証が成功しました！", NamedTextColor.GREEN));
           logger.info("Sent auth confirmation message to player {}", playerName);
         });
       });
