@@ -242,7 +242,17 @@ backup_server() {
         local archive_name="${world_type}.tar.gz"
         local archive_path="$backup_server_dir/$archive_name"
 
-        if tar -cf "$archive_path" -C "$server_dir" "$world_type" --use-compress-program="gzip -$COMPRESSION_LEVEL" 2>/dev/null; then
+        # tarを実行し、終了ステータスを取得（標準エラーはログのために残すか、2>/dev/nullにする）
+        tar -cf "$archive_path" -C "$server_dir" "$world_type" --use-compress-program="gzip -$COMPRESSION_LEVEL" 2>/dev/null
+        local status=$?
+
+        # 0: 正常終了, 1: ファイル変更の警告 (Minecraft稼働中によくある)
+        if [ $status -eq 0 ] || [ $status -eq 1 ]; then
+            if [ $status -eq 1 ]; then
+                # オプション：ログに警告が出ていたことを残すと親切です
+                echo "      (ℹ️  一部のファイルが圧縮中に変更されましたが、続行します)"
+            fi
+
             local archive_size=$(du -sh "$archive_path" | cut -f1)
             print_success "     圧縮完了: $archive_size"
             backup_count=$((backup_count + 1))
@@ -251,7 +261,8 @@ backup_server() {
             local archive_bytes=$(du -sb "$archive_path" | cut -f1)
             total_size=$((total_size + archive_bytes))
         else
-            print_error "     圧縮失敗: $world_type"
+            # ステータス 2 以上の場合は、ディスクフルや権限エラーなどの致命的な失敗
+            print_error "     圧縮失敗: $world_type (ステータス: $status)"
             return 1
         fi
     done
