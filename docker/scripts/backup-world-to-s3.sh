@@ -242,7 +242,7 @@ backup_server() {
         local archive_name="${world_type}.tar.gz"
         local archive_path="$backup_server_dir/$archive_name"
 
-        if tar -czf "$archive_path" -C "$server_dir" "$world_type" --use-compress-program="gzip -$COMPRESSION_LEVEL" 2>/dev/null; then
+        if tar -cf "$archive_path" -C "$server_dir" "$world_type" --use-compress-program="gzip -$COMPRESSION_LEVEL" 2>/dev/null; then
             local archive_size=$(du -sh "$archive_path" | cut -f1)
             print_success "     圧縮完了: $archive_size"
             backup_count=$((backup_count + 1))
