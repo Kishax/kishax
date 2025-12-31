@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc backup-world backup-world-list backup-world-restore backup-world-verify
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc backup-world backup-world-list backup-world-restore backup-world-verify deploy-world deploy-world-list
 
 .DEFAULT_GOAL := help
 
@@ -565,4 +565,47 @@ backup-world-verify: ## 最新バックアップの整合性確認
 	done; \
 	echo ""; \
 	echo "✅ 整合性確認完了"
+
+## =============================================================================
+## S3ワールドデプロイメント (EC2 i-a用)
+## =============================================================================
+
+.PHONY: deploy-world
+deploy-world: ## ワールドデータをS3にデプロイ (EC2 i-a側で実行)
+	@echo "🚀 ワールドデータをS3にデプロイします"
+	@echo ""
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "❌ kishax-minecraftコンテナが動作していません"; \
+		echo "💡 docker compose up -d で起動してください"; \
+		exit 1; \
+	fi
+	@echo "🔍 デプロイ対象サーバーを確認中..."
+	@docker exec -it kishax-minecraft /mc/scripts/deploy-world-to-s3.sh
+
+.PHONY: deploy-world-list
+deploy-world-list: ## S3デプロイメント一覧を表示
+	@echo "📋 S3ワールドデプロイメント一覧"
+	@echo ""
+	@S3_BUCKET=$${S3_BUCKET:-kishax-production-world-backups}; \
+	AWS_REGION=$${AWS_REGION:-ap-northeast-1}; \
+	echo "📦 S3 Bucket: $$S3_BUCKET"; \
+	echo "📂 Prefix: deployment/"; \
+	echo ""; \
+	echo "🔍 デプロイメント一覧 (年月/バージョン):"; \
+	aws s3 ls s3://$$S3_BUCKET/deployment/ --region $$AWS_REGION | \
+		grep "PRE" | \
+		awk '{print "  📅 " $$2}' | \
+		sed 's|/||g' | \
+		sort -r | \
+		while read -r line; do \
+			yearmonth=$${line##* }; \
+			echo "$$line"; \
+			aws s3 ls s3://$$S3_BUCKET/deployment/$$yearmonth/ --region $$AWS_REGION 2>/dev/null | \
+				grep "PRE" | \
+				awk '{print "    🔢 " $$2}' | \
+				sed 's|/||g'; \
+		done; \
+	echo ""; \
+	echo "💡 詳細を確認するには:"; \
+	echo "   aws s3 ls s3://$$S3_BUCKET/deployment/<YYYYMM>/<version>/ --recursive --human-readable"
 
