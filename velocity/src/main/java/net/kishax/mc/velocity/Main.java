@@ -36,9 +36,11 @@ import net.kishax.mc.velocity.server.events.EventListener;
 import net.kishax.mc.velocity.util.SettingsSyncService;
 import net.kishax.mc.velocity.util.config.VelocityConfig;
 import net.kishax.mc.velocity.auth.AuthLevelChecker;
+import net.kishax.mc.velocity.discord.RedisBroadcastListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.luckperms.api.LuckPermsProvider;
+import redis.clients.jedis.JedisPool;
 
 public class Main {
   public static boolean isVelocity = true;
@@ -53,6 +55,8 @@ public class Main {
   private static net.kishax.api.bridge.SqsWorker kishaxSqsWorker;
   private net.kishax.api.bridge.RedisClient kishaxRedisClient;
   private static AuthLevelChecker authLevelChecker;
+  private RedisBroadcastListener redisBroadcastListener;
+  private JedisPool jedisPool;
 
   @Inject
   public Main(ProxyServer serverinstance, Logger logger, @DataDirectory Path dataDirectory) {
@@ -134,6 +138,13 @@ public class Main {
       initializeAuthLevelChecker();
     } catch (Exception e) {
       logger.error("Failed to initialize AuthLevelChecker: {}", e.getMessage());
+    }
+
+    // Discord→MC ブロードキャストリスナーの初期化
+    try {
+      initializeRedisBroadcastListener();
+    } catch (Exception e) {
+      logger.error("Failed to initialize RedisBroadcastListener: {}", e.getMessage());
     }
 
     logger.info(FloodgateApi.getInstance().toString());
@@ -307,6 +318,34 @@ public class Main {
     }
   }
 
+  private void initializeRedisBroadcastListener() throws Exception {
+    try {
+      VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
+
+      // Redis URL取得
+      String redisUrl = config.getString("Redis.URL", "redis://localhost:6379");
+
+      if (redisUrl.isEmpty()) {
+        logger.warn("Redis.URL が設定されていません。Discord→MCブロードキャスト機能は無効になります。");
+        return;
+      }
+
+      // JedisPoolを初期化
+      jedisPool = new JedisPool(redisUrl);
+      logger.info("JedisPool initialized for RedisBroadcastListener: {}", redisUrl);
+
+      // RedisBroadcastListenerを初期化して開始
+      redisBroadcastListener = new RedisBroadcastListener(jedisPool, server);
+      redisBroadcastListener.start();
+
+      logger.info("✅ RedisBroadcastListener が開始されました (Redis: {})", redisUrl);
+
+    } catch (Exception e) {
+      logger.error("RedisBroadcastListener の初期化に失敗しました: {}", e.getMessage());
+      throw e;
+    }
+  }
+
   @Subscribe
   public void onProxyShutdown(ProxyShutdownEvent e) {
     if (!isEnable)
@@ -320,6 +359,20 @@ public class Main {
       }
     } catch (Exception ex) {
       logger.error("AuthLevelChecker の停止中にエラーが発生しました: {}", ex.getMessage());
+    }
+
+    // RedisBroadcastListener の停止
+    try {
+      if (redisBroadcastListener != null) {
+        redisBroadcastListener.stop();
+        logger.info("✅ RedisBroadcastListener が停止しました");
+      }
+      if (jedisPool != null && !jedisPool.isClosed()) {
+        jedisPool.close();
+        logger.info("✅ JedisPool が停止しました");
+      }
+    } catch (Exception ex) {
+      logger.error("RedisBroadcastListener の停止中にエラーが発生しました: {}", ex.getMessage());
     }
 
     // kishax-api SQS関連サービスの停止
