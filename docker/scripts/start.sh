@@ -327,6 +327,35 @@ for ((i=0; i<$ACTIVE_SPIGOT_COUNT; i++)); do
     echo ""
   fi
 
+  # Copy common files to server directory
+  echo "📋 Copying common files to $SPIGOT_NAME..."
+  mkdir -p "/mc/spigot/$SPIGOT_NAME/config"
+  mkdir -p "/mc/spigot/$SPIGOT_NAME/plugins"
+
+  # Copy config files
+  if [ -f "/mc/spigot/config/paper-global.yml" ]; then
+    cp /mc/spigot/config/paper-global.yml "/mc/spigot/$SPIGOT_NAME/config/"
+    echo "  ✅ Copied paper-global.yml"
+  fi
+
+  # Copy and customize server.properties with correct port
+  if [ -f "/mc/spigot/server.properties" ]; then
+    cp /mc/spigot/server.properties "/mc/spigot/$SPIGOT_NAME/server.properties"
+    # Update port from servers.json
+    sed -i "s/^server-port=.*/server-port=$SPIGOT_PORT/" "/mc/spigot/$SPIGOT_NAME/server.properties"
+    echo "  ✅ Copied server.properties (port=$SPIGOT_PORT)"
+  fi
+
+  # Copy plugin configs
+  if [ -d "/mc/spigot/plugins/Kishax" ]; then
+    cp -r /mc/spigot/plugins/Kishax "/mc/spigot/$SPIGOT_NAME/plugins/"
+    echo "  ✅ Copied Kishax plugin config"
+  fi
+  if [ -d "/mc/spigot/plugins/LuckPerms" ]; then
+    cp -r /mc/spigot/plugins/LuckPerms "/mc/spigot/$SPIGOT_NAME/plugins/"
+    echo "  ✅ Copied LuckPerms plugin config"
+  fi
+
   # Copy server-specific configuration files
   SERVER_SPECIFIC_DIR="/mc/templates/spigot/server-specific/$SPIGOT_NAME"
   if [ -d "$SERVER_SPECIFIC_DIR" ]; then
