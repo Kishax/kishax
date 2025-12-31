@@ -22,6 +22,7 @@ AWS_REGION="${AWS_REGION:-ap-northeast-1}"
 YEAR_MONTH=$(date +%Y%m)
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION="1"
+VERSION_MANUALLY_SET=false
 DRY_RUN=false
 TARGET_SERVER=""
 
@@ -57,6 +58,31 @@ print_info() {
 }
 
 # ================================================================
+# Versioning Logic
+# ================================================================
+
+# S3から最新のバージョン番号を取得し、次の番号を返す
+get_next_version() {
+    local prefix="s3://$S3_BUCKET/$S3_DEPLOY_PREFIX$YEAR_MONTH/"
+    
+    # S3上のディレクトリ(PRE)一覧を取得し、数値のみを抽出して最大値を取得
+    local latest
+    latest=$(aws s3 ls "$prefix" --region "$AWS_REGION" 2>/dev/null | \
+             grep 'PRE ' | \
+             awk '{print $2}' | \
+             sed 's/\///g' | \
+             grep '^[0-9]\+$' | \
+             sort -rn | \
+             head -n 1 || true)
+
+    if [ -z "$latest" ]; then
+        echo "1"
+    else
+        echo $((latest + 1))
+    fi
+}
+
+# ================================================================
 # Options Parser
 # ================================================================
 
@@ -69,14 +95,14 @@ Usage: $0 [OPTIONS]
 Options:
   --dry-run                実際にはアップロードせず、何が実行されるか確認
   --server <name>          特定サーバーのみデプロイ
-  --version <num>          バージョン番号 (デフォルト: 1)
+  --version <num>          バージョン番号 (指定しない場合は自動的に次の番号を採番)
   --help                   このヘルプを表示
 
 Examples:
-  $0                                    # 全サーバーをデプロイ (version=1)
+  $0                                    # 全サーバーをデプロイ (自動採番)
   $0 --dry-run                          # ドライラン
   $0 --server home                      # homeサーバーのみデプロイ
-  $0 --version 2 --server latest        # latestサーバーをversion 2としてデプロイ
+  $0 --version 5                        # 強制的にバージョン5としてデプロイ
 
 Environment Variables:
   S3_BUCKET            S3バケット名 (デフォルト: kishax-production-world-backups)
@@ -98,6 +124,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --version)
             VERSION="$2"
+            VERSION_MANUALLY_SET=true
             if [[ ! "$VERSION" =~ ^[0-9]+$ ]]; then
                 print_error "バージョンは正の整数で指定してください"
                 exit 1
@@ -332,11 +359,17 @@ EOF
 
 main() {
     clear
-
     print_header "S3 World Deployment Script"
+
+    # バージョン自動決定
+    if [ "$VERSION_MANUALLY_SET" = false ]; then
+        print_info "S3から最新バージョンを確認中..."
+        VERSION=$(get_next_version)
+    fi
+
     echo "📅 年月: $YEAR_MONTH"
-    echo "🔢 バージョン: $VERSION"
-    echo "📍 S3バケット: s3://$S3_BUCKET/$S3_DEPLOY_PREFIX$YEAR_MONTH/$VERSION/"
+    echo "🔢 デプロイバージョン: $VERSION"
+    echo "📍 S3保存先: s3://$S3_BUCKET/$S3_DEPLOY_PREFIX$YEAR_MONTH/$VERSION/"
     echo "🔧 AWS リージョン: $AWS_REGION"
 
     if [ -n "$TARGET_SERVER" ]; then
@@ -373,7 +406,7 @@ main() {
 
     # Confirmation
     if [ "$DRY_RUN" = false ]; then
-        print_warning "⚠️  デプロイメント用データとしてS3にアップロードします"
+        print_warning "⚠️  デプロイメント用データとしてS3にアップロードします (Version: $VERSION)"
         print_warning "⚠️  このデータは import-world-from-s3.sh で使用されます"
         echo ""
         read -p "デプロイを開始しますか？ (y/N): " answer
