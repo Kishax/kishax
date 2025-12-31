@@ -145,6 +145,8 @@ COPY docker/scripts/generate-velocity-config.sh /mc/scripts/generate-velocity-co
 COPY docker/scripts/deploy-plugins.sh /mc/scripts/deploy-plugins.sh
 COPY docker/scripts/register-servers-to-db.sh /mc/scripts/register-servers-to-db.sh
 COPY docker/scripts/import-world-from-s3.sh /mc/scripts/import-world-from-s3.sh
+COPY docker/scripts/backup-world-to-s3.sh /mc/scripts/backup-world-to-s3.sh
+COPY docker/scripts/deploy-world-to-s3.sh /mc/scripts/deploy-world-to-s3.sh
 RUN chmod +x /mc/start.sh /mc/scripts/*.sh
 
 # Accept Minecraft EULA
