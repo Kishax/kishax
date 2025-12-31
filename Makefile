@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc backup-world backup-world-list backup-world-restore backup-world-verify
 
 .DEFAULT_GOAL := help
 
@@ -406,4 +406,163 @@ deploy-mc: ## S3からプラグインをダウンロード→Dockerコンテナ�
 	@echo ""
 	@rm -rf ~/mc-plugins-temp
 	@echo "🧹 一時ファイルを削除しました"
+
+## =============================================================================
+## S3ワールドバックアップ (EC2 i-a用)
+## =============================================================================
+
+.PHONY: backup-world
+backup-world: ## ワールドデータをS3にバックアップ (EC2 i-a側で実行)
+	@echo "💾 ワールドデータをS3にバックアップします"
+	@echo ""
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "❌ kishax-minecraftコンテナが動作していません"; \
+		echo "💡 docker compose up -d で起動してください"; \
+		exit 1; \
+	fi
+	@echo "🔍 バックアップ対象サーバーを確認中..."
+	@docker exec -it kishax-minecraft /mc/scripts/backup-world-to-s3.sh
+
+.PHONY: backup-world-list
+backup-world-list: ## S3バックアップ一覧を表示
+	@echo "📋 S3ワールドバックアップ一覧"
+	@echo ""
+	@S3_BUCKET=$${S3_BUCKET:-kishax-production-world-backups}; \
+	AWS_REGION=$${AWS_REGION:-ap-northeast-1}; \
+	echo "📦 S3 Bucket: $$S3_BUCKET"; \
+	echo "📂 Prefix: backups/"; \
+	echo ""; \
+	echo "🔍 バックアップ日付一覧:"; \
+	aws s3 ls s3://$$S3_BUCKET/backups/ --region $$AWS_REGION | \
+		grep "PRE" | \
+		awk '{print "  📅 " $$2}' | \
+		sed 's|/||g' | \
+		sort -r | \
+		head -20; \
+	echo ""; \
+	echo "💡 詳細を確認するには:"; \
+	echo "   aws s3 ls s3://$$S3_BUCKET/backups/<YYYYMMDD>/ --recursive --human-readable"
+
+.PHONY: backup-world-restore
+backup-world-restore: ## バックアップから復元 (要: DATE=YYYYMMDD)
+	@echo "♻️  S3バックアップから復元します"
+	@echo ""
+	@if [ -z "$(DATE)" ]; then \
+		echo "❌ DATEパラメータを指定してください"; \
+		echo ""; \
+		echo "💡 使用方法: make backup-world-restore DATE=YYYYMMDD"; \
+		echo ""; \
+		echo "📋 利用可能なバックアップ:"; \
+		$(MAKE) backup-world-list; \
+		exit 1; \
+	fi
+	@S3_BUCKET=$${S3_BUCKET:-kishax-production-world-backups}; \
+	AWS_REGION=$${AWS_REGION:-ap-northeast-1}; \
+	BACKUP_DATE=$(DATE); \
+	echo "📦 S3 Bucket: $$S3_BUCKET"; \
+	echo "📅 バックアップ日付: $$BACKUP_DATE"; \
+	echo ""; \
+	echo "⚠️  警告: この操作は現在のワールドデータを上書きします！"; \
+	echo ""; \
+	read -p "続行しますか？ (yes/N): " answer; \
+	if [ "$$answer" != "yes" ]; then \
+		echo "キャンセルしました"; \
+		exit 0; \
+	fi; \
+	echo ""; \
+	if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "❌ kishax-minecraftコンテナが動作していません"; \
+		exit 1; \
+	fi; \
+	echo "📥 S3からバックアップをダウンロード中..."; \
+	docker exec -it kishax-minecraft bash -c " \
+		set -e; \
+		S3_BUCKET=$$S3_BUCKET; \
+		AWS_REGION=$$AWS_REGION; \
+		BACKUP_DATE=$$BACKUP_DATE; \
+		TEMP_DIR=/tmp/mc-restore-\$$\$$; \
+		mkdir -p \$$TEMP_DIR; \
+		echo ''; \
+		echo '📂 対象サーバーを検出中...'; \
+		SERVERS=\$$(aws s3 ls s3://\$$S3_BUCKET/backups/\$$BACKUP_DATE/ --region \$$AWS_REGION | grep PRE | awk '{print \$$2}' | sed 's|/||g'); \
+		if [ -z \"\$$SERVERS\" ]; then \
+			echo '❌ 指定された日付のバックアップが見つかりません'; \
+			rm -rf \$$TEMP_DIR; \
+			exit 1; \
+		fi; \
+		for server in \$$SERVERS; do \
+			echo ''; \
+			echo \"📥 復元中: \$$server\"; \
+			SERVER_DIR=/mc/spigot/\$$server; \
+			if [ ! -d \"\$$SERVER_DIR\" ]; then \
+				echo \"  ⚠️  サーバーディレクトリが見つかりません: \$$SERVER_DIR\"; \
+				continue; \
+			fi; \
+			BACKUP_PATH=s3://\$$S3_BUCKET/backups/\$$BACKUP_DATE/\$$server; \
+			DOWNLOAD_DIR=\$$TEMP_DIR/\$$server; \
+			mkdir -p \$$DOWNLOAD_DIR; \
+			echo \"  📥 ダウンロード中: \$$BACKUP_PATH\"; \
+			aws s3 sync \$$BACKUP_PATH \$$DOWNLOAD_DIR --region \$$AWS_REGION --quiet; \
+			for archive in \$$DOWNLOAD_DIR/*.tar.gz; do \
+				if [ -f \"\$$archive\" ]; then \
+					world=\$$(basename \"\$$archive\" .tar.gz); \
+					echo \"  📦 展開中: \$$world\"; \
+					rm -rf \$$SERVER_DIR/\$$world; \
+					tar -xzf \"\$$archive\" -C \$$SERVER_DIR; \
+					echo \"    ✅ \$$world 復元完了\"; \
+				fi; \
+			done; \
+			echo \"  ✅ \$$server 復元完了\"; \
+		done; \
+		rm -rf \$$TEMP_DIR; \
+		echo ''; \
+		echo '✅ 全サーバーの復元が完了しました'; \
+		echo ''; \
+		echo '💡 サーバーを再起動してください:'; \
+		echo '   make restart-all'; \
+	"
+
+.PHONY: backup-world-verify
+backup-world-verify: ## 最新バックアップの整合性確認
+	@echo "🔍 最新バックアップの整合性を確認します"
+	@echo ""
+	@S3_BUCKET=$${S3_BUCKET:-kishax-production-world-backups}; \
+	AWS_REGION=$${AWS_REGION:-ap-northeast-1}; \
+	echo "📦 S3 Bucket: $$S3_BUCKET"; \
+	echo ""; \
+	echo "🔍 最新バックアップを検索中..."; \
+	LATEST_DATE=$$(aws s3 ls s3://$$S3_BUCKET/backups/ --region $$AWS_REGION | \
+		grep "PRE" | \
+		awk '{print $$2}' | \
+		sed 's|/||g' | \
+		sort -r | \
+		head -1); \
+	if [ -z "$$LATEST_DATE" ]; then \
+		echo "❌ バックアップが見つかりません"; \
+		exit 1; \
+	fi; \
+	echo "📅 最新バックアップ日付: $$LATEST_DATE"; \
+	echo ""; \
+	echo "📊 バックアップ内容:"; \
+	aws s3 ls s3://$$S3_BUCKET/backups/$$LATEST_DATE/ --recursive --human-readable --region $$AWS_REGION | \
+		grep -E "(\.tar\.gz|metadata\.json|__BACKUP_COMPLETED__)" | \
+		awk '{printf "  %s %s\n", $$3, $$5}'; \
+	echo ""; \
+	echo "🔍 メタデータ確認:"; \
+	SERVERS=$$(aws s3 ls s3://$$S3_BUCKET/backups/$$LATEST_DATE/ --region $$AWS_REGION | \
+		grep "PRE" | \
+		awk '{print $$2}' | \
+		sed 's|/||g'); \
+	for server in $$SERVERS; do \
+		echo ""; \
+		echo "  📂 $$server:"; \
+		METADATA_PATH=s3://$$S3_BUCKET/backups/$$LATEST_DATE/$$server/metadata.json; \
+		if aws s3 ls $$METADATA_PATH --region $$AWS_REGION &>/dev/null; then \
+			aws s3 cp $$METADATA_PATH - --region $$AWS_REGION 2>/dev/null | jq -r '.worlds[] | "    ✅ \(.world): \(.size_bytes) bytes"' || echo "    ⚠️  メタデータ読み込み失敗"; \
+		else \
+			echo "    ❌ metadata.json が見つかりません"; \
+		fi; \
+	done; \
+	echo ""; \
+	echo "✅ 整合性確認完了"
 
