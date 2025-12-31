@@ -150,6 +150,22 @@ else
   echo "Created forwarding.secret file for Velocity"
 fi
 
+# Generate CONFIRM_URL from MC_CONFIRM_BASE_URL or AUTH_API_URL if not explicitly set
+if [ -z "$CONFIRM_URL" ]; then
+  if [ -n "$MC_CONFIRM_BASE_URL" ]; then
+    export CONFIRM_URL="${MC_CONFIRM_BASE_URL}/mc/auth"
+    echo "Auto-generated CONFIRM_URL from MC_CONFIRM_BASE_URL: $CONFIRM_URL"
+  elif [ -n "$AUTH_API_URL" ]; then
+    export CONFIRM_URL="${AUTH_API_URL}/mc/auth"
+    echo "Auto-generated CONFIRM_URL from AUTH_API_URL: $CONFIRM_URL"
+  else
+    export CONFIRM_URL="https://your-confirm-url.com"
+    echo "WARNING: Neither MC_CONFIRM_BASE_URL nor AUTH_API_URL set, using default CONFIRM_URL"
+  fi
+else
+  echo "Using explicitly set CONFIRM_URL: $CONFIRM_URL"
+fi
+
 # Replace placeholders in config files
 echo "Configuring server files..."
 find /mc -type f \( -name "*.yml" -o -name "*.toml" \) | while read file; do
