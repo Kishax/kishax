@@ -60,8 +60,15 @@ fi
 
 # Extract the directory path (remove __IMPORT_ENABLED__ filename)
 S3_WORLD_DIR=$(dirname "$LATEST_S3_PATH")
+
+# Extract year_month and version from path (deployment/YYYYMM/version/server_name)
+YEAR_MONTH=$(echo "$S3_WORLD_DIR" | awk -F'/' '{print $2}')
+VERSION=$(echo "$S3_WORLD_DIR" | awk -F'/' '{print $3}')
+
 echo "✅ Found import-enabled world data:"
-echo "   S3 Path: s3://$S3_BUCKET/$S3_WORLD_DIR"
+echo "   📅 年月: $YEAR_MONTH"
+echo "   🔢 バージョン: $VERSION"
+echo "   📍 S3パス: s3://$S3_BUCKET/$S3_WORLD_DIR"
 
 # Download world data
 echo ""
