@@ -56,7 +56,7 @@ public class Luckperms {
       user.data().add(node);
       lpapi.getUserManager().saveUser(user);
       // キャッシュをクリア
-      // user.getCachedData().invalidate();
+      user.getCachedData().invalidate();
       triggerNetworkSync();
     }
   }
@@ -88,12 +88,19 @@ public class Luckperms {
       Node node = Node.builder(permission).build();
       user.data().remove(node);
       lpapi.getUserManager().saveUser(user);
-      // user.getCachedData().invalidate(); // キャッシュをクリア
+      user.getCachedData().invalidate(); // キャッシュをクリア
       triggerNetworkSync();
     }
   }
 
   public int getPermLevel(String playerName) {
+    // プレイヤーのUserを取得し、データベースから再読み込み
+    User user = lpapi.getUserManager().getUser(playerName);
+    if (user != null) {
+      // キャッシュをリフレッシュ
+      lpapi.getUserManager().loadUser(user.getUniqueId()).join();
+    }
+
     int permLevel = 0;
     List<String> groups = new ArrayList<>(
         Arrays.asList(PermSettings.NEW_USER.get(), PermSettings.SUB_ADMIN.get(), PermSettings.SUPER_ADMIN.get()));
