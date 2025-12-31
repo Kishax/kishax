@@ -1,5 +1,6 @@
 package net.kishax.mc.velocity.auth;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.velocitypowered.api.proxy.Player;
@@ -76,9 +77,9 @@ public class AuthLevelChecker {
       } catch (Exception e) {
         logger.error("Error during periodic auth level check", e);
       }
-    }, 0, 1, TimeUnit.MINUTES);
+    }, 0, 10, TimeUnit.SECONDS);  // 1分 → 10秒に短縮
 
-    logger.info("Started periodic auth level checks (every 1 minute)");
+    logger.info("Started periodic auth level checks (every 10 seconds)");
   }
 
   /**
@@ -201,16 +202,20 @@ public class AuthLevelChecker {
 
   /**
    * 新規プレイヤー権限設定
+   * MC_UNAUTHENTICATED: WEB認証未実施
+   * 権限なし（認証を促すメッセージのみ表示）
    */
   private void applyNewPlayerPermissions(User user) {
-    user.data().add(Node.builder("group.new-user").build());
+    // 権限なし - WEB認証を促す
   }
 
   /**
    * 一時権限設定
+   * MC_AUTHENTICATED_TRYING: 認証トークン発行済み、WEB認証待ち
+   * 権限なし（認証URL表示済み、WEB認証完了待ち）
    */
   private void applyTempPermissions(User user) {
-    user.data().add(Node.builder("group.new-user").build());
+    // 権限なし - WEB認証完了待ち
     // 一時的な追加権限があればここに追加
   }
 
@@ -218,14 +223,14 @@ public class AuthLevelChecker {
    * 未連携プレイヤー権限設定
    */
   private void applyUnlinkedPermissions(User user) {
-    user.data().add(Node.builder("group.verified").build());
+    user.data().add(Node.builder("group.new-user").build());
   }
 
   /**
    * 連携済みプレイヤー権限設定
    */
   private void applyLinkedPermissions(User user) {
-    user.data().add(Node.builder("group.verified").build());
+    user.data().add(Node.builder("group.new-user").build());
     // Kishaxアカウント連携ユーザー向け基本権限
   }
 
@@ -234,7 +239,7 @@ public class AuthLevelChecker {
    */
   private void applyProductPermissions(User user, List<String> activeProducts) {
     // 基本権限
-    user.data().add(Node.builder("group.verified").build());
+    user.data().add(Node.builder("group.new-user").build());
 
     // プロダクト別権限追加
     for (String product : activeProducts) {
@@ -272,10 +277,12 @@ public class AuthLevelChecker {
   /**
    * API レスポンス用クラス
    */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class AuthLevelResponse {
     private String authLevel;
     private List<String> activeProducts;
     private String kishaxUserId;
+    private String lastUpdated;  // Auth APIが返すタイムスタンプ（無視しても良い）
 
     // getters and setters
     public String getAuthLevel() {
@@ -300,6 +307,14 @@ public class AuthLevelChecker {
 
     public void setKishaxUserId(String kishaxUserId) {
       this.kishaxUserId = kishaxUserId;
+    }
+
+    public String getLastUpdated() {
+      return lastUpdated;
+    }
+
+    public void setLastUpdated(String lastUpdated) {
+      this.lastUpdated = lastUpdated;
     }
   }
 }

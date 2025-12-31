@@ -1,0 +1,56 @@
+# ================================================================
+# Portals Configuration - Home Server
+# ================================================================
+# This file is specific to the "home" server.
+# Define custom portal locations and destinations here.
+# ================================================================
+
+portals:
+- name: Nether Portal
+  corner1:
+  - 100
+  - 64
+  - 100
+  corner2:
+  - 110
+  - 70
+  - 110
+- name: End Portal
+  corner1:
+  - 200
+  - 64
+  - 200
+  corner2:
+  - 210
+  - 70
+  - 210
+- corner1:
+  - -310.0
+  - 72.0
+  - -256.0
+  corner2:
+  - -310.0
+  - 75.0
+  - -258.0
+  name: confirm
+  uuid: ad92fa83-1316-40f0-b40c-5db390b4400a
+- corner1:
+  - -281.0
+  - 61.0
+  - -232.0
+  corner2:
+  - -316.0
+  - 62.0
+  - -251.0
+  name: waterGate
+  uuid: 670381d8-fce0-4c06-86de-39026acc7ce0
+- corner1:
+  - 3.0
+  - 60.0
+  - -3.0
+  corner2:
+  - -3.0
+  - 60.0
+  - 3.0
+  name: online
+  uuid: aedf98e4-cfa2-4363-b9c3-f6ba85252be4

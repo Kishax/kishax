@@ -45,17 +45,18 @@ public class SpigotOtpHandler implements OtpHandler {
    * Velocity→Spigot OTP処理
    */
   public void handle(Message.Minecraft.Otp otp) {
-    try {
-      logger.info("Velocity→Spigot OTP受信: {} ({}) OTP: {}", otp.mcid, otp.uuid, otp.otp);
+    logger.info("Velocity→Spigot OTP受信: {} ({}) OTP: {}", otp.mcid, otp.uuid, otp.otp);
 
-      // TEST_トークンの場合は追加のログ出力
-      boolean isTestMode = isTestToken(otp.mcid, otp.uuid);
-      if (isTestMode) {
-        logger.info("🧪 テストモードでのOTP処理を開始します");
-      }
+    // TEST_トークンの場合は追加のログ出力
+    boolean isTestMode = isTestToken(otp.mcid, otp.uuid);
+    if (isTestMode) {
+      logger.info("🧪 テストモードでのOTP処理を開始します");
+    }
 
-      // メインスレッドで実行（Bukkit API呼び出しのため）
-      Bukkit.getScheduler().runTask(plugin, () -> {
+    // メインスレッドで実行（Bukkit API呼び出しのため）
+    // runTask内でエラーハンドリングを行う
+    Bukkit.getScheduler().runTask(plugin, () -> {
+      try {
         Player player = Bukkit.getPlayer(otp.mcid);
         boolean success = false;
         String responseMessage;
@@ -91,14 +92,15 @@ public class SpigotOtpHandler implements OtpHandler {
           logger.warn("プレイヤーが見つからないかUUIDが一致しません: {} ({})", otp.mcid, otp.uuid);
         }
 
-        // Velocityにレスポンス送信
+        // Velocityにレスポンス送信（必ず1回のみ）
         sendOtpResponseToVelocity(otp.mcid, otp.uuid, success, responseMessage);
-      });
 
-    } catch (Exception e) {
-      logger.error("OTP受信処理でエラーが発生しました: {} ({})", otp.mcid, otp.uuid, e);
-      sendOtpResponseToVelocity(otp.mcid, otp.uuid, false, "Spigot側でOTP処理エラーが発生しました。");
-    }
+      } catch (Exception e) {
+        // runTask内のエラーハンドリング
+        logger.error("OTP処理中にエラーが発生しました: {} ({})", otp.mcid, otp.uuid, e);
+        sendOtpResponseToVelocity(otp.mcid, otp.uuid, false, "Spigot側でOTP処理エラーが発生しました。");
+      }
+    });
   }
 
   /**

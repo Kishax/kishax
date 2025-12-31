@@ -41,6 +41,14 @@ public class Main extends JavaPlugin {
 
   @Override
   public void onEnable() {
+    // プラグインビルド情報を表示（埋め込み版）
+    // このコメントの日時: 2025-12-21 21:30:00 JST
+    String buildIdentifier = "v1.0.0-20251221-2130";
+    
+    logger.info("===================================");
+    logger.info("Kishax Spigot Plugin");
+    logger.info("Build: {}", buildIdentifier);
+    logger.info("===================================");
     logger.info("detected spigot platform.");
     this.audiences = BukkitAudiences.create(this);
     injector = Guice.createInjector(new Module(this, logger, audiences));

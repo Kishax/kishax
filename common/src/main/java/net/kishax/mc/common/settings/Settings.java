@@ -17,6 +17,15 @@ public enum Settings {
   HOME_SERVER_IP("HOME_SERVER_IP"),
   INPUT_PERIOD("INPUT_PERIOD"),
   HUB_TELEPORT_TIME("HUB_TELEPORT_TIME"),
+  
+  // Image Storage Settings
+  IMAGE_STORAGE_MODE("IMAGE_STORAGE_MODE"),              // "local" or "s3"
+  S3_BUCKET_NAME("S3_BUCKET_NAME"),                      // S3 bucket name
+  S3_PREFIX("S3_PREFIX"),                                 // S3 prefix (e.g., "images/")
+  S3_REGION("S3_REGION"),                                 // AWS region (e.g., "ap-northeast-1")
+  S3_USE_INSTANCE_PROFILE("S3_USE_INSTANCE_PROFILE"),    // "true" or "false"
+  S3_CACHE_ENABLED("S3_CACHE_ENABLED"),                  // "true" or "false"
+  S3_CACHE_DIRECTORY("S3_CACHE_DIRECTORY"),              // Local cache directory
   ;
 
   private final Database db = Database.getInstance();
@@ -34,6 +43,10 @@ public enum Settings {
 
   public int getIntValue() {
     return this.value != null ? Integer.parseInt(this.value) : 0;
+  }
+
+  public boolean getBooleanValue() {
+    return this.value != null && "true".equalsIgnoreCase(this.value);
   }
 
   public String getColumnKey() {

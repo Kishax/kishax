@@ -63,6 +63,14 @@ public class Main {
 
   @Subscribe
   public void onProxyInitialization(ProxyInitializeEvent e) {
+    // プラグインビルド情報を表示（埋め込み版）
+    // このコメントの日時: 2025-12-21 21:30:00 JST
+    String buildIdentifier = "v1.0.0-20251221-2130";
+    
+    logger.info("===================================");
+    logger.info("Kishax Velocity Plugin");
+    logger.info("Build: {}", buildIdentifier);
+    logger.info("===================================");
     logger.info("detected velocity platform.");
     TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"));
 
@@ -101,7 +109,6 @@ public class Main {
     commandManager.register(commandManager.metaBuilder("hub").build(), getInjector().getInstance(Hub.class));
     commandManager.register(commandManager.metaBuilder("cend").build(), getInjector().getInstance(CEnd.class));
     commandManager.register(commandManager.metaBuilder("stp").build(), getInjector().getInstance(ServerTeleport.class));
-    commandManager.register(commandManager.metaBuilder("kishax").build(), getInjector().getInstance(net.kishax.mc.velocity.server.cmd.sub.Test.class));
     VelocityConfig config = getInjector().getInstance(VelocityConfig.class);
     int port = config.getInt("Socket.Server_Port", 0);
     if (port != 0) {
@@ -247,6 +254,14 @@ public class Main {
           player.sendMessage(Component.text("Web authentication successful!", NamedTextColor.GREEN));
           logger.info("Sent auth confirmation message to player {}", playerName);
         });
+      });
+
+      // Register Auth Token Saved callback to prevent SQS loop
+      net.kishax.api.bridge.SqsWorker.setAuthTokenSavedCallback((mcid, uuid, authToken) -> {
+        logger.info("🔔 Auth token saved callback triggered for player: {} ({})", mcid, uuid);
+        // VelocitySqsMessageHandlerに転送してSpigotに送信
+        VelocitySqsMessageHandler handler = getInjector().getInstance(VelocitySqsMessageHandler.class);
+        handler.handleAuthTokenSaved(mcid, uuid, authToken);
       });
 
       sqsWorker.start();

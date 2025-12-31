@@ -72,21 +72,23 @@ public class Confirm {
                 // データベースにトークンを保存
                 db.updateAuthToken(conn, playerUUID, authToken, expiresAt);
 
-                // 新形式のURL（トークンベース）を使用
-                String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
-
-                // QRコード生成・配布
-                String[] imageArgs = { "image", "createqr", confirmUrl };
-                if (ifMapId == -1) {
-                  im.executeImageMapForConfirm(player, imageArgs);
-                } else {
-                  im.giveMapToPlayer(player, ifMapId);
-                }
+                // 先に処理中メッセージを表示
+                sendProcessingMessage(player);
 
                 // Velocity経由でWeb側にプレイヤー情報とトークンを送信
+                // Web側でDB保存後、mc_auth_token_savedメッセージが返ってきて
+                // SpigotAuthTokenSavedHandlerがURLを表示する
                 sendAuthTokenToVelocity(conn, player, authToken, expiresAt, "create");
 
-                sendConfirmationMessage(player, confirmUrl);
+                // QRコード生成・配布（URL表示後に行う予定だったが、ここでは行わない）
+                // URL表示とQRコード配布はSpigotAuthTokenSavedHandlerに移譲
+                // String confirmUrl = Settings.CONFIRM_URL.getValue() + "?t=" + authToken;
+                // String[] imageArgs = { "image", "createqr", confirmUrl };
+                // if (ifMapId == -1) {
+                //   im.executeImageMapForConfirm(player, imageArgs);
+                // } else {
+                //   im.giveMapToPlayer(player, ifMapId);
+                // }
               }
             }
           } catch (SQLException | ClassNotFoundException e2) {
@@ -261,6 +263,20 @@ public class Confirm {
         .append(finalMessage);
 
     audiences.player(player).sendMessage(fullMessage);
+  }
+
+  /**
+   * 認証URL発行処理中メッセージを送信
+   */
+  private void sendProcessingMessage(Player player) {
+    Component processingMessage = Component.text()
+        .append(Component.text("⏳ ").color(NamedTextColor.YELLOW))
+        .append(Component.text("認証URLを発行中です...").color(NamedTextColor.WHITE))
+        .appendNewline()
+        .append(Component.text("少々お待ちください。").color(NamedTextColor.GRAY))
+        .build();
+
+    audiences.player(player).sendMessage(processingMessage);
   }
 
   private int checkExistConfirmMap(Connection conn, Object[] args) throws SQLException {

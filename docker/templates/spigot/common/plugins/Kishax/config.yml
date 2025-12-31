@@ -1,11 +1,11 @@
 # Configuration File
 Menu:
-  Server: false
-  ImageMap: false
+  Server: true
+  ImageMap: true
 
 Portals:
-  Move: false
-  Wand: false
+  Move: true
+  Wand: true
 
 MySQL:
   Host: "${MYSQL_HOST}"

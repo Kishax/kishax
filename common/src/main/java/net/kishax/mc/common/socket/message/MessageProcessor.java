@@ -24,6 +24,10 @@ public class MessageProcessor {
         .map(web -> web.confirm)
         .ifPresent(confirm -> injector.getInstance(MinecraftWebConfirmHandler.class).handle(confirm));
 
+    Optional.ofNullable(msg.web)
+        .map(web -> web.authTokenSaved)
+        .ifPresent(authTokenSaved -> injector.getInstance(AuthTokenSavedHandler.class).handle(authTokenSaved));
+
     Optional.ofNullable(msg.discord)
         .map(discord -> discord.rulebook)
         .ifPresent(rulebook -> injector.getInstance(RuleBookSyncHandler.class).handle(rulebook));
@@ -59,18 +63,6 @@ public class MessageProcessor {
           });
 
       Optional.ofNullable(msg.mc.otp)
-          .ifPresent(otp -> {
-            try {
-              injector.getInstance(OtpHandler.class).handle(otp);
-            } catch (ProvisionException e) {
-              // OtpHandlerが存在しない場合はスキップ
-            }
-          });
-    }
-
-    // minecraftフィールドの処理（ソケット通信用）
-    if (msg.minecraft != null) {
-      Optional.ofNullable(msg.minecraft.otp)
           .ifPresent(otp -> {
             try {
               injector.getInstance(OtpHandler.class).handle(otp);

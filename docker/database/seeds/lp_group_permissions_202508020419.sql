@@ -1,0 +1,157 @@
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('super-admin','bungeecord.command.server',1,'global','global',0,'{}'),
+	 ('super-admin','minecraft.command.op',1,'global','global',0,'{}'),
+	 ('super-admin','minecraft.command.block',1,'global','global',0,'{}'),
+	 ('super-admin','minecraft.command.deop',1,'global','global',0,'{}'),
+	 ('super-admin','group.sub-admin',1,'global','global',0,'{}'),
+	 ('super-admin','group.builder',1,'global','global',0,'{}'),
+	 ('sub-admin','multiverse.portal.access.world_gate',1,'global','global',0,'{}'),
+	 ('sub-admin','multiverse.portal.access.creative_gate',1,'global','global',0,'{}'),
+	 ('sub-command-admin','minecraft.command.tellraw',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.perf',1,'global','creative',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('sub-command-admin','minecraft.command.execute',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.msg',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.difficulty',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.seed',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.team',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.summon',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.selector',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.locate',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.list',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.tick',1,'global','creative',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('sub-command-admin','minecraft.command.attribute',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.me',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.enchant',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.experience',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.particle',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.data',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.clone',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.give',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.datapack',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.worldborder',1,'global','creative',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('sub-command-admin','minecraft.commandblock',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.spectate',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.schedule',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.tag',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.random',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.weather',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.teleport',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.gamemode',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.loot',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.time',1,'global','creative',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('sub-command-admin','minecraft.command.trigger',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.setblock',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.say',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.nbt.place',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.return',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.spreadplayers',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.playsound',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.scoreboard',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.nbt.copy',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.stopsound',1,'global','creative',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('sub-command-admin','minecraft.admin.command_feedback',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.advancement',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.debugstick',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.damage',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.debug',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.ride',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.fill',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.kill',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.item',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.clear',1,'global','creative',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('sub-command-admin','minecraft.command.setidletimeout',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.title',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.fillbiome',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.bossbar',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.transfer',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.defaultgamemode',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.nbt',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.teammsg',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.place',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','minecraft.command.effect',1,'global','creative',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('sub-command-admin','minecraft.debugstick.always',1,'global','creative',0,'{}'),
+	 ('sub-command-admin','prefix.1.&9《&dCommandAdmin&9》&7',1,'global','creative',0,'{}'),
+	 ('sub-admin','minecraft.command.stop',1,'latest','global',0,'{}'),
+	 ('sub-command-admin','minecraft.commandblock',1,'global','global',0,'{}'),
+	 ('super-admin','velocity.command.send',1,'global','global',0,'{}'),
+	 ('default','velocity.command.server',0,'global','global',0,'{}'),
+	 ('sub-admin','velocity.command.server',0,'global','global',0,'{}'),
+	 ('sub-command-admin','velocity.command.server',0,'global','global',0,'{}'),
+	 ('sub-admin','gsit.*',1,'latest','global',0,'{}'),
+	 ('super-admin','velocity.command.server',0,'global','global',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('super-admin','tab.super-admin',1,'global','global',0,'{}'),
+	 ('sub-admin','prefix.1.&9《&aSubAdmin&9》&7',1,'global','global',0,'{}'),
+	 ('super-admin','prefix.1.&9《&bSuperAdmin&9》&7',1,'global','global',0,'{}'),
+	 ('builder','skript.builder',1,'global','global',0,'{}'),
+	 ('builder','kishax.*',1,'global','global',0,'{}'),
+	 ('default','kishax.proxy.retry',1,'global','global',0,'{}'),
+	 ('default','kishax.check',1,'global','global',0,'{}'),
+	 ('default','kishax.confirm',1,'global','global',0,'{}'),
+	 ('sub-admin','kishax.proxy.start',1,'global','global',0,'{}'),
+	 ('sub-admin','kishax.proxy.stop',1,'global','global',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('sub-admin','kishax.setpoint',1,'global','global',0,'{}'),
+	 ('sub-admin','kishax.proxy.conv',1,'global','global',0,'{}'),
+	 ('sub-admin','kishax.proxy.conv.remove',1,'global','global',0,'{}'),
+	 ('sub-admin','kishax.proxy.conv.add',1,'global','global',0,'{}'),
+	 ('sub-admin','group.new-user',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.commandslist',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.stop',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.debug',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.conv',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.silent',1,'global','global',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('super-admin','group.new-user',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.perm',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.mcvc',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.test',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.conv.*',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.setpoint',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.chat',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.stp',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.cend',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.*',1,'global','global',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('super-admin','kishax.proxy.reload',1,'global','global',0,'{}'),
+	 ('super-admin','kishax.proxy.maintenance',1,'global','global',0,'{}'),
+	 ('new-user','betternav.navplayer',1,'latest','global',0,'{}'),
+	 ('new-user','chestsort.use',1,'latest','global',0,'{}'),
+	 ('new-user','itemslotmachine.slot.use.*',1,'global','global',0,'{}'),
+	 ('new-user','gsit.*',1,'global','global',0,'{}'),
+	 ('new-user','cleanping.ping',1,'global','global',0,'{}'),
+	 ('new-user','cleanping.ping.others',1,'global','global',0,'{}'),
+	 ('new-user','kishax.im',1,'global','global',0,'{}'),
+	 ('new-user','kishax.im.create',1,'global','global',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('new-user','kishax.im.createqr',1,'global','global',0,'{}'),
+	 ('new-user','kishax.image',1,'global','global',0,'{}'),
+	 ('new-user','kishax.image.create',1,'global','global',0,'{}'),
+	 ('new-user','kishax.image.createqr',1,'global','global',0,'{}'),
+	 ('new-user','kishax.menu',1,'global','global',0,'{}'),
+	 ('new-user','kishax.portal',1,'global','global',0,'{}'),
+	 ('new-user','kishax.proxy.cancel',1,'global','global',0,'{}'),
+	 ('new-user','kishax.proxy.hub',1,'global','global',0,'{}'),
+	 ('new-user','kishax.proxy.req',1,'global','global',0,'{}'),
+	 ('new-user','kishax.proxy.retry',1,'global','global',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('new-user','kishax.proxy.stp',1,'global','global',0,'{}'),
+	 ('new-user','kishax.registermap',1,'global','global',0,'{}'),
+	 ('new-user','kishax.registerpoint',1,'global','global',0,'{}'),
+	 ('new-user','kishax.tpr',1,'global','global',0,'{}'),
+	 ('new-user','multiverse.portal.access.creative_gate',1,'global','global',0,'{}'),
+	 ('new-user','multiverse.portal.access.world_gate',1,'global','global',0,'{}'),
+	 ('new-user','prefix.1.&9《&eMember&9》&7',1,'global','global',0,'{}'),
+	 ('new-user','velocity.command.server',0,'global','global',0,'{}'),
+	 ('new-user','voicechat.groups',1,'global','global',0,'{}'),
+	 ('new-user','voicechat.listen',1,'global','global',0,'{}');
+INSERT INTO mc.lp_group_permissions (name,permission,value,server,world,expiry,contexts) VALUES
+	 ('new-user','voicechat.speak',1,'global','global',0,'{}'),
+	 ('builder','worldedit.*',1,'global','global',0,'{}');

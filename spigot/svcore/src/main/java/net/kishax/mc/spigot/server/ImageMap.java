@@ -66,6 +66,8 @@ import net.kishax.mc.spigot.server.menu.Menu;
 import net.kishax.mc.spigot.server.menu.Type;
 import net.kishax.mc.spigot.server.menu.interfaces.MenuEventRunnable;
 import net.kishax.mc.spigot.server.render.ImageMapRenderer;
+import net.kishax.mc.spigot.server.imagemap.ImageStorageManager;
+import net.kishax.mc.spigot.server.imagemap.ImageStorage;
 import net.kishax.mc.spigot.server.textcomponent.TCUtils;
 import net.kishax.mc.spigot.server.textcomponent.TCUtils2;
 import net.kishax.mc.spigot.util.RunnableTaskUtil;
@@ -92,6 +94,7 @@ public class ImageMap {
   private final RunnableTaskUtil rt;
   private final String serverName;
   private final Provider<SocketSwitch> sswProvider;
+  private final ImageStorageManager storageManager;
 
   @Inject
   public ImageMap(JavaPlugin plugin, BukkitAudiences audiences, Logger logger, Database db, ServerHomeDir shd,
@@ -103,6 +106,9 @@ public class ImageMap {
     this.serverName = shd.getServerName();
     this.rt = rt;
     this.sswProvider = sswProvider;
+    this.storageManager = new ImageStorageManager(logger);
+    
+    logger.info("ImageMap initialized with storage type: {}", storageManager.getStorageType());
   }
 
   public void leadAction(Connection conn, Player player, RunnableTaskUtil.Key key, String[] usingArgs, Object[] qArgs)
@@ -1381,9 +1387,27 @@ public class ImageMap {
           comment = (String) mArgs[5],
           ext = (String) mArgs[6],
           date = (String) mArgs[7],
-          fullPath = Settings.IMAGE_FOLDER.getValue() + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext,
           playerName = player.getName();
-      BufferedImage image = ImageIO.read(new File(fullPath));
+      
+      LocalDate localDate = LocalDate.parse(date);
+      
+      // StorageManagerを使用して画像を取得
+      ImageStorage storage = storageManager.getStorage();
+      BufferedImage image = storage.loadImage(imageUUID, ext, localDate).join();
+      
+      // ストレージから取得できない場合、従来のローカルパスを試行
+      if (image == null) {
+        logger.warn("Image not found in {} storage, trying legacy local path", 
+                    storageManager.getStorageType());
+        String fullPath = Settings.IMAGE_FOLDER.getValue() + "/" + date.replace("-", "") + "/" + imageUUID + "." + ext;
+        image = ImageIO.read(new File(fullPath));
+      }
+      
+      if (image == null) {
+        player.sendMessage("画像の読み取りに失敗しました。");
+        return;
+      }
+      
       image = !isQr ? resizeImage(image, 128, 128) : image;
       List<String> lores = new ArrayList<>();
       lores.add(isQr ? "<QRコード>" : "<イメージマップ>");
@@ -1465,12 +1489,25 @@ public class ImageMap {
         if (rs.next()) {
           boolean isQr = rs.getBoolean("isqr");
           Date date = rs.getDate("date");
-          String imageUUID = rs.getString("imuuid"),
-              ext = rs.getString("ext"),
-              fullPath = getFullPath(date, imageUUID, ext);
-          BufferedImage image = ImageIO.read(new File(fullPath));
+          String imageUUID = rs.getString("imuuid");
+          String ext = rs.getString("ext");
+          LocalDate localDate = date.toLocalDate();
+          
+          // StorageManagerを使用して画像を取得
+          ImageStorage storage = storageManager.getStorage();
+          BufferedImage image = storage.loadImage(imageUUID, ext, localDate).join();
+          
           if (image != null) {
             return isQr ? image : resizeImage(image, 128, 128);
+          } else {
+            // ストレージから取得できない場合、従来のローカルパスを試行
+            logger.warn("Image not found in {} storage, trying legacy local path", 
+                        storageManager.getStorageType());
+            String fullPath = getFullPath(date, imageUUID, ext);
+            image = ImageIO.read(new File(fullPath));
+            if (image != null) {
+              return isQr ? image : resizeImage(image, 128, 128);
+            }
           }
         }
       }
@@ -1624,13 +1661,32 @@ public class ImageMap {
 
   private void saveImageToFileSystem(BufferedImage image, String imageUUID, String ext)
       throws IOException, SQLException, ClassNotFoundException {
-    Path dirPath = Paths.get(Settings.IMAGE_FOLDER.getValue(), LocalDate.now().toString().replace("-", ""));
-    if (!Files.exists(dirPath)) {
-      Files.createDirectories(dirPath);
+    ImageStorage storage = storageManager.getStorage();
+    LocalDate date = LocalDate.now();
+    
+    try {
+      // 非同期保存を実行し、完了を待つ
+      storage.saveImage(image, imageUUID, ext, date).join();
+      logger.info("Image saved successfully via {} storage: {}", 
+                  storageManager.getStorageType(), imageUUID);
+    } catch (Exception e) {
+      logger.error("Failed to save image via {} storage: {}", 
+                   storageManager.getStorageType(), e.getMessage());
+      
+      // S3保存に失敗した場合、ローカルにフォールバック
+      if ("s3".equals(storageManager.getStorageType())) {
+        logger.warn("Falling back to local storage for image: {}", imageUUID);
+        Path dirPath = Paths.get(Settings.IMAGE_FOLDER.getValue(), date.toString().replace("-", ""));
+        if (!Files.exists(dirPath)) {
+          Files.createDirectories(dirPath);
+        }
+        String fileName = imageUUID + "." + ext;
+        Path filePath = dirPath.resolve(fileName);
+        ImageIO.write(image, ext, filePath.toFile());
+      } else {
+        throw new IOException("Failed to save image to local storage", e);
+      }
     }
-    String fileName = imageUUID + "." + ext;
-    Path filePath = dirPath.resolve(fileName);
-    ImageIO.write(image, ext, filePath.toFile());
   }
 
   @SuppressWarnings("unused")

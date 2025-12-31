@@ -57,3 +57,50 @@ commands:
     usage: /<command>
     description: You can open navi menu
     executor: net.kishax.mc.spigot.cmd.sub.teleport.Navi
+permissions:
+  kishax.*:
+    description: Gives access to all kishax commands
+    default: op
+    children:
+      kishax.reload: true
+      kishax.fv: true
+      kishax.mcvc: true
+      kishax.portal: true
+      kishax.portal.*: true
+      kishax.hideplayer: true
+      kishax.im: true
+      kishax.image: true
+      kishax.image.*: true
+      kishax.menu: true
+      kishax.button: true
+      kishax.check: true
+      kishax.setpoint: true
+      kishax.confirm: true
+      kishax.back: true
+      kishax.test: true
+  kishax.confirm:
+    description: Allows use of /kishax confirm
+    default: true
+  kishax.check:
+    description: Allows use of /kishax check
+    default: true
+  kishax.portal:
+    description: Allows use of /kishax portal
+    default: op
+  kishax.portal.*:
+    description: Gives access to all portal commands
+    default: op
+    children:
+      kishax.portal.wand: true
+      kishax.portal.delete: true
+      kishax.portal.rename: true
+      kishax.portal.nether: true
+  kishax.image:
+    description: Allows use of /kishax image
+    default: op
+  kishax.image.*:
+    description: Gives access to all image commands
+    default: op
+    children:
+      kishax.image.create: true
+      kishax.image.q: true

@@ -1,0 +1,241 @@
+{
+  "memory": {
+    "overall": "8.0",
+    "buffer": 0.1,
+    "mc_wantage": 1.0,
+    "comment": "overall: Total available memory (GB), buffer: Reserved buffer ratio (0.1 = 10% of overall), mc_wantage: Percentage allocated to MC (0.0-1.0)"
+  },
+  "plugin_presets": {
+    "essential": {
+      "description": "Essential plugins for all servers",
+      "plugins": [
+        "luckperms"
+      ]
+    },
+    "full": {
+      "description": "All available plugins",
+      "plugins": [
+        "luckperms",
+        "kishax"
+      ]
+    }
+  },
+  "proxies": [
+    {
+      "name": "proxy",
+      "type": "velocity",
+      "version": "3.4.0-SNAPSHOT-558",
+      "url": "https://fill-data.papermc.io/v1/objects/ef1a852bfae7397e84907837925e7ad21c6312066290edaae401b77f6f423ac3/velocity-3.4.0-SNAPSHOT-558.jar",
+      "filename": "velocity-3.4.0-SNAPSHOT-558.jar",
+      "memory_ratio": 0.15,
+      "plugins": [
+        "luckperms",
+        "geyser-velocity",
+        "floodgate-velocity",
+        "kishax"
+      ],
+      "comment": "memory_ratio: Portion of MC memory allocated to this proxy (sum of all proxies + spigots must be <= 1.0)"
+    }
+  ],
+  "spigots": [
+    {
+      "name": "home",
+      "type": "paper",
+      "version": "1.21.11-69",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/cf374f2af9d71dfcc75343f37b722a7abcb091c574131b95e3b13c6fc2cb8fae/paper-1.21.11-69.jar",
+      "filename": "paper-1.21.11-69.jar",
+      "memory_ratio": 0.35,
+      "plugin_preset": "full",
+      "custom_plugins": [],
+      "port": 25565,
+      "internal_port": 25564,
+      "is_home": true,
+      "s3import": true,
+      "server_type": "survival",
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
+      "comment": "Home server: Always running, default entry point. s3import: If true, import world data from S3 on first startup"
+    },
+    {
+      "name": "latest",
+      "type": "paper",
+      "version": "1.21.11-69",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/cf374f2af9d71dfcc75343f37b722a7abcb091c574131b95e3b13c6fc2cb8fae/paper-1.21.11-69.jar",
+      "filename": "paper-1.21.11-69.jar",
+      "memory_ratio": 0.5,
+      "plugin_preset": "full",
+      "custom_plugins": [],
+      "port": 25578,
+      "internal_port": 25577,
+      "is_home": false,
+      "s3import": true,
+      "auto_start": false,
+      "server_type": "survival",
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
+      "comment": "Latest server: Dynamically started from home server, imports world data from S3. auto_start: false = dont start on container boot"
+    },
+    {
+      "name": "darumasan",
+      "type": "paper",
+      "version": "1.21.11-39",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
+      "filename": "paper-1.21.11-39.jar",
+      "memory_ratio": 0,
+      "plugin_preset": "full",
+      "custom_plugins": [],
+      "port": 25607,
+      "internal_port": 25606,
+      "is_home": false,
+      "s3import": false,
+      "auto_start": false,
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
+      "comment": "Disabled: memory_ratio=0, kept for database compatibility"
+    },
+    {
+      "name": "test",
+      "type": "paper",
+      "version": "1.21.11-39",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
+      "filename": "paper-1.21.11-39.jar",
+      "memory_ratio": 0,
+      "plugin_preset": "full",
+      "custom_plugins": [],
+      "port": 25580,
+      "internal_port": 25579,
+      "is_home": false,
+      "s3import": false,
+      "auto_start": false,
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
+      "comment": "Disabled: memory_ratio=0, kept for database compatibility"
+    },
+    {
+      "name": "relics",
+      "type": "paper",
+      "version": "1.21.11-39",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
+      "filename": "paper-1.21.11-39.jar",
+      "memory_ratio": 0,
+      "plugin_preset": "full",
+      "custom_plugins": [],
+      "port": 25609,
+      "internal_port": 25608,
+      "is_home": false,
+      "s3import": false,
+      "auto_start": false,
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
+      "comment": "Disabled: memory_ratio=0, kept for database compatibility"
+    },
+    {
+      "name": "universe",
+      "type": "paper",
+      "version": "1.21.11-39",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
+      "filename": "paper-1.21.11-39.jar",
+      "memory_ratio": 0,
+      "plugin_preset": "full",
+      "custom_plugins": [],
+      "port": 25595,
+      "internal_port": 25594,
+      "is_home": false,
+      "s3import": false,
+      "auto_start": false,
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
+      "comment": "Disabled: memory_ratio=0, kept for database compatibility"
+    },
+    {
+      "name": "forge",
+      "type": "paper",
+      "version": "1.21.11-39",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
+      "filename": "paper-1.21.11-39.jar",
+      "memory_ratio": 0,
+      "plugin_preset": "full",
+      "custom_plugins": [],
+      "port": 25612,
+      "internal_port": 25611,
+      "is_home": false,
+      "s3import": false,
+      "auto_start": false,
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
+      "comment": "Disabled: memory_ratio=0, kept for database compatibility"
+    },
+    {
+      "name": "twillest",
+      "type": "paper",
+      "version": "1.21.11-39",
+      "minecraft_version": "1.21.11",
+      "url": "https://fill-data.papermc.io/v1/objects/7e8fd35b554aea8d1492c83fcf429e9c8e391464e50f82ee3e408be87b4e80df/paper-1.21.11-39.jar",
+      "filename": "paper-1.21.11-39.jar",
+      "memory_ratio": 0,
+      "plugin_preset": "full",
+      "custom_plugins": [],
+      "port": 25611,
+      "internal_port": 25610,
+      "is_home": false,
+      "s3import": false,
+      "auto_start": false,
+      "kishax_spigot_jar": "Kishax-Spigot-1.21.11.jar",
+      "comment": "Disabled: memory_ratio=0, kept for database compatibility"
+    }
+  ],
+  "plugins": {
+    "luckperms": {
+      "bukkit": {
+        "version": "5.5.21",
+        "url": "https://download.luckperms.net/1610/bukkit/loader/LuckPerms-Bukkit-5.5.21.jar",
+        "filename": "LuckPerms-Bukkit-5.5.21.jar"
+      },
+      "velocity": {
+        "version": "5.5.21",
+        "url": "https://download.luckperms.net/1610/velocity/LuckPerms-Velocity-5.5.21.jar",
+        "filename": "LuckPerms-Velocity-5.5.21.jar"
+      }
+    },
+    "geyser-velocity": {
+      "version": "x.x.x",
+      "url": "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/velocity",
+      "filename": "geyser-velocity.jar"
+    },
+    "floodgate-velocity": {
+      "version": "x.x.x",
+      "url": "https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/velocity",
+      "filename": "floodgate-velocity.jar"
+    },
+    "kishax": {
+      "bukkit": {
+        "version": "custom",
+        "source": "build",
+        "comment": "Built from source during Docker build",
+        "version_mappings": {
+          "1.21.11": {
+            "gradle_module": "sv1_21_11",
+            "jar_filename": "Kishax-Spigot-1.21.11.jar"
+          },
+          "1.21.8": {
+            "gradle_module": "sv1_21_8",
+            "jar_filename": "Kishax-Spigot-1.21.8.jar"
+          },
+          "1.21": {
+            "gradle_module": "sv1_21",
+            "jar_filename": "Kishax-Spigot-1.21.jar"
+          },
+          "1.20.4": {
+            "gradle_module": "sv1_20_4",
+            "jar_filename": "Kishax-Spigot-1.20.4.jar"
+          }
+        }
+      },
+      "velocity": {
+        "version": "custom",
+        "source": "build",
+        "jar_filename": "Kishax-Velocity-3.4.0.jar"
+      }
+    }
+  }
+}

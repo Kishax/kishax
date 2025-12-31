@@ -1,0 +1,23 @@
+# ================================================================
+# Portals Configuration - Latest Server
+# ================================================================
+# This file is specific to the "latest" server.
+# Define custom portal locations and destinations here.
+# ================================================================
+
+portals:
+  # Example portal definition for latest server
+  # test_portal:
+  #   world: world
+  #   location:
+  #     x: 0
+  #     y: 100
+  #     z: 0
+  #   destination:
+  #     world: world_the_end
+  #     x: 0
+  #     y: 64
+  #     z: 0
+  #   size:
+  #     width: 4
+  #     height: 4

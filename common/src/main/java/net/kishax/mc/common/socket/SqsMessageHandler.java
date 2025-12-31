@@ -39,4 +39,11 @@ public interface SqsMessageHandler {
   default void handleAuthCompletion(String playerName, String playerUuid, String message) {
     // デフォルト実装は何もしない（拡張性のため）
   }
+
+  /**
+   * 認証トークン保存完了通知処理
+   */
+  default void handleAuthTokenSaved(String mcid, String uuid, String authToken) {
+    // デフォルト実装は何もしない（拡張性のため）
+  }
 }
