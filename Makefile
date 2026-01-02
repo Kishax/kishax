@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc backup-world backup-world-list backup-world-restore backup-world-verify deploy-world deploy-world-list
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc backup-world backup-world-list backup-world-restore backup-world-verify deploy-world deploy-world-list build-image upload-image deploy-image
 
 .DEFAULT_GOAL := help
 
@@ -608,4 +608,32 @@ deploy-world-list: ## S3デプロイメント一覧を表示
 	echo ""; \
 	echo "💡 詳細を確認するには:"; \
 	echo "   aws s3 ls s3://$$S3_BUCKET/deployment/<YYYYMM>/<version>/ --recursive --human-readable"
+
+## =============================================================================
+## DockerイメージS3アップロード (ローカル側で実行)
+## =============================================================================
+
+IMAGE_NAME := kishax-mc
+IMAGE_TAG := latest
+S3_BUCKET := kishax-production-docker-images
+S3_PATH := mc
+AWS_PROFILE := AdministratorAccess-126112056177
+
+build-image: ## Dockerイメージをビルド (linux/amd64)
+	@echo "Building Docker image for linux/amd64..."
+	docker build --platform linux/amd64 -t $(IMAGE_NAME):$(IMAGE_TAG) .
+	@echo "Build complete: $(IMAGE_NAME):$(IMAGE_TAG)"
+
+upload-image: ## DockerイメージをS3にアップロード
+	@echo "Saving Docker image to tar.gz..."
+	docker save $(IMAGE_NAME):$(IMAGE_TAG) | gzip > $(IMAGE_NAME)-$(IMAGE_TAG).tar.gz
+	@echo "Uploading to S3..."
+	aws s3 cp $(IMAGE_NAME)-$(IMAGE_TAG).tar.gz \
+		s3://$(S3_BUCKET)/$(S3_PATH)/$(IMAGE_NAME)-$(IMAGE_TAG).tar.gz \
+		--profile $(AWS_PROFILE)
+	@echo "Cleaning up local tar.gz file..."
+	rm $(IMAGE_NAME)-$(IMAGE_TAG).tar.gz
+	@echo "Upload complete!"
+
+deploy-image: build-image upload-image ## Dockerイメージをビルド→S3アップロード
 
