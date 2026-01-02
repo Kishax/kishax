@@ -1,5 +1,6 @@
 services:
   kishax-server:
+    image: kishax-mc:latest
     build:
       context: .
       args:
