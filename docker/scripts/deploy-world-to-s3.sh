@@ -61,25 +61,44 @@ print_info() {
 # Versioning Logic
 # ================================================================
 
-# S3から最新のバージョン番号を取得し、次の番号を返す
+# 全ての年月ディレクトリを走査して、最新のバージョン番号を取得する
 get_next_version() {
-    local prefix="s3://$S3_BUCKET/$S3_DEPLOY_PREFIX$YEAR_MONTH/"
+    local root_prefix="s3://$S3_BUCKET/$S3_DEPLOY_PREFIX"
     
-    # S3上のディレクトリ(PRE)一覧を取得し、数値のみを抽出して最大値を取得
-    local latest
-    latest=$(aws s3 ls "$prefix" --region "$AWS_REGION" 2>/dev/null | \
+    # 1. まず全ての年月ディレクトリ(YYYYMM/)を取得
+    local months
+    months=$(aws s3 ls "$root_prefix" --region "$AWS_REGION" 2>/dev/null | \
              grep 'PRE ' | \
              awk '{print $2}' | \
              sed 's/\///g' | \
-             grep '^[0-9]\+$' | \
-             sort -rn | \
-             head -n 1 || true)
+             grep '^[0-9]\{6\}$' | \
+             sort -rn)
 
-    if [ -z "$latest" ]; then
+    if [ -z "$months" ]; then
         echo "1"
-    else
-        echo $((latest + 1))
+        return
     fi
+
+    # 2. 最新の（一番数字が大きい）月のディレクトリの中身を確認
+    # ただし、最新の月の中にバージョンがない可能性も考慮し、見つかるまでループ
+    for month in $months; do
+        local prefix="$root_prefix$month/"
+        local latest_in_month
+        latest_in_month=$(aws s3 ls "$prefix" --region "$AWS_REGION" 2>/dev/null | \
+                         grep 'PRE ' | \
+                         awk '{print $2}' | \
+                         sed 's/\///g' | \
+                         grep '^[0-9]\+$' | \
+                         sort -rn | \
+                         head -n 1 || true)
+        
+        if [ -n "$latest_in_month" ]; then
+            echo $((latest_in_month + 1))
+            return
+        fi
+    done
+
+    echo "1"
 }
 
 # ================================================================
@@ -361,13 +380,16 @@ main() {
     clear
     print_header "S3 World Deployment Script"
 
+    # Prerequisites check (S3権限チェックのために先に実行)
+    check_prerequisites
+
     # バージョン自動決定
     if [ "$VERSION_MANUALLY_SET" = false ]; then
-        print_info "S3から最新バージョンを確認中..."
+        print_info "S3から全期間の最新バージョンを確認中..."
         VERSION=$(get_next_version)
     fi
 
-    echo "📅 年月: $YEAR_MONTH"
+    echo "📅 現在の年月: $YEAR_MONTH"
     echo "🔢 デプロイバージョン: $VERSION"
     echo "📍 S3保存先: s3://$S3_BUCKET/$S3_DEPLOY_PREFIX$YEAR_MONTH/$VERSION/"
     echo "🔧 AWS リージョン: $AWS_REGION"
@@ -381,9 +403,6 @@ main() {
     fi
 
     echo ""
-
-    # Prerequisites check
-    check_prerequisites
 
     # Get active servers
     print_header "対象サーバー取得"
