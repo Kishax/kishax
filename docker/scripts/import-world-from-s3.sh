@@ -48,9 +48,9 @@ echo ""
 echo "Searching for latest import-enabled world data in S3..."
 LATEST_S3_PATH=$(aws s3 ls "s3://$S3_BUCKET/$S3_WORLDS_PREFIX" --recursive --region "$AWS_REGION" 2>/dev/null | \
     grep "/$SERVER_NAME/__IMPORT_ENABLED__" | \
-    sort -k4 -r | \
-    head -1 | \
-    awk '{print $4}')
+    awk '{print $4}' | \
+    sort -t'/' -k2,2nr -k3,3nr | \
+    head -1)
 
 if [ -z "$LATEST_S3_PATH" ]; then
     echo "⏭️  No __IMPORT_ENABLED__ flag found in S3 for server '$SERVER_NAME'"
