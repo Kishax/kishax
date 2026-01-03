@@ -147,6 +147,9 @@ COPY docker/scripts/register-servers-to-db.sh /mc/scripts/register-servers-to-db
 COPY docker/scripts/import-world-from-s3.sh /mc/scripts/import-world-from-s3.sh
 COPY docker/scripts/backup-world-to-s3.sh /mc/scripts/backup-world-to-s3.sh
 COPY docker/scripts/deploy-world-to-s3.sh /mc/scripts/deploy-world-to-s3.sh
+COPY docker/scripts/sync-world-to-workspace.sh /mc/scripts/sync-world-to-workspace.sh
+COPY docker/scripts/sync-world-from-workspace.sh /mc/scripts/sync-world-from-workspace.sh
+COPY docker/scripts/create-deployment-from-workspace.sh /mc/scripts/create-deployment-from-workspace.sh
 RUN chmod +x /mc/start.sh /mc/scripts/*.sh
 
 # Accept Minecraft EULA
