@@ -1,6 +1,6 @@
 include .env
 
-.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc backup-world backup-world-list backup-world-restore backup-world-verify deploy-world deploy-world-list build-image upload-image deploy-image
+.PHONY: help deploy deploy-plugin deploy-config mysql mc-proxy mc-home mc-latest mc-spigot mc-velocity mc-list logs-proxy logs-home logs-latest logs-velocity logs-spigot restart-proxy restart-home restart-latest restart-all servers-status download-jars clean-old-jars update-servers check-diff env-load build-mc-plugins deploy-mc-to-s3 deploy-mc backup-world backup-world-list backup-world-restore backup-world-verify deploy-world deploy-world-list workspace-upload workspace-download workspace-to-deployment workspace-list workspace-clean build-image upload-image deploy-image
 
 .DEFAULT_GOAL := help
 
@@ -608,6 +608,96 @@ deploy-world-list: ## S3デプロイメント一覧を表示
 	echo ""; \
 	echo "💡 詳細を確認するには:"; \
 	echo "   aws s3 ls s3://$$S3_BUCKET/deployment/<YYYYMM>/<version>/ --recursive --human-readable"
+
+## =============================================================================
+## S3ワークスペース (EC2 i-a用)
+## =============================================================================
+
+.PHONY: workspace-upload
+workspace-upload: ## ワールドデータをS3 Workspaceへ同期（非圧縮・差分のみ）
+	@echo "📤 ワールドデータをS3 Workspaceへアップロードします"
+	@echo ""
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "❌ kishax-minecraftコンテナが動作していません"; \
+		echo "💡 docker compose up -d で起動してください"; \
+		exit 1; \
+	fi
+	@echo "🔍 対象サーバーを確認中..."
+	@docker exec -it kishax-minecraft /mc/scripts/sync-world-to-workspace.sh
+
+.PHONY: workspace-download
+workspace-download: ## S3 Workspaceからワールドデータをダウンロード（非圧縮・差分のみ）
+	@echo "📥 S3 Workspaceからワールドデータをダウンロードします"
+	@echo ""
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "❌ kishax-minecraftコンテナが動作していません"; \
+		echo "💡 docker compose up -d で起動してください"; \
+		exit 1; \
+	fi
+	@echo "⚠️  警告: この操作は現在のワールドデータを上書きします！"
+	@echo ""
+	@docker exec -it kishax-minecraft /mc/scripts/sync-world-from-workspace.sh
+
+.PHONY: workspace-to-deployment
+workspace-to-deployment: ## WorkspaceのデータをDeploymentへ変換（圧縮してアップロード）
+	@echo "🔄 WorkspaceからDeploymentへ変換します"
+	@echo ""
+	@if ! docker ps --format "table {{.Names}}" | grep -q kishax-minecraft; then \
+		echo "❌ kishax-minecraftコンテナが動作していません"; \
+		echo "💡 docker compose up -d で起動してください"; \
+		exit 1; \
+	fi
+	@docker exec -it kishax-minecraft /mc/scripts/create-deployment-from-workspace.sh
+
+.PHONY: workspace-list
+workspace-list: ## S3 Workspace一覧を表示
+	@echo "📋 S3 Workspace一覧"
+	@echo ""
+	@S3_BUCKET=$${S3_BUCKET:-kishax-production-world-backups}; \
+	AWS_REGION=$${AWS_REGION:-ap-northeast-1}; \
+	echo "📦 S3 Bucket: $$S3_BUCKET"; \
+	echo "📂 Prefix: workspace/"; \
+	echo ""; \
+	echo "🔍 サーバー一覧:"; \
+	aws s3 ls s3://$$S3_BUCKET/workspace/ --region $$AWS_REGION | \
+		grep "PRE" | \
+		awk '{print "  📂 " $$2}' | \
+		sed 's|/||g'; \
+	echo ""; \
+	echo "💡 詳細を確認するには:"; \
+	echo "   aws s3 ls s3://$$S3_BUCKET/workspace/<server_name>/ --recursive --human-readable"
+
+.PHONY: workspace-clean
+workspace-clean: ## S3 Workspaceの特定サーバーを削除 (要: SERVER=<server_name>)
+	@echo "🗑️  S3 Workspaceのサーバーを削除します"
+	@echo ""
+	@if [ -z "$(SERVER)" ]; then \
+		echo "❌ SERVERパラメータを指定してください"; \
+		echo ""; \
+		echo "💡 使用方法: make workspace-clean SERVER=<server_name>"; \
+		echo ""; \
+		echo "📋 利用可能なサーバー:"; \
+		make workspace-list 2>/dev/null | grep "📂" || true; \
+		exit 1; \
+	fi
+	@S3_BUCKET=$${S3_BUCKET:-kishax-production-world-backups}; \
+	AWS_REGION=$${AWS_REGION:-ap-northeast-1}; \
+	SERVER_NAME=$(SERVER); \
+	echo "📦 S3 Bucket: $$S3_BUCKET"; \
+	echo "📂 削除対象: workspace/$$SERVER_NAME/"; \
+	echo ""; \
+	echo "⚠️  警告: この操作は取り消せません！"; \
+	echo ""; \
+	read -p "削除を実行しますか？ (yes/N): " answer; \
+	if [ "$$answer" != "yes" ]; then \
+		echo "キャンセルしました"; \
+		exit 0; \
+	fi; \
+	echo ""; \
+	echo "🗑️  削除中..."; \
+	aws s3 rm s3://$$S3_BUCKET/workspace/$$SERVER_NAME/ --recursive --region $$AWS_REGION; \
+	echo ""; \
+	echo "✅ 削除完了"
 
 ## =============================================================================
 ## DockerイメージS3アップロード (ローカル側で実行)

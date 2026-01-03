@@ -79,30 +79,49 @@ echo "This may take several minutes depending on world size..."
 TEMP_DOWNLOAD_DIR="/tmp/mc-world-import-$$"
 mkdir -p "$TEMP_DOWNLOAD_DIR"
 
-# Download all world directories
-for WORLD_TYPE in "world" "world_nether" "world_the_end"; do
-    S3_WORLD_PATH="s3://$S3_BUCKET/$S3_WORLD_DIR/$WORLD_TYPE/"
-    LOCAL_WORLD_PATH="$TEMP_DOWNLOAD_DIR/$WORLD_TYPE"
-    
-    echo ""
-    echo "Downloading $WORLD_TYPE..."
-    
-    # Check if world exists in S3
-    if aws s3 ls "$S3_WORLD_PATH" --region "$AWS_REGION" > /dev/null 2>&1; then
-        aws s3 sync "$S3_WORLD_PATH" "$LOCAL_WORLD_PATH" \
-            --region "$AWS_REGION" \
-            --delete \
-            --quiet
-        
+# Download all compressed world archives
+echo ""
+echo "Downloading compressed archives..."
+aws s3 sync "s3://$S3_BUCKET/$S3_WORLD_DIR/" "$TEMP_DOWNLOAD_DIR/" \
+    --region "$AWS_REGION" \
+    --exclude "*" \
+    --include "*.tar.gz" \
+    --quiet
+
+if [ $? -ne 0 ]; then
+    echo "  ❌ Failed to download world archives"
+    rm -rf "$TEMP_DOWNLOAD_DIR"
+    exit 2
+fi
+
+# Check if any archives were downloaded
+ARCHIVE_COUNT=$(find "$TEMP_DOWNLOAD_DIR" -name "*.tar.gz" | wc -l)
+if [ "$ARCHIVE_COUNT" -eq 0 ]; then
+    echo "  ⏭️  No world archives found in S3"
+    rm -rf "$TEMP_DOWNLOAD_DIR"
+    exit 1
+fi
+
+echo "  ✅ Downloaded $ARCHIVE_COUNT archive(s)"
+
+# Extract all archives
+echo ""
+echo "Extracting archives..."
+for ARCHIVE in "$TEMP_DOWNLOAD_DIR"/*.tar.gz; do
+    if [ -f "$ARCHIVE" ]; then
+        WORLD_NAME=$(basename "$ARCHIVE" .tar.gz)
+        echo "  📦 Extracting $WORLD_NAME..."
+
+        tar -xzf "$ARCHIVE" -C "$TEMP_DOWNLOAD_DIR"
+
         if [ $? -eq 0 ]; then
-            echo "  ✅ Downloaded $WORLD_TYPE"
+            echo "    ✅ Extracted $WORLD_NAME"
+            rm -f "$ARCHIVE"  # Remove archive after extraction
         else
-            echo "  ❌ Failed to download $WORLD_TYPE"
+            echo "    ❌ Failed to extract $WORLD_NAME"
             rm -rf "$TEMP_DOWNLOAD_DIR"
             exit 2
         fi
-    else
-        echo "  ⏭️  $WORLD_TYPE not found in S3, skipping"
     fi
 done
 
@@ -111,17 +130,18 @@ echo ""
 echo "Installing world data to server directory..."
 mkdir -p "$SERVER_DIR"
 
-for WORLD_TYPE in "world" "world_nether" "world_the_end"; do
-    SOURCE_PATH="$TEMP_DOWNLOAD_DIR/$WORLD_TYPE"
-    DEST_PATH="$SERVER_DIR/$WORLD_TYPE"
-    
+# Dynamically detect all extracted world directories (world*)
+for SOURCE_PATH in "$TEMP_DOWNLOAD_DIR"/world*; do
     if [ -d "$SOURCE_PATH" ]; then
+        WORLD_TYPE=$(basename "$SOURCE_PATH")
+        DEST_PATH="$SERVER_DIR/$WORLD_TYPE"
+
         # Remove existing world if present (delete contents, not directory itself for volume mounts)
         if [ -d "$DEST_PATH" ]; then
             echo "  Removing existing $WORLD_TYPE contents..."
             rm -rf "$DEST_PATH"/*
         fi
-        
+
         # Move new world data contents (not the directory itself)
         mkdir -p "$DEST_PATH"
         mv "$SOURCE_PATH"/* "$DEST_PATH"/
