@@ -377,6 +377,30 @@ for ((i=0; i<$ACTIVE_SPIGOT_COUNT; i++)); do
   if [ -d "$SERVER_SPECIFIC_DIR" ]; then
     echo "📁 Copying server-specific files for $SPIGOT_NAME..."
 
+    # Copy server-specific server.properties (overwrite common server.properties if exists)
+    if [ -f "$SERVER_SPECIFIC_DIR/server.properties" ]; then
+      cp "$SERVER_SPECIFIC_DIR/server.properties" "/mc/spigot/$SPIGOT_NAME/server.properties.specific"
+      # Merge with common server.properties: server-specific values override common values
+      # Read server-specific properties and override in the target file
+      while IFS='=' read -r key value; do
+        # Skip comments and empty lines
+        if [[ ! "$key" =~ ^[[:space:]]*# && -n "$key" ]]; then
+          # Escape special characters in key for sed
+          escaped_key=$(echo "$key" | sed 's/[]\/$*.^[]/\\&/g')
+          # Check if key exists in target file
+          if grep -q "^${escaped_key}=" "/mc/spigot/$SPIGOT_NAME/server.properties" 2>/dev/null; then
+            # Override existing value
+            sed -i "s|^${escaped_key}=.*|${key}=${value}|" "/mc/spigot/$SPIGOT_NAME/server.properties"
+          else
+            # Append new property
+            echo "${key}=${value}" >> "/mc/spigot/$SPIGOT_NAME/server.properties"
+          fi
+        fi
+      done < "$SERVER_SPECIFIC_DIR/server.properties"
+      rm -f "/mc/spigot/$SPIGOT_NAME/server.properties.specific"
+      echo "  ✅ Applied server-specific server.properties overrides"
+    fi
+
     # Copy server-specific plugin configs (overwrite common configs if exists)
     if [ -d "$SERVER_SPECIFIC_DIR/plugins" ]; then
       mkdir -p "/mc/spigot/$SPIGOT_NAME/plugins"
