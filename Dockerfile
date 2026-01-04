@@ -38,8 +38,8 @@ RUN if [ ! -f velocity/build/libs/Kishax-Velocity-*.jar ] || [ ! -f spigot/sv1_2
     echo "Kishax plugins already built, skipping build step"; \
     fi
 
-# Production stage
-FROM eclipse-temurin:21-jdk
+# Production stage - JRE is sufficient for running Java applications
+FROM eclipse-temurin:21-jre
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
